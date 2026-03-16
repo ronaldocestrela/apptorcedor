@@ -28,9 +28,9 @@ export function BottomNav() {
         className="flex flex-col items-center justify-center flex-1 h-full text-white hover:bg-ffc-green-light transition-colors"
       >
         <img
-          src="/logo-ffc.svg"
+          src="/ESCUDO_FFC_PNG.png"
           alt="Home"
-          className="w-8 h-8 object-contain brightness-0 invert"
+          className="w-8 h-8 object-contain"
         />
         {isActive("/") && (
           <span className="w-8 h-0.5 bg-white rounded mt-1" />
