@@ -15,6 +15,7 @@ export function ProductCard({ product }: ProductCardProps) {
         />
       </div>
       <div className="p-3 flex flex-col gap-2">
+        <p className="font-bold text-black text-lg uppercase">{product.name}</p>
         <p className="font-bold text-black text-lg">
           R$ {product.price.toFixed(2).replace('.', ',')}
         </p>

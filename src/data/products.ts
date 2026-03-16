@@ -8,26 +8,26 @@ export interface Product {
 export const products: Product[] = [
   {
     id: 1,
-    name: 'Camisa Oficial',
+    name: 'Mochila FFC',
     price: 100,
-    image: 'https://picsum.photos/seed/prod1/300/300',
+    image: 'loja01.jpeg',
   },
   {
     id: 2,
-    name: 'Camisa Treino',
+    name: 'Kit Torcedor',
     price: 100,
-    image: 'https://picsum.photos/seed/prod2/300/300',
+    image: 'loja02.jpeg',
   },
   {
     id: 3,
-    name: 'Short Oficial',
+    name: 'Chaveiro FFC',
     price: 80,
-    image: 'https://picsum.photos/seed/prod3/300/300',
+    image: 'loja03.jpeg',
   },
   {
     id: 4,
-    name: 'Boné FFC',
+    name: 'Camiseta FFC',
     price: 50,
-    image: 'https://picsum.photos/seed/prod4/300/300',
+    image: 'loja04.jpeg',
   },
 ];
