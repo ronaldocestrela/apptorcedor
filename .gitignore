@@ -1,25 +1,125 @@
-# Dependencies
-node_modules/
+## .NET / C#
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
 
-# Build output
-dist/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
 
-# Env files
-.env
-.env.local
-.env.*.local
+[Dd]ebugPublic/
+[Rr]eleases/
+[Aa]rtifacts/
+publish/
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
 
-# OS
-.DS_Store
-Thumbs.db
+*.nuget.props
+*.nuget.targets
 
-# Logs
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## NuGet
+**/packages/*
+!**/packages/build/
+
+## MSBuild
 *.log
-npm-debug.log*
-pnpm-debug.log*
+msbuild.wrn
+msbuild.err
+
+## Visual Studio
+.vs/
+*.sln.iml
+launchSettings.json
+!**/Properties/launchSettings.json
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## .NET tool manifests
+# .config/ — uncomment if not using dotnet tools manifest
+
+## ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+## User-specific files
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+
+## Windows image file caches
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+
+## Folder config
+[Dd]esktop.ini
+
+## Recycle Bin
+$RECYCLE.BIN/
+
+## VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+## Node / React / Vite (frontend)
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.*
+!.env.example
+
+## Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+## macOS
+.DS_Store
+
+## Linux
+*~
+
+## Docker
+docker-compose.override.yml
+
+## Coverage / Test Results
+coverage/
+TestResults/
+*.coverage
+*.coveragexml
+lcov.info
+
+## Secrets / Credentials
+appsettings.Development.json
+appsettings.Local.json
+*.pfx
+*.key
+*.pem
+secrets.json

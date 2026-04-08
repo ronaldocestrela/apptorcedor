@@ -1,6 +1,0 @@
-services:
-  app:
-    build: .
-    ports:
-      - "3540:80"
-    restart: unless-stopped

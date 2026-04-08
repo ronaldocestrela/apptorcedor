@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SocioTorcedor.Api</RootNamespace>
+    <AssemblyName>SocioTorcedor.Api</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\SocioTorcedor.BuildingBlocks.Application\SocioTorcedor.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\SocioTorcedor.BuildingBlocks.Shared\SocioTorcedor.BuildingBlocks.Shared.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\SocioTorcedor.Modules.Identity.Api\SocioTorcedor.Modules.Identity.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Tenancy\SocioTorcedor.Modules.Tenancy.Api\SocioTorcedor.Modules.Tenancy.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Tenancy\SocioTorcedor.Modules.Tenancy.Application\SocioTorcedor.Modules.Tenancy.Application.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\SocioTorcedor.BuildingBlocks.Domain\SocioTorcedor.BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\Tenancy\SocioTorcedor.Modules.Tenancy.Infrastructure\SocioTorcedor.Modules.Tenancy.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
