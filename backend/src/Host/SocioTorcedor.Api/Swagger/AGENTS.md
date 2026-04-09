@@ -18,4 +18,4 @@ Sem `X-Tenant-Id` no Swagger, chamadas como `POST /api/Auth/login` falham com 40
 
 ## Dependências
 - `Swashbuckle.AspNetCore` (`IOperationFilter`, geração OpenAPI)
-- `Microsoft.OpenApi.Models`
+- `Microsoft.OpenApi` (OpenAPI.NET 2.x, tipos como `OpenApiOperation`; referências de esquema com `OpenApiSecuritySchemeReference`)

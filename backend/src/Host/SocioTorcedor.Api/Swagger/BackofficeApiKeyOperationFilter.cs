@@ -1,4 +1,4 @@
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace SocioTorcedor.Api.Swagger;
@@ -20,20 +20,13 @@ public sealed class BackofficeApiKeyOperationFilter : IOperationFilter
             !path.StartsWith("api/backoffice/", StringComparison.OrdinalIgnoreCase))
             return;
 
-        var schemeRef = new OpenApiSecurityScheme
-        {
-            Reference = new OpenApiReference
-            {
-                Type = ReferenceType.SecurityScheme,
-                Id = SecuritySchemeId
-            }
-        };
+        var schemeRef = new OpenApiSecuritySchemeReference(SecuritySchemeId, null, null);
 
         operation.Security =
         [
             new OpenApiSecurityRequirement
             {
-                [schemeRef] = Array.Empty<string>()
+                [schemeRef] = new List<string>()
             }
         ];
     }

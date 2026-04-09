@@ -1,4 +1,4 @@
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using SocioTorcedor.Api.Swagger;
 using SocioTorcedor.BuildingBlocks.Application;
 using SocioTorcedor.Modules.Backoffice.Api;
@@ -68,9 +68,9 @@ public static class ServiceCollectionExtensions
 
             options.AddSecurityDefinition(BackofficeApiKeyOperationFilter.SecuritySchemeId, backofficeApiKey);
 
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
-                { bearer, Array.Empty<string>() }
+                { new OpenApiSecuritySchemeReference("Bearer", document, null), new List<string>() }
             });
 
             options.OperationFilter<TenantHeaderOperationFilter>();

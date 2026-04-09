@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using NSubstitute;
 using SocioTorcedor.Api.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -25,7 +25,7 @@ public sealed class TenantHeaderOperationFilterTests
     {
         var apiDescription = new ApiDescription { RelativePath = relativePath };
         var schemaGenerator = Substitute.For<ISchemaGenerator>();
-        return new OperationFilterContext(apiDescription, schemaGenerator, new SchemaRepository(), ApplyMethod);
+        return new OperationFilterContext(apiDescription, schemaGenerator, new SchemaRepository(), new OpenApiDocument(), ApplyMethod);
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public sealed class TenantHeaderOperationFilterTests
         param.In.Should().Be(ParameterLocation.Header);
         param.Required.Should().BeTrue();
         param.Schema.Should().NotBeNull();
-        param.Schema!.Type.Should().Be("string");
+        param.Schema!.Type.Should().Be(JsonSchemaType.String);
         param.Description.Should().Contain("tenant");
     }
 
@@ -73,7 +73,7 @@ public sealed class TenantHeaderOperationFilterTests
 
         filter.Apply(operation, context);
 
-        operation.Parameters.Should().NotContain(p =>
+        (operation.Parameters ?? []).Should().NotContain(p =>
             string.Equals(p.Name, "X-Tenant-Id", StringComparison.OrdinalIgnoreCase));
     }
 

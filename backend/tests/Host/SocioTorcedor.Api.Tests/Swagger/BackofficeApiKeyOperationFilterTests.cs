@@ -1,7 +1,7 @@
 using System.Reflection;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using NSubstitute;
 using SocioTorcedor.Api.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -19,7 +19,7 @@ public sealed class BackofficeApiKeyOperationFilterTests
     {
         var apiDescription = new ApiDescription { RelativePath = relativePath };
         var schemaGenerator = Substitute.For<ISchemaGenerator>();
-        return new OperationFilterContext(apiDescription, schemaGenerator, new SchemaRepository(), ApplyMethod);
+        return new OperationFilterContext(apiDescription, schemaGenerator, new SchemaRepository(), new OpenApiDocument(), ApplyMethod);
     }
 
     [Fact]
@@ -32,8 +32,9 @@ public sealed class BackofficeApiKeyOperationFilterTests
         filter.Apply(operation, context);
 
         operation.Security.Should().NotBeNull();
-        operation.Security!.Should().ContainSingle();
-        var requirement = operation.Security.Single();
+        var security = operation.Security!;
+        security.Should().ContainSingle();
+        var requirement = security.Single();
         requirement.Should().ContainSingle();
         var scheme = requirement.Keys.Single();
         scheme.Reference.Should().NotBeNull();

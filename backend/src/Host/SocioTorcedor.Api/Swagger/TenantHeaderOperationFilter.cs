@@ -1,4 +1,4 @@
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace SocioTorcedor.Api.Swagger;
@@ -32,7 +32,7 @@ public sealed class TenantHeaderOperationFilter : IOperationFilter
             In = ParameterLocation.Header,
             Required = true,
             Description = "Slug do tenant (ex: flamengo)",
-            Schema = new OpenApiSchema { Type = "string" }
+            Schema = new OpenApiSchema { Type = JsonSchemaType.String }
         });
     }
 
