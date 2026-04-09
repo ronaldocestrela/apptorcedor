@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Tenancy\SocioTorcedor.Modules.Tenancy.Application\SocioTorcedor.Modules.Tenancy.Application.csproj" />
     <ProjectReference Include="..\SocioTorcedor.Modules.Identity.Application\SocioTorcedor.Modules.Identity.Application.csproj" />
     <ProjectReference Include="..\SocioTorcedor.Modules.Identity.Domain\SocioTorcedor.Modules.Identity.Domain.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\SocioTorcedor.BuildingBlocks.Infrastructure\SocioTorcedor.BuildingBlocks.Infrastructure.csproj" />

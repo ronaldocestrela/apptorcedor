@@ -8,6 +8,5 @@ public sealed class CreateTenantCommandValidator : AbstractValidator<CreateTenan
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(256);
         RuleFor(x => x.Slug).NotEmpty().MinimumLength(2).MaximumLength(63);
-        RuleFor(x => x.ConnectionString).NotEmpty().MaximumLength(2048);
     }
 }

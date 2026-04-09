@@ -6,7 +6,10 @@ using SocioTorcedor.Modules.Tenancy.Domain.Entities;
 
 namespace SocioTorcedor.Modules.Tenancy.Application.Commands.CreateTenant;
 
-public sealed class CreateTenantHandler(ITenantRepository repository)
+public sealed class CreateTenantHandler(
+    ITenantRepository repository,
+    ITenantConnectionStringGenerator connectionStringGenerator,
+    ITenantDatabaseProvisioner databaseProvisioner)
     : ICommandHandler<CreateTenantCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateTenantCommand command, CancellationToken cancellationToken)
@@ -16,14 +19,26 @@ public sealed class CreateTenantHandler(ITenantRepository repository)
             if (await repository.SlugExistsAsync(command.Slug, cancellationToken))
                 return Result<Guid>.Fail(Error.Conflict("Tenant.SlugExists", "A tenant with this slug already exists."));
 
+            var slug = command.Slug.Trim();
+            var connectionString = connectionStringGenerator.Generate(slug);
+
             var tenant = Tenant.Create(
                 command.Name.Trim(),
-                command.Slug.Trim(),
-                command.ConnectionString.Trim(),
+                slug,
+                connectionString,
                 slugAlreadyExists: () => false);
 
             await repository.AddAsync(tenant, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+
+            try
+            {
+                await databaseProvisioner.ProvisionAsync(connectionString, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                return Result<Guid>.Fail(Error.Failure("Tenant.ProvisioningFailed", ex.Message));
+            }
 
             return Result<Guid>.Ok(tenant.Id);
         }

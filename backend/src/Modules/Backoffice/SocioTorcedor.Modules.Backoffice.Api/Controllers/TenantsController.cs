@@ -22,7 +22,7 @@ public sealed class TenantsController(IMediator mediator) : BackofficeController
     public async Task<IActionResult> Create([FromBody] CreateTenantBody body, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new CreateTenantCommand(body.Name, body.Slug, body.ConnectionString),
+            new CreateTenantCommand(body.Name, body.Slug),
             cancellationToken);
 
         return FromResult(result, id => CreatedAtAction(nameof(GetById), new { id }, new { id }));
@@ -108,8 +108,6 @@ public sealed class TenantsController(IMediator mediator) : BackofficeController
         public string Name { get; set; } = string.Empty;
 
         public string Slug { get; set; } = string.Empty;
-
-        public string ConnectionString { get; set; } = string.Empty;
     }
 
     public sealed class UpdateTenantBody

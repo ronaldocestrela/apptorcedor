@@ -17,6 +17,7 @@ public static class DependencyInjection
             options.UseSqlServer(masterConnectionString));
 
         services.AddMemoryCache();
+        services.AddSingleton<ITenantConnectionStringGenerator, TenantConnectionStringGenerator>();
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<ITenantResolver, TenantSlugResolver>();
         services.AddScoped<ITenantSlugCacheInvalidator, TenantSlugCacheInvalidator>();
