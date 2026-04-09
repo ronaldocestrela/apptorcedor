@@ -7,13 +7,13 @@ namespace SocioTorcedor.Modules.Tenancy.Infrastructure.Repositories;
 
 public sealed class TenantRepository(MasterDbContext db) : ITenantRepository
 {
-    public async Task<TenantDto?> GetBySubdomainAsync(string subdomain, CancellationToken cancellationToken)
+    public async Task<TenantDto?> GetBySlugAsync(string slug, CancellationToken cancellationToken)
     {
-        var normalized = subdomain.Trim().ToLowerInvariant();
+        var normalized = slug.Trim().ToLowerInvariant();
         var tenant = await db.Tenants
             .AsNoTracking()
             .Include(t => t.Domains)
-            .FirstOrDefaultAsync(t => t.Subdomain == normalized, cancellationToken);
+            .FirstOrDefaultAsync(t => t.Slug == normalized, cancellationToken);
 
         if (tenant is null)
             return null;
@@ -22,7 +22,7 @@ public sealed class TenantRepository(MasterDbContext db) : ITenantRepository
         return new TenantDto(
             tenant.Id,
             tenant.Name,
-            tenant.Subdomain,
+            tenant.Slug,
             tenant.ConnectionString,
             origins);
     }

@@ -1,7 +1,7 @@
 # SocioTorcedor.Modules.Tenancy.Infrastructure
 
 ## Descrição
-`MasterDbContext`, repositório, `SubdomainTenantResolver`, cache.
+`MasterDbContext`, repositório, `TenantSlugResolver`, cache.
 
 ## Estrutura
 - `DependencyInjection.cs`

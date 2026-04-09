@@ -1,7 +1,7 @@
 namespace SocioTorcedor.BuildingBlocks.Shared.Tenancy;
 
 /// <summary>
-/// Request-scoped tenant resolution (populated by host middleware after subdomain resolution).
+/// Request-scoped tenant resolution (populated by host middleware after tenant slug resolution via X-Tenant-Id).
 /// </summary>
 public interface ICurrentTenantContext
 {

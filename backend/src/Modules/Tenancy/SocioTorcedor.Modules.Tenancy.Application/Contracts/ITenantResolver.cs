@@ -4,5 +4,5 @@ namespace SocioTorcedor.Modules.Tenancy.Application.Contracts;
 
 public interface ITenantResolver
 {
-    Task<TenantContext?> ResolveAsync(string subdomain, CancellationToken cancellationToken);
+    Task<TenantContext?> ResolveAsync(string slug, CancellationToken cancellationToken);
 }

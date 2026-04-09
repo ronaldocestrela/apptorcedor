@@ -52,6 +52,7 @@ public sealed class DynamicCorsMiddlewareTests
         context.Response.Headers["Access-Control-Allow-Origin"].ToString().Should()
             .Be("https://flamengo.example.com");
         context.Response.Headers["Access-Control-Allow-Credentials"].ToString().Should().Be("true");
+        context.Response.Headers["Access-Control-Allow-Headers"].ToString().Should().Contain("X-Tenant-Id");
     }
 
     [Fact]

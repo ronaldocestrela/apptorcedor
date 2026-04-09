@@ -31,7 +31,7 @@ public sealed class TenantResolutionMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_NoSubdomain_Returns404()
+    public async Task InvokeAsync_NoTenantHeader_Returns400()
     {
         var nextCalled = false;
         var middleware = new TenantResolutionMiddleware(_ =>
@@ -42,14 +42,13 @@ public sealed class TenantResolutionMiddlewareTests
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/api/x";
-        context.Request.Headers.Host = "localhost";
         context.Response.Body = new MemoryStream();
         var resolver = Substitute.For<ITenantResolver>();
 
         await middleware.InvokeAsync(context, resolver);
 
         nextCalled.Should().BeFalse();
-        context.Response.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+        context.Response.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
         await resolver.DidNotReceive().ResolveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
@@ -65,7 +64,7 @@ public sealed class TenantResolutionMiddlewareTests
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/api/x";
-        context.Request.Headers.Host = "missing.example.com";
+        context.Request.Headers["X-Tenant-Id"] = "missing";
         context.Response.Body = new MemoryStream();
         var resolver = Substitute.For<ITenantResolver>();
         resolver.ResolveAsync("missing", Arg.Any<CancellationToken>()).Returns((TenantContext?)null);
@@ -95,7 +94,7 @@ public sealed class TenantResolutionMiddlewareTests
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/api/x";
-        context.Request.Headers.Host = "flamengo.example.com";
+        context.Request.Headers["X-Tenant-Id"] = "flamengo";
         var resolver = Substitute.For<ITenantResolver>();
         resolver.ResolveAsync("flamengo", Arg.Any<CancellationToken>()).Returns(tenant);
 

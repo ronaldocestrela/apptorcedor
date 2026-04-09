@@ -1,7 +1,7 @@
 # Tenancy
 
 ## Descrição
-Parte do backend Sócio Torcedor; ver módulo pai.
+Contrato `ICurrentTenantContext` — preenchido pelo Host após resolver o tenant (slug enviado em `X-Tenant-Id`).
 
 ## Estrutura
 - `ICurrentTenantContext.cs`

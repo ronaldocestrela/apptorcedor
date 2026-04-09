@@ -1,11 +1,12 @@
 using Microsoft.OpenApi.Models;
+using SocioTorcedor.Api.Swagger;
 using SocioTorcedor.BuildingBlocks.Application;
 using SocioTorcedor.Modules.Identity.Api;
 using SocioTorcedor.Modules.Identity.Api.Controllers;
 using SocioTorcedor.Modules.Identity.Application.Commands.LoginUser;
 using SocioTorcedor.Modules.Identity.Application.Commands.RegisterUser;
 using SocioTorcedor.Modules.Tenancy.Api;
-using SocioTorcedor.Modules.Tenancy.Application.Queries.GetTenantBySubdomain;
+using SocioTorcedor.Modules.Tenancy.Application.Queries.GetTenantBySlug;
 
 namespace SocioTorcedor.Api.Extensions;
 
@@ -17,7 +18,7 @@ public static class ServiceCollectionExtensions
             .AddApplicationPart(typeof(AuthController).Assembly);
 
         services.AddBuildingBlocksApplication(
-            typeof(GetTenantBySubdomainHandler).Assembly,
+            typeof(GetTenantBySlugHandler).Assembly,
             typeof(RegisterUserHandler).Assembly,
             typeof(LoginUserHandler).Assembly);
 
@@ -45,6 +46,8 @@ public static class ServiceCollectionExtensions
             {
                 { bearer, Array.Empty<string>() }
             });
+
+            options.OperationFilter<TenantHeaderOperationFilter>();
         });
 
         services.AddTenancyModule(configuration);

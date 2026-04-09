@@ -1,7 +1,7 @@
 # SocioTorcedor.Modules.Tenancy.Domain
 
 ## Descrição
-Agregado `Tenant`, VO `Subdomain`, regras e eventos.
+Agregado `Tenant`, VO `TenantSlug` (slug único do tenant), regras e eventos.
 
 ## Estrutura
 - (nenhum `.cs` direto; ver subpastas)

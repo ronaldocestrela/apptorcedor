@@ -10,6 +10,8 @@ builder.Services.AddSocioTorcedorApi(builder.Configuration);
 
 var app = builder.Build();
 
+await app.ApplyPendingEfCoreMigrationsAsync();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

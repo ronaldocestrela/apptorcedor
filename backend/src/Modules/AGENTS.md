@@ -4,7 +4,7 @@
 Módulos verticais do monólito (clean architecture por módulo: Domain → Application → Infrastructure → Api).
 
 ## Estrutura
-- `Tenancy/` — master DB, resolução de tenant por subdomínio
+- `Tenancy/` — master DB, resolução de tenant pelo header `X-Tenant-Id` (slug)
 - `Identity/` — usuários, roles, permissões, JWT
 
 ## Dependências

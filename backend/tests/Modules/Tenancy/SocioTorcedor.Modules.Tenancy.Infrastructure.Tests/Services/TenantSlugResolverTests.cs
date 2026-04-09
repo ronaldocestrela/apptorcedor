@@ -8,10 +8,10 @@ using SocioTorcedor.Modules.Tenancy.Infrastructure.Services;
 
 namespace SocioTorcedor.Modules.Tenancy.Infrastructure.Tests.Services;
 
-public class SubdomainTenantResolverTests
+public class TenantSlugResolverTests
 {
     [Fact]
-    public async Task ResolveAsync_returns_null_for_unknown_subdomain()
+    public async Task ResolveAsync_returns_null_for_unknown_slug()
     {
         var options = new DbContextOptionsBuilder<MasterDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -19,7 +19,7 @@ public class SubdomainTenantResolverTests
 
         await using var ctx = new MasterDbContext(options);
         var repo = new TenantRepository(ctx);
-        var resolver = new SubdomainTenantResolver(repo, new MemoryCache(new MemoryCacheOptions()));
+        var resolver = new TenantSlugResolver(repo, new MemoryCache(new MemoryCacheOptions()));
 
         var result = await resolver.ResolveAsync("missing", CancellationToken.None);
 
@@ -45,13 +45,13 @@ public class SubdomainTenantResolverTests
         await using var readCtx = new MasterDbContext(options);
         var repo = new TenantRepository(readCtx);
         var cache = new MemoryCache(new MemoryCacheOptions());
-        var resolver = new SubdomainTenantResolver(repo, cache);
+        var resolver = new TenantSlugResolver(repo, cache);
 
         var first = await resolver.ResolveAsync("ffc", CancellationToken.None);
         var second = await resolver.ResolveAsync("ffc", CancellationToken.None);
 
         first.Should().NotBeNull();
-        first!.Subdomain.Should().Be("ffc");
+        first!.Slug.Should().Be("ffc");
         first.AllowedOrigins.Should().Contain("https://ffc.app");
         second.Should().BeEquivalentTo(first);
     }

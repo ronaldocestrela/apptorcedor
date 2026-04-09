@@ -44,26 +44,19 @@ O sistema será dividido em:
 
 ### Identificação do Tenant
 
-**Baseado em subdomínio**
+**Header HTTP `X-Tenant-Id`** (slug do tenant enviado pelo frontend / cliente)
 
 #### Exemplo:
 
-```text
-flamengo.meusistema.com
-bahia.meusistema.com
-feirafc.meusistema.com
+```http
+X-Tenant-Id: flamengo
 ```
 
 ### Fluxo de resolução
 
-1. Request chega com `Host`
-2. Extrair subdomínio:
-
-   ```text
-   flamengo.meusistema.com → flamengo
-   ```
-3. Buscar tenant no banco master
-4. Resolver:
+1. Request chega com o header `X-Tenant-Id` (valor = slug, ex.: `flamengo`)
+2. Buscar tenant no banco master pelo slug
+3. Resolver:
 
    * TenantId
    * ConnectionString
@@ -425,7 +418,7 @@ src/
 ### Fase 1 — Fundação
 
 * estrutura base
-* tenancy por subdomínio
+* tenancy por header `X-Tenant-Id` (slug)
 * CORS dinâmico
 * Identity
 * permissões

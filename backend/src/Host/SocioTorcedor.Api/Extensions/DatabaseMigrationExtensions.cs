@@ -1,0 +1,54 @@
+using Microsoft.EntityFrameworkCore;
+using SocioTorcedor.Modules.Identity.Infrastructure.Persistence;
+using SocioTorcedor.Modules.Tenancy.Infrastructure.Persistence;
+
+namespace SocioTorcedor.Api.Extensions;
+
+/// <summary>
+/// Ao subir a API, aplica todas as migrations pendentes do EF Core (em ordem) no banco master e,
+/// em seguida, em cada connection string distinta cadastrada em <c>Tenants</c> (Identity por tenant).
+/// </summary>
+public static class DatabaseMigrationExtensions
+{
+    public static async Task ApplyPendingEfCoreMigrationsAsync(
+        this WebApplication app,
+        CancellationToken cancellationToken = default)
+    {
+        var enabled = app.Configuration.GetValue("Database:ApplyMigrationsAtStartup", true);
+        if (!enabled)
+        {
+            app.Logger.LogInformation(
+                "Database migrations at startup are disabled (Database:ApplyMigrationsAtStartup=false).");
+            return;
+        }
+
+        await using var scope = app.Services.CreateAsyncScope();
+        var master = scope.ServiceProvider.GetRequiredService<MasterDbContext>();
+
+        app.Logger.LogInformation("Applying pending EF Core migrations to master database...");
+        await master.Database.MigrateAsync(cancellationToken);
+
+        var tenantConnectionStrings = await master.Tenants
+            .AsNoTracking()
+            .Where(t => !string.IsNullOrWhiteSpace(t.ConnectionString))
+            .Select(t => t.ConnectionString)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        app.Logger.LogInformation(
+            "Applying pending EF Core migrations to {TenantCount} tenant database(s)...",
+            tenantConnectionStrings.Count);
+
+        foreach (var connectionString in tenantConnectionStrings)
+        {
+            var options = new DbContextOptionsBuilder<TenantIdentityDbContext>()
+                .UseSqlServer(connectionString)
+                .Options;
+
+            await using var tenantDb = new TenantIdentityDbContext(options);
+            await tenantDb.Database.MigrateAsync(cancellationToken);
+        }
+
+        app.Logger.LogInformation("EF Core migrations applied (master + tenant databases).");
+    }
+}

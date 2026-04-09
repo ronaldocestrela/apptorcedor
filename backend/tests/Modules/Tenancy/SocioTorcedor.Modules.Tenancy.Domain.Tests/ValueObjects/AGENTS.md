@@ -4,7 +4,7 @@
 Parte do backend Sócio Torcedor; ver módulo pai.
 
 ## Estrutura
-- `SubdomainTests.cs`
+- `TenantSlugTests.cs`
 
 ## Dependências
 - Pasta pai: `tests/Modules/Tenancy/SocioTorcedor.Modules.Tenancy.Domain.Tests`

@@ -2,32 +2,32 @@ using FluentAssertions;
 using NSubstitute;
 using SocioTorcedor.Modules.Tenancy.Application.Contracts;
 using SocioTorcedor.Modules.Tenancy.Application.DTOs;
-using SocioTorcedor.Modules.Tenancy.Application.Queries.GetTenantBySubdomain;
+using SocioTorcedor.Modules.Tenancy.Application.Queries.GetTenantBySlug;
 
 namespace SocioTorcedor.Modules.Tenancy.Application.Tests.Queries;
 
-public class GetTenantBySubdomainHandlerTests
+public class GetTenantBySlugHandlerTests
 {
     [Fact]
-    public async Task Returns_failure_when_subdomain_empty()
+    public async Task Returns_failure_when_slug_empty()
     {
         var repo = Substitute.For<ITenantRepository>();
-        var handler = new GetTenantBySubdomainHandler(repo);
+        var handler = new GetTenantBySlugHandler(repo);
 
-        var result = await handler.Handle(new GetTenantBySubdomainQuery("  "), CancellationToken.None);
+        var result = await handler.Handle(new GetTenantBySlugQuery("  "), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        await repo.DidNotReceive().GetBySubdomainAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await repo.DidNotReceive().GetBySlugAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Returns_not_found_when_repository_returns_null()
     {
         var repo = Substitute.For<ITenantRepository>();
-        repo.GetBySubdomainAsync("x", Arg.Any<CancellationToken>()).Returns((TenantDto?)null);
-        var handler = new GetTenantBySubdomainHandler(repo);
+        repo.GetBySlugAsync("x", Arg.Any<CancellationToken>()).Returns((TenantDto?)null);
+        var handler = new GetTenantBySlugHandler(repo);
 
-        var result = await handler.Handle(new GetTenantBySubdomainQuery("x"), CancellationToken.None);
+        var result = await handler.Handle(new GetTenantBySlugQuery("x"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error!.Code.Should().Be("Tenant.NotFound");
@@ -43,10 +43,10 @@ public class GetTenantBySubdomainHandlerTests
             "cs",
             new[] { "https://ffc.app" });
         var repo = Substitute.For<ITenantRepository>();
-        repo.GetBySubdomainAsync("ffc", Arg.Any<CancellationToken>()).Returns(dto);
-        var handler = new GetTenantBySubdomainHandler(repo);
+        repo.GetBySlugAsync("ffc", Arg.Any<CancellationToken>()).Returns(dto);
+        var handler = new GetTenantBySlugHandler(repo);
 
-        var result = await handler.Handle(new GetTenantBySubdomainQuery("ffc"), CancellationToken.None);
+        var result = await handler.Handle(new GetTenantBySlugQuery("ffc"), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.TenantId.Should().Be(dto.TenantId);

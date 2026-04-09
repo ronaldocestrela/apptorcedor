@@ -2,7 +2,7 @@ using SocioTorcedor.BuildingBlocks.Domain.Abstractions;
 using SocioTorcedor.Modules.Tenancy.Domain.Enums;
 using SocioTorcedor.Modules.Tenancy.Domain.Events;
 using SocioTorcedor.Modules.Tenancy.Domain.Rules;
-using SubdomainVo = SocioTorcedor.Modules.Tenancy.Domain.ValueObjects.Subdomain;
+using TenantSlugVo = SocioTorcedor.Modules.Tenancy.Domain.ValueObjects.TenantSlug;
 
 namespace SocioTorcedor.Modules.Tenancy.Domain.Entities;
 
@@ -14,7 +14,7 @@ public sealed class Tenant : AggregateRoot
 
     public string Name { get; private set; } = null!;
 
-    public string Subdomain { get; private set; } = null!;
+    public string Slug { get; private set; } = null!;
 
     public string ConnectionString { get; private set; } = null!;
 
@@ -28,19 +28,19 @@ public sealed class Tenant : AggregateRoot
 
     public static Tenant Create(
         string name,
-        string subdomainRaw,
+        string slugRaw,
         string connectionString,
-        Func<bool> subdomainAlreadyExists)
+        Func<bool> slugAlreadyExists)
     {
-        var rule = new TenantSubdomainMustBeUniqueRule(subdomainAlreadyExists);
+        var rule = new TenantSlugMustBeUniqueRule(slugAlreadyExists);
         if (rule.IsBroken())
             throw new BusinessRuleValidationException(rule);
 
-        var subdomain = SubdomainVo.Create(subdomainRaw);
+        var slug = TenantSlugVo.Create(slugRaw);
         var tenant = new Tenant
         {
             Name = name,
-            Subdomain = subdomain.Value,
+            Slug = slug.Value,
             ConnectionString = connectionString,
             Status = TenantStatus.Active,
             CreatedAt = DateTime.UtcNow

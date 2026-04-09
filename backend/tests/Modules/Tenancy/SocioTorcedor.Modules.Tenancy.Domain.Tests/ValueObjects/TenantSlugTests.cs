@@ -1,9 +1,9 @@
 using FluentAssertions;
-using SubdomainVo = SocioTorcedor.Modules.Tenancy.Domain.ValueObjects.Subdomain;
+using TenantSlugVo = SocioTorcedor.Modules.Tenancy.Domain.ValueObjects.TenantSlug;
 
 namespace SocioTorcedor.Modules.Tenancy.Domain.Tests.ValueObjects;
 
-public class SubdomainTests
+public class TenantSlugTests
 {
     [Theory]
     [InlineData("flamengo")]
@@ -11,7 +11,7 @@ public class SubdomainTests
     [InlineData("ab")]
     public void Create_accepts_valid_values(string raw)
     {
-        var s = SubdomainVo.Create(raw);
+        var s = TenantSlugVo.Create(raw);
 
         s.Value.Should().Be(raw.Trim().ToLowerInvariant());
     }
@@ -19,7 +19,7 @@ public class SubdomainTests
     [Fact]
     public void Create_rejects_empty()
     {
-        var act = () => SubdomainVo.Create(" ");
+        var act = () => TenantSlugVo.Create(" ");
 
         act.Should().Throw<ArgumentException>();
     }
@@ -27,7 +27,7 @@ public class SubdomainTests
     [Fact]
     public void Create_rejects_uppercase_input_normalizes()
     {
-        var s = SubdomainVo.Create("Flamengo");
+        var s = TenantSlugVo.Create("Flamengo");
 
         s.Value.Should().Be("flamengo");
     }
@@ -37,7 +37,7 @@ public class SubdomainTests
     [InlineData("bad_underscore")]
     public void Create_rejects_invalid(string raw)
     {
-        var act = () => SubdomainVo.Create(raw);
+        var act = () => TenantSlugVo.Create(raw);
 
         act.Should().Throw<ArgumentException>();
     }

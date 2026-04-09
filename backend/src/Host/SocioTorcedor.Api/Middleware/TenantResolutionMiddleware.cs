@@ -1,6 +1,5 @@
 using SocioTorcedor.Api.Tenancy;
 using SocioTorcedor.Modules.Tenancy.Application.Contracts;
-using SocioTorcedor.Modules.Tenancy.Infrastructure.Services;
 
 namespace SocioTorcedor.Api.Middleware;
 
@@ -20,16 +19,15 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             return;
         }
 
-        var host = context.Request.Headers.Host.ToString();
-        var subdomain = SubdomainParser.TryExtractSubdomain(host);
-        if (string.IsNullOrEmpty(subdomain))
+        var slug = context.Request.Headers["X-Tenant-Id"].ToString().Trim();
+        if (string.IsNullOrEmpty(slug))
         {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsJsonAsync(new { error = "Tenant subdomain could not be determined from host." });
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new { error = "Header 'X-Tenant-Id' is required." });
             return;
         }
 
-        var tenant = await tenantResolver.ResolveAsync(subdomain, context.RequestAborted);
+        var tenant = await tenantResolver.ResolveAsync(slug, context.RequestAborted);
         if (tenant is null)
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;

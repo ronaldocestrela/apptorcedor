@@ -11,8 +11,8 @@ public sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.ToTable("Tenants");
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Name).HasMaxLength(256).IsRequired();
-        builder.Property(t => t.Subdomain).HasMaxLength(63).IsRequired();
-        builder.HasIndex(t => t.Subdomain).IsUnique();
+        builder.Property(t => t.Slug).HasMaxLength(63).IsRequired();
+        builder.HasIndex(t => t.Slug).IsUnique();
         builder.Property(t => t.ConnectionString).HasMaxLength(2048).IsRequired();
         builder.Property(t => t.Status).HasConversion<int>();
         builder.Property(t => t.CreatedAt).IsRequired();

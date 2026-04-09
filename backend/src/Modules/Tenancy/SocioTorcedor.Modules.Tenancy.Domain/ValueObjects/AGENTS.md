@@ -4,7 +4,7 @@
 Parte do backend Sócio Torcedor; ver módulo pai.
 
 ## Estrutura
-- `Subdomain.cs`
+- `TenantSlug.cs`
 
 ## Dependências
 - Pasta pai: `src/Modules/Tenancy/SocioTorcedor.Modules.Tenancy.Domain`

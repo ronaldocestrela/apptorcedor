@@ -9,24 +9,24 @@ namespace SocioTorcedor.Modules.Tenancy.Domain.Tests.Entities;
 public class TenantTests
 {
     [Fact]
-    public void Create_when_subdomain_free_succeeds_and_raises_domain_event()
+    public void Create_when_slug_free_succeeds_and_raises_domain_event()
     {
         var tenant = Tenant.Create("Flamengo", "flamengo", "Server=.", () => false);
 
         tenant.Name.Should().Be("Flamengo");
-        tenant.Subdomain.Should().Be("flamengo");
+        tenant.Slug.Should().Be("flamengo");
         tenant.Status.Should().Be(TenantStatus.Active);
         tenant.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<TenantCreatedDomainEvent>()
             .Which.TenantId.Should().Be(tenant.Id);
     }
 
     [Fact]
-    public void Create_when_subdomain_taken_throws_business_rule_exception()
+    public void Create_when_slug_taken_throws_business_rule_exception()
     {
         var act = () => Tenant.Create("A", "dup", "cs", () => true);
 
         act.Should().Throw<BusinessRuleValidationException>()
-            .Which.BrokenRule.Message.Should().Contain("Subdomain");
+            .Which.BrokenRule.Message.Should().Contain("slug");
     }
 
     [Fact]
