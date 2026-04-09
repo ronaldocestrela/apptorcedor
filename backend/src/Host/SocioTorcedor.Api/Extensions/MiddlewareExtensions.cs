@@ -8,5 +8,6 @@ public static class MiddlewareExtensions
         app
             .UseMiddleware<ExceptionHandlingMiddleware>()
             .UseMiddleware<TenantResolutionMiddleware>()
+            .UseMiddleware<ApiKeyAuthMiddleware>()
             .UseMiddleware<DynamicCorsMiddleware>();
 }

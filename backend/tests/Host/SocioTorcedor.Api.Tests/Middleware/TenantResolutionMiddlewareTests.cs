@@ -10,6 +10,27 @@ namespace SocioTorcedor.Api.Tests.Middleware;
 public sealed class TenantResolutionMiddlewareTests
 {
     [Fact]
+    public async Task InvokeAsync_BypassBackoffice_CallsNextWithoutResolving()
+    {
+        var nextCalled = false;
+        var middleware = new TenantResolutionMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/api/backoffice/tenants";
+        var resolver = Substitute.For<ITenantResolver>();
+
+        await middleware.InvokeAsync(context, resolver);
+
+        nextCalled.Should().BeTrue();
+        context.Items.Should().NotContainKey(HttpContextTenantContext.TenantContextItemKey);
+        await resolver.DidNotReceive().ResolveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task InvokeAsync_BypassHealth_CallsNextWithoutResolving()
     {
         var nextCalled = false;

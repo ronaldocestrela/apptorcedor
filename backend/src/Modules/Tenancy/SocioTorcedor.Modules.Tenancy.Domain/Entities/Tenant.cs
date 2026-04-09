@@ -52,8 +52,74 @@ public sealed class Tenant : AggregateRoot
 
     public void ChangeStatus(TenantStatus status) => Status = status;
 
+    public void UpdateName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name is required.", nameof(name));
+
+        Name = name.Trim();
+    }
+
+    public void UpdateConnectionString(string connectionString)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("Connection string is required.", nameof(connectionString));
+
+        ConnectionString = connectionString.Trim();
+    }
+
     public void AddAllowedOrigin(string origin)
     {
         Domains.Add(new TenantDomain(Id, origin));
+    }
+
+    public bool RemoveDomain(Guid domainId)
+    {
+        var domain = Domains.FirstOrDefault(d => d.Id == domainId);
+        if (domain is null)
+            return false;
+
+        Domains.Remove(domain);
+        return true;
+    }
+
+    public TenantSetting AddSetting(string key, string value)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            throw new ArgumentException("Key is required.", nameof(key));
+
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException("Value is required.", nameof(value));
+
+        var normalizedKey = key.Trim();
+        if (Settings.Any(s => string.Equals(s.Key, normalizedKey, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException($"A setting with key '{normalizedKey}' already exists.");
+
+        var setting = new TenantSetting(Id, normalizedKey, value.Trim());
+        Settings.Add(setting);
+        return setting;
+    }
+
+    public bool UpdateSetting(Guid settingId, string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException("Value is required.", nameof(value));
+
+        var setting = Settings.FirstOrDefault(s => s.Id == settingId);
+        if (setting is null)
+            return false;
+
+        setting.ChangeValue(value.Trim());
+        return true;
+    }
+
+    public bool RemoveSetting(Guid settingId)
+    {
+        var setting = Settings.FirstOrDefault(s => s.Id == settingId);
+        if (setting is null)
+            return false;
+
+        Settings.Remove(setting);
+        return true;
     }
 }

@@ -8,7 +8,8 @@ public sealed class DynamicCorsMiddleware(RequestDelegate next)
     private static readonly PathString[] BypassPrefixes =
     [
         "/health",
-        "/swagger"
+        "/swagger",
+        "/api/backoffice"
     ];
 
     public async Task InvokeAsync(HttpContext context)
@@ -59,7 +60,7 @@ public sealed class DynamicCorsMiddleware(RequestDelegate next)
         response.Headers.Append("Access-Control-Allow-Origin", origin);
         response.Headers.Append("Access-Control-Allow-Credentials", "true");
         response.Headers.Append("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-        response.Headers.Append("Access-Control-Allow-Headers", "Authorization,Content-Type,X-Tenant-Id");
+        response.Headers.Append("Access-Control-Allow-Headers", "Authorization,Content-Type,X-Tenant-Id,X-Api-Key");
         response.Headers.Append("Vary", "Origin");
     }
 

@@ -30,6 +30,7 @@ services:
       Jwt__Audience: SocioTorcedor
       Jwt__SigningKey: "CHANGE_ME_DEV_ONLY_MIN_32_CHARS_HMACSHA256_KEY!"
       Jwt__AccessTokenMinutes: "120"
+      Backoffice__ApiKey: "CHANGE_ME_BACKOFFICE_API_KEY"
     depends_on:
       sqlserver:
         condition: service_healthy

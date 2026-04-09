@@ -48,4 +48,40 @@ public class TenantTests
 
         tenant.Domains.Should().ContainSingle().Which.Origin.Should().Be("https://t2.app");
     }
+
+    [Fact]
+    public void RemoveDomain_removes_when_present()
+    {
+        var tenant = Tenant.Create("T", "t3", "cs", () => false);
+        tenant.AddAllowedOrigin("https://a.com");
+        var id = tenant.Domains.Single().Id;
+
+        tenant.RemoveDomain(id).Should().BeTrue();
+        tenant.Domains.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AddSetting_and_UpdateSetting_and_RemoveSetting_work()
+    {
+        var tenant = Tenant.Create("T", "t4", "cs", () => false);
+        var setting = tenant.AddSetting("k1", "v1");
+        setting.Id.Should().NotBeEmpty();
+
+        tenant.UpdateSetting(setting.Id, "v2").Should().BeTrue();
+        tenant.Settings.Single().Value.Should().Be("v2");
+
+        tenant.RemoveSetting(setting.Id).Should().BeTrue();
+        tenant.Settings.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AddSetting_duplicate_key_throws()
+    {
+        var tenant = Tenant.Create("T", "t5", "cs", () => false);
+        tenant.AddSetting("dup", "1");
+
+        var act = () => tenant.AddSetting("DUP", "2");
+
+        act.Should().Throw<InvalidOperationException>();
+    }
 }

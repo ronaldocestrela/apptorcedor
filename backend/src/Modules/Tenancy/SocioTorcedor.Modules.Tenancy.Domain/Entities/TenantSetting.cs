@@ -23,4 +23,12 @@ public sealed class TenantSetting : Entity
     public string Value { get; private set; } = null!;
 
     public Tenant Tenant { get; private set; } = null!;
+
+    public void ChangeValue(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException("Value is required.", nameof(value));
+
+        Value = value.Trim();
+    }
 }

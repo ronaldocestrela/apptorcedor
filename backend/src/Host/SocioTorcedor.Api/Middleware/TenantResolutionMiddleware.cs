@@ -8,7 +8,8 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
     private static readonly PathString[] BypassPrefixes =
     [
         "/health",
-        "/swagger"
+        "/swagger",
+        "/api/backoffice"
     ];
 
     public async Task InvokeAsync(HttpContext context, ITenantResolver tenantResolver)

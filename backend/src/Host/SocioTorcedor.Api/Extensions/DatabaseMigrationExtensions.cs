@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SocioTorcedor.Modules.Backoffice.Infrastructure.Persistence;
 using SocioTorcedor.Modules.Identity.Infrastructure.Persistence;
 using SocioTorcedor.Modules.Tenancy.Infrastructure.Persistence;
 
@@ -27,6 +28,10 @@ public static class DatabaseMigrationExtensions
 
         app.Logger.LogInformation("Applying pending EF Core migrations to master database...");
         await master.Database.MigrateAsync(cancellationToken);
+
+        var backoffice = scope.ServiceProvider.GetRequiredService<BackofficeMasterDbContext>();
+        app.Logger.LogInformation("Applying pending EF Core migrations to backoffice (master) tables...");
+        await backoffice.Database.MigrateAsync(cancellationToken);
 
         var tenantConnectionStrings = await master.Tenants
             .AsNoTracking()

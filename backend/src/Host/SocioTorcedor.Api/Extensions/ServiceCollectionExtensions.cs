@@ -1,11 +1,16 @@
 using Microsoft.OpenApi.Models;
 using SocioTorcedor.Api.Swagger;
 using SocioTorcedor.BuildingBlocks.Application;
+using SocioTorcedor.Modules.Backoffice.Api;
+using SocioTorcedor.Modules.Backoffice.Api.Controllers;
+using SocioTorcedor.Modules.Backoffice.Application.Commands.AssignPlanToTenant;
+using SocioTorcedor.Modules.Backoffice.Application.Commands.CreateSaaSPlan;
 using SocioTorcedor.Modules.Identity.Api;
 using SocioTorcedor.Modules.Identity.Api.Controllers;
 using SocioTorcedor.Modules.Identity.Application.Commands.LoginUser;
 using SocioTorcedor.Modules.Identity.Application.Commands.RegisterUser;
 using SocioTorcedor.Modules.Tenancy.Api;
+using SocioTorcedor.Modules.Tenancy.Application.Commands.CreateTenant;
 using SocioTorcedor.Modules.Tenancy.Application.Queries.GetTenantBySlug;
 
 namespace SocioTorcedor.Api.Extensions;
@@ -15,12 +20,16 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddSocioTorcedorApi(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddControllers()
-            .AddApplicationPart(typeof(AuthController).Assembly);
+            .AddApplicationPart(typeof(AuthController).Assembly)
+            .AddApplicationPart(typeof(TenantsController).Assembly);
 
         services.AddBuildingBlocksApplication(
             typeof(GetTenantBySlugHandler).Assembly,
             typeof(RegisterUserHandler).Assembly,
-            typeof(LoginUserHandler).Assembly);
+            typeof(LoginUserHandler).Assembly,
+            typeof(CreateTenantHandler).Assembly,
+            typeof(CreateSaaSPlanHandler).Assembly,
+            typeof(AssignPlanToTenantHandler).Assembly);
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
@@ -52,6 +61,7 @@ public static class ServiceCollectionExtensions
 
         services.AddTenancyModule(configuration);
         services.AddIdentityModule(configuration);
+        services.AddBackofficeModule(configuration);
         return services;
     }
 }

@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<ITenantResolver, TenantSlugResolver>();
+        services.AddScoped<ITenantSlugCacheInvalidator, TenantSlugCacheInvalidator>();
         return services;
     }
 }

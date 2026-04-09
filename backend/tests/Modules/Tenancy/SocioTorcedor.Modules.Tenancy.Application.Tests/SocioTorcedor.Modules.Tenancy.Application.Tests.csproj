@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\BuildingBlocks\SocioTorcedor.BuildingBlocks.Shared\SocioTorcedor.BuildingBlocks.Shared.csproj" />
     <ProjectReference Include="..\..\..\..\src\Modules\Tenancy\SocioTorcedor.Modules.Tenancy.Application\SocioTorcedor.Modules.Tenancy.Application.csproj" />
   </ItemGroup>
 

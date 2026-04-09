@@ -1,9 +1,11 @@
 using SocioTorcedor.Api.Extensions;
+using SocioTorcedor.Api.Options;
 using SocioTorcedor.Api.Tenancy;
 using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.Configure<BackofficeOptions>(builder.Configuration.GetSection(BackofficeOptions.SectionName));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentTenantContext, HttpContextTenantContext>();
 builder.Services.AddSocioTorcedorApi(builder.Configuration);
