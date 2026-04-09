@@ -117,8 +117,8 @@ TestResults/
 lcov.info
 
 ## Secrets / Credentials
-appsettings.Development.json
 appsettings.Local.json
+appsettings.json
 *.pfx
 *.key
 *.pem
