@@ -118,7 +118,7 @@ lcov.info
 
 ## Secrets / Credentials
 appsettings.Local.json
-appsettings.json
+# appsettings.json
 *.pfx
 *.key
 *.pem
