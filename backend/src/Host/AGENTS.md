@@ -7,4 +7,4 @@
 - `SocioTorcedor.Api/` — `Program.cs`, middlewares, Swagger, health
 
 ## Dependências
-- Referencia APIs e infraestruturas necessárias (Tenancy + Identity) e BuildingBlocks.
+- Referencia APIs e infraestruturas necessárias (Tenancy + Identity + **Backoffice**) e BuildingBlocks.

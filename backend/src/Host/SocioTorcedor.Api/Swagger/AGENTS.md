@@ -1,14 +1,21 @@
 # Swagger (Host)
 
 ## Descrição
-Extensões do **Swashbuckle** para o OpenAPI exposto pelo Host: segurança JWT e parâmetros globais usados na UI do Swagger.
+Extensões do **Swashbuckle** para o OpenAPI: documentação da API, segurança **Bearer (JWT)**, **API key do backoffice**, e header de tenant onde aplicável.
 
 ## Arquivos
-- `TenantHeaderOperationFilter.cs` — `IOperationFilter` que adiciona o header **`X-Tenant-Id`** (obrigatório, string) em **todas** as operações, para o Swagger UI enviar o slug do tenant em login, register e demais endpoints. A aplicação do filtro é **idempotente** (não duplica o parâmetro se `Apply` rodar mais de uma vez).
+- `TenantHeaderOperationFilter.cs` — adiciona o parâmetro de header **`X-Tenant-Id`** (obrigatório) nas operações cujo `RelativePath` **não** começa com `api/backoffice/`, alinhado ao `TenantResolutionMiddleware`. Idempotente (não duplica o parâmetro).
+- `BackofficeApiKeyOperationFilter.cs` — nas operações `api/backoffice/*`, define `operation.Security` com o esquema **`BackofficeApiKey`**, substituindo na prática o requisito global JWT **só nessas rotas** (OpenAPI 3: segurança por operação).
+
+## Registro (`ServiceCollectionExtensions`)
+- `OpenApiInfo.Description` resume tenant vs backoffice.
+- `AddSecurityDefinition("Bearer", ...)` — JWT para rotas do clube.
+- `AddSecurityDefinition("BackofficeApiKey", ...)` — tipo **apiKey**, header **`X-Api-Key`** (valor = `Backoffice:ApiKey`).
+- `AddSecurityRequirement` global com Bearer (padrão); operações backoffice sobrescrevem via `BackofficeApiKeyOperationFilter`.
 
 ## Contexto
-O `TenantResolutionMiddleware` exige `X-Tenant-Id` fora de `/health` e `/swagger`; sem este filtro, a UI do Swagger não oferece campo para o header e chamadas como `POST /api/auth/login` retornam 400.
+Sem `X-Tenant-Id` no Swagger, chamadas como `POST /api/Auth/login` falham com 400. Sem autorizar **BackofficeApiKey**, chamadas a `api/backoffice/*` falham com 401.
 
 ## Dependências
 - `Swashbuckle.AspNetCore` (`IOperationFilter`, geração OpenAPI)
-- `Microsoft.OpenApi.Models` (`OpenApiOperation`, `OpenApiParameter`)
+- `Microsoft.OpenApi.Models`

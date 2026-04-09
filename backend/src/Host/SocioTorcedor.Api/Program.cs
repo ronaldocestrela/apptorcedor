@@ -14,7 +14,13 @@ var app = builder.Build();
 
 await app.ApplyPendingEfCoreMigrationsAsync();
 
-if (app.Environment.IsDevelopment())
+var exposeOpenApi = app.Environment.IsDevelopment()
+    || string.Equals(
+        Environment.GetEnvironmentVariable("EXPOSE_OPENAPI_JSON"),
+        "true",
+        StringComparison.OrdinalIgnoreCase);
+
+if (exposeOpenApi)
 {
     app.UseSwagger();
     app.UseSwaggerUI();

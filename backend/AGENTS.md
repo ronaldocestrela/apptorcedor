@@ -1,7 +1,7 @@
 # backend
 
 ## Descrição
-Raiz do backend .NET 10 do **Sócio Torcedor** (Fase 1 — Fundação): **Modular Monolith**, CQRS (MediatR), multitenancy via header **`X-Tenant-Id`** (slug do tenant), CORS dinâmico por tenant, **ASP.NET Identity** + JWT, Swagger, Docker + SQL Server.
+Raiz do backend .NET 10 do **Sócio Torcedor**: **Modular Monolith**, CQRS (MediatR), multitenancy via header **`X-Tenant-Id`** (slug), CORS dinâmico por tenant, **ASP.NET Identity** + JWT, **Backoffice SaaS** (`api/backoffice/*` + **`X-Api-Key`**), Swagger (JWT + API key documentados), Docker + SQL Server.
 
 ## Estrutura
 - `SocioTorcedor.sln` — solution (todos os projetos)

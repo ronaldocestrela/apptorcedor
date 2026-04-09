@@ -4,7 +4,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace SocioTorcedor.Api.Swagger;
 
 /// <summary>
-/// Adiciona o header <c>X-Tenant-Id</c> a todas as operações do OpenAPI para o Swagger UI enviar o slug do tenant.
+/// Adiciona o header <c>X-Tenant-Id</c> às operações que exigem resolução de tenant (exclui <c>/api/backoffice/*</c>).
 /// </summary>
 public sealed class TenantHeaderOperationFilter : IOperationFilter
 {
@@ -13,6 +13,9 @@ public sealed class TenantHeaderOperationFilter : IOperationFilter
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         ArgumentNullException.ThrowIfNull(operation);
+
+        if (IsBackofficeOperation(context))
+            return;
 
         operation.Parameters ??= [];
 
@@ -31,5 +34,12 @@ public sealed class TenantHeaderOperationFilter : IOperationFilter
             Description = "Slug do tenant (ex: flamengo)",
             Schema = new OpenApiSchema { Type = "string" }
         });
+    }
+
+    private static bool IsBackofficeOperation(OperationFilterContext context)
+    {
+        var path = context.ApiDescription?.RelativePath;
+        return !string.IsNullOrEmpty(path) &&
+               path.StartsWith("api/backoffice/", StringComparison.OrdinalIgnoreCase);
     }
 }

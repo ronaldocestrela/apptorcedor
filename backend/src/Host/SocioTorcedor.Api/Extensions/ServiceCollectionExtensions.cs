@@ -37,7 +37,11 @@ public static class ServiceCollectionExtensions
             options.SwaggerDoc("v1", new OpenApiInfo
             {
                 Title = "Socio Torcedor API",
-                Version = "v1"
+                Version = "v1",
+                Description =
+                    "API multitenant: use **X-Tenant-Id** (slug) nas rotas do clube. " +
+                    "Rotas **/api/backoffice/** são administrativas (SaaS): não usam tenant; use **X-Api-Key** " +
+                    "(configuração `Backoffice:ApiKey`)."
             });
 
             var bearer = new OpenApiSecurityScheme
@@ -47,16 +51,30 @@ public static class ServiceCollectionExtensions
                 Scheme = "bearer",
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
-                Description = "JWT Authorization header using the Bearer scheme."
+                Description = "JWT para endpoints do tenant (após login). Não aplicável às rotas /api/backoffice/*."
             };
 
             options.AddSecurityDefinition("Bearer", bearer);
+
+            var backofficeApiKey = new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.ApiKey,
+                In = ParameterLocation.Header,
+                Name = "X-Api-Key",
+                Description =
+                    "Chave do backoffice SaaS (mesmo valor que `Backoffice:ApiKey` no appsettings). " +
+                    "Obrigatória em todas as operações sob /api/backoffice/."
+            };
+
+            options.AddSecurityDefinition(BackofficeApiKeyOperationFilter.SecuritySchemeId, backofficeApiKey);
+
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 { bearer, Array.Empty<string>() }
             });
 
             options.OperationFilter<TenantHeaderOperationFilter>();
+            options.OperationFilter<BackofficeApiKeyOperationFilter>();
         });
 
         services.AddTenancyModule(configuration);

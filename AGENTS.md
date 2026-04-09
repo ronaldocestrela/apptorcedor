@@ -63,6 +63,12 @@ X-Tenant-Id: flamengo
    * Configurações
    * AllowedOrigins (CORS)
 
+### API administrativa (Backoffice)
+
+* Rotas **`api/backoffice/*`**: não exigem **`X-Tenant-Id`** (operação central no banco master).
+* Autenticação: header **`X-Api-Key`**, conferido com a configuração **`Backoffice:ApiKey`**.
+* **Swagger / OpenAPI**: nas rotas de tenant, o parâmetro **`X-Tenant-Id`** continua documentado; no backoffice, o esquema **`BackofficeApiKey`** documenta **`X-Api-Key`** (use **Authorize** na UI do Swagger para essas operações).
+
 ---
 
 ## 🌐 CORS Dinâmico por Tenant
@@ -155,7 +161,8 @@ Cada clube possui seu próprio banco com:
 
 ### Autenticação
 
-* ASP.NET Identity
+* **Rotas de sócio / tenant:** ASP.NET Identity + JWT (Bearer).
+* **Rotas `api/backoffice/*`:** chave de API **`X-Api-Key`** (config **`Backoffice:ApiKey`**), sem JWT.
 * Email + senha
 * Login social:
 
@@ -415,20 +422,22 @@ src/
 
 ## 🚀 Fases de Implementação
 
+**Legenda:** **✅** = já entregue no estado atual do repositório (backend).
+
 ### Fase 1 — Fundação
 
-* estrutura base
-* tenancy por header `X-Tenant-Id` (slug)
-* CORS dinâmico
-* Identity
-* permissões
-* Swagger
-* Docker
+* ✅ estrutura base
+* ✅ tenancy por header `X-Tenant-Id` (slug)
+* ✅ CORS dinâmico
+* ✅ Identity
+* ✅ permissões
+* ✅ Swagger
+* ✅ Docker
 
 ### Fase 2 — Backoffice
 
-* gestão de tenants
-* planos SaaS
+* ✅ gestão de tenants
+* ✅ planos SaaS
 
 ### Fase 3 — Sócio
 
