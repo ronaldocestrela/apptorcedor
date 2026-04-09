@@ -21,6 +21,9 @@
     <ProjectReference Include="..\..\BuildingBlocks\SocioTorcedor.BuildingBlocks.Shared\SocioTorcedor.BuildingBlocks.Shared.csproj" />
     <ProjectReference Include="..\..\Modules\Backoffice\SocioTorcedor.Modules.Backoffice.Api\SocioTorcedor.Modules.Backoffice.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Backoffice\SocioTorcedor.Modules.Backoffice.Application\SocioTorcedor.Modules.Backoffice.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Membership\SocioTorcedor.Modules.Membership.Api\SocioTorcedor.Modules.Membership.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Membership\SocioTorcedor.Modules.Membership.Application\SocioTorcedor.Modules.Membership.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Membership\SocioTorcedor.Modules.Membership.Infrastructure\SocioTorcedor.Modules.Membership.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\SocioTorcedor.Modules.Identity.Api\SocioTorcedor.Modules.Identity.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Tenancy\SocioTorcedor.Modules.Tenancy.Api\SocioTorcedor.Modules.Tenancy.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Tenancy\SocioTorcedor.Modules.Tenancy.Application\SocioTorcedor.Modules.Tenancy.Application.csproj" />

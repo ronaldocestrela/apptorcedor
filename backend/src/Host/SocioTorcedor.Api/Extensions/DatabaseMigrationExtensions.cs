@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SocioTorcedor.Modules.Backoffice.Infrastructure.Persistence;
 using SocioTorcedor.Modules.Identity.Infrastructure.Persistence;
+using SocioTorcedor.Modules.Membership.Infrastructure.Persistence;
 using SocioTorcedor.Modules.Tenancy.Infrastructure.Persistence;
 
 namespace SocioTorcedor.Api.Extensions;
@@ -46,12 +47,23 @@ public static class DatabaseMigrationExtensions
 
         foreach (var connectionString in tenantConnectionStrings)
         {
-            var options = new DbContextOptionsBuilder<TenantIdentityDbContext>()
+            var identityOptions = new DbContextOptionsBuilder<TenantIdentityDbContext>()
                 .UseSqlServer(connectionString)
                 .Options;
 
-            await using var tenantDb = new TenantIdentityDbContext(options);
-            await tenantDb.Database.MigrateAsync(cancellationToken);
+            await using (var tenantIdentityDb = new TenantIdentityDbContext(identityOptions))
+            {
+                await tenantIdentityDb.Database.MigrateAsync(cancellationToken);
+            }
+
+            var membershipOptions = new DbContextOptionsBuilder<TenantMembershipDbContext>()
+                .UseSqlServer(
+                    connectionString,
+                    o => o.MigrationsHistoryTable("__EFMembershipMigrationsHistory"))
+                .Options;
+
+            await using var tenantMembershipDb = new TenantMembershipDbContext(membershipOptions);
+            await tenantMembershipDb.Database.MigrateAsync(cancellationToken);
         }
 
         app.Logger.LogInformation("EF Core migrations applied (master + tenant databases).");

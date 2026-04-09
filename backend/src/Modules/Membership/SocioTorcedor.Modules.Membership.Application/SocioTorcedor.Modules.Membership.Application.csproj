@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SocioTorcedor.Modules.Membership.Domain\SocioTorcedor.Modules.Membership.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SocioTorcedor.BuildingBlocks.Application\SocioTorcedor.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SocioTorcedor.BuildingBlocks.Domain\SocioTorcedor.BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SocioTorcedor.BuildingBlocks.Shared\SocioTorcedor.BuildingBlocks.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+  </ItemGroup>
+
+</Project>

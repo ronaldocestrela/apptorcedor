@@ -9,6 +9,13 @@ using SocioTorcedor.Modules.Identity.Api;
 using SocioTorcedor.Modules.Identity.Api.Controllers;
 using SocioTorcedor.Modules.Identity.Application.Commands.LoginUser;
 using SocioTorcedor.Modules.Identity.Application.Commands.RegisterUser;
+using SocioTorcedor.Modules.Membership.Api;
+using SocioTorcedor.Modules.Membership.Api.Controllers;
+using SocioTorcedor.Modules.Membership.Application.Commands.CreateMemberProfile;
+using SocioTorcedor.Modules.Membership.Application.Commands.UpdateMemberProfile;
+using SocioTorcedor.Modules.Membership.Application.Queries.GetMemberById;
+using SocioTorcedor.Modules.Membership.Application.Queries.GetMyProfile;
+using SocioTorcedor.Modules.Membership.Application.Queries.ListMembers;
 using SocioTorcedor.Modules.Tenancy.Api;
 using SocioTorcedor.Modules.Tenancy.Application.Commands.CreateTenant;
 using SocioTorcedor.Modules.Tenancy.Application.Queries.GetTenantBySlug;
@@ -21,7 +28,8 @@ public static class ServiceCollectionExtensions
     {
         services.AddControllers()
             .AddApplicationPart(typeof(AuthController).Assembly)
-            .AddApplicationPart(typeof(TenantsController).Assembly);
+            .AddApplicationPart(typeof(TenantsController).Assembly)
+            .AddApplicationPart(typeof(MembersController).Assembly);
 
         services.AddBuildingBlocksApplication(
             typeof(GetTenantBySlugHandler).Assembly,
@@ -29,7 +37,12 @@ public static class ServiceCollectionExtensions
             typeof(LoginUserHandler).Assembly,
             typeof(CreateTenantHandler).Assembly,
             typeof(CreateSaaSPlanHandler).Assembly,
-            typeof(AssignPlanToTenantHandler).Assembly);
+            typeof(AssignPlanToTenantHandler).Assembly,
+            typeof(CreateMemberProfileHandler).Assembly,
+            typeof(UpdateMemberProfileHandler).Assembly,
+            typeof(GetMyProfileHandler).Assembly,
+            typeof(GetMemberByIdHandler).Assembly,
+            typeof(ListMembersHandler).Assembly);
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
@@ -80,6 +93,7 @@ public static class ServiceCollectionExtensions
         services.AddTenancyModule(configuration);
         services.AddIdentityModule(configuration);
         services.AddBackofficeModule(configuration);
+        services.AddMembershipModule();
         return services;
     }
 }
