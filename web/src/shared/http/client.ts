@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getResolvedTenantSlug } from '../tenant'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -14,9 +15,10 @@ export const apiClient = axios.create({
 })
 
 apiClient.interceptors.request.use((config) => {
-  // Futuro: injetar slug do tenant, ex.:
-  // const tenantId = getTenantSlug()
-  // if (tenantId) config.headers.set('X-Tenant-Id', tenantId)
+  const tenantSlug = getResolvedTenantSlug()
+  if (tenantSlug) {
+    config.headers.set('X-Tenant-Id', tenantSlug)
+  }
   return config
 })
 
