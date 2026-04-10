@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../app/auth/useAuth'
+import { ThemeToggle } from '../../app/theme/ThemeToggle'
 import { getApiErrorMessage } from '../../shared/auth'
 
 export function LoginPage() {
@@ -35,6 +36,9 @@ export function LoginPage() {
 
   return (
     <div className="auth-page">
+      <div className="auth-page__toolbar">
+        <ThemeToggle />
+      </div>
       <div className="auth-card">
         <h1 className="auth-card__title">Entrar</h1>
         <p className="auth-card__subtitle">Use sua conta do tenant atual.</p>

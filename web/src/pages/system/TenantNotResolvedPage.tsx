@@ -1,3 +1,4 @@
+import { ThemeToggle } from '../../app/theme/ThemeToggle'
 import type { TenantResolutionFailureReason } from '../../shared/tenant'
 
 const reasonMessages: Record<TenantResolutionFailureReason, string> = {
@@ -18,6 +19,9 @@ type Props = {
 export function TenantNotResolvedPage({ hostname, reason }: Props) {
   return (
     <div className="tenant-error">
+      <div className="tenant-error__toolbar">
+        <ThemeToggle />
+      </div>
       <h1 className="tenant-error__title">Tenant não identificado</h1>
       <p className="tenant-error__text">{reasonMessages[reason]}</p>
       <p className="tenant-error__meta">
