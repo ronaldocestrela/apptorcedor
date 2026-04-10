@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       session,
       isAuthenticated: session != null,
+      roles: session?.roles ?? [],
       login,
       register,
       logout,

@@ -4,7 +4,8 @@ import { useAuth } from '../auth/useAuth'
 import { ThemeToggle } from '../theme/ThemeToggle'
 
 export function AppShell() {
-  const { logout } = useAuth()
+  const { logout, roles } = useAuth()
+  const isAdmin = roles.includes('Administrador')
   const [navOpen, setNavOpen] = useState(false)
 
   useEffect(() => {
@@ -28,25 +29,29 @@ export function AppShell() {
         <div className="app-shell__bar">
           <strong className="app-shell__brand">Sócio Torcedor</strong>
           <nav className="app-shell__nav" aria-label="Áreas">
-            <NavLink
-              to="/admin"
-              end
-              className={({ isActive }) =>
-                isActive ? 'app-shell__link app-shell__link--active' : 'app-shell__link'
-              }
-              onClick={closeNav}
-            >
-              Admin
-            </NavLink>
-            <NavLink
-              to="/admin/billing"
-              className={({ isActive }) =>
-                isActive ? 'app-shell__link app-shell__link--active' : 'app-shell__link'
-              }
-              onClick={closeNav}
-            >
-              Faturamento SaaS
-            </NavLink>
+            {isAdmin ? (
+              <NavLink
+                to="/admin"
+                end
+                className={({ isActive }) =>
+                  isActive ? 'app-shell__link app-shell__link--active' : 'app-shell__link'
+                }
+                onClick={closeNav}
+              >
+                Admin
+              </NavLink>
+            ) : null}
+            {isAdmin ? (
+              <NavLink
+                to="/admin/billing"
+                className={({ isActive }) =>
+                  isActive ? 'app-shell__link app-shell__link--active' : 'app-shell__link'
+                }
+                onClick={closeNav}
+              >
+                Faturamento SaaS
+              </NavLink>
+            ) : null}
             <NavLink
               to="/member"
               end
