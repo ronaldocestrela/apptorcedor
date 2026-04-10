@@ -373,10 +373,28 @@ public interface IPaymentProvider
 ```text
 src/
   app/
+    auth/
+    router/
+    theme/          # useTheme, ThemeToggle; tema em data-theme no <html>
   shared/
+    http/
+    tenant/
+    auth/           # sessão + decodificação de claims do JWT (roles, email)
+    payments/
+    members/        # GET /api/members/me
   features/
   pages/
 ```
+
+### UI e tema
+
+* Estilos globais em **`web/src/index.css`**: **CSS Custom Properties** por tema (`:root` claro, `[data-theme="dark"]` escuro), layout responsivo (ex.: menu colapsável no shell abaixo de ~600px).
+* **Tema claro/escuro:** preferência persistida em **`localStorage`** (`theme` = `light` | `dark`); script inline em **`web/index.html`** aplica o tema antes do primeiro paint (evita flash); toggle nas páginas autenticadas (**`AppShell`**) e em login/cadastro / **`TenantNotResolvedPage`**.
+
+### Sessão e papéis no SPA
+
+* Além de `accessToken` e `expiresAtUtc`, a sessão em **`sessionStorage`** guarda **`roles`** extraídas do JWT (claim curta **`role`** ou claim longa do .NET); sessões antigas sem `roles` são normalizadas ao carregar, decodificando o token de novo.
+* **Navegação:** os links **Admin** e **Faturamento SaaS** só aparecem para usuários com role **`Administrador`**. Usuários apenas **`Socio`** continuam com **Sócio** e **Pagamentos**. Não há bloqueio de rota por papel no front (apenas visibilidade no menu); a API continua a autorizar com JWT + roles.
 
 ### Áreas
 
@@ -391,7 +409,7 @@ src/
 
 #### Sócio
 
-* perfil
+* perfil (**`/member`** — dados de **`GET /api/members/me`**; e-mail da sessão via JWT quando o perfil ainda não existe)
 * plano
 * carteirinha
 * ingressos
@@ -454,7 +472,7 @@ src/
 ### Fase 4 — Pagamentos
 
 * ✅ **MVP backend** — módulo `Payments`: assinatura + faturas SaaS (master) e sócio (tenant); `POST/GET` backoffice em `api/backoffice/payments/saas/*`; `api/payments/member/*` (subscribe, PIX checkout, minha assinatura, faturas); webhooks SaaS (API key) e tenant (`X-Payments-Webhook-Secret`); provider **stub** trocável por gateway real
-* ✅ **MVP web** — rotas `/member/billing` (fluxo sócio) e `/admin/billing` (orientação SaaS / backoffice)
+* ✅ **MVP web** — rotas `/member` (perfil sócio, `GET /api/members/me`), `/member/billing` (fluxo sócio) e `/admin/billing` (orientação SaaS / backoffice); UI responsiva, tema claro/escuro, menu admin visível só para role **`Administrador`**
 * recorrência end-to-end com gateway de produção
 * cartão (tokenização / 3DS) além do stub
 * conciliação e jobs de cobrança
@@ -476,6 +494,8 @@ src/
 ### Fase 8 — Atendimento
 
 ### Fase 9 — Apps (Web + Mobile)
+
+* **Web (SPA em `web/`):** UI responsiva, tema claro/escuro, navegação admin condicionada à role **`Administrador`**, área do sócio em **`/member`** com perfil via **`GET /api/members/me`**.
 
 ---
 

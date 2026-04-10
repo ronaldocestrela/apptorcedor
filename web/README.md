@@ -6,10 +6,17 @@ SPA **React + Vite + TypeScript**, com **Axios** e **React Router**.
 
 | Pasta | Uso |
 |--------|-----|
-| `app/` | Shell, roteamento (`router/`), autenticação (`auth/`) |
-| `shared/` | Código compartilhado (`http`, `tenant`, `auth`, `payments`, etc.) |
+| `app/` | Shell, roteamento (`router/`), autenticação (`auth/`), tema (`theme/`: `useTheme`, `ThemeToggle`) |
+| `shared/` | Código compartilhado (`http`, `tenant`, `auth`, `payments`, `members`, etc.) |
 | `features/` | Módulos por domínio |
 | `pages/` | Páginas (`admin/`, `member/`, `auth/`, `system/`) |
+
+## UI e tema (claro / escuro)
+
+* Estilos: **`src/index.css`** com variáveis CSS por tema; **`data-theme="light"`** ou **`dark`** no elemento `<html>`.
+* Persistência: **`localStorage`** chave **`theme`**; em **`index.html`**, script inline aplica o tema antes do React (fallback: `prefers-color-scheme`).
+* **Toggle:** barra do [`AppShell`](src/app/router/AppShell.tsx) (logado); canto superior direito em login, cadastro e [`TenantNotResolvedPage`](src/pages/system/TenantNotResolvedPage.tsx).
+* Layout responsivo: navegação principal com menu “hambúrguer” em telas estreitas (~600px).
 
 ## Fase 1.2 — Tenant por subdomínio (modo estrito)
 
@@ -51,11 +58,12 @@ Use um hostname com subdomínio, por exemplo:
 - **Documentos legais (antes do cadastro):** `GET /api/legal-documents/current` (sem JWT; o cliente já envia `X-Tenant-Id`). Resposta inclui as versões vigentes de termos e privacidade (`id`, `kind`, `versionNumber`, `content`, etc.).
 - **Cadastro:** `POST /api/auth/register` com `{ email, password, firstName, lastName, acceptedTermsDocumentId, acceptedPrivacyDocumentId }` — os dois GUIDs devem ser os `id` retornados em **current** para `TermsOfUse` e `PrivacyPolicy`. O backend grava IP e User-Agent do request nos consentimentos.
 - Resposta: `{ accessToken, expiresAtUtc }` (JSON camelCase).
-- O JWT é guardado em **`sessionStorage`** (via [`tokenStorage`](src/shared/auth/tokenStorage.ts)).
+- O JWT é guardado em **`sessionStorage`** (via [`tokenStorage`](src/shared/auth/tokenStorage.ts)), junto com **`roles`** lidas do payload (claim **`role`**, string ou array; também aceita a claim longa do .NET). Funções auxiliares expõem claims básicas (**`decodeJwtBasicClaims`**: `email`, `sub`) para exibição quando não há perfil de sócio.
 - O [`apiClient`](src/shared/http/client.ts) envia:
   - `X-Tenant-Id` (slug do subdomínio)
   - `Authorization: Bearer <accessToken>` quando há sessão válida
 - Rotas **`/admin`** e **`/member`** exigem autenticação ([`RequireAuth`](src/app/router/RequireAuth.tsx)); **`/login`** e **`/register`** são públicas.
+- **Navegação por papel:** no [`AppShell`](src/app/router/AppShell.tsx), os links **Admin** e **Faturamento SaaS** só são exibidos se `roles` contiver **`Administrador`**. Quem tem apenas **`Socio`** não vê esses itens (acesso direto à URL ainda é possível; a API aplica autorização).
 - **Sair** limpa a sessão e redireciona para `/login`.
 - Respostas **401** em rotas autenticadas limpam a sessão e redirecionam para `/login` (exceto nas páginas de login/cadastro).
 
@@ -87,14 +95,18 @@ npm run preview
 - **`/member/billing`** — assinatura de plano do clube, geração de PIX (stub), assinatura e faturas (`/api/payments/member/*`).
 - **`/admin/billing`** — orientação: faturamento SaaS do tenant é via **`/api/backoffice/payments/saas/*`** com **`X-Api-Key`** (não há chave no SPA).
 
+## Área do sócio — perfil
+
+- **`/member`** — [`MemberHomePage`](src/pages/member/MemberHomePage.tsx): carrega **`GET /api/members/me`** ([`membersApi`](src/shared/members/membersApi.ts)). Exibe identificação, endereço e metadados; em **404** (sem `MemberProfile`), mostra e-mail/roles da sessão e orientação. Link para **`/member/billing`**.
+
 ## Rotas
 
 - `/login` — entrar
 - `/register` — cadastro
 - `/` — redireciona para `/member` (após autenticação)
-- `/admin` — placeholder área administrativa (protegida)
-- `/admin/billing` — faturamento SaaS (instruções; protegida)
-- `/member` — placeholder área do sócio (protegida)
+- `/admin` — placeholder área administrativa (protegida; link no menu só para **`Administrador`**)
+- `/admin/billing` — faturamento SaaS (instruções; protegida; link no menu só para **`Administrador`**)
+- `/member` — minha conta / perfil do sócio (`GET /api/members/me`; protegida)
 - `/member/billing` — pagamentos do sócio (protegida)
 
 ## Cliente HTTP
