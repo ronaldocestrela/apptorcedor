@@ -13,6 +13,8 @@ public sealed class TenantMembershipDbContext : BaseDbContext
 
     public DbSet<MemberProfile> MemberProfiles => Set<MemberProfile>();
 
+    public DbSet<MemberPlan> MemberPlans => Set<MemberPlan>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TenantMembershipDbContext).Assembly);

@@ -441,8 +441,8 @@ src/
 
 ### Fase 3 — Sócio
 
-* cadastro
-* planos
+* ✅ cadastro (perfil `MemberProfile`, `api/members`)
+* ✅ planos de sócio (`MemberPlan`, vantagens em JSON, `api/plans`) — Fase 3.2
 * status
 * LGPD
 
