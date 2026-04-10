@@ -118,6 +118,35 @@ public sealed class TenantResolutionMiddlewareTests
     }
 
     [Fact]
+    public async Task InvokeAsync_TenantAlreadyInItems_CallsNextWithoutResolvingAgain()
+    {
+        var nextCalled = false;
+        var middleware = new TenantResolutionMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+
+        var tenant = new TenantContext(
+            Guid.NewGuid(),
+            "Flamengo",
+            "flamengo",
+            "Server=.;Database=t1;",
+            new[] { "https://flamengo.example.com" });
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/api/x";
+        context.Items[HttpContextTenantContext.TenantContextItemKey] = tenant;
+        var resolver = Substitute.For<ITenantResolver>();
+
+        await middleware.InvokeAsync(context, resolver);
+
+        nextCalled.Should().BeTrue();
+        context.Items[HttpContextTenantContext.TenantContextItemKey].Should().Be(tenant);
+        await resolver.DidNotReceive().ResolveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task InvokeAsync_TenantFound_StoresContextAndCallsNext()
     {
         var nextCalled = false;

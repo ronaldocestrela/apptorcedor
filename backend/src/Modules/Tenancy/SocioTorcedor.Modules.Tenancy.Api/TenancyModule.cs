@@ -11,6 +11,6 @@ public static class TenancyModule
         var connectionString = configuration.GetConnectionString("MasterDb")
             ?? throw new InvalidOperationException("Connection string 'MasterDb' is not configured.");
 
-        return services.AddTenancyInfrastructure(connectionString);
+        return services.AddTenancyInfrastructure(connectionString, configuration);
     }
 }

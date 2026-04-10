@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SocioTorcedor.Modules.Tenancy.Application.Contracts;
 using SocioTorcedor.Modules.Tenancy.Infrastructure.Persistence;
@@ -11,7 +12,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddTenancyInfrastructure(
         this IServiceCollection services,
-        string masterConnectionString)
+        string masterConnectionString,
+        IConfiguration configuration)
     {
         services.AddDbContext<MasterDbContext>(options =>
             options.UseSqlServer(masterConnectionString));
@@ -21,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<ITenantResolver, TenantSlugResolver>();
         services.AddScoped<ITenantSlugCacheInvalidator, TenantSlugCacheInvalidator>();
+        services.AddSingleton<ITenantAutoCorsOriginProvider>(new TenantAutoCorsOriginProvider(configuration));
         return services;
     }
 }

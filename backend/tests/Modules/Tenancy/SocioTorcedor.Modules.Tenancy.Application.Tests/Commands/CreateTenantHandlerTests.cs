@@ -8,6 +8,13 @@ namespace SocioTorcedor.Modules.Tenancy.Application.Tests.Commands;
 
 public sealed class CreateTenantHandlerTests
 {
+    private static ITenantAutoCorsOriginProvider CorsProviderReturning(string origin)
+    {
+        var p = Substitute.For<ITenantAutoCorsOriginProvider>();
+        p.GetDefaultOriginForNewTenant(Arg.Any<string>()).Returns(origin);
+        return p;
+    }
+
     [Fact]
     public async Task Returns_conflict_when_slug_exists()
     {
@@ -15,7 +22,7 @@ public sealed class CreateTenantHandlerTests
         repo.SlugExistsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(true);
         var generator = Substitute.For<ITenantConnectionStringGenerator>();
         var provisioner = Substitute.For<ITenantDatabaseProvisioner>();
-        var handler = new CreateTenantHandler(repo, generator, provisioner);
+        var handler = new CreateTenantHandler(repo, generator, provisioner, CorsProviderReturning("http://slug.localhost:5173"));
 
         var result = await handler.Handle(
             new CreateTenantCommand("Club", "slug"),
@@ -38,14 +45,17 @@ public sealed class CreateTenantHandlerTests
         const string cs = "Server=.;Database=SocioTorcedor_Tenant_newslug;";
         generator.Generate(Arg.Any<string>()).Returns(cs);
         var provisioner = Substitute.For<ITenantDatabaseProvisioner>();
-        var handler = new CreateTenantHandler(repo, generator, provisioner);
+        const string autoOrigin = "http://newslug.localhost:5173";
+        var handler = new CreateTenantHandler(repo, generator, provisioner, CorsProviderReturning(autoOrigin));
 
         var result = await handler.Handle(
             new CreateTenantCommand("Club", "newslug"),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        await repo.Received(1).AddAsync(Arg.Any<Tenant>(), Arg.Any<CancellationToken>());
+        await repo.Received(1).AddAsync(
+            Arg.Is<Tenant>(t => t.Domains.Count == 1 && t.Domains.First().Origin == autoOrigin),
+            Arg.Any<CancellationToken>());
         await repo.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
         await provisioner.Received(1).ProvisionAsync(cs, Arg.Any<CancellationToken>());
     }
@@ -63,7 +73,7 @@ public sealed class CreateTenantHandlerTests
             .ProvisionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromException(new InvalidOperationException("migration failed")));
 
-        var handler = new CreateTenantHandler(repo, generator, provisioner);
+        var handler = new CreateTenantHandler(repo, generator, provisioner, CorsProviderReturning("http://ab.localhost:5173"));
 
         var result = await handler.Handle(
             new CreateTenantCommand("Club", "ab"),
@@ -72,5 +82,27 @@ public sealed class CreateTenantHandlerTests
         result.IsSuccess.Should().BeFalse();
         result.Error!.Code.Should().Be("Tenant.ProvisioningFailed");
         result.Error.Message.Should().Contain("migration failed");
+    }
+
+    [Fact]
+    public async Task Creates_tenant_with_origin_from_auto_cors_provider()
+    {
+        var repo = Substitute.For<ITenantRepository>();
+        repo.SlugExistsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
+        var generator = Substitute.For<ITenantConnectionStringGenerator>();
+        const string cs = "Server=.;Database=SocioTorcedor_Tenant_x;";
+        generator.Generate(Arg.Any<string>()).Returns(cs);
+        var provisioner = Substitute.For<ITenantDatabaseProvisioner>();
+        const string configuredOrigin = "https://club.example.com";
+        var handler = new CreateTenantHandler(repo, generator, provisioner, CorsProviderReturning(configuredOrigin));
+
+        var result = await handler.Handle(
+            new CreateTenantCommand("Club", "tenantx"),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        await repo.Received(1).AddAsync(
+            Arg.Is<Tenant>(t => t.Domains.Single().Origin == configuredOrigin),
+            Arg.Any<CancellationToken>());
     }
 }

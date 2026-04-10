@@ -5,6 +5,7 @@ Parte do backend Sócio Torcedor; ver módulo pai.
 
 ## Estrutura
 - `TenantSlugResolverTests.cs`
+- `TenantAutoCorsOriginProviderTests.cs`
 
 ## Dependências
 - Pasta pai: `tests/Modules/Tenancy/SocioTorcedor.Modules.Tenancy.Infrastructure.Tests`

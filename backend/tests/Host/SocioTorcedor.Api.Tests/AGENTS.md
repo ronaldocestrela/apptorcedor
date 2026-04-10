@@ -1,7 +1,7 @@
 # SocioTorcedor.Api.Tests
 
 ## Descrição
-Testes unitários dos middlewares do Host (`DefaultHttpContext`, NSubstitute para `ITenantResolver`; header **`X-Tenant-Id`** para resolução de tenant).
+Testes unitários dos middlewares do Host (`DefaultHttpContext`, NSubstitute para `ITenantResolver`; CORS dinâmico antes do tenant; preflight **`OPTIONS`** com slug via **`X-Tenant-Id`** ou **`{slug}.localhost`** no `Origin`).
 
 ## Estrutura
 - `Middleware/TenantResolutionMiddlewareTests.cs` — inclui bypass `/api/backoffice`, `/scalar`

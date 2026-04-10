@@ -1,5 +1,6 @@
 using SocioTorcedor.Api.Tenancy;
 using SocioTorcedor.Modules.Tenancy.Application.Contracts;
+using SocioTorcedor.Modules.Tenancy.Application.DTOs;
 
 namespace SocioTorcedor.Api.Middleware;
 
@@ -16,6 +17,13 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
     public async Task InvokeAsync(HttpContext context, ITenantResolver tenantResolver)
     {
         if (ShouldBypass(context.Request.Path))
+        {
+            await next(context);
+            return;
+        }
+
+        if (context.Items.TryGetValue(HttpContextTenantContext.TenantContextItemKey, out var existing) &&
+            existing is TenantContext)
         {
             await next(context);
             return;

@@ -9,7 +9,8 @@ namespace SocioTorcedor.Modules.Tenancy.Application.Commands.CreateTenant;
 public sealed class CreateTenantHandler(
     ITenantRepository repository,
     ITenantConnectionStringGenerator connectionStringGenerator,
-    ITenantDatabaseProvisioner databaseProvisioner)
+    ITenantDatabaseProvisioner databaseProvisioner,
+    ITenantAutoCorsOriginProvider autoCorsOriginProvider)
     : ICommandHandler<CreateTenantCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateTenantCommand command, CancellationToken cancellationToken)
@@ -27,6 +28,8 @@ public sealed class CreateTenantHandler(
                 slug,
                 connectionString,
                 slugAlreadyExists: () => false);
+
+            tenant.AddAllowedOrigin(autoCorsOriginProvider.GetDefaultOriginForNewTenant(slug));
 
             await repository.AddAsync(tenant, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);

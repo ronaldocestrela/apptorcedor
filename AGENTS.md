@@ -112,6 +112,7 @@ app.Use(async (context, next) =>
 * NÃO usar CORS fixo no `Program.cs`
 * CORS deve ser resolvido por request
 * Permitir atualização sem rebuild
+* **Novo tenant:** na criação (`CreateTenant`), é registrada automaticamente uma origem permitida a partir de **`CORS_BASE_DOMAIN`** (chave raiz em `appsettings` ou variável de ambiente). Se **ausente ou só espaços**, o fallback é **`http://{slug}.localhost:5173`** (ex.: slug `feira` → `http://feira.localhost:5173`). Se **`CORS_BASE_DOMAIN`** for uma URL completa **sem** o placeholder **`{slug}`**, essa origem é usada igual para todos os novos tenants. Se contiver **`{slug}`**, o placeholder é substituído pelo slug. Se for só **host** (ex. `localhost:5173` ou `app.meuclube.com`), monta-se **`http://{slug}.…`** em ambiente local (host com `localhost`) ou **`https://{slug}.…`** caso contrário. Outras origens continuam via backoffice (`POST /api/backoffice/tenants/{id}/domains`).
 
 ---
 

@@ -1,7 +1,7 @@
 # SocioTorcedor.Modules.Tenancy.Api
 
 ## Descrição
-`TenancyModule` — registro de DI do módulo.
+`TenancyModule` — registro de DI do módulo (inclui `IConfiguration` para **`TenantAutoCorsOriginProvider`** / **`CORS_BASE_DOMAIN`**).
 
 ## Estrutura
 - `TenancyModule.cs`

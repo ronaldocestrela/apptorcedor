@@ -10,7 +10,7 @@ Host ASP.NET Core: composição de módulos (Tenancy, Identity, **Backoffice**),
 - `Extensions/` — `ServiceCollectionExtensions`, `MiddlewareExtensions`, `DatabaseMigrationExtensions` (Identity + Membership por tenant; seed de documentos legais placeholder após migrate do Identity quando vazio)
 - `Swagger/` — filtros Swashbuckle/OpenAPI: `TenantHeaderOperationFilter` (**`X-Tenant-Id`** nas rotas de tenant), **`BackofficeApiKeyOperationFilter`** (segurança **`BackofficeApiKey`** / **`X-Api-Key`** em `api/backoffice/*`)
 - `Tenancy/` — `HttpContextTenantContext` (`ICurrentTenantContext`)
-- `appsettings*.json` — connection string master, JWT, **`Backoffice:ApiKey`**
+- `appsettings*.json` — connection string master, JWT, **`Backoffice:ApiKey`**, **`CORS_BASE_DOMAIN`** (origem automática em novos tenants; vazio → `http://{slug}.localhost:5173`; ver `AGENTS.md` raiz)
 
 **Rotas de tenant:** o slug vai no header **`X-Tenant-Id`**; o middleware resolve o tenant no master. No documento OpenAPI (consumido pelo **Scalar**), esse header aparece nas operações que **não** são `api/backoffice/*`.
 

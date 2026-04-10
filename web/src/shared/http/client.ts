@@ -1,8 +1,20 @@
-import axios from 'axios'
+import axios, { type InternalAxiosRequestConfig } from 'axios'
 import { clearSession, getAccessToken } from '../auth/tokenStorage'
-import { getResolvedTenantSlug } from '../tenant'
+import { getTenantSlugFromBrowser } from '../tenant'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? ''
+
+function setRequestHeader(config: InternalAxiosRequestConfig, name: string, value: string) {
+  const headers = config.headers
+  if (!headers) {
+    return
+  }
+  if (typeof headers.set === 'function') {
+    headers.set(name, value)
+    return
+  }
+  ;(headers as Record<string, string>)[name] = value
+}
 
 /**
  * Cliente HTTP único da aplicação. Use este export para chamadas à API.
@@ -16,13 +28,13 @@ export const apiClient = axios.create({
 })
 
 apiClient.interceptors.request.use((config) => {
-  const tenantSlug = getResolvedTenantSlug()
+  const tenantSlug = getTenantSlugFromBrowser()
   if (tenantSlug) {
-    config.headers.set('X-Tenant-Id', tenantSlug)
+    setRequestHeader(config, 'X-Tenant-Id', tenantSlug)
   }
   const token = getAccessToken()
   if (token) {
-    config.headers.set('Authorization', `Bearer ${token}`)
+    setRequestHeader(config, 'Authorization', `Bearer ${token}`)
   }
   return config
 })
