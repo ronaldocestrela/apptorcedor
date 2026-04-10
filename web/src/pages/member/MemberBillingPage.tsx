@@ -10,6 +10,18 @@ import {
   type MemberPlanSummary,
 } from '../../shared/payments/paymentsApi'
 
+/** Alinhado a `BillingSubscriptionStatus` no backend (valores numéricos do enum). */
+const BILLING_SUBSCRIPTION_STATUS_LABELS: Record<number, string> = {
+  0: 'Pendente',
+  1: 'Ativa',
+  2: 'Inadimplente',
+  3: 'Cancelada',
+}
+
+function formatBillingSubscriptionStatus(status: number): string {
+  return BILLING_SUBSCRIPTION_STATUS_LABELS[status] ?? `Desconhecido (${status})`
+}
+
 /** Exibe só a data (dd/mm/aaaa) em fuso UTC, para valores vindos como `nextBillingAtUtc` sem sufixo Z. */
 function formatBillingDateOnlyBr(iso: string | null | undefined): string {
   if (iso == null || iso === '') return '—'
@@ -135,9 +147,11 @@ export function MemberBillingPage() {
           <p>Sem assinatura ativa.</p>
         ) : (
           <ul>
-            <li>Plano (id): {subscription.memberPlanId}</li>
+            <li>
+              Plano: {subscription.planName ?? '—'} <span className="billing-page__hint">({subscription.memberPlanId})</span>
+            </li>
             <li>Valor: {subscription.recurringAmount} {subscription.currency}</li>
-            <li>Status: {subscription.status}</li>
+            <li>Status: {formatBillingSubscriptionStatus(subscription.status)}</li>
             <li>Próxima cobrança: {formatBillingDateOnlyBr(subscription.nextBillingAtUtc)}</li>
           </ul>
         )}

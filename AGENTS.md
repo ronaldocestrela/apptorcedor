@@ -472,7 +472,7 @@ src/
 
 ### Fase 4 — Pagamentos
 
-* ✅ **MVP backend** — módulo `Payments`: assinatura + faturas SaaS (master) e sócio (tenant); `POST/GET` backoffice em `api/backoffice/payments/saas/*`; `api/payments/member/*` (subscribe, PIX checkout, minha assinatura, faturas); webhooks SaaS (API key) e tenant (`X-Payments-Webhook-Secret`); provider **stub** trocável por gateway real
+* ✅ **MVP backend** — módulo `Payments`: assinatura + faturas SaaS (master) e sócio (tenant); `POST/GET` backoffice em `api/backoffice/payments/saas/*`; `api/payments/member/*` (subscribe, PIX checkout, **`GET /api/payments/member/me/subscription`** com `planName` do `MemberPlan`, faturas); webhooks SaaS (API key) e tenant (`X-Payments-Webhook-Secret`); provider **stub** trocável por gateway real
 * ✅ **MVP web** — rotas `/member` (perfil sócio, `GET /api/members/me`), `/member/billing` (fluxo sócio) e `/admin/billing` (orientação SaaS / backoffice); UI responsiva, tema claro/escuro, menu admin visível só para role **`Administrador`**
 * recorrência end-to-end com gateway de produção
 * cartão (tokenização / 3DS) além do stub

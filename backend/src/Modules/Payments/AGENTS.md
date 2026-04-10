@@ -12,6 +12,7 @@ Cobrança em dois contextos: **SaaS** (clube paga a plataforma, banco master) e 
 ## Rotas
 - **Backoffice** (`X-Api-Key`): `api/backoffice/payments/saas/...`
 - **Tenant** (`X-Tenant-Id` + JWT): `api/payments/member/...`
+- **`GET api/payments/member/me/subscription`**: retorna a assinatura ativa do sócio (ou `null`); inclui **`memberPlanId`** e **`planName`** (nome do `MemberPlan` no tenant; `null` se o plano não existir mais).
 - Webhook sócio: `POST api/payments/member/webhooks` com header `X-Payments-Webhook-Secret` (`Payments:MemberWebhookSecret`)
 
 ## Contrato de gateway

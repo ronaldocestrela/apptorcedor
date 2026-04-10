@@ -9,6 +9,7 @@ namespace SocioTorcedor.Modules.Payments.Application.Queries.GetMyMemberBilling;
 public sealed class GetMyMemberBillingHandler(
     ICurrentUserAccessor currentUserAccessor,
     IMemberProfileRepository memberProfileRepository,
+    IMemberPlanRepository memberPlanRepository,
     IMemberTenantPaymentsRepository paymentsRepository)
     : IQueryHandler<GetMyMemberBillingQuery, MemberBillingSubscriptionDto?>
 {
@@ -28,10 +29,14 @@ public sealed class GetMyMemberBillingHandler(
         if (sub is null)
             return Result<MemberBillingSubscriptionDto?>.Ok(null);
 
+        var plan = await memberPlanRepository.GetByIdAsync(sub.MemberPlanId, cancellationToken);
+        var planName = plan?.Nome;
+
         var dto = new MemberBillingSubscriptionDto(
             sub.Id,
             sub.MemberProfileId,
             sub.MemberPlanId,
+            planName,
             sub.RecurringAmount,
             sub.Currency,
             sub.PaymentMethod,

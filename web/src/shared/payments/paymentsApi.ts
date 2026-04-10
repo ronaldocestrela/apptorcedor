@@ -14,6 +14,7 @@ export interface MemberBillingSubscription {
   id: string
   memberProfileId: string
   memberPlanId: string
+  planName: string | null
   recurringAmount: number
   currency: string
   paymentMethod: PaymentMethodKind

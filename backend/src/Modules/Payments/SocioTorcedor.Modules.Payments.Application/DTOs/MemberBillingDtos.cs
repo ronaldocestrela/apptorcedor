@@ -6,6 +6,7 @@ public sealed record MemberBillingSubscriptionDto(
     Guid Id,
     Guid MemberProfileId,
     Guid MemberPlanId,
+    string? PlanName,
     decimal RecurringAmount,
     string Currency,
     PaymentMethodKind PaymentMethod,
