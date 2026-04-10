@@ -9,6 +9,7 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
     [
         "/health",
         "/swagger",
+        "/scalar",
         "/api/backoffice"
     ];
 

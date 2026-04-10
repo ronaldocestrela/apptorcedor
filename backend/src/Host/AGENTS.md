@@ -4,7 +4,7 @@
 **Host** ASP.NET Core: composição de módulos, middlewares globais e pontos de entrada HTTP.
 
 ## Estrutura
-- `SocioTorcedor.Api/` — `Program.cs`, middlewares, Swagger, health
+- `SocioTorcedor.Api/` — `Program.cs`, middlewares, OpenAPI/Scalar, health
 
 ## Dependências
 - Referencia APIs e infraestruturas necessárias (Tenancy + Identity + **Backoffice**) e BuildingBlocks.

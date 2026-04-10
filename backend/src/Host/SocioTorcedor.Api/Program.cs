@@ -1,6 +1,6 @@
 using Microsoft.OpenApi;
+using Scalar.AspNetCore;
 using SocioTorcedor.Api.Extensions;
-using SocioTorcedor.Api.Swagger;
 using SocioTorcedor.Api.Options;
 using SocioTorcedor.Api.Tenancy;
 using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
@@ -24,15 +24,8 @@ var exposeOpenApi = app.Environment.IsDevelopment()
 
 if (exposeOpenApi)
 {
-    // OpenApi3_0 is serialized as "openapi":"3.0.4" by Microsoft.OpenApi 2.x; stale Swagger UI can reject unknown 3.0.x (hard-refresh: Ctrl+Shift+R).
-    // OpenApi3_1 is opt-in in Swashbuckle 10 and matches swagger-ui-dist 5.32+ bundled with the package.
+    // OpenAPI 3.1 (opt-in in Swashbuckle 10); Scalar consumes this spec from /swagger/v1/swagger.json.
     app.UseSwagger(options => options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1);
-    app.UseSwaggerUI(options =>
-    {
-        // Path from site root avoids wrong resolution behind some proxies; relative "v1/swagger.json" is also valid.
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Socio Torcedor API v1");
-        options.UseSocioTorcedorSwaggerDarkMode();
-    });
 }
 
 app.UseSocioTorcedorMiddleware();
@@ -44,6 +37,13 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
     .WithTags("Health");
 
 app.MapControllers();
+
+if (exposeOpenApi)
+{
+    app.MapScalarApiReference(options =>
+            options.WithOpenApiRoutePattern("/swagger/{documentName}/swagger.json"))
+        .AllowAnonymous();
+}
 
 app.Run();
 

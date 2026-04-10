@@ -67,7 +67,7 @@ X-Tenant-Id: flamengo
 
 * Rotas **`api/backoffice/*`**: não exigem **`X-Tenant-Id`** (operação central no banco master).
 * Autenticação: header **`X-Api-Key`**, conferido com a configuração **`Backoffice:ApiKey`**.
-* **Swagger / OpenAPI**: nas rotas de tenant, o parâmetro **`X-Tenant-Id`** continua documentado; no backoffice, o esquema **`BackofficeApiKey`** documenta **`X-Api-Key`** (use **Authorize** na UI do Swagger para essas operações).
+* **OpenAPI (Scalar)**: nas rotas de tenant, o parâmetro **`X-Tenant-Id`** continua documentado; no backoffice, o esquema **`BackofficeApiKey`** documenta **`X-Api-Key`**. A referência interativa fica em **`/scalar`** (desenvolvimento ou `EXPOSE_OPENAPI_JSON=true`); use a autenticação da UI (**Bearer** e **BackofficeApiKey**) para testar as operações.
 
 ---
 
@@ -435,7 +435,7 @@ src/
 * ✅ CORS dinâmico
 * ✅ Identity
 * ✅ permissões
-* ✅ Swagger
+* ✅ OpenAPI + Scalar (referência em `/scalar`; JSON em `/swagger/v1/swagger.json`)
 * ✅ Docker
 
 ### Fase 2 — Backoffice

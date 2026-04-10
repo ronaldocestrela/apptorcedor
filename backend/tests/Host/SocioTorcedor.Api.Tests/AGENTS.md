@@ -4,8 +4,8 @@
 Testes unitários dos middlewares do Host (`DefaultHttpContext`, NSubstitute para `ITenantResolver`; header **`X-Tenant-Id`** para resolução de tenant).
 
 ## Estrutura
-- `Middleware/TenantResolutionMiddlewareTests.cs` — inclui bypass `/api/backoffice`
-- `Middleware/DynamicCorsMiddlewareTests.cs`
+- `Middleware/TenantResolutionMiddlewareTests.cs` — inclui bypass `/api/backoffice`, `/scalar`
+- `Middleware/DynamicCorsMiddlewareTests.cs` — bypass de `/swagger/v1/swagger.json` e `/scalar`
 - `Middleware/ExceptionHandlingMiddlewareTests.cs`
 - `Middleware/ApiKeyAuthMiddlewareTests.cs`
 - `Swagger/TenantHeaderOperationFilterTests.cs` — `X-Tenant-Id` onde aplicável; exclusão de rotas backoffice

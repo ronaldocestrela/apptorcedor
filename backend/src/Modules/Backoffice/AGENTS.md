@@ -11,4 +11,4 @@ Módulo **Fase 2**: API administrativa SaaS (gestão de tenants no master DB, pl
 
 ## Dependências
 - Host registra `AddBackofficeModule`, aplica migrations do contexto Backoffice após o `MasterDbContext` do Tenancy
-- Swagger: esquema **`BackofficeApiKey`** (header `X-Api-Key`); rotas backoffice **não** recebem parâmetro `X-Tenant-Id` no OpenAPI (`TenantHeaderOperationFilter`)
+- OpenAPI (Scalar): esquema **`BackofficeApiKey`** (header `X-Api-Key`); rotas backoffice **não** recebem parâmetro `X-Tenant-Id` no spec (`TenantHeaderOperationFilter`)

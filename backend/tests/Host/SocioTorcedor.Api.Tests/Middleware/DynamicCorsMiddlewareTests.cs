@@ -11,7 +11,7 @@ public sealed class DynamicCorsMiddlewareTests
         new(Guid.NewGuid(), "T", "t", "cs", origins);
 
     [Fact]
-    public async Task InvokeAsync_BypassSwagger_CallsNext()
+    public async Task InvokeAsync_BypassSwaggerJson_CallsNext()
     {
         var nextCalled = false;
         var mw = new DynamicCorsMiddleware(_ =>
@@ -21,7 +21,25 @@ public sealed class DynamicCorsMiddlewareTests
         });
 
         var context = new DefaultHttpContext();
-        context.Request.Path = "/swagger/index.html";
+        context.Request.Path = "/swagger/v1/swagger.json";
+
+        await mw.InvokeAsync(context);
+
+        nextCalled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BypassScalar_CallsNext()
+    {
+        var nextCalled = false;
+        var mw = new DynamicCorsMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/scalar";
 
         await mw.InvokeAsync(context);
 

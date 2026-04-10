@@ -1,7 +1,7 @@
-# Swagger (Host)
+# OpenAPI / Swashbuckle (Host)
 
 ## Descrição
-Extensões do **Swashbuckle** para o OpenAPI: documentação da API, segurança **Bearer (JWT)**, **API key do backoffice**, e header de tenant onde aplicável.
+Filtros **Swashbuckle** que enriquecem o documento OpenAPI (consumido pela UI **Scalar** em `/scalar`): segurança **Bearer (JWT)**, **API key do backoffice**, e header de tenant onde aplicável.
 
 ## Arquivos
 - `TenantHeaderOperationFilter.cs` — adiciona o parâmetro de header **`X-Tenant-Id`** (obrigatório) nas operações cujo `RelativePath` **não** começa com `api/backoffice/`, alinhado ao `TenantResolutionMiddleware`. Idempotente (não duplica o parâmetro).
@@ -14,7 +14,7 @@ Extensões do **Swashbuckle** para o OpenAPI: documentação da API, segurança 
 - `AddSecurityRequirement` global com Bearer (padrão); operações backoffice sobrescrevem via `BackofficeApiKeyOperationFilter`.
 
 ## Contexto
-Sem `X-Tenant-Id` no Swagger, chamadas como `POST /api/Auth/login` falham com 400. Sem autorizar **BackofficeApiKey**, chamadas a `api/backoffice/*` falham com 401.
+Sem `X-Tenant-Id` na chamada (via Scalar ou outro cliente), rotas de tenant como `POST /api/Auth/login` falham com 400. Sem enviar **BackofficeApiKey** (`X-Api-Key`), chamadas a `api/backoffice/*` falham com 401.
 
 ## Dependências
 - `Swashbuckle.AspNetCore` (`IOperationFilter`, geração OpenAPI)

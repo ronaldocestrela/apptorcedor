@@ -9,6 +9,7 @@ public sealed class DynamicCorsMiddleware(RequestDelegate next)
     [
         "/health",
         "/swagger",
+        "/scalar",
         "/api/backoffice"
     ];
 
