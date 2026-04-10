@@ -43,6 +43,17 @@ export function AppShell() {
             ) : null}
             {isAdmin ? (
               <NavLink
+                to="/admin/plans"
+                className={({ isActive }) =>
+                  isActive ? 'app-shell__link app-shell__link--active' : 'app-shell__link'
+                }
+                onClick={closeNav}
+              >
+                Planos
+              </NavLink>
+            ) : null}
+            {isAdmin ? (
+              <NavLink
                 to="/admin/billing"
                 className={({ isActive }) =>
                   isActive ? 'app-shell__link app-shell__link--active' : 'app-shell__link'

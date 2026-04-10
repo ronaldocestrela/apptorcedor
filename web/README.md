@@ -104,7 +104,8 @@ npm run preview
 - `/login` — entrar
 - `/register` — cadastro
 - `/` — redireciona para `/member` (após autenticação)
-- `/admin` — placeholder área administrativa (protegida; link no menu só para **`Administrador`**)
+- `/admin` — início admin com links para subáreas (protegida; link no menu só para **`Administrador`**)
+- `/admin/plans` — CRUD de planos de sócio (`/api/plans`; protegida; menu só para **`Administrador`**)
 - `/admin/billing` — faturamento SaaS (instruções; protegida; link no menu só para **`Administrador`**)
 - `/member` — minha conta / perfil do sócio (`GET /api/members/me`; protegida)
 - `/member/billing` — pagamentos do sócio (protegida)

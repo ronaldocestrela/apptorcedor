@@ -10,6 +10,16 @@ import {
   type MemberPlanSummary,
 } from '../../shared/payments/paymentsApi'
 
+/** Exibe só a data (dd/mm/aaaa) em fuso UTC, para valores vindos como `nextBillingAtUtc` sem sufixo Z. */
+function formatBillingDateOnlyBr(iso: string | null | undefined): string {
+  if (iso == null || iso === '') return '—'
+  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso.trim())
+  const normalized = hasTz ? iso.trim() : `${iso.trim()}Z`
+  const t = Date.parse(normalized)
+  if (Number.isNaN(t)) return iso
+  return new Date(t).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+}
+
 export function MemberBillingPage() {
   const [plans, setPlans] = useState<MemberPlanSummary[]>([])
   const [selectedPlanId, setSelectedPlanId] = useState('')
@@ -128,7 +138,7 @@ export function MemberBillingPage() {
             <li>Plano (id): {subscription.memberPlanId}</li>
             <li>Valor: {subscription.recurringAmount} {subscription.currency}</li>
             <li>Status: {subscription.status}</li>
-            <li>Próxima cobrança: {subscription.nextBillingAtUtc ?? '—'}</li>
+            <li>Próxima cobrança: {formatBillingDateOnlyBr(subscription.nextBillingAtUtc)}</li>
           </ul>
         )}
       </div>

@@ -773,3 +773,330 @@ body {
     gap: 0.2rem;
   }
 }
+
+/* Admin — planos de sócio */
+.admin-plans__hint {
+  color: var(--color-muted);
+  max-width: 48rem;
+  line-height: 1.55;
+}
+
+.admin-plans__muted {
+  color: var(--color-muted);
+  margin: 0.5rem 0;
+}
+
+.admin-plans__list-heading {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--color-text);
+}
+
+.admin-plans__list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-plans__btn-new {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.admin-plans__btn-new:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+.admin-plans__btn-new:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.admin-plans__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 36rem;
+}
+
+.admin-plans__textarea {
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  width: 100%;
+  resize: vertical;
+  transition: var(--transition-theme);
+}
+
+.admin-plans__textarea:focus {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 1px;
+  border-color: var(--color-primary);
+}
+
+.admin-plans__form-actions {
+  margin-top: 0.25rem;
+}
+
+.admin-plans__btn-secondary {
+  border: 1px solid var(--color-border-strong) !important;
+  background: var(--color-bg-elevated) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.admin-plans__btn-secondary:hover:not(:disabled) {
+  background: var(--color-border) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text) !important;
+}
+
+.admin-plans__table-wrap {
+  overflow-x: auto;
+  margin-top: 0.5rem;
+}
+
+.admin-plans__table th:last-child,
+.admin-plans__table td:last-child {
+  min-width: 11rem;
+}
+
+.admin-plans__cell-sub {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+.admin-plans__badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--color-code-bg);
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+}
+
+.admin-plans__badge--on {
+  background: var(--color-nav-active-bg);
+  color: var(--color-nav-active-text);
+  border-color: transparent;
+}
+
+.admin-plans__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.admin-plans__row-actions button {
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.admin-plans__row-actions button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.admin-plans__row-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-plans__pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.admin-plans__pager button {
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.admin-plans__pager button:hover:not(:disabled) {
+  background: var(--color-border);
+}
+
+.admin-plans__pager button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-plans__pager-info {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+/* Admin planos — modal */
+.admin-plans-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 45%);
+  transition: background-color 0.2s ease;
+}
+
+[data-theme='dark'] .admin-plans-modal {
+  background: rgb(0 0 0 / 55%);
+}
+
+.admin-plans-modal__panel {
+  width: 100%;
+  max-width: 32rem;
+  max-height: min(90vh, 40rem);
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  transition: var(--transition-theme);
+}
+
+.admin-plans-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-plans-modal__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+.admin-plans-modal__close {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+  transition: var(--transition-theme);
+}
+
+.admin-plans-modal__close:hover:not(:disabled) {
+  background: var(--color-border);
+}
+
+.admin-plans-modal__close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-plans-modal__error {
+  margin: 0.75rem 1rem 0;
+}
+
+.admin-plans-modal__form {
+  padding: 1rem;
+  max-width: none;
+}
+
+.admin-plans-modal__footer {
+  margin-top: 0.5rem;
+}
+
+.admin-plans-modal--confirm .admin-plans-modal__panel {
+  max-width: 26rem;
+}
+
+.admin-plans-modal__confirm-body {
+  margin: 0;
+  padding: 1rem;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.admin-plans-modal__confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+  justify-content: flex-end;
+}
+
+.admin-plans-modal__confirm-actions button {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.admin-plans-modal__confirm-actions button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.admin-plans-modal__confirm-actions .admin-plans__btn-secondary {
+  border: 1px solid var(--color-border-strong) !important;
+  background: var(--color-bg-elevated) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.admin-plans-modal__confirm-actions .admin-plans__btn-secondary:hover:not(:disabled) {
+  background: var(--color-border) !important;
+  color: var(--color-text) !important;
+}
+
+.admin-plans-modal__confirm-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
