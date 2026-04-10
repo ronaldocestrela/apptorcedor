@@ -4,7 +4,8 @@
 Parte do backend Sócio Torcedor; ver módulo pai.
 
 ## Estrutura
-- (nenhum `.cs` direto; ver subpastas)
+- `Persistence/` — `RoleTenantSeedTests.cs`
+- `Services/` — `JwtTokenServiceTests.cs`
 
 ## Dependências
 - Pasta pai: `tests/Modules/Identity`

@@ -7,7 +7,7 @@ Host ASP.NET Core: composição de módulos (Tenancy, Identity, **Backoffice**),
 - `Program.cs` — bootstrap, `Configure<BackofficeOptions>`, `UseSocioTorcedorMiddleware`, autenticação
 - `Middleware/` — `ExceptionHandlingMiddleware`, `TenantResolutionMiddleware`, **`ApiKeyAuthMiddleware`**, `DynamicCorsMiddleware`
 - `Options/` — `BackofficeOptions` (`Backoffice:ApiKey`)
-- `Extensions/` — `ServiceCollectionExtensions`, `MiddlewareExtensions`, `DatabaseMigrationExtensions` (Identity + Membership por tenant; seed de documentos legais placeholder após migrate do Identity quando vazio)
+- `Extensions/` — `ServiceCollectionExtensions`, `MiddlewareExtensions`, `DatabaseMigrationExtensions` (Identity + Membership por tenant; após migrate do Identity: seed de documentos legais placeholder quando vazio e seed de roles **`Socio`** / **`Administrador`**)
 - `Swagger/` — filtros Swashbuckle/OpenAPI: `TenantHeaderOperationFilter` (**`X-Tenant-Id`** nas rotas de tenant), **`BackofficeApiKeyOperationFilter`** (segurança **`BackofficeApiKey`** / **`X-Api-Key`** em `api/backoffice/*`)
 - `Tenancy/` — `HttpContextTenantContext` (`ICurrentTenantContext`)
 - `appsettings*.json` — connection string master, JWT, **`Backoffice:ApiKey`**, **`CORS_BASE_DOMAIN`** (origem automática em novos tenants; vazio → `http://{slug}.localhost:5173`; ver `AGENTS.md` raiz)

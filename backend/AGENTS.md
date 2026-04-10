@@ -16,4 +16,4 @@ Raiz do backend .NET 10 do **Sócio Torcedor**: **Modular Monolith**, CQRS (Medi
 
 ## Notas de produto (Fase 3)
 - **Status do sócio** (`Membership`): enum e rotas admin documentados em `src/Modules/Membership/AGENTS.md`.
-- **LGPD / cadastro** (`Identity`): consentimento no register, leitura e publicação de documentos em `src/Modules/Identity/AGENTS.md`.
+- **LGPD / cadastro** (`Identity`): consentimento no register, leitura e publicação de documentos; seed por tenant de roles **`Socio`** e **`Administrador`** após migrate do Identity — ver `src/Modules/Identity/AGENTS.md`.

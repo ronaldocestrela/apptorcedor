@@ -440,6 +440,7 @@ src/
 * **Leitura pública (sem JWT)**: `GET /api/legal-documents/current` — retorna as versões atuais de termos e privacidade (exige `X-Tenant-Id`)
 * **Publicação (admin do clube)**: `POST /api/legal-documents` — role `Administrador`, corpo com `kind` (`TermsOfUse` / `PrivacyPolicy`) e `content`
 * após migrations, tenants sem documentos recebem seed mínimo (placeholder) na subida da API ou na criação do tenant; o clube deve substituir pelo texto oficial
+* após migrations do Identity por tenant, o seed **`RoleTenantSeed`** garante as roles **`Socio`** e **`Administrador`** em `AspNetRoles` (idempotente); o primeiro cadastro continua atribuindo **`Socio`**; atribuir **`Administrador`** a um usuário é feito fora do registro público (ex.: operação administrativa ou banco)
 
 ---
 

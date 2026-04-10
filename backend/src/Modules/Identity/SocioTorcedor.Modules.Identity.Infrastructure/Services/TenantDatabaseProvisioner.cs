@@ -18,6 +18,7 @@ public sealed class TenantDatabaseProvisioner : ITenantDatabaseProvisioner
         {
             await identityDb.Database.MigrateAsync(cancellationToken);
             await LegalDocumentTenantSeed.SeedIfEmptyAsync(identityDb, cancellationToken);
+            await RoleTenantSeed.SeedAsync(identityDb, cancellationToken);
         }
 
         var membershipOptions = new DbContextOptionsBuilder<TenantMembershipDbContext>()

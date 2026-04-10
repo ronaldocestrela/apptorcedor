@@ -6,7 +6,7 @@ Usuários por tenant (ASP.NET Identity), JWT, roles/permissões e **LGPD Fase 3.
 ## Estrutura
 - `SocioTorcedor.Modules.Identity.Domain` — enums (ex.: `LegalDocumentKind`)
 - `SocioTorcedor.Modules.Identity.Application` — comandos login/register, queries de documentos legais, `ILegalDocumentRepository`
-- `SocioTorcedor.Modules.Identity.Infrastructure` — `TenantIdentityDbContext`, entidades `LegalDocumentVersion`, `UserLegalConsent`, seed `LegalDocumentTenantSeed` (placeholder se não houver versões)
+- `SocioTorcedor.Modules.Identity.Infrastructure` — `TenantIdentityDbContext`, entidades `LegalDocumentVersion`, `UserLegalConsent`, seeds `LegalDocumentTenantSeed` (placeholder se não houver versões) e **`RoleTenantSeed`** (roles **`Socio`** e **`Administrador`** por tenant, após migrate)
 - `SocioTorcedor.Modules.Identity.Api` — `AuthController`, `LegalDocumentsController`
 
 ## API relevante (tenant)

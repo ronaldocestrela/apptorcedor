@@ -5,6 +5,8 @@ Identity EF por tenant, `JwtTokenService`, `IdentityService`.
 
 ## Estrutura
 - `DependencyInjection.cs`
+- `Persistence/` — `TenantIdentityDbContext`, `LegalDocumentTenantSeed`, **`RoleTenantSeed`**, migrations EF
+- `Services/` — `IdentityService`, `JwtTokenService`, `TenantDatabaseProvisioner`
 
 ## Dependências
 - Pasta pai: `src/Modules/Identity`
