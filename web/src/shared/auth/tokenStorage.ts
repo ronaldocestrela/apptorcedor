@@ -102,3 +102,17 @@ export function getAccessToken(): string | null {
   const s = loadSession()
   return s?.accessToken ?? null
 }
+
+/** Claims comuns do JWT (sub, email) para exibição quando não há perfil de sócio. */
+export function decodeJwtBasicClaims(token: string): { sub?: string; email?: string } {
+  const parts = token.split('.')
+  if (parts.length < 2) return {}
+  const payload = decodeJwtPayloadSegment(parts[1])
+  if (!payload) return {}
+  const email = payload['email']
+  const sub = payload['sub']
+  return {
+    email: typeof email === 'string' ? email : undefined,
+    sub: typeof sub === 'string' ? sub : undefined,
+  }
+}

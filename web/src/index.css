@@ -691,3 +691,85 @@ body {
 .billing-page__block li {
   margin: 0.25rem 0;
 }
+
+/* Member home / profile */
+.member-home__lead {
+  color: var(--color-muted);
+  max-width: 42rem;
+  line-height: 1.55;
+}
+
+.member-home__lead a {
+  color: var(--color-link);
+  font-weight: 600;
+}
+
+.member-home__muted {
+  color: var(--color-muted);
+  margin: 0.5rem 0;
+}
+
+.member-home__error {
+  color: var(--color-error);
+  font-weight: 600;
+  margin: 0.75rem 0;
+}
+
+.member-home__block h2 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.05rem;
+  color: var(--color-text);
+}
+
+.member-home__dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.member-home__row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 11rem) 1fr;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.member-home__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.member-home__row dt {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.member-home__row dd {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  word-break: break-word;
+}
+
+.member-home__code {
+  font-size: 0.8rem;
+  background: var(--color-code-bg);
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
+@media (max-width: 520px) {
+  .member-home__row {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+}
