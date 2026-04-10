@@ -1,0 +1,47 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using SocioTorcedor.BuildingBlocks.Application.Payments;
+using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
+using SocioTorcedor.Modules.Payments.Application.Contracts;
+using SocioTorcedor.Modules.Payments.Infrastructure.Options;
+using SocioTorcedor.Modules.Payments.Infrastructure.Persistence;
+using SocioTorcedor.Modules.Payments.Infrastructure.Repositories;
+using SocioTorcedor.Modules.Payments.Infrastructure.Services;
+
+namespace SocioTorcedor.Modules.Payments.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddPaymentsInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<PaymentsOptions>(configuration.GetSection(PaymentsOptions.SectionName));
+
+        var masterConnectionString = configuration.GetConnectionString("MasterDb")
+            ?? throw new InvalidOperationException("Connection string 'MasterDb' is not configured.");
+
+        services.AddDbContext<PaymentsMasterDbContext>(options =>
+            options.UseSqlServer(
+                masterConnectionString,
+                sql => sql.MigrationsHistoryTable("__EFPaymentsMasterMigrationsHistory")));
+
+        services.AddDbContext<TenantPaymentsDbContext>((sp, builder) =>
+        {
+            var tenant = sp.GetRequiredService<ICurrentTenantContext>();
+            if (!tenant.IsResolved)
+                throw new InvalidOperationException("Tenant must be resolved before accessing tenant payments database.");
+
+            builder.UseSqlServer(
+                tenant.TenantConnectionString,
+                o => o.MigrationsHistoryTable("__EFPaymentsTenantMigrationsHistory"));
+        });
+
+        services.AddScoped<ITenantMasterPaymentsRepository, TenantMasterPaymentsRepository>();
+        services.AddScoped<IMemberTenantPaymentsRepository, MemberTenantPaymentsRepository>();
+        services.AddSingleton<IPaymentProvider, StubPaymentProvider>();
+
+        return services;
+    }
+}

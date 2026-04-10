@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SocioTorcedor.Modules.Backoffice.Infrastructure.Persistence;
 using SocioTorcedor.Modules.Identity.Infrastructure.Persistence;
 using SocioTorcedor.Modules.Membership.Infrastructure.Persistence;
+using SocioTorcedor.Modules.Payments.Infrastructure.Persistence;
 using SocioTorcedor.Modules.Tenancy.Infrastructure.Persistence;
 
 namespace SocioTorcedor.Api.Extensions;
@@ -34,6 +35,10 @@ public static class DatabaseMigrationExtensions
         app.Logger.LogInformation("Applying pending EF Core migrations to backoffice (master) tables...");
         await backoffice.Database.MigrateAsync(cancellationToken);
 
+        var paymentsMaster = scope.ServiceProvider.GetRequiredService<PaymentsMasterDbContext>();
+        app.Logger.LogInformation("Applying pending EF Core migrations to payments (master) tables...");
+        await paymentsMaster.Database.MigrateAsync(cancellationToken);
+
         var tenantConnectionStrings = await master.Tenants
             .AsNoTracking()
             .Where(t => !string.IsNullOrWhiteSpace(t.ConnectionString))
@@ -65,6 +70,15 @@ public static class DatabaseMigrationExtensions
 
             await using var tenantMembershipDb = new TenantMembershipDbContext(membershipOptions);
             await tenantMembershipDb.Database.MigrateAsync(cancellationToken);
+
+            var paymentsTenantOptions = new DbContextOptionsBuilder<TenantPaymentsDbContext>()
+                .UseSqlServer(
+                    connectionString,
+                    o => o.MigrationsHistoryTable("__EFPaymentsTenantMigrationsHistory"))
+                .Options;
+
+            await using var tenantPaymentsDb = new TenantPaymentsDbContext(paymentsTenantOptions);
+            await tenantPaymentsDb.Database.MigrateAsync(cancellationToken);
         }
 
         app.Logger.LogInformation("EF Core migrations applied (master + tenant databases).");

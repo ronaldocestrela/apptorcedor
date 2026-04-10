@@ -7,7 +7,7 @@ SPA **React + Vite + TypeScript**, com **Axios** e **React Router**.
 | Pasta | Uso |
 |--------|-----|
 | `app/` | Shell, roteamento (`router/`), autenticação (`auth/`) |
-| `shared/` | Código compartilhado (`http`, `tenant`, `auth`, etc.) |
+| `shared/` | Código compartilhado (`http`, `tenant`, `auth`, `payments`, etc.) |
 | `features/` | Módulos por domínio |
 | `pages/` | Páginas (`admin/`, `member/`, `auth/`, `system/`) |
 
@@ -82,13 +82,20 @@ npm run build
 npm run preview
 ```
 
+## Fase 4 — Pagamentos (MVP web)
+
+- **`/member/billing`** — assinatura de plano do clube, geração de PIX (stub), assinatura e faturas (`/api/payments/member/*`).
+- **`/admin/billing`** — orientação: faturamento SaaS do tenant é via **`/api/backoffice/payments/saas/*`** com **`X-Api-Key`** (não há chave no SPA).
+
 ## Rotas
 
 - `/login` — entrar
 - `/register` — cadastro
 - `/` — redireciona para `/member` (após autenticação)
 - `/admin` — placeholder área administrativa (protegida)
+- `/admin/billing` — faturamento SaaS (instruções; protegida)
 - `/member` — placeholder área do sócio (protegida)
+- `/member/billing` — pagamentos do sócio (protegida)
 
 ## Cliente HTTP
 

@@ -16,6 +16,17 @@ using SocioTorcedor.Modules.Membership.Application.Commands.UpdateMemberProfile;
 using SocioTorcedor.Modules.Membership.Application.Queries.GetMemberById;
 using SocioTorcedor.Modules.Membership.Application.Queries.GetMyProfile;
 using SocioTorcedor.Modules.Membership.Application.Queries.ListMembers;
+using SocioTorcedor.Modules.Payments.Api;
+using SocioTorcedor.Modules.Payments.Api.Controllers;
+using SocioTorcedor.Modules.Payments.Application.Commands.CreateMemberPixCheckout;
+using SocioTorcedor.Modules.Payments.Application.Commands.ProcessMemberTenantWebhook;
+using SocioTorcedor.Modules.Payments.Application.Commands.ProcessTenantSaasWebhook;
+using SocioTorcedor.Modules.Payments.Application.Commands.StartTenantSaasBilling;
+using SocioTorcedor.Modules.Payments.Application.Commands.SubscribeMemberPlan;
+using SocioTorcedor.Modules.Payments.Application.Queries.GetMyMemberBilling;
+using SocioTorcedor.Modules.Payments.Application.Queries.GetTenantSaasBilling;
+using SocioTorcedor.Modules.Payments.Application.Queries.ListMyMemberInvoices;
+using SocioTorcedor.Modules.Payments.Application.Queries.ListTenantSaasInvoices;
 using SocioTorcedor.Modules.Tenancy.Api;
 using SocioTorcedor.Modules.Tenancy.Application.Commands.CreateTenant;
 using SocioTorcedor.Modules.Tenancy.Application.Queries.GetTenantBySlug;
@@ -29,7 +40,9 @@ public static class ServiceCollectionExtensions
         services.AddControllers()
             .AddApplicationPart(typeof(AuthController).Assembly)
             .AddApplicationPart(typeof(TenantsController).Assembly)
-            .AddApplicationPart(typeof(MembersController).Assembly);
+            .AddApplicationPart(typeof(MembersController).Assembly)
+            .AddApplicationPart(typeof(BackofficeSaasPaymentsController).Assembly)
+            .AddApplicationPart(typeof(MemberPaymentsController).Assembly);
 
         services.AddBuildingBlocksApplication(
             typeof(GetTenantBySlugHandler).Assembly,
@@ -42,7 +55,16 @@ public static class ServiceCollectionExtensions
             typeof(UpdateMemberProfileHandler).Assembly,
             typeof(GetMyProfileHandler).Assembly,
             typeof(GetMemberByIdHandler).Assembly,
-            typeof(ListMembersHandler).Assembly);
+            typeof(ListMembersHandler).Assembly,
+            typeof(StartTenantSaasBillingHandler).Assembly,
+            typeof(ProcessTenantSaasWebhookHandler).Assembly,
+            typeof(GetTenantSaasBillingHandler).Assembly,
+            typeof(ListTenantSaasInvoicesHandler).Assembly,
+            typeof(SubscribeMemberPlanHandler).Assembly,
+            typeof(CreateMemberPixCheckoutHandler).Assembly,
+            typeof(ProcessMemberTenantWebhookHandler).Assembly,
+            typeof(GetMyMemberBillingHandler).Assembly,
+            typeof(ListMyMemberInvoicesHandler).Assembly);
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
@@ -94,6 +116,7 @@ public static class ServiceCollectionExtensions
         services.AddIdentityModule(configuration);
         services.AddBackofficeModule(configuration);
         services.AddMembershipModule();
+        services.AddPaymentsModule(configuration);
         return services;
     }
 }

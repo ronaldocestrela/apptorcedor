@@ -242,3 +242,79 @@ body {
   color: #0369a1;
   font-weight: 600;
 }
+
+.billing-page__hint {
+  color: #64748b;
+  max-width: 42rem;
+}
+
+.billing-page__error {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.billing-page__block {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  max-width: 48rem;
+}
+
+.billing-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+   margin: 0.5rem 0;
+  font-weight: 600;
+}
+
+.billing-page__field select {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-family: inherit;
+}
+
+.billing-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.billing-page__actions button {
+  padding: 0.5rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #0369a1;
+  background: #0369a1;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.billing-page__actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.billing-page__pix {
+  width: 100%;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+}
+
+.billing-page__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.billing-page__table th,
+.billing-page__table td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.5rem;
+  text-align: left;
+}

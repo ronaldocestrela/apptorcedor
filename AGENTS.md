@@ -452,9 +452,11 @@ src/
 
 ### Fase 4 — Pagamentos
 
-* recorrência
-* PIX / cartão
-* inadimplência
+* ✅ **MVP backend** — módulo `Payments`: assinatura + faturas SaaS (master) e sócio (tenant); `POST/GET` backoffice em `api/backoffice/payments/saas/*`; `api/payments/member/*` (subscribe, PIX checkout, minha assinatura, faturas); webhooks SaaS (API key) e tenant (`X-Payments-Webhook-Secret`); provider **stub** trocável por gateway real
+* ✅ **MVP web** — rotas `/member/billing` (fluxo sócio) e `/admin/billing` (orientação SaaS / backoffice)
+* recorrência end-to-end com gateway de produção
+* cartão (tokenização / 3DS) além do stub
+* conciliação e jobs de cobrança
 
 ### Fase 5 — Jogos / Ingressos
 

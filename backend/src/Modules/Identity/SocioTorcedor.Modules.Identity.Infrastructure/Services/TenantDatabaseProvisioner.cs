@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SocioTorcedor.Modules.Identity.Infrastructure.Persistence;
 using SocioTorcedor.Modules.Membership.Infrastructure.Persistence;
+using SocioTorcedor.Modules.Payments.Infrastructure.Persistence;
 using SocioTorcedor.Modules.Tenancy.Application.Contracts;
 
 namespace SocioTorcedor.Modules.Identity.Infrastructure.Services;
@@ -27,5 +28,14 @@ public sealed class TenantDatabaseProvisioner : ITenantDatabaseProvisioner
 
         await using var membershipDb = new TenantMembershipDbContext(membershipOptions);
         await membershipDb.Database.MigrateAsync(cancellationToken);
+
+        var paymentsOptions = new DbContextOptionsBuilder<TenantPaymentsDbContext>()
+            .UseSqlServer(
+                connectionString,
+                o => o.MigrationsHistoryTable("__EFPaymentsTenantMigrationsHistory"))
+            .Options;
+
+        await using var paymentsDb = new TenantPaymentsDbContext(paymentsOptions);
+        await paymentsDb.Database.MigrateAsync(cancellationToken);
     }
 }

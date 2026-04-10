@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Membership\SocioTorcedor.Modules.Membership.Infrastructure\SocioTorcedor.Modules.Membership.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Payments\SocioTorcedor.Modules.Payments.Infrastructure\SocioTorcedor.Modules.Payments.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Tenancy\SocioTorcedor.Modules.Tenancy.Application\SocioTorcedor.Modules.Tenancy.Application.csproj" />
     <ProjectReference Include="..\SocioTorcedor.Modules.Identity.Application\SocioTorcedor.Modules.Identity.Application.csproj" />
     <ProjectReference Include="..\SocioTorcedor.Modules.Identity.Domain\SocioTorcedor.Modules.Identity.Domain.csproj" />
