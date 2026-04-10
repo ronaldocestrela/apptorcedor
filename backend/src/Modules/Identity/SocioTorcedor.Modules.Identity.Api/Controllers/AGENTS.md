@@ -5,6 +5,7 @@ Parte do backend Sócio Torcedor; ver módulo pai.
 
 ## Estrutura
 - `AuthController.cs`
+- `LegalDocumentsController.cs`
 
 ## Dependências
 - Pasta pai: `src/Modules/Identity/SocioTorcedor.Modules.Identity.Api`

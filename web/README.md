@@ -6,10 +6,10 @@ SPA **React + Vite + TypeScript**, com **Axios** e **React Router**.
 
 | Pasta | Uso |
 |--------|-----|
-| `app/` | Shell da aplicação e roteamento (`router/`) |
-| `shared/` | Código compartilhado (`http`, `tenant`, etc.) |
+| `app/` | Shell, roteamento (`router/`), autenticação (`auth/`) |
+| `shared/` | Código compartilhado (`http`, `tenant`, `auth`, etc.) |
 | `features/` | Módulos por domínio |
-| `pages/` | Páginas roteadas (`admin/`, `member/`, `system/`) |
+| `pages/` | Páginas (`admin/`, `member/`, `auth/`, `system/`) |
 
 ## Fase 1.2 — Tenant por subdomínio (modo estrito)
 
@@ -45,6 +45,20 @@ Use um hostname com subdomínio, por exemplo:
 1. Entrada em `/etc/hosts`: `127.0.0.1 flamengo.localhost`
 2. Abra `http://flamengo.localhost:5173` (porta do Vite conforme o console).
 
+## Fase 1.4 / 1.5 — Login e cadastro (Axios)
+
+- **Login:** `POST /api/auth/login` com `{ email, password }`.
+- **Documentos legais (antes do cadastro):** `GET /api/legal-documents/current` (sem JWT; o cliente já envia `X-Tenant-Id`). Resposta inclui as versões vigentes de termos e privacidade (`id`, `kind`, `versionNumber`, `content`, etc.).
+- **Cadastro:** `POST /api/auth/register` com `{ email, password, firstName, lastName, acceptedTermsDocumentId, acceptedPrivacyDocumentId }` — os dois GUIDs devem ser os `id` retornados em **current** para `TermsOfUse` e `PrivacyPolicy`. O backend grava IP e User-Agent do request nos consentimentos.
+- Resposta: `{ accessToken, expiresAtUtc }` (JSON camelCase).
+- O JWT é guardado em **`sessionStorage`** (via [`tokenStorage`](src/shared/auth/tokenStorage.ts)).
+- O [`apiClient`](src/shared/http/client.ts) envia:
+  - `X-Tenant-Id` (slug do subdomínio)
+  - `Authorization: Bearer <accessToken>` quando há sessão válida
+- Rotas **`/admin`** e **`/member`** exigem autenticação ([`RequireAuth`](src/app/router/RequireAuth.tsx)); **`/login`** e **`/register`** são públicas.
+- **Sair** limpa a sessão e redireciona para `/login`.
+- Respostas **401** em rotas autenticadas limpam a sessão e redirecionam para `/login` (exceto nas páginas de login/cadastro).
+
 ## Pré-requisitos
 
 - Node.js 20+ (recomendado)
@@ -68,12 +82,14 @@ npm run build
 npm run preview
 ```
 
-## Rotas iniciais
+## Rotas
 
-- `/` — redireciona para `/member`
-- `/admin` — placeholder área administrativa
-- `/member` — placeholder área do sócio
+- `/login` — entrar
+- `/register` — cadastro
+- `/` — redireciona para `/member` (após autenticação)
+- `/admin` — placeholder área administrativa (protegida)
+- `/member` — placeholder área do sócio (protegida)
 
 ## Cliente HTTP
 
-Use `apiClient` exportado de `src/shared/http` para chamadas à API. O header `X-Tenant-Id` é definido pelo interceptor com base em `shared/tenant`.
+Use `apiClient` exportado de `src/shared/http` para chamadas à API. Os headers `X-Tenant-Id` e `Authorization` são aplicados nos interceptors quando aplicável.

@@ -7,4 +7,8 @@ public sealed record RegisterUserCommand(
     string Email,
     string Password,
     string FirstName,
-    string LastName) : ICommand<AuthResultDto>;
+    string LastName,
+    Guid AcceptedTermsDocumentId,
+    Guid AcceptedPrivacyDocumentId,
+    string? ConsentIpAddress,
+    string? ConsentUserAgent) : ICommand<AuthResultDto>;

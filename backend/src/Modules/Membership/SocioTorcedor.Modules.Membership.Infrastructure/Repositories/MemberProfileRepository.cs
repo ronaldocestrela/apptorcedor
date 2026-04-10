@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SocioTorcedor.BuildingBlocks.Shared.Results;
 using SocioTorcedor.Modules.Membership.Application.Contracts;
 using SocioTorcedor.Modules.Membership.Domain.Entities;
+using SocioTorcedor.Modules.Membership.Domain.Enums;
 using SocioTorcedor.Modules.Membership.Infrastructure.Persistence;
 
 namespace SocioTorcedor.Modules.Membership.Infrastructure.Repositories;
@@ -26,12 +27,19 @@ public sealed class MemberProfileRepository(TenantMembershipDbContext db) : IMem
     public Task SaveChangesAsync(CancellationToken cancellationToken) =>
         db.SaveChangesAsync(cancellationToken);
 
-    public async Task<PagedResult<MemberProfile>> ListAsync(int page, int pageSize, CancellationToken cancellationToken)
+    public async Task<PagedResult<MemberProfile>> ListAsync(
+        int page,
+        int pageSize,
+        MemberStatus? status,
+        CancellationToken cancellationToken)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
         var query = db.MemberProfiles.AsNoTracking();
+        if (status is { } s)
+            query = query.Where(p => p.Status == s);
+
         var total = await query.CountAsync(cancellationToken);
 
         var items = await query

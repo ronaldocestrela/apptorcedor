@@ -13,3 +13,7 @@ Raiz do backend .NET 10 do **Sócio Torcedor**: **Modular Monolith**, CQRS (Medi
 ## Dependências
 - .NET 10 SDK
 - SQL Server (`ConnectionStrings:MasterDb` no `appsettings` / variáveis de ambiente no Docker)
+
+## Notas de produto (Fase 3)
+- **Status do sócio** (`Membership`): enum e rotas admin documentados em `src/Modules/Membership/AGENTS.md`.
+- **LGPD / cadastro** (`Identity`): consentimento no register, leitura e publicação de documentos em `src/Modules/Identity/AGENTS.md`.

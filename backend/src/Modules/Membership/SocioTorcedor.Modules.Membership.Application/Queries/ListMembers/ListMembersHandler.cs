@@ -18,7 +18,7 @@ public sealed class ListMembersHandler(
             return Result<PagedResult<MemberProfileDto>>.Fail(
                 Error.Failure("Tenant.Required", "Tenant context is not resolved."));
 
-        var page = await repository.ListAsync(query.Page, query.PageSize, cancellationToken);
+        var page = await repository.ListAsync(query.Page, query.PageSize, query.Status, cancellationToken);
         var items = page.Items.Select(p => p.ToDto()).ToList();
 
         return Result<PagedResult<MemberProfileDto>>.Ok(

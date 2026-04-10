@@ -5,7 +5,7 @@ Código-fonte do monólito modular: blocos compartilhados, módulos de domínio 
 
 ## Estrutura
 - `BuildingBlocks/` — Domain, Application, Infrastructure, Shared
-- `Modules/` — Tenancy, Identity (Fase 1)
+- `Modules/` — Tenancy, Identity (JWT + LGPD Fase 3.4), Membership (perfil e planos Fase 3), Backoffice
 - `Host/SocioTorcedor.Api/` — pipeline HTTP, middlewares, `Program.cs`
 
 ## Dependências

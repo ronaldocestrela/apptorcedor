@@ -8,6 +8,7 @@ namespace SocioTorcedor.Modules.Identity.Application.Commands.RegisterUser;
 
 public sealed class RegisterUserHandler(
     IIdentityService identityService,
+    ILegalDocumentRepository legalDocuments,
     ICurrentTenantContext currentTenant)
     : ICommandHandler<RegisterUserCommand, AuthResultDto>
 {
@@ -18,12 +19,23 @@ public sealed class RegisterUserHandler(
         if (!currentTenant.IsResolved)
             return Result<AuthResultDto>.Fail(Error.Failure("Tenant.Required", "Tenant context is not resolved."));
 
+        var legal = await legalDocuments.ValidateRegistrationAcceptancesAsync(
+            command.AcceptedTermsDocumentId,
+            command.AcceptedPrivacyDocumentId,
+            cancellationToken);
+        if (!legal.IsSuccess)
+            return Result<AuthResultDto>.Fail(legal.Error!);
+
         return await identityService.RegisterAsync(
             command.Email,
             command.Password,
             command.FirstName,
             command.LastName,
             currentTenant.TenantId,
+            command.AcceptedTermsDocumentId,
+            command.AcceptedPrivacyDocumentId,
+            command.ConsentIpAddress,
+            command.ConsentUserAgent,
             cancellationToken);
     }
 }

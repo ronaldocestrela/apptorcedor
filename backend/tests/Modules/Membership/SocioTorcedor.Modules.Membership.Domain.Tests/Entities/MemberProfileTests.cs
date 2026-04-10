@@ -100,4 +100,58 @@ public sealed class MemberProfileTests
         profile.Address.City.Should().Be("Campinas");
         profile.UpdatedAt.Should().NotBeNull();
     }
+
+    [Fact]
+    public void ChangeStatus_from_active_to_suspended_updates_status_and_UpdatedAt()
+    {
+        var profile = MemberProfile.Create(
+            "user-1",
+            ValidCpf(),
+            new DateTime(1990, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            Gender.Male,
+            "11888888888",
+            ValidAddress(),
+            () => false);
+
+        profile.ChangeStatus(MemberStatus.Suspended);
+
+        profile.Status.Should().Be(MemberStatus.Suspended);
+        profile.UpdatedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ChangeStatus_same_value_is_noop_and_does_not_touch_UpdatedAt()
+    {
+        var profile = MemberProfile.Create(
+            "user-1",
+            ValidCpf(),
+            new DateTime(1990, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            Gender.Male,
+            "11888888888",
+            ValidAddress(),
+            () => false);
+
+        var updatedBefore = profile.UpdatedAt;
+        profile.ChangeStatus(MemberStatus.Active);
+
+        profile.Status.Should().Be(MemberStatus.Active);
+        profile.UpdatedAt.Should().Be(updatedBefore);
+    }
+
+    [Fact]
+    public void ChangeStatus_invalid_transition_throws()
+    {
+        var profile = MemberProfile.Create(
+            "user-1",
+            ValidCpf(),
+            new DateTime(1990, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            Gender.Male,
+            "11888888888",
+            ValidAddress(),
+            () => false);
+
+        var act = () => profile.ChangeStatus(MemberStatus.PendingCompletion);
+
+        act.Should().Throw<BusinessRuleValidationException>();
+    }
 }

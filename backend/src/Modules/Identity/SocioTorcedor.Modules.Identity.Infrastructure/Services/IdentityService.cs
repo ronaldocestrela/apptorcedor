@@ -12,7 +12,8 @@ public sealed class IdentityService(
     UserManager<ApplicationUser> userManager,
     RoleManager<ApplicationRole> roleManager,
     TenantIdentityDbContext db,
-    IJwtTokenService jwtTokenService) : IIdentityService
+    IJwtTokenService jwtTokenService,
+    ILegalDocumentRepository legalDocuments) : IIdentityService
 {
     private const string DefaultMemberRole = "Socio";
 
@@ -22,6 +23,10 @@ public sealed class IdentityService(
         string firstName,
         string lastName,
         Guid tenantId,
+        Guid acceptedTermsDocumentId,
+        Guid acceptedPrivacyDocumentId,
+        string? consentIpAddress,
+        string? consentUserAgent,
         CancellationToken cancellationToken)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
@@ -49,6 +54,14 @@ public sealed class IdentityService(
 
         await EnsureRoleAsync(DefaultMemberRole, cancellationToken);
         await userManager.AddToRoleAsync(user, DefaultMemberRole);
+
+        await legalDocuments.SaveUserConsentsAsync(
+            user.Id,
+            acceptedTermsDocumentId,
+            acceptedPrivacyDocumentId,
+            consentIpAddress,
+            consentUserAgent,
+            cancellationToken);
 
         return await BuildAuthResultAsync(user, cancellationToken);
     }

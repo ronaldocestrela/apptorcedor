@@ -288,6 +288,72 @@ namespace SocioTorcedor.Modules.Identity.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("SocioTorcedor.Modules.Identity.Infrastructure.Entities.LegalDocumentVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsCurrent")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("PublishedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Kind", "IsCurrent");
+
+                    b.ToTable("LegalDocumentVersions", (string)null);
+                });
+
+            modelBuilder.Entity("SocioTorcedor.Modules.Identity.Infrastructure.Entities.UserLegalConsent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AcceptedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("LegalDocumentVersionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LegalDocumentVersionId");
+
+                    b.HasIndex("UserId", "Kind", "AcceptedAtUtc");
+
+                    b.ToTable("UserLegalConsents", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("SocioTorcedor.Modules.Identity.Infrastructure.Entities.ApplicationRole", null)
@@ -348,6 +414,17 @@ namespace SocioTorcedor.Modules.Identity.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Permission");
+                });
+
+            modelBuilder.Entity("SocioTorcedor.Modules.Identity.Infrastructure.Entities.UserLegalConsent", b =>
+                {
+                    b.HasOne("SocioTorcedor.Modules.Identity.Infrastructure.Entities.LegalDocumentVersion", "LegalDocumentVersion")
+                        .WithMany()
+                        .HasForeignKey("LegalDocumentVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LegalDocumentVersion");
                 });
 
             modelBuilder.Entity("SocioTorcedor.Modules.Identity.Domain.Entities.Permission", b =>

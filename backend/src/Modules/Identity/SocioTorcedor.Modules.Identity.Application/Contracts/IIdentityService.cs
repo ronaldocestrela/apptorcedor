@@ -11,6 +11,10 @@ public interface IIdentityService
         string firstName,
         string lastName,
         Guid tenantId,
+        Guid acceptedTermsDocumentId,
+        Guid acceptedPrivacyDocumentId,
+        string? consentIpAddress,
+        string? consentUserAgent,
         CancellationToken cancellationToken);
 
     Task<Result<AuthResultDto>> LoginAsync(

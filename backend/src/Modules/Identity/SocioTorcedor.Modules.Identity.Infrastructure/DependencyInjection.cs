@@ -10,6 +10,7 @@ using SocioTorcedor.Modules.Identity.Application.Contracts;
 using SocioTorcedor.Modules.Identity.Infrastructure.Entities;
 using SocioTorcedor.Modules.Identity.Infrastructure.Options;
 using SocioTorcedor.Modules.Identity.Infrastructure.Persistence;
+using SocioTorcedor.Modules.Identity.Infrastructure.Repositories;
 using SocioTorcedor.Modules.Identity.Infrastructure.Services;
 using SocioTorcedor.Modules.Tenancy.Application.Contracts;
 
@@ -69,6 +70,7 @@ public static class DependencyInjection
             });
 
         services.AddAuthorization();
+        services.AddScoped<ILegalDocumentRepository, LegalDocumentRepository>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddTransient<ITenantDatabaseProvisioner, TenantDatabaseProvisioner>();

@@ -14,7 +14,7 @@ public sealed class ListMembersHandlerTests
     public async Task Returns_paged_dtos()
     {
         var repo = Substitute.For<IMemberProfileRepository>();
-        repo.ListAsync(2, 10, Arg.Any<CancellationToken>())
+        repo.ListAsync(2, 10, null, Arg.Any<CancellationToken>())
             .Returns(new PagedResult<MemberProfile>(Array.Empty<MemberProfile>(), 0, 2, 10));
 
         var handler = new ListMembersHandler(repo, new ResolvedTenant(Guid.NewGuid()));

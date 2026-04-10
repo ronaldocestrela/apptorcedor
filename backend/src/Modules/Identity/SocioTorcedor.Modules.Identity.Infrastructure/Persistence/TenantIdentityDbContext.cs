@@ -16,6 +16,10 @@ public sealed class TenantIdentityDbContext : IdentityDbContext<ApplicationUser,
 
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
+    public DbSet<LegalDocumentVersion> LegalDocumentVersions => Set<LegalDocumentVersion>();
+
+    public DbSet<UserLegalConsent> UserLegalConsents => Set<UserLegalConsent>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

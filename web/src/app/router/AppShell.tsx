@@ -1,6 +1,9 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
 
 export function AppShell() {
+  const { logout } = useAuth()
+
   return (
     <div className="app-shell">
       <header className="app-shell__header">
@@ -22,6 +25,9 @@ export function AppShell() {
           >
             Sócio
           </NavLink>
+          <button type="button" className="app-shell__logout" onClick={logout}>
+            Sair
+          </button>
         </nav>
       </header>
       <main className="app-shell__main">

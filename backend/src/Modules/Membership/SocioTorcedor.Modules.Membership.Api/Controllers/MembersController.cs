@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SocioTorcedor.BuildingBlocks.Shared.Results;
+using SocioTorcedor.Modules.Membership.Application.Commands.ChangeMemberStatus;
 using SocioTorcedor.Modules.Membership.Application.Commands.CreateMemberProfile;
 using SocioTorcedor.Modules.Membership.Application.Commands.UpdateMemberProfile;
 using SocioTorcedor.Modules.Membership.Application.Queries.GetMemberById;
@@ -133,11 +134,34 @@ public sealed class MembersController(IMediator mediator) : ControllerBase
         return Ok(result.Value);
     }
 
+    public sealed class ChangeMemberStatusBody
+    {
+        public MemberStatus Status { get; set; }
+    }
+
     [Authorize(Roles = "Administrador")]
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> List(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] MemberStatus? status = null,
+        CancellationToken cancellationToken = default)
     {
-        var result = await mediator.Send(new ListMembersQuery(page, pageSize), cancellationToken);
+        var result = await mediator.Send(new ListMembersQuery(page, pageSize, status), cancellationToken);
+        if (!result.IsSuccess)
+            return MapError(result);
+
+        return Ok(result.Value);
+    }
+
+    [Authorize(Roles = "Administrador")]
+    [HttpPatch("{id:guid}/status")]
+    public async Task<IActionResult> ChangeStatus(
+        Guid id,
+        [FromBody] ChangeMemberStatusBody body,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new ChangeMemberStatusCommand(id, body.Status), cancellationToken);
         if (!result.IsSuccess)
             return MapError(result);
 
@@ -149,7 +173,8 @@ public sealed class MembersController(IMediator mediator) : ControllerBase
         {
             "Membership.ProfileNotFound" => new NotFoundObjectResult(new { code = result.Error.Code, message = result.Error.Message }),
             "Membership.CpfConflict" or "Membership.ProfileExists" => new ConflictObjectResult(new { code = result.Error.Code, message = result.Error.Message }),
-            "Membership.InvalidInput" => new BadRequestObjectResult(new { code = result.Error.Code, message = result.Error.Message }),
+            "Membership.InvalidInput" or "Membership.InvalidStatusTransition" =>
+                new BadRequestObjectResult(new { code = result.Error.Code, message = result.Error.Message }),
             "Tenant.Required" => new BadRequestObjectResult(new { code = result.Error.Code, message = result.Error.Message }),
             "Membership.UserRequired" => new UnauthorizedObjectResult(new { code = result.Error.Code, message = result.Error.Message }),
             _ => new BadRequestObjectResult(new { code = result.Error.Code, message = result.Error.Message })

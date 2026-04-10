@@ -282,14 +282,16 @@ ModuleName/
 
 * 1 plano ativo por usuário
 * pode fazer upgrade/downgrade
-* status controlado:
+* status controlado (no backend, enum `MemberStatus`; valores de produto abaixo; existe também `PendingCompletion` para fluxos futuros de cadastro incompleto):
 
 ```text
-Ativo
-Inadimplente
-Cancelado
-Suspenso
+Ativo (Active)
+Inadimplente (Delinquent)
+Cancelado (Canceled)
+Suspenso (Suspended)
 ```
+
+* alteração de status por **administrador do tenant**: `PATCH /api/members/{id}/status` (JWT + role `Administrador` + header `X-Tenant-Id`); listagem admin com filtro opcional `?status=`
 
 ---
 
@@ -413,10 +415,12 @@ src/
 
 ## ⚖️ LGPD
 
-* aceite de termos obrigatório
-* aceite de política de privacidade
-* versionamento de documentos
-* registro de data/hora
+* aceite de termos obrigatório e de política de privacidade no **`POST /api/auth/register`** (IDs das versões vigentes do tenant)
+* versionamento por tenant: tabelas `LegalDocumentVersions` e `UserLegalConsents` no banco do tenant (módulo Identity)
+* registro de data/hora (UTC), IP e user-agent no consentimento
+* **Leitura pública (sem JWT)**: `GET /api/legal-documents/current` — retorna as versões atuais de termos e privacidade (exige `X-Tenant-Id`)
+* **Publicação (admin do clube)**: `POST /api/legal-documents` — role `Administrador`, corpo com `kind` (`TermsOfUse` / `PrivacyPolicy`) e `content`
+* após migrations, tenants sem documentos recebem seed mínimo (placeholder) na subida da API ou na criação do tenant; o clube deve substituir pelo texto oficial
 
 ---
 
@@ -443,8 +447,8 @@ src/
 
 * ✅ cadastro (perfil `MemberProfile`, `api/members`)
 * ✅ planos de sócio (`MemberPlan`, vantagens em JSON, `api/plans`) — Fase 3.2
-* status
-* LGPD
+* ✅ **Fase 3.3** — ciclo de vida do sócio: `MemberStatus` (incl. inadimplente/cancelado/suspenso), regras de transição, `PATCH /api/members/{id}/status`, filtro `GET /api/members?status=`
+* ✅ **Fase 3.4** — LGPD no cadastro: documentos versionados, consentimento obrigatório no register, endpoints `GET /api/legal-documents/current` e `POST /api/legal-documents`
 
 ### Fase 4 — Pagamentos
 

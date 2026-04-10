@@ -77,7 +77,18 @@ public sealed class MemberProfile : AggregateRoot
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void ChangeStatus(MemberStatus status) => Status = status;
+    public void ChangeStatus(MemberStatus status)
+    {
+        var rule = new MemberStatusTransitionRule(Status, status);
+        if (rule.IsBroken())
+            throw new BusinessRuleValidationException(rule);
+
+        if (Status == status)
+            return;
+
+        Status = status;
+        UpdatedAt = DateTime.UtcNow;
+    }
 
     private static string NormalizePhone(string phone)
     {

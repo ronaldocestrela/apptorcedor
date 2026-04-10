@@ -54,6 +54,7 @@ public static class DatabaseMigrationExtensions
             await using (var tenantIdentityDb = new TenantIdentityDbContext(identityOptions))
             {
                 await tenantIdentityDb.Database.MigrateAsync(cancellationToken);
+                await LegalDocumentTenantSeed.SeedIfEmptyAsync(tenantIdentityDb, cancellationToken);
             }
 
             var membershipOptions = new DbContextOptionsBuilder<TenantMembershipDbContext>()

@@ -19,6 +19,10 @@ public sealed class AuthController(IMediator mediator) : ControllerBase
         public string FirstName { get; set; } = string.Empty;
 
         public string LastName { get; set; } = string.Empty;
+
+        public Guid AcceptedTermsDocumentId { get; set; }
+
+        public Guid AcceptedPrivacyDocumentId { get; set; }
     }
 
     public sealed class LoginBody
@@ -32,8 +36,21 @@ public sealed class AuthController(IMediator mediator) : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterBody body, CancellationToken cancellationToken)
     {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var userAgent = HttpContext.Request.Headers.UserAgent.ToString();
+        if (string.IsNullOrWhiteSpace(userAgent))
+            userAgent = null;
+
         var result = await mediator.Send(
-            new RegisterUserCommand(body.Email, body.Password, body.FirstName, body.LastName),
+            new RegisterUserCommand(
+                body.Email,
+                body.Password,
+                body.FirstName,
+                body.LastName,
+                body.AcceptedTermsDocumentId,
+                body.AcceptedPrivacyDocumentId,
+                ip,
+                userAgent),
             cancellationToken);
 
         if (!result.IsSuccess)

@@ -4,7 +4,7 @@
 Módulo **Fase 3** — cadastro de perfil de sócio torcedor e **planos de sócio** no banco **por tenant** (mesma connection string do Identity).
 
 ## Estrutura
-- `SocioTorcedor.Modules.Membership.Domain` — `MemberProfile`, `MemberPlan`, value objects `Cpf`, `Address`, **`Vantagem`** (vantagens do plano; não é entidade), enums, regras (`CpfMustBeUniqueRule`, `PlanNameMustBeUniqueRule`)
+- `SocioTorcedor.Modules.Membership.Domain` — `MemberProfile`, `MemberPlan`, value objects `Cpf`, `Address`, **`Vantagem`** (vantagens do plano; não é entidade), enums (`MemberStatus`), regras (`CpfMustBeUniqueRule`, `PlanNameMustBeUniqueRule`, **`MemberStatusTransitionRule`**)
 - `SocioTorcedor.Modules.Membership.Application` — CQRS, `IMemberProfileRepository`, **`IMemberPlanRepository`**, `ICurrentUserAccessor`
 - `SocioTorcedor.Modules.Membership.Infrastructure` — `TenantMembershipDbContext`, migrations em `__EFMembershipMigrationsHistory`; **`MemberPlan.Vantagens`** mapeadas como coluna **JSON** (`OwnsMany` + `ToJson`), sem tabela filha
 - `SocioTorcedor.Modules.Membership.Api` — `MembersController` (`api/members`), **`PlansController`** (`api/plans`)
@@ -18,3 +18,9 @@ Módulo **Fase 3** — cadastro de perfil de sócio torcedor e **planos de sóci
 - Host: `AddMembershipModule`, migrations de tenant após Identity em `DatabaseMigrationExtensions`
 - `TenantDatabaseProvisioner` (Identity) aplica também migrations do Membership ao criar tenant
 - Rotas admin de membros (`GET /api/members`, `GET /api/members/{id}`) exigem role **`Administrador`**
+
+## Status do sócio (`MemberProfile`) — Fase 3.3
+- Enum **`MemberStatus`**: `PendingCompletion`, `Active`, `Delinquent`, `Canceled`, `Suspended` (persistido como `int`; migration `RemapMemberStatusEnum` converte dados legados `Inactive`/`Suspended` antigos).
+- Transições inválidas retornam erro de aplicação `Membership.InvalidStatusTransition`.
+- **`PATCH /api/members/{id}/status`** (body: `status`) — role **`Administrador`**.
+- **`GET /api/members`** — query opcional **`status`** (filtra por `MemberStatus`).

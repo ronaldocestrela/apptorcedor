@@ -7,7 +7,7 @@ Host ASP.NET Core: composição de módulos (Tenancy, Identity, **Backoffice**),
 - `Program.cs` — bootstrap, `Configure<BackofficeOptions>`, `UseSocioTorcedorMiddleware`, autenticação
 - `Middleware/` — `ExceptionHandlingMiddleware`, `TenantResolutionMiddleware`, **`ApiKeyAuthMiddleware`**, `DynamicCorsMiddleware`
 - `Options/` — `BackofficeOptions` (`Backoffice:ApiKey`)
-- `Extensions/` — `ServiceCollectionExtensions`, `MiddlewareExtensions`, `DatabaseMigrationExtensions`
+- `Extensions/` — `ServiceCollectionExtensions`, `MiddlewareExtensions`, `DatabaseMigrationExtensions` (Identity + Membership por tenant; seed de documentos legais placeholder após migrate do Identity quando vazio)
 - `Swagger/` — `TenantHeaderOperationFilter` (**`X-Tenant-Id`** nas rotas de tenant), **`BackofficeApiKeyOperationFilter`** (segurança **`BackofficeApiKey`** / **`X-Api-Key`** em `api/backoffice/*`)
 - `Tenancy/` — `HttpContextTenantContext` (`ICurrentTenantContext`)
 - `appsettings*.json` — connection string master, JWT, **`Backoffice:ApiKey`**
