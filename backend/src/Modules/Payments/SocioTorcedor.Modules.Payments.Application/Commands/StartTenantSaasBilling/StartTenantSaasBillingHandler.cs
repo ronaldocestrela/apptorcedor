@@ -38,13 +38,23 @@ public sealed class StartTenantSaasBillingHandler(
             return Result<Guid>.Fail(Error.Failure("Payments.InvalidAmount", "Plan amount must be greater than zero."));
 
         var interval = activePlan.BillingCycle == BillingCycle.Yearly ? "year" : "month";
+        var stripePriceId = activePlan.BillingCycle == BillingCycle.Yearly
+            ? saasPlan.StripePriceYearlyId ?? saasPlan.StripePriceMonthlyId
+            : saasPlan.StripePriceMonthlyId;
+
+        var idempotencyKey = $"saas-billing:{command.TenantId:N}";
         var providerResult = await paymentProvider.CreateSubscriptionAsync(
             new CreateSubscriptionRequest(
                 PaymentProviderContext.SaaS,
                 command.TenantId.ToString("N"),
                 amount,
                 "BRL",
-                interval),
+                interval,
+                IdempotencyKey: idempotencyKey,
+                StripePriceId: stripePriceId,
+                ConnectedAccountId: null,
+                CustomerEmail: null,
+                ProductName: saasPlan.Name),
             cancellationToken);
 
         var subscription = TenantBillingSubscription.Start(
@@ -58,6 +68,8 @@ public sealed class StartTenantSaasBillingHandler(
             providerResult.ExternalSubscriptionId,
             BillingSubscriptionStatus.Active,
             NextBillingUtc(activePlan.BillingCycle));
+
+        subscription.SetStripeBillingMetadata(stripePriceId, providerResult.CurrentPeriodEndUtc?.UtcDateTime);
 
         await paymentsRepository.AddSubscriptionAsync(subscription, cancellationToken);
 

@@ -19,11 +19,16 @@ using SocioTorcedor.Modules.Membership.Application.Queries.ListMembers;
 using SocioTorcedor.Modules.Payments.Api;
 using SocioTorcedor.Modules.Payments.Api.Controllers;
 using SocioTorcedor.Modules.Payments.Application.Commands.CreateMemberPixCheckout;
+using SocioTorcedor.Modules.Payments.Application.Commands.CreateMemberStripeCheckoutSession;
+using SocioTorcedor.Modules.Payments.Application.Commands.CreateTenantSaasBillingPortalSession;
 using SocioTorcedor.Modules.Payments.Application.Commands.ProcessMemberTenantWebhook;
+using SocioTorcedor.Modules.Payments.Application.Commands.ProcessStripeConnectWebhook;
 using SocioTorcedor.Modules.Payments.Application.Commands.ProcessTenantSaasWebhook;
+using SocioTorcedor.Modules.Payments.Application.Commands.StartStripeConnectOnboarding;
 using SocioTorcedor.Modules.Payments.Application.Commands.StartTenantSaasBilling;
 using SocioTorcedor.Modules.Payments.Application.Commands.SubscribeMemberPlan;
 using SocioTorcedor.Modules.Payments.Application.Queries.GetMyMemberBilling;
+using SocioTorcedor.Modules.Payments.Application.Queries.GetStripeConnectStatus;
 using SocioTorcedor.Modules.Payments.Application.Queries.GetTenantSaasBilling;
 using SocioTorcedor.Modules.Payments.Application.Queries.ListMyMemberInvoices;
 using SocioTorcedor.Modules.Payments.Application.Queries.ListTenantSaasInvoices;
@@ -62,6 +67,11 @@ public static class ServiceCollectionExtensions
             typeof(ListTenantSaasInvoicesHandler).Assembly,
             typeof(SubscribeMemberPlanHandler).Assembly,
             typeof(CreateMemberPixCheckoutHandler).Assembly,
+            typeof(CreateMemberStripeCheckoutSessionHandler).Assembly,
+            typeof(CreateTenantSaasBillingPortalSessionHandler).Assembly,
+            typeof(StartStripeConnectOnboardingHandler).Assembly,
+            typeof(GetStripeConnectStatusHandler).Assembly,
+            typeof(ProcessStripeConnectWebhookHandler).Assembly,
             typeof(ProcessMemberTenantWebhookHandler).Assembly,
             typeof(GetMyMemberBillingHandler).Assembly,
             typeof(ListMyMemberInvoicesHandler).Assembly);

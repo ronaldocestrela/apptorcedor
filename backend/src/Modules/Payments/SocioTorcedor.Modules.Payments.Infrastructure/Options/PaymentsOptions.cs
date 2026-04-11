@@ -8,4 +8,25 @@ public sealed class PaymentsOptions
     /// Segredo compartilhado para webhooks do tenant (header X-Payments-Webhook-Secret).
     /// </summary>
     public string MemberWebhookSecret { get; set; } = string.Empty;
+
+    /// <summary>Chave secreta da API Stripe (sk_test_... / sk_live_...).</summary>
+    public string StripeSecretKey { get; set; } = string.Empty;
+
+    /// <summary>Opcional: publishable key para o frontend (pk_...).</summary>
+    public string StripePublishableKey { get; set; } = string.Empty;
+
+    /// <summary>Webhook signing secret para eventos de Billing SaaS (conta da plataforma).</summary>
+    public string StripeSaasWebhookSecret { get; set; } = string.Empty;
+
+    /// <summary>Webhook signing secret para eventos Connect / contas conectadas.</summary>
+    public string StripeConnectWebhookSecret { get; set; } = string.Empty;
+
+    /// <summary>Informacional: test ou live.</summary>
+    public string StripeEnvironment { get; set; } = "test";
+
+    /// <summary>
+    /// URL base pública (API ou SPA) para montar success/cancel de Checkout e links de Connect
+    /// (ex.: https://app.exemplo.com ou https://api.exemplo.com).
+    /// </summary>
+    public string PublicAppBaseUrl { get; set; } = string.Empty;
 }

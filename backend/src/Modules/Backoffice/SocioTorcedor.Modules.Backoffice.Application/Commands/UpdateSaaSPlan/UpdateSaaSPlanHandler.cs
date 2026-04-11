@@ -20,7 +20,9 @@ public sealed class UpdateSaaSPlanHandler(ISaaSPlanRepository repository)
                 command.Description,
                 command.MonthlyPrice,
                 command.YearlyPrice,
-                command.MaxMembers);
+                command.MaxMembers,
+                command.StripePriceMonthlyId,
+                command.StripePriceYearlyId);
 
             if (command.Features is not null)
             {

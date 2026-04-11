@@ -7,6 +7,8 @@ public sealed record SaaSPlanDetailDto(
     decimal MonthlyPrice,
     decimal? YearlyPrice,
     int MaxMembers,
+    string? StripePriceMonthlyId,
+    string? StripePriceYearlyId,
     bool IsActive,
     DateTime CreatedAt,
     DateTime UpdatedAt,

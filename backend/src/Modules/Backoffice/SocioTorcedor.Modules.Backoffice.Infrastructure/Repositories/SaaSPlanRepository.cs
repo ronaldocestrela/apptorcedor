@@ -35,6 +35,8 @@ public sealed class SaaSPlanRepository(BackofficeMasterDbContext db) : ISaaSPlan
             plan.MonthlyPrice,
             plan.YearlyPrice,
             plan.MaxMembers,
+            plan.StripePriceMonthlyId,
+            plan.StripePriceYearlyId,
             plan.IsActive,
             plan.CreatedAt,
             plan.UpdatedAt,
@@ -60,6 +62,8 @@ public sealed class SaaSPlanRepository(BackofficeMasterDbContext db) : ISaaSPlan
                 p.MonthlyPrice,
                 p.YearlyPrice,
                 p.MaxMembers,
+                p.StripePriceMonthlyId,
+                p.StripePriceYearlyId,
                 p.IsActive))
             .ToListAsync(cancellationToken);
 

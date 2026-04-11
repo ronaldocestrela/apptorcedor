@@ -7,4 +7,6 @@ public sealed record SaaSPlanDto(
     decimal MonthlyPrice,
     decimal? YearlyPrice,
     int MaxMembers,
+    string? StripePriceMonthlyId,
+    string? StripePriceYearlyId,
     bool IsActive);

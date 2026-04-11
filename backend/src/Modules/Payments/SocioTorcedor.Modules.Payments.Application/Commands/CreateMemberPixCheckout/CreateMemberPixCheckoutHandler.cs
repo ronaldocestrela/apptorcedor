@@ -1,6 +1,7 @@
 using SocioTorcedor.BuildingBlocks.Application.Abstractions;
 using SocioTorcedor.BuildingBlocks.Application.Payments;
 using SocioTorcedor.BuildingBlocks.Shared.Results;
+using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
 using SocioTorcedor.Modules.Membership.Application.Contracts;
 using SocioTorcedor.Modules.Payments.Application.Contracts;
 using SocioTorcedor.Modules.Payments.Application.DTOs;
@@ -11,9 +12,12 @@ namespace SocioTorcedor.Modules.Payments.Application.Commands.CreateMemberPixChe
 
 public sealed class CreateMemberPixCheckoutHandler(
     ICurrentUserAccessor currentUserAccessor,
+    ICurrentTenantContext tenantContext,
     IMemberProfileRepository memberProfileRepository,
     IMemberPlanRepository memberPlanRepository,
     IMemberTenantPaymentsRepository paymentsRepository,
+    ITenantMasterPaymentsRepository masterPaymentsRepository,
+    IPaymentsGatewayMetadata paymentsGatewayMetadata,
     IPaymentProvider paymentProvider)
     : ICommandHandler<CreateMemberPixCheckoutCommand, MemberPixCheckoutDto>
 {
@@ -45,13 +49,22 @@ public sealed class CreateMemberPixCheckoutHandler(
                     "Subscribe to this plan first (POST /api/payments/member/subscribe)."));
         }
 
+        string? connectAccountId = null;
+        if (paymentsGatewayMetadata.IsStripeEnabled)
+        {
+            var connect = await masterPaymentsRepository.GetStripeConnectByTenantIdAsync(tenantContext.TenantId, cancellationToken);
+            if (connect is { ChargesEnabled: true })
+                connectAccountId = connect.StripeAccountId;
+        }
+
         var pix = await paymentProvider.CreatePixAsync(
             new CreatePixChargeRequest(
                 PaymentProviderContext.Member,
                 $"{profile.Id:N}:{plan.Id:N}:{Guid.NewGuid():N}",
                 plan.Preco,
                 "BRL",
-                $"Plano {plan.Nome}"),
+                $"Plano {plan.Nome}",
+                ConnectedAccountId: connectAccountId),
             cancellationToken);
 
         var invoice = MemberBillingInvoice.Create(

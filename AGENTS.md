@@ -472,9 +472,9 @@ src/
 
 ### Fase 4 — Pagamentos
 
-* ✅ **MVP backend** — módulo `Payments`: assinatura + faturas SaaS (master) e sócio (tenant); `POST/GET` backoffice em `api/backoffice/payments/saas/*`; `api/payments/member/*` (subscribe, PIX checkout, **`GET /api/payments/member/me/subscription`** com `planName` do `MemberPlan`, faturas); webhooks SaaS (API key) e tenant (`X-Payments-Webhook-Secret`); provider **stub** trocável por gateway real
+* ✅ **MVP backend** — módulo `Payments`: assinatura + faturas SaaS (master) e sócio (tenant); `POST/GET` backoffice em `api/backoffice/payments/saas/*`; **`Stripe`** opcional (`Payments:Gateway`): Billing SaaS com price IDs nos planos, **Stripe Connect Express** por tenant (`api/backoffice/payments/stripe/connect/*`), checkout sócio e **`POST /api/webhooks/stripe/saas`** + **`POST /api/webhooks/stripe/connect`** (assinatura Stripe, idempotência por `event.id`); `api/payments/member/*` (subscribe, PIX, sessão Stripe quando configurado, **`GET /api/payments/member/me/subscription`** com `planName`); webhooks legados SaaS (API key) e tenant (`X-Payments-Webhook-Secret`); provider **stub** ou **Stripe** (`IPaymentProvider`)
 * ✅ **MVP web** — rotas `/member` (perfil sócio, `GET /api/members/me`), `/member/billing` (fluxo sócio) e `/admin/billing` (orientação SaaS / backoffice); UI responsiva, tema claro/escuro, menu admin visível só para role **`Administrador`**
-* recorrência end-to-end com gateway de produção
+* recorrência end-to-end com gateway de produção (operacionalização, monitoramento)
 * cartão (tokenização / 3DS) além do stub
 * conciliação e jobs de cobrança
 

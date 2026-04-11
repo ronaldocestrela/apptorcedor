@@ -12,7 +12,8 @@ public sealed class DynamicCorsMiddleware(RequestDelegate next)
         "/health",
         "/swagger",
         "/scalar",
-        "/api/backoffice"
+        "/api/backoffice",
+        "/api/webhooks"
     ];
 
     public async Task InvokeAsync(HttpContext context, ITenantResolver tenantResolver)

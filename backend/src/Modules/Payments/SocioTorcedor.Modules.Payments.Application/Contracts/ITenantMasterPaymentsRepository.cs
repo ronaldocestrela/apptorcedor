@@ -14,6 +14,10 @@ public interface ITenantMasterPaymentsRepository
 
     Task AddWebhookAsync(TenantPaymentWebhookInbox inbox, CancellationToken cancellationToken);
 
+    Task<ConnectStripeWebhookInbox?> GetConnectWebhookByIdempotencyKeyAsync(string idempotencyKey, CancellationToken cancellationToken);
+
+    Task AddConnectWebhookAsync(ConnectStripeWebhookInbox inbox, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<TenantBillingInvoice>> ListInvoicesByTenantAsync(
         Guid tenantId,
         int skip,
@@ -23,6 +27,12 @@ public interface ITenantMasterPaymentsRepository
     Task<int> CountInvoicesByTenantAsync(Guid tenantId, CancellationToken cancellationToken);
 
     Task<TenantBillingSubscription?> GetSubscriptionByExternalIdAsync(string externalSubscriptionId, CancellationToken cancellationToken);
+
+    Task<TenantStripeConnectAccount?> GetStripeConnectByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken);
+
+    Task<TenantStripeConnectAccount?> GetStripeConnectByStripeAccountIdAsync(string stripeAccountId, CancellationToken cancellationToken);
+
+    Task AddStripeConnectAsync(TenantStripeConnectAccount account, CancellationToken cancellationToken);
 
     Task SaveChangesAsync(CancellationToken cancellationToken);
 }

@@ -1,9 +1,15 @@
+using DotNetEnv;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using SocioTorcedor.Api.Extensions;
 using SocioTorcedor.Api.Options;
 using SocioTorcedor.Api.Tenancy;
 using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
+
+var contentRoot = Directory.GetCurrentDirectory();
+var envPath = Path.Combine(contentRoot, ".env");
+if (File.Exists(envPath))
+    Env.Load(envPath);
 
 var builder = WebApplication.CreateBuilder(args);
 

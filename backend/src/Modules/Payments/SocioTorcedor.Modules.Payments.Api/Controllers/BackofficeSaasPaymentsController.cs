@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SocioTorcedor.Modules.Backoffice.Api.Controllers;
+using SocioTorcedor.Modules.Payments.Application.Commands.CreateTenantSaasBillingPortalSession;
 using SocioTorcedor.Modules.Payments.Application.Commands.ProcessTenantSaasWebhook;
 using SocioTorcedor.Modules.Payments.Application.Commands.StartTenantSaasBilling;
 using SocioTorcedor.Modules.Payments.Application.Queries.GetTenantSaasBilling;
@@ -37,6 +38,19 @@ public sealed class BackofficeSaasPaymentsController(IMediator mediator) : Backo
         return FromResult(result, Ok);
     }
 
+    [HttpPost("tenants/{tenantId:guid}/billing/portal")]
+    public async Task<IActionResult> CreatePortalSession(
+        Guid tenantId,
+        [FromBody] PortalBody body,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new CreateTenantSaasBillingPortalSessionCommand(tenantId, body.ReturnUrl),
+            cancellationToken);
+
+        return FromResult(result, Ok);
+    }
+
     [HttpPost("webhooks")]
     public async Task<IActionResult> Webhook([FromBody] WebhookBody body, CancellationToken cancellationToken)
     {
@@ -60,5 +74,10 @@ public sealed class BackofficeSaasPaymentsController(IMediator mediator) : Backo
         public string? RawBody { get; set; }
 
         public string? ExternalSubscriptionId { get; set; }
+    }
+
+    public sealed class PortalBody
+    {
+        public string ReturnUrl { get; set; } = string.Empty;
     }
 }

@@ -31,6 +31,12 @@ public sealed class TenantBillingSubscription : AggregateRoot
 
     public string? ExternalSubscriptionId { get; private set; }
 
+    /// <summary>Price Stripe usado nesta assinatura (auditoria).</summary>
+    public string? StripePriceId { get; private set; }
+
+    /// <summary>Fim do período de cobrança atual na Stripe (UTC).</summary>
+    public DateTime? CurrentPeriodEndUtc { get; private set; }
+
     public DateTime? NextBillingAtUtc { get; private set; }
 
     public DateTime CreatedAtUtc { get; private set; }
@@ -84,6 +90,14 @@ public sealed class TenantBillingSubscription : AggregateRoot
         Status = status;
         if (nextBillingAtUtc.HasValue)
             NextBillingAtUtc = nextBillingAtUtc;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetStripeBillingMetadata(string? stripePriceId, DateTime? currentPeriodEndUtc)
+    {
+        StripePriceId = string.IsNullOrWhiteSpace(stripePriceId) ? null : stripePriceId.Trim();
+        if (currentPeriodEndUtc.HasValue)
+            CurrentPeriodEndUtc = currentPeriodEndUtc;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 }

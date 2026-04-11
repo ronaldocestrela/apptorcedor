@@ -9,6 +9,12 @@ public sealed class ApiKeyAuthMiddleware(RequestDelegate next, IOptions<Backoffi
 
     public async Task InvokeAsync(HttpContext context)
     {
+        if (context.Request.Path.StartsWithSegments("/api/webhooks"))
+        {
+            await next(context);
+            return;
+        }
+
         if (!context.Request.Path.StartsWithSegments("/api/backoffice"))
         {
             await next(context);

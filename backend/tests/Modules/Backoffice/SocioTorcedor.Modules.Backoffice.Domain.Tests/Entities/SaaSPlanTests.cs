@@ -13,7 +13,7 @@ public sealed class SaaSPlanTests
             ("f1", "d1", "v1")
         };
 
-        var plan = SaaSPlan.Create("Pro", "Desc", 10m, 100m, 500, features);
+        var plan = SaaSPlan.Create("Pro", "Desc", 10m, 100m, 500, null, null, features);
 
         plan.Name.Should().Be("Pro");
         plan.Features.Should().ContainSingle();
@@ -24,7 +24,7 @@ public sealed class SaaSPlanTests
     [Fact]
     public void ToggleActive_flips_flag()
     {
-        var plan = SaaSPlan.Create("Basic", null, 0m, null, 0, null);
+        var plan = SaaSPlan.Create("Basic", null, 0m, null, 0, null, null, null);
         plan.IsActive.Should().BeTrue();
 
         plan.ToggleActive();

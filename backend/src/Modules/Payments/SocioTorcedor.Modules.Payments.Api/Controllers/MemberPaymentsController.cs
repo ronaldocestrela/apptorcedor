@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SocioTorcedor.BuildingBlocks.Shared.Results;
 using SocioTorcedor.Modules.Payments.Application.Commands.CreateMemberPixCheckout;
+using SocioTorcedor.Modules.Payments.Application.Commands.CreateMemberStripeCheckoutSession;
 using SocioTorcedor.Modules.Payments.Application.Commands.ProcessMemberTenantWebhook;
 using SocioTorcedor.Modules.Payments.Application.Commands.SubscribeMemberPlan;
 using SocioTorcedor.Modules.Payments.Application.Queries.GetMyMemberBilling;
@@ -35,6 +36,17 @@ public sealed class MemberPaymentsController(IMediator mediator, IOptions<Paymen
     public async Task<IActionResult> CheckoutPix([FromBody] PixBody body, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new CreateMemberPixCheckoutCommand(body.MemberPlanId), cancellationToken);
+        return FromResult(result, Ok);
+    }
+
+    [Authorize]
+    [HttpPost("checkout/stripe-session")]
+    public async Task<IActionResult> CheckoutStripeSession([FromBody] StripeCheckoutBody body, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new CreateMemberStripeCheckoutSessionCommand(body.MemberPlanId, body.SuccessUrl, body.CancelUrl),
+            cancellationToken);
+
         return FromResult(result, Ok);
     }
 
@@ -87,6 +99,15 @@ public sealed class MemberPaymentsController(IMediator mediator, IOptions<Paymen
     public sealed class PixBody
     {
         public Guid MemberPlanId { get; set; }
+    }
+
+    public sealed class StripeCheckoutBody
+    {
+        public Guid MemberPlanId { get; set; }
+
+        public string SuccessUrl { get; set; } = string.Empty;
+
+        public string CancelUrl { get; set; } = string.Empty;
     }
 
     public sealed class MemberWebhookBody

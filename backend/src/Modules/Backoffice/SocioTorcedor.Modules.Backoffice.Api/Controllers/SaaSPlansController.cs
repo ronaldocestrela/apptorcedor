@@ -24,6 +24,8 @@ public sealed class SaaSPlansController(IMediator mediator) : BackofficeControll
                 body.MonthlyPrice,
                 body.YearlyPrice,
                 body.MaxMembers,
+                body.StripePriceMonthlyId,
+                body.StripePriceYearlyId,
                 features),
             cancellationToken);
 
@@ -60,6 +62,8 @@ public sealed class SaaSPlansController(IMediator mediator) : BackofficeControll
                 body.MonthlyPrice,
                 body.YearlyPrice,
                 body.MaxMembers,
+                body.StripePriceMonthlyId,
+                body.StripePriceYearlyId,
                 features),
             cancellationToken);
 
@@ -85,6 +89,10 @@ public sealed class SaaSPlansController(IMediator mediator) : BackofficeControll
 
         public int MaxMembers { get; set; }
 
+        public string? StripePriceMonthlyId { get; set; }
+
+        public string? StripePriceYearlyId { get; set; }
+
         public List<FeatureBody>? Features { get; set; }
     }
 
@@ -99,6 +107,10 @@ public sealed class SaaSPlansController(IMediator mediator) : BackofficeControll
         public decimal? YearlyPrice { get; set; }
 
         public int MaxMembers { get; set; }
+
+        public string? StripePriceMonthlyId { get; set; }
+
+        public string? StripePriceYearlyId { get; set; }
 
         public List<FeatureBody>? Features { get; set; }
     }

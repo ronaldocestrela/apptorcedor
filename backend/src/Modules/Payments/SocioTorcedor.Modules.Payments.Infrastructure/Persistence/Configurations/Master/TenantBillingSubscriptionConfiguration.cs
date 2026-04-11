@@ -16,6 +16,7 @@ public sealed class TenantBillingSubscriptionConfiguration : IEntityTypeConfigur
         builder.Property(x => x.Currency).HasMaxLength(8);
         builder.Property(x => x.ExternalCustomerId).HasMaxLength(256);
         builder.Property(x => x.ExternalSubscriptionId).HasMaxLength(256);
+        builder.Property(x => x.StripePriceId).HasMaxLength(128);
 
         builder.HasIndex(x => x.TenantId);
         builder.HasIndex(x => x.ExternalSubscriptionId);

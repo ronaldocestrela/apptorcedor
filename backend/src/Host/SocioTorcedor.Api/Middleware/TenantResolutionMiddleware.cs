@@ -11,7 +11,8 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         "/health",
         "/swagger",
         "/scalar",
-        "/api/backoffice"
+        "/api/backoffice",
+        "/api/webhooks"
     ];
 
     public async Task InvokeAsync(HttpContext context, ITenantResolver tenantResolver)

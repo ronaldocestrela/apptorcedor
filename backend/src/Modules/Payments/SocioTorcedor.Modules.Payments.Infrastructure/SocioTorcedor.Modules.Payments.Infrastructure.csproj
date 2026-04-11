@@ -16,6 +16,7 @@
     <ProjectReference Include="..\..\..\BuildingBlocks\SocioTorcedor.BuildingBlocks.Infrastructure\SocioTorcedor.BuildingBlocks.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\SocioTorcedor.BuildingBlocks.Application\SocioTorcedor.BuildingBlocks.Application.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\SocioTorcedor.BuildingBlocks.Shared\SocioTorcedor.BuildingBlocks.Shared.csproj" />
+    <ProjectReference Include="..\..\Tenancy\SocioTorcedor.Modules.Tenancy.Infrastructure\SocioTorcedor.Modules.Tenancy.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +28,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Stripe.net" />
   </ItemGroup>
 
 </Project>

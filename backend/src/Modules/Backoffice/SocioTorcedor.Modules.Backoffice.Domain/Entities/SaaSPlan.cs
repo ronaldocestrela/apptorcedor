@@ -18,6 +18,12 @@ public sealed class SaaSPlan : AggregateRoot
 
     public int MaxMembers { get; private set; }
 
+    /// <summary>ID do Price mensal na Stripe (price_...), opcional.</summary>
+    public string? StripePriceMonthlyId { get; private set; }
+
+    /// <summary>ID do Price anual na Stripe (price_...), opcional.</summary>
+    public string? StripePriceYearlyId { get; private set; }
+
     public bool IsActive { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
@@ -32,6 +38,8 @@ public sealed class SaaSPlan : AggregateRoot
         decimal monthlyPrice,
         decimal? yearlyPrice,
         int maxMembers,
+        string? stripePriceMonthlyId,
+        string? stripePriceYearlyId,
         IReadOnlyList<(string Key, string? Description, string? Value)>? features)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -54,6 +62,8 @@ public sealed class SaaSPlan : AggregateRoot
             MonthlyPrice = monthlyPrice,
             YearlyPrice = yearlyPrice,
             MaxMembers = maxMembers,
+            StripePriceMonthlyId = string.IsNullOrWhiteSpace(stripePriceMonthlyId) ? null : stripePriceMonthlyId.Trim(),
+            StripePriceYearlyId = string.IsNullOrWhiteSpace(stripePriceYearlyId) ? null : stripePriceYearlyId.Trim(),
             IsActive = true,
             CreatedAt = now,
             UpdatedAt = now
@@ -78,7 +88,9 @@ public sealed class SaaSPlan : AggregateRoot
         string? description,
         decimal monthlyPrice,
         decimal? yearlyPrice,
-        int maxMembers)
+        int maxMembers,
+        string? stripePriceMonthlyId,
+        string? stripePriceYearlyId)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is required.", nameof(name));
@@ -97,6 +109,8 @@ public sealed class SaaSPlan : AggregateRoot
         MonthlyPrice = monthlyPrice;
         YearlyPrice = yearlyPrice;
         MaxMembers = maxMembers;
+        StripePriceMonthlyId = string.IsNullOrWhiteSpace(stripePriceMonthlyId) ? null : stripePriceMonthlyId.Trim();
+        StripePriceYearlyId = string.IsNullOrWhiteSpace(stripePriceYearlyId) ? null : stripePriceYearlyId.Trim();
         UpdatedAt = DateTime.UtcNow;
     }
 

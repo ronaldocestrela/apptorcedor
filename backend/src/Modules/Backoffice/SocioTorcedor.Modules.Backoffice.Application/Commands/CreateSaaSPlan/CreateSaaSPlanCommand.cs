@@ -10,4 +10,6 @@ public sealed record CreateSaaSPlanCommand(
     decimal MonthlyPrice,
     decimal? YearlyPrice,
     int MaxMembers,
+    string? StripePriceMonthlyId,
+    string? StripePriceYearlyId,
     IReadOnlyList<SaaSPlanFeatureInput>? Features) : ICommand<Guid>;

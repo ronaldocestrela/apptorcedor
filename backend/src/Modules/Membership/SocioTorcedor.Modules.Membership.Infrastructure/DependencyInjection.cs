@@ -25,6 +25,7 @@ public static class DependencyInjection
 
         services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
         services.AddScoped<IMemberPlanRepository, MemberPlanRepository>();
+        services.AddScoped<IMemberProfileStatusService, MemberProfileStatusService>();
         services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
         return services;
     }

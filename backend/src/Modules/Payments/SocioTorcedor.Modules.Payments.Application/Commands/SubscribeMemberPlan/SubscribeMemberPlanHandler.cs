@@ -1,6 +1,7 @@
 using SocioTorcedor.BuildingBlocks.Application.Abstractions;
 using SocioTorcedor.BuildingBlocks.Application.Payments;
 using SocioTorcedor.BuildingBlocks.Shared.Results;
+using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
 using SocioTorcedor.Modules.Membership.Application.Contracts;
 using SocioTorcedor.Modules.Payments.Application.Contracts;
 using SocioTorcedor.Modules.Payments.Domain.Entities;
@@ -10,9 +11,12 @@ namespace SocioTorcedor.Modules.Payments.Application.Commands.SubscribeMemberPla
 
 public sealed class SubscribeMemberPlanHandler(
     ICurrentUserAccessor currentUserAccessor,
+    ICurrentTenantContext tenantContext,
     IMemberProfileRepository memberProfileRepository,
     IMemberPlanRepository memberPlanRepository,
     IMemberTenantPaymentsRepository paymentsRepository,
+    ITenantMasterPaymentsRepository masterPaymentsRepository,
+    IPaymentsGatewayMetadata paymentsGatewayMetadata,
     IPaymentProvider paymentProvider)
     : ICommandHandler<SubscribeMemberPlanCommand, Guid>
 {
@@ -33,6 +37,16 @@ public sealed class SubscribeMemberPlanHandler(
         if (plan.Preco <= 0)
             return Result<Guid>.Fail(Error.Failure("Payments.InvalidAmount", "Plan price must be greater than zero."));
 
+        string? connectAccountId = null;
+        if (paymentsGatewayMetadata.IsStripeEnabled)
+        {
+            var connect = await masterPaymentsRepository.GetStripeConnectByTenantIdAsync(tenantContext.TenantId, cancellationToken);
+            if (connect is null || !connect.ChargesEnabled)
+                return Result<Guid>.Fail(Error.Failure("Payments.Connect.NotReady", "Stripe Connect is not ready for this club."));
+
+            connectAccountId = connect.StripeAccountId;
+        }
+
         var existing = await paymentsRepository.GetActiveSubscriptionByMemberAsync(profile.Id, cancellationToken);
         if (existing is not null)
         {
@@ -41,19 +55,27 @@ public sealed class SubscribeMemberPlanHandler(
                 await paymentProvider.CancelAsync(
                     PaymentProviderContext.Member,
                     existing.ExternalSubscriptionId,
+                    connectedAccountId: connectAccountId,
+                    idempotencyKey: $"cancel:{existing.ExternalSubscriptionId}",
                     cancellationToken);
             }
 
             existing.MarkStatus(BillingSubscriptionStatus.Canceled);
         }
 
+        var idempotencyKey = $"member-sub:{profile.Id:N}:{plan.Id:N}";
         var providerResult = await paymentProvider.CreateSubscriptionAsync(
             new CreateSubscriptionRequest(
                 PaymentProviderContext.Member,
                 $"{profile.Id:N}:{plan.Id:N}",
                 plan.Preco,
                 "BRL",
-                "month"),
+                "month",
+                IdempotencyKey: idempotencyKey,
+                StripePriceId: null,
+                ConnectedAccountId: connectAccountId,
+                CustomerEmail: null,
+                ProductName: plan.Nome),
             cancellationToken);
 
         var subscription = MemberBillingSubscription.Start(

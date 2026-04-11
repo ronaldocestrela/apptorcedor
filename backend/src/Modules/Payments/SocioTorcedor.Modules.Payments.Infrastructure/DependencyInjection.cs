@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using SocioTorcedor.BuildingBlocks.Application.Payments;
 using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
 using SocioTorcedor.Modules.Payments.Application.Contracts;
@@ -8,6 +9,7 @@ using SocioTorcedor.Modules.Payments.Infrastructure.Options;
 using SocioTorcedor.Modules.Payments.Infrastructure.Persistence;
 using SocioTorcedor.Modules.Payments.Infrastructure.Repositories;
 using SocioTorcedor.Modules.Payments.Infrastructure.Services;
+using SocioTorcedor.Modules.Tenancy.Infrastructure.Persistence;
 
 namespace SocioTorcedor.Modules.Payments.Infrastructure;
 
@@ -40,7 +42,18 @@ public static class DependencyInjection
 
         services.AddScoped<ITenantMasterPaymentsRepository, TenantMasterPaymentsRepository>();
         services.AddScoped<IMemberTenantPaymentsRepository, MemberTenantPaymentsRepository>();
-        services.AddSingleton<IPaymentProvider, StubPaymentProvider>();
+        services.AddScoped<ITenantConnectionStringResolver, TenantConnectionStringResolver>();
+        services.AddScoped<IMemberTenantPaymentsScopeFactory, MemberTenantPaymentsScopeFactory>();
+
+        services.AddSingleton<IPaymentProvider>(sp =>
+        {
+            var opts = sp.GetRequiredService<IOptions<PaymentsOptions>>().Value;
+            return !string.IsNullOrWhiteSpace(opts.StripeSecretKey)
+                ? new StripePaymentProvider(sp.GetRequiredService<IOptions<PaymentsOptions>>())
+                : new StubPaymentProvider();
+        });
+
+        services.AddSingleton<IPaymentsGatewayMetadata, PaymentsGatewayMetadata>();
 
         return services;
     }

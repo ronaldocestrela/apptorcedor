@@ -10,4 +10,6 @@ public sealed record UpdateSaaSPlanCommand(
     decimal MonthlyPrice,
     decimal? YearlyPrice,
     int MaxMembers,
+    string? StripePriceMonthlyId,
+    string? StripePriceYearlyId,
     IReadOnlyList<SaaSPlanFeatureInput>? Features) : ICommand;

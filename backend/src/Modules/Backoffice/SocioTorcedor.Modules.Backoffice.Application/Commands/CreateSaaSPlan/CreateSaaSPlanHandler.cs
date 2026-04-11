@@ -22,6 +22,8 @@ public sealed class CreateSaaSPlanHandler(ISaaSPlanRepository repository)
                 command.MonthlyPrice,
                 command.YearlyPrice,
                 command.MaxMembers,
+                command.StripePriceMonthlyId,
+                command.StripePriceYearlyId,
                 features);
 
             await repository.AddAsync(plan, cancellationToken);
