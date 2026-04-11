@@ -1,4 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Options;
+using SocioTorcedor.Api.Options;
 using SocioTorcedor.Api.Tenancy;
 using SocioTorcedor.Modules.Tenancy.Application.Contracts;
 using SocioTorcedor.Modules.Tenancy.Application.DTOs;
@@ -12,15 +14,25 @@ public sealed class DynamicCorsMiddleware(RequestDelegate next)
         "/health",
         "/swagger",
         "/scalar",
-        "/api/backoffice",
         "/api/webhooks"
     ];
 
-    public async Task InvokeAsync(HttpContext context, ITenantResolver tenantResolver)
+    private static readonly PathString BackofficePathPrefix = "/api/backoffice";
+
+    public async Task InvokeAsync(
+        HttpContext context,
+        ITenantResolver tenantResolver,
+        IOptions<BackofficeOptions> backofficeOptions)
     {
         if (ShouldBypass(context.Request.Path))
         {
             await next(context);
+            return;
+        }
+
+        if (context.Request.Path.StartsWithSegments(BackofficePathPrefix))
+        {
+            await HandleBackofficeCorsAsync(context, backofficeOptions.Value);
             return;
         }
 
@@ -54,6 +66,44 @@ public sealed class DynamicCorsMiddleware(RequestDelegate next)
         }
 
         await next(context);
+    }
+
+    private async Task HandleBackofficeCorsAsync(HttpContext context, BackofficeOptions options)
+    {
+        var origin = context.Request.Headers.Origin.ToString();
+        var hasOrigin = !string.IsNullOrEmpty(origin);
+        var normalizedOrigin = hasOrigin ? origin.Trim().TrimEnd('/') : string.Empty;
+        var allowed = hasOrigin && IsOriginInList(normalizedOrigin, options.AllowedOrigins);
+
+        if (HttpMethods.IsOptions(context.Request.Method))
+        {
+            if (allowed)
+                WriteCorsHeaders(context.Response, origin);
+            context.Response.StatusCode = StatusCodes.Status204NoContent;
+            return;
+        }
+
+        if (allowed)
+            WriteCorsHeaders(context.Response, origin);
+
+        await next(context);
+    }
+
+    private static bool IsOriginInList(string normalizedOrigin, IList<string>? allowedOrigins)
+    {
+        if (allowedOrigins is null || allowedOrigins.Count == 0)
+            return false;
+
+        foreach (var o in allowedOrigins)
+        {
+            var trimmed = (o ?? string.Empty).Trim().TrimEnd('/');
+            if (trimmed.Length == 0)
+                continue;
+            if (string.Equals(trimmed, normalizedOrigin, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     private static async Task<TenantContext?> EnsureTenantContextAsync(

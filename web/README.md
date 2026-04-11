@@ -6,16 +6,16 @@ SPA **React + Vite + TypeScript**, com **Axios** e **React Router**.
 
 | Pasta | Uso |
 |--------|-----|
-| `app/` | Shell, roteamento (`router/`), autenticação (`auth/`), tema (`theme/`: `useTheme`, `ThemeToggle`) |
-| `shared/` | Código compartilhado (`http`, `tenant`, `auth`, `payments`, `members`, etc.) |
-| `features/` | Módulos por domínio |
-| `pages/` | Páginas (`admin/`, `member/`, `auth/`, `system/`) |
+| `app/` | Shell, roteamento (`router/`), **backoffice** (`backoffice/`: rotas `/backoffice/*`), autenticação (`auth/`), tema (`theme/`: `useTheme`, `ThemeToggle`) |
+| `shared/` | Código compartilhado (`http` + `backofficeClient`, **`backoffice/`** (APIs `api/backoffice/*`), `tenant`, `auth`, `payments`, `members`, etc.) |
+| `features/` | Módulos por domínio (opcional; ainda pouco usado) |
+| `pages/` | Páginas (`admin/`, `member/`, **`backoffice/`**, `auth/`, `system/`) |
 
 ## UI e tema (claro / escuro)
 
 * Estilos: **`src/index.css`** com variáveis CSS por tema; **`data-theme="light"`** ou **`dark`** no elemento `<html>`.
 * Persistência: **`localStorage`** chave **`theme`**; em **`index.html`**, script inline aplica o tema antes do React (fallback: `prefers-color-scheme`).
-* **Toggle:** barra do [`AppShell`](src/app/router/AppShell.tsx) (logado); canto superior direito em login, cadastro e [`TenantNotResolvedPage`](src/pages/system/TenantNotResolvedPage.tsx).
+* **Toggle:** barra do [`AppShell`](src/app/router/AppShell.tsx) (logado); canto superior direito em login, cadastro, [`TenantNotResolvedPage`](src/pages/system/TenantNotResolvedPage.tsx) e [`BackofficeShell`](src/app/backoffice/BackofficeShell.tsx).
 * Layout responsivo: navegação principal com menu “hambúrguer” em telas estreitas (~600px).
 
 ## Fase 1.2 — Tenant por subdomínio (modo estrito)
@@ -88,12 +88,23 @@ npm install
 npm run dev
 npm run build
 npm run preview
+npm test
+npm run test:watch
 ```
+
+## Backoffice SaaS (`/backoffice/*`)
+
+Área para **operadores da plataforma** (master DB), autenticada com **`X-Api-Key`** — a mesma chave de `Backoffice:ApiKey` no backend.
+
+- **Não** usa resolução de tenant por subdomínio: em [`App.tsx`](src/app/App.tsx), se o path começa com `/backoffice`, o app monta só o [`BackofficeRouter`](src/app/backoffice/BackofficeRouter.tsx) (pode abrir em `http://localhost:5173/backoffice/login`).
+- **Login:** [`BackofficeLoginPage`](src/pages/backoffice/BackofficeLoginPage.tsx) valida a chave e grava em `sessionStorage`.
+- **HTTP:** [`backofficeClient`](src/shared/http/backofficeClient.ts) envia apenas `X-Api-Key` (sem `X-Tenant-Id` nem JWT).
+- **Guia:** [`docs/user_guid/backoffice-frontend.md`](../docs/user_guid/backoffice-frontend.md).
 
 ## Fase 4 — Pagamentos (MVP web)
 
 - **`/member/billing`** — assinatura de plano do clube, geração de PIX (stub), assinatura e faturas (`/api/payments/member/*`). A assinatura atual usa **`GET /api/payments/member/me/subscription`**, que inclui **`planName`** (nome do plano) além do id do plano.
-- **`/admin/billing`** — orientação: faturamento SaaS do tenant é via **`/api/backoffice/payments/saas/*`** com **`X-Api-Key`** (não há chave no SPA).
+- **`/admin/billing`** — orientação para **admin do clube**: faturamento SaaS ainda é via API backoffice; operadores da plataforma podem usar **`/backoffice`** (UI) ou Scalar com **`X-Api-Key`**.
 
 ## Área do sócio — perfil
 
@@ -109,7 +120,16 @@ npm run preview
 - `/admin/billing` — faturamento SaaS (instruções; protegida; link no menu só para **`Administrador`**)
 - `/member` — minha conta / perfil do sócio (`GET /api/members/me`; protegida)
 - `/member/billing` — pagamentos do sócio (protegida)
+- `/backoffice/login` — entrada da chave API (sem tenant)
+- `/backoffice` — painel SaaS (protegida pela chave em sessão)
+- `/backoffice/tenants` — lista e criação de tenants
+- `/backoffice/tenants/:id` — detalhe (domínios, settings, plano, pagamentos, Connect)
+- `/backoffice/plans` — planos SaaS
+- `/backoffice/tenant-plans` — vínculos tenant–plano
 
 ## Cliente HTTP
 
-Use `apiClient` exportado de `src/shared/http` para chamadas à API. Os headers `X-Tenant-Id` e `Authorization` são aplicados nos interceptors quando aplicável.
+- **`apiClient`** (`src/shared/http/client.ts`): rotas do tenant — headers `X-Tenant-Id` e `Authorization` quando aplicável.
+- **`backofficeClient`** (`src/shared/http/backofficeClient.ts`): rotas `api/backoffice/*` — header `X-Api-Key` a partir da sessão do backoffice.
+
+Ambos são reexportados em `src/shared/http/index.ts`.

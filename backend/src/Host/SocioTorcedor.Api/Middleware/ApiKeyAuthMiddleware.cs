@@ -21,6 +21,12 @@ public sealed class ApiKeyAuthMiddleware(RequestDelegate next, IOptions<Backoffi
             return;
         }
 
+        if (HttpMethods.IsOptions(context.Request.Method))
+        {
+            await next(context);
+            return;
+        }
+
         var configuredKey = _options.ApiKey?.Trim() ?? string.Empty;
         if (string.IsNullOrEmpty(configuredKey))
         {

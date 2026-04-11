@@ -1,6 +1,8 @@
 using FluentAssertions;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using SocioTorcedor.Api.Middleware;
+using SocioTorcedor.Api.Options;
 using SocioTorcedor.Api.Tenancy;
 using SocioTorcedor.Modules.Tenancy.Application.Contracts;
 using SocioTorcedor.Modules.Tenancy.Application.DTOs;
@@ -13,6 +15,12 @@ public sealed class DynamicCorsMiddlewareTests
         new(Guid.NewGuid(), "T", "t", "cs", origins);
 
     private static ITenantResolver UnusedResolver() => Substitute.For<ITenantResolver>();
+
+    private static IOptions<BackofficeOptions> EmptyBackofficeOptions() =>
+        Microsoft.Extensions.Options.Options.Create(new BackofficeOptions());
+
+    private static IOptions<BackofficeOptions> BackofficeOptionsWith(params string[] origins) =>
+        Microsoft.Extensions.Options.Options.Create(new BackofficeOptions { AllowedOrigins = [..origins] });
 
     [Fact]
     public async Task InvokeAsync_BypassSwaggerJson_CallsNext()
@@ -27,7 +35,7 @@ public sealed class DynamicCorsMiddlewareTests
         var context = new DefaultHttpContext();
         context.Request.Path = "/swagger/v1/swagger.json";
 
-        await mw.InvokeAsync(context, UnusedResolver());
+        await mw.InvokeAsync(context, UnusedResolver(), EmptyBackofficeOptions());
 
         nextCalled.Should().BeTrue();
     }
@@ -45,7 +53,7 @@ public sealed class DynamicCorsMiddlewareTests
         var context = new DefaultHttpContext();
         context.Request.Path = "/scalar";
 
-        await mw.InvokeAsync(context, UnusedResolver());
+        await mw.InvokeAsync(context, UnusedResolver(), EmptyBackofficeOptions());
 
         nextCalled.Should().BeTrue();
     }
@@ -67,7 +75,7 @@ public sealed class DynamicCorsMiddlewareTests
         context.Items[HttpContextTenantContext.TenantContextItemKey] =
             CreateTenant("https://flamengo.example.com");
 
-        await mw.InvokeAsync(context, UnusedResolver());
+        await mw.InvokeAsync(context, UnusedResolver(), EmptyBackofficeOptions());
 
         nextCalled.Should().BeFalse();
         context.Response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
@@ -90,7 +98,7 @@ public sealed class DynamicCorsMiddlewareTests
         context.Items[HttpContextTenantContext.TenantContextItemKey] =
             CreateTenant("https://flamengo.example.com");
 
-        await mw.InvokeAsync(context, UnusedResolver());
+        await mw.InvokeAsync(context, UnusedResolver(), EmptyBackofficeOptions());
 
         context.Response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
         context.Response.Headers.ContainsKey("Access-Control-Allow-Origin").Should().BeFalse();
@@ -111,7 +119,7 @@ public sealed class DynamicCorsMiddlewareTests
         context.Request.Headers.Origin = "http://feira.localhost:5173";
         context.Request.Headers["X-Tenant-Id"] = "feira";
 
-        await mw.InvokeAsync(context, resolver);
+        await mw.InvokeAsync(context, resolver, EmptyBackofficeOptions());
 
         context.Response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
         context.Response.Headers["Access-Control-Allow-Origin"].ToString().Should()
@@ -133,7 +141,7 @@ public sealed class DynamicCorsMiddlewareTests
         context.Request.Method = HttpMethods.Options;
         context.Request.Headers.Origin = "http://feira.localhost:5173";
 
-        await mw.InvokeAsync(context, resolver);
+        await mw.InvokeAsync(context, resolver, EmptyBackofficeOptions());
 
         context.Response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
         context.Response.Headers["Access-Control-Allow-Origin"].ToString().Should()
@@ -151,7 +159,7 @@ public sealed class DynamicCorsMiddlewareTests
         context.Request.Method = HttpMethods.Options;
         context.Request.Headers.Origin = "https://evil.com";
 
-        await mw.InvokeAsync(context, resolver);
+        await mw.InvokeAsync(context, resolver, EmptyBackofficeOptions());
 
         context.Response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
         context.Response.Headers.ContainsKey("Access-Control-Allow-Origin").Should().BeFalse();
@@ -175,7 +183,7 @@ public sealed class DynamicCorsMiddlewareTests
         context.Items[HttpContextTenantContext.TenantContextItemKey] =
             CreateTenant("https://flamengo.example.com");
 
-        await mw.InvokeAsync(context, UnusedResolver());
+        await mw.InvokeAsync(context, UnusedResolver(), EmptyBackofficeOptions());
 
         nextCalled.Should().BeTrue();
         context.Response.Headers["Access-Control-Allow-Origin"].ToString().Should()
@@ -199,7 +207,7 @@ public sealed class DynamicCorsMiddlewareTests
         context.Items[HttpContextTenantContext.TenantContextItemKey] =
             CreateTenant("https://flamengo.example.com");
 
-        await mw.InvokeAsync(context, UnusedResolver());
+        await mw.InvokeAsync(context, UnusedResolver(), EmptyBackofficeOptions());
 
         nextCalled.Should().BeTrue();
         context.Response.Headers.ContainsKey("Access-Control-Allow-Origin").Should().BeFalse();
@@ -220,7 +228,7 @@ public sealed class DynamicCorsMiddlewareTests
         context.Items[HttpContextTenantContext.TenantContextItemKey] =
             CreateTenant("https://flamengo.example.com");
 
-        await mw.InvokeAsync(context, UnusedResolver());
+        await mw.InvokeAsync(context, UnusedResolver(), EmptyBackofficeOptions());
 
         nextCalled.Should().BeTrue();
         context.Response.Headers.ContainsKey("Access-Control-Allow-Origin").Should().BeFalse();
@@ -246,11 +254,72 @@ public sealed class DynamicCorsMiddlewareTests
         context.Request.Headers.Origin = "http://feira.localhost:5173";
         context.Request.Headers["X-Tenant-Id"] = "feira";
 
-        await mw.InvokeAsync(context, resolver);
+        await mw.InvokeAsync(context, resolver, EmptyBackofficeOptions());
 
         nextCalled.Should().BeTrue();
         context.Response.Headers["Access-Control-Allow-Origin"].ToString().Should()
             .Be("http://feira.localhost:5173");
         context.Items[HttpContextTenantContext.TenantContextItemKey].Should().Be(tenant);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BackofficeOptions_AllowedOrigin_SetsCorsHeadersAnd204()
+    {
+        var nextCalled = false;
+        var mw = new DynamicCorsMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/api/backoffice/plans";
+        context.Request.Method = HttpMethods.Options;
+        context.Request.Headers.Origin = "http://localhost:5173";
+
+        await mw.InvokeAsync(context, UnusedResolver(), BackofficeOptionsWith("http://localhost:5173"));
+
+        nextCalled.Should().BeFalse();
+        context.Response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
+        context.Response.Headers["Access-Control-Allow-Origin"].ToString().Should()
+            .Be("http://localhost:5173");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BackofficeOptions_DisallowedOrigin_NoCorsHeaders()
+    {
+        var mw = new DynamicCorsMiddleware(_ => Task.CompletedTask);
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/api/backoffice/tenants";
+        context.Request.Method = HttpMethods.Options;
+        context.Request.Headers.Origin = "https://evil.com";
+
+        await mw.InvokeAsync(context, UnusedResolver(), BackofficeOptionsWith("http://localhost:5173"));
+
+        context.Response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
+        context.Response.Headers.ContainsKey("Access-Control-Allow-Origin").Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BackofficeGet_AllowedOrigin_AddsCorsHeadersAndCallsNext()
+    {
+        var nextCalled = false;
+        var mw = new DynamicCorsMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/api/backoffice/plans";
+        context.Request.Method = HttpMethods.Get;
+        context.Request.Headers.Origin = "http://localhost:5173";
+
+        await mw.InvokeAsync(context, UnusedResolver(), BackofficeOptionsWith("http://localhost:5173"));
+
+        nextCalled.Should().BeTrue();
+        context.Response.Headers["Access-Control-Allow-Origin"].ToString().Should()
+            .Be("http://localhost:5173");
     }
 }

@@ -13,9 +13,12 @@ export function AdminBillingPage() {
     <section>
       <h1>Faturamento SaaS (backoffice)</h1>
       <p>
-        Esta área do SPA não envia <code>X-Api-Key</code>. Para operar o faturamento do <strong>tenant/clube</strong>,
-        use as rotas <code>/api/backoffice/payments/saas/...</code> documentadas na referência OpenAPI (<code>/scalar</code>), com a chave configurada
-        em <code>Backoffice:ApiKey</code>.
+        Administradores do <strong>clube</strong> não usam a chave da plataforma aqui. Operadores do SaaS podem abrir{' '}
+        <a href="/backoffice/login">
+          <code>/backoffice</code>
+        </a>{' '}
+        (login com <code>Backoffice:ApiKey</code>) ou usar <code>/api/backoffice/payments/saas/...</code> no OpenAPI (
+        <code>/scalar</code>).
       </p>
       <p>
         O faturamento dos <strong>sócios</strong> (PIX, assinatura) usa as rotas <code>/api/payments/member/...</code>{' '}

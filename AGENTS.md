@@ -374,22 +374,31 @@ public interface IPaymentProvider
 src/
   app/
     auth/
+    backoffice/     # rotas /backoffice/* (X-Api-Key), shell e guards
     router/
     theme/          # useTheme, ThemeToggle; tema em data-theme no <html>
   shared/
-    http/
+    http/           # apiClient (tenant JWT) + backofficeClient (X-Api-Key)
+    backoffice/     # tipos e APIs api/backoffice/*
     tenant/
     auth/           # sessão + decodificação de claims do JWT (roles, email)
     payments/
     members/        # GET /api/members/me
   features/
   pages/
+    backoffice/     # UI SaaS (tenants, planos, vínculos, detalhe tenant)
 ```
 
 ### UI e tema
 
 * Estilos globais em **`web/src/index.css`**: **CSS Custom Properties** por tema (`:root` claro, `[data-theme="dark"]` escuro), layout responsivo (ex.: menu colapsável no shell abaixo de ~600px).
-* **Tema claro/escuro:** preferência persistida em **`localStorage`** (`theme` = `light` | `dark`); script inline em **`web/index.html`** aplica o tema antes do primeiro paint (evita flash); toggle nas páginas autenticadas (**`AppShell`**) e em login/cadastro / **`TenantNotResolvedPage`**.
+* **Tema claro/escuro:** preferência persistida em **`localStorage`** (`theme` = `light` | `dark`); script inline em **`web/index.html`** aplica o tema antes do primeiro paint (evita flash); toggle nas páginas autenticadas (**`AppShell`**) e em login/cadastro / **`TenantNotResolvedPage`** / **backoffice** (**`BackofficeShell`**).
+
+### Backoffice SaaS (web)
+
+* Rotas **`/backoffice/*`**: operação no master com header **`X-Api-Key`** (chave informada na tela **`/backoffice/login`** e guardada em **`sessionStorage`**); **`backofficeClient`** não envia **`X-Tenant-Id`** nem Bearer.
+* **`App.tsx`**: se o path começa com **`/backoffice`**, não aplica resolução de tenant por hostname (permite usar `localhost` sem subdomínio de clube).
+* Guia: **`docs/user_guid/backoffice-frontend.md`**.
 
 ### Sessão e papéis no SPA
 
@@ -462,6 +471,7 @@ src/
 
 * ✅ gestão de tenants
 * ✅ planos SaaS
+* ✅ **MVP web** — UI em **`/backoffice`** (login com API key, tenants, planos SaaS, vínculos, detalhe com domínios/settings/plano/pagamentos SaaS/Stripe Connect); ver **`docs/user_guid/backoffice-frontend.md`**
 
 ### Fase 3 — Sócio
 
@@ -473,7 +483,7 @@ src/
 ### Fase 4 — Pagamentos
 
 * ✅ **MVP backend** — módulo `Payments`: assinatura + faturas SaaS (master) e sócio (tenant); `POST/GET` backoffice em `api/backoffice/payments/saas/*`; **`Stripe`** (Stripe.net 51): Billing SaaS com price IDs nos planos, **Stripe Connect Express** por tenant (`api/backoffice/payments/stripe/connect/*`), checkout sócio e **`POST /api/webhooks/stripe/saas`** + **`POST /api/webhooks/stripe/connect`** — webhooks **thin** (Event Destinations, `v2.core.event`); idempotência alinhada ao snapshot via `snapshot_event` quando a Stripe envia; `Payments:StripeWebhookShadowMode` para validação sem gravar inbox/efeitos; `api/payments/member/*` (subscribe, PIX, sessão Stripe quando configurado, **`GET /api/payments/member/me/subscription`** com `planName`); webhooks legados SaaS (API key) e tenant (`X-Payments-Webhook-Secret`); provider **stub** ou **Stripe** (`IPaymentProvider`)
-* ✅ **MVP web** — rotas `/member` (perfil sócio, `GET /api/members/me`), `/member/billing` (fluxo sócio) e `/admin/billing` (orientação SaaS / backoffice); UI responsiva, tema claro/escuro, menu admin visível só para role **`Administrador`**
+* ✅ **MVP web** — rotas `/member` (perfil sócio, `GET /api/members/me`), `/member/billing` (fluxo sócio), `/admin/billing` (orientação SaaS para admins do clube) e **`/backoffice`** (operadores da plataforma com `X-Api-Key`); UI responsiva, tema claro/escuro, menu admin do tenant visível só para role **`Administrador`**
 * recorrência end-to-end com gateway de produção (operacionalização, monitoramento)
 * cartão (tokenização / 3DS) além do stub
 * conciliação e jobs de cobrança
@@ -496,7 +506,7 @@ src/
 
 ### Fase 9 — Apps (Web + Mobile)
 
-* **Web (SPA em `web/`):** UI responsiva, tema claro/escuro, navegação admin condicionada à role **`Administrador`**, área do sócio em **`/member`** com perfil via **`GET /api/members/me`**.
+* **Web (SPA em `web/`):** UI responsiva, tema claro/escuro, navegação admin do **clube** condicionada à role **`Administrador`**, área do sócio em **`/member`** com perfil via **`GET /api/members/me`**, **backoffice SaaS** em **`/backoffice`** (API key, sem tenant por subdomínio).
 
 ---
 

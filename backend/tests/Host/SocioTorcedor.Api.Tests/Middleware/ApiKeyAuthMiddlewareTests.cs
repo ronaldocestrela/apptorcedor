@@ -30,6 +30,25 @@ public sealed class ApiKeyAuthMiddlewareTests
     }
 
     [Fact]
+    public async Task BackofficePath_Options_CallsNextWithoutApiKey()
+    {
+        var next = false;
+        var mw = new ApiKeyAuthMiddleware(_ =>
+        {
+            next = true;
+            return Task.CompletedTask;
+        }, CreateOptions("expected"));
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/api/backoffice/plans";
+        context.Request.Method = HttpMethods.Options;
+
+        await mw.InvokeAsync(context);
+
+        next.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task BackofficePath_MissingKey_Returns401()
     {
         var next = false;
