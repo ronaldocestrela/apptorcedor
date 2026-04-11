@@ -15,11 +15,17 @@ public sealed class PaymentsOptions
     /// <summary>Opcional: publishable key para o frontend (pk_...).</summary>
     public string StripePublishableKey { get; set; } = string.Empty;
 
-    /// <summary>Webhook signing secret para eventos de Billing SaaS (conta da plataforma).</summary>
+    /// <summary>Webhook signing secret para eventos de Billing SaaS (conta da plataforma), formato snapshot V1 (legado).</summary>
     public string StripeSaasWebhookSecret { get; set; } = string.Empty;
 
-    /// <summary>Webhook signing secret para eventos Connect / contas conectadas.</summary>
+    /// <summary>Signing secret do Event Destination thin (SaaS). Se vazio, usa <see cref="StripeSaasWebhookSecret"/>.</summary>
+    public string StripeThinSaasWebhookSecret { get; set; } = string.Empty;
+
+    /// <summary>Webhook signing secret para eventos Connect / contas conectadas, formato snapshot V1 (legado).</summary>
     public string StripeConnectWebhookSecret { get; set; } = string.Empty;
+
+    /// <summary>Signing secret do Event Destination thin (Connect). Se vazio, usa <see cref="StripeConnectWebhookSecret"/>.</summary>
+    public string StripeThinConnectWebhookSecret { get; set; } = string.Empty;
 
     /// <summary>Informacional: test ou live.</summary>
     public string StripeEnvironment { get; set; } = "test";

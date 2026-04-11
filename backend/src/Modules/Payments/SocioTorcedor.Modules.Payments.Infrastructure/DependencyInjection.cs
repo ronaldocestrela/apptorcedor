@@ -5,6 +5,8 @@ using Microsoft.Extensions.Options;
 using SocioTorcedor.BuildingBlocks.Application.Payments;
 using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
 using SocioTorcedor.Modules.Payments.Application.Contracts;
+using SocioTorcedor.Modules.Payments.Application.Options;
+using SocioTorcedor.Modules.Payments.Application.Services;
 using SocioTorcedor.Modules.Payments.Infrastructure.Options;
 using SocioTorcedor.Modules.Payments.Infrastructure.Persistence;
 using SocioTorcedor.Modules.Payments.Infrastructure.Repositories;
@@ -20,6 +22,7 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.Configure<PaymentsOptions>(configuration.GetSection(PaymentsOptions.SectionName));
+        services.Configure<StripeWebhookHandlingOptions>(configuration.GetSection(StripeWebhookHandlingOptions.SectionName));
 
         var masterConnectionString = configuration.GetConnectionString("MasterDb")
             ?? throw new InvalidOperationException("Connection string 'MasterDb' is not configured.");
@@ -44,6 +47,16 @@ public static class DependencyInjection
         services.AddScoped<IMemberTenantPaymentsRepository, MemberTenantPaymentsRepository>();
         services.AddScoped<ITenantConnectionStringResolver, TenantConnectionStringResolver>();
         services.AddScoped<IMemberTenantPaymentsScopeFactory, MemberTenantPaymentsScopeFactory>();
+
+        services.AddSingleton(provider =>
+        {
+            var key = provider.GetRequiredService<IOptions<PaymentsOptions>>().Value.StripeSecretKey;
+            return new Stripe.StripeClient(string.IsNullOrWhiteSpace(key) ? string.Empty : key.Trim());
+        });
+
+        services.AddScoped<ITenantSaasStripeWebhookEffectApplicator, TenantSaasStripeWebhookEffectApplicator>();
+        services.AddScoped<IConnectStripeWebhookEffectApplicator, ConnectStripeWebhookEffectApplicator>();
+        services.AddScoped<IStripeThinWebhookPayloadFactory, StripeThinWebhookPayloadFactory>();
 
         services.AddSingleton<IPaymentProvider>(sp =>
         {
