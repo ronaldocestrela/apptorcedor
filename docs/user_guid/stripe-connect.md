@@ -44,7 +44,7 @@ No **banco master** é mantido um registro por clube com:
 - flags vindas da Stripe: cobranças habilitadas, repasses habilitados, formulário enviado;
 - status de onboarding agregado (`Pendente`, `Pendente de requisitos`, `Habilitado` — valores numéricos na API).
 
-Atualizações desses dados ocorrem via **webhooks Connect** (thin events) descritos em `docs/Stripe/configuracao-chaves-e-webhooks.md`.
+Atualizações desses dados ocorrem via **webhooks Connect** (thin events) descritos em `docs/Stripe/configuracao-chaves-e-webhooks.md`, ou manualmente pelo admin do clube com **`POST /api/payments/admin/connect/sync`**, que consulta a API da Stripe, grava no master e devolve o DTO atualizado.
 
 ---
 
@@ -72,7 +72,8 @@ Base path: `api/payments/admin/connect`
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | `POST` | `onboarding` | Mesmo comportamento do backoffice: cria conta Express se necessário e devolve **URL** de onboarding. Corpo JSON: `refreshUrl`, `returnUrl`. |
-| `GET` | `status` | Retorna o mesmo `StripeConnectStatusDto` que o GET do backoffice, porém sempre para o tenant atual. |
+| `GET` | `status` | Lê o registro no banco master e retorna `StripeConnectStatusDto` (sem chamar a Stripe). |
+| `POST` | `sync` | Chama a **API Stripe** para a conta conectada do tenant, atualiza o master (`charges_enabled`, etc.) e retorna o `StripeConnectStatusDto` atualizado. Exige conta Connect já criada; caso contrário responde 404. |
 
 Exemplo: `POST https://<sua-api>/api/payments/admin/connect/onboarding`
 
@@ -93,7 +94,7 @@ Guia passo a passo para o admin do clube: **`docs/user_guid/tenant-stripe-connec
 
 1. Acessar **`/admin/stripe`** no domínio do tenant (com login de **Administrador**).
 2. Clicar em **Configurar conta Stripe** (ou **Retomar configuração**), abrir o link na Stripe e concluir dados exigidos.
-3. Voltar ao app e usar **Atualizar status** até indicar conta ativa (`chargesEnabled` / `payoutsEnabled`).
+3. Voltar ao app e usar **Atualizar status** (que dispara o `POST sync` e busca os dados **direto na Stripe**) até indicar conta ativa (`chargesEnabled` / `payoutsEnabled`).
 4. Os webhooks Connect continuam atualizando o estado no servidor em paralelo.
 
 ---
@@ -112,4 +113,5 @@ Configuração de segredos e lista de eventos: **`docs/Stripe/configuracao-chave
 
 - Backoffice: `backend/src/Modules/Payments/SocioTorcedor.Modules.Payments.Api/Controllers/BackofficeStripeConnectController.cs`
 - Admin do tenant: `backend/src/Modules/Payments/SocioTorcedor.Modules.Payments.Api/Controllers/AdminStripeConnectController.cs`
+- Sincronização com a Stripe: `backend/src/Modules/Payments/SocioTorcedor.Modules.Payments.Application/Commands/SyncStripeConnectStatus/SyncStripeConnectStatusHandler.cs`
 - Módulo: `backend/src/Modules/Payments/AGENTS.md`

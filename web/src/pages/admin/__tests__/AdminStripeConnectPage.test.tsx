@@ -5,10 +5,12 @@ import { AdminStripeConnectPage } from '../AdminStripeConnectPage'
 
 const getStatusMock = vi.fn()
 const startOnboardingMock = vi.fn()
+const syncStatusMock = vi.fn()
 
 vi.mock('../../../shared/payments/stripeConnectTenantApi', () => ({
   getTenantStripeConnectStatus: (...a: unknown[]) => getStatusMock(...a),
   startTenantStripeConnectOnboarding: (...a: unknown[]) => startOnboardingMock(...a),
+  syncTenantStripeConnectStatus: (...a: unknown[]) => syncStatusMock(...a),
 }))
 
 describe('AdminStripeConnectPage', () => {
@@ -70,14 +72,16 @@ describe('AdminStripeConnectPage', () => {
 
   it('opens onboarding URL in new tab when configuring', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
-    getStatusMock.mockResolvedValue({
+    const notConfigured = {
       isConfigured: false,
       stripeAccountId: null,
       onboardingStatus: 0,
       chargesEnabled: false,
       payoutsEnabled: false,
       detailsSubmitted: false,
-    })
+    }
+    getStatusMock.mockResolvedValue(notConfigured)
+    syncStatusMock.mockResolvedValue(notConfigured)
     startOnboardingMock.mockResolvedValue({ url: 'https://connect.stripe.com/setup' })
     const user = userEvent.setup()
     render(<AdminStripeConnectPage />)
@@ -95,29 +99,29 @@ describe('AdminStripeConnectPage', () => {
     openSpy.mockRestore()
   })
 
-  it('refetches status when clicking refresh', async () => {
-    getStatusMock
-      .mockResolvedValueOnce({
-        isConfigured: false,
-        stripeAccountId: null,
-        onboardingStatus: 0,
-        chargesEnabled: false,
-        payoutsEnabled: false,
-        detailsSubmitted: false,
-      })
-      .mockResolvedValueOnce({
-        isConfigured: true,
-        stripeAccountId: 'acct_x',
-        onboardingStatus: 2,
-        chargesEnabled: true,
-        payoutsEnabled: true,
-        detailsSubmitted: true,
-      })
+  it('syncs from Stripe when clicking refresh', async () => {
+    getStatusMock.mockResolvedValueOnce({
+      isConfigured: false,
+      stripeAccountId: null,
+      onboardingStatus: 0,
+      chargesEnabled: false,
+      payoutsEnabled: false,
+      detailsSubmitted: false,
+    })
+    syncStatusMock.mockResolvedValue({
+      isConfigured: true,
+      stripeAccountId: 'acct_x',
+      onboardingStatus: 2,
+      chargesEnabled: true,
+      payoutsEnabled: true,
+      detailsSubmitted: true,
+    })
     const user = userEvent.setup()
     render(<AdminStripeConnectPage />)
     await screen.findByText(/Seu clube ainda não configurou uma conta Stripe/i)
     await user.click(screen.getByRole('button', { name: /Atualizar status/i }))
-    expect(getStatusMock).toHaveBeenCalledTimes(2)
+    expect(getStatusMock).toHaveBeenCalledTimes(1)
+    expect(syncStatusMock).toHaveBeenCalledTimes(1)
     expect(
       await screen.findByText(/Conta Stripe ativa\. Seu clube pode receber pagamentos de sócios/i),
     ).toBeInTheDocument()

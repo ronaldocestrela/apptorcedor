@@ -31,9 +31,9 @@ A **plataforma SaaS** (software) continua separada: o que você configura aqui �
    - Se já existe conta mas cobranças não estão habilitadas, use **Retomar configuração**.
 4. Clique em **Configurar conta Stripe** ou **Retomar configuração**. Uma nova aba abrirá o fluxo oficial da **Stripe** (cadastro, KYC, dados bancários conforme exigido no seu país).
 5. Conclua os passos na Stripe. Ao final, você pode ser redirecionado de volta para a URL de retorno configurada pelo sistema (em geral, de volta à área admin).
-6. Na página **Stripe Connect**, clique em **Atualizar status** até aparecer que a conta está **ativa** (cobranças e repasses habilitados, quando aplicável).
+6. Na página **Stripe Connect**, clique em **Atualizar status** até aparecer que a conta está **ativa** (cobranças e repasses habilitados, quando aplicável). Esse botão **consulta a Stripe em tempo real**, atualiza o banco da plataforma e atualiza a tela — não depende só do webhook.
 
-O estado no servidor também é atualizado por **webhooks** da Stripe; se algo demorar a refletir, aguarde alguns instantes e use **Atualizar status** de novo.
+O estado no servidor também pode ser atualizado por **webhooks** da Stripe em paralelo.
 
 ---
 
@@ -67,6 +67,7 @@ Enquanto a conta conectada não estiver apta a cobrar (`chargesEnabled` etc.), o
 ## Referência técnica (API)
 
 - `POST /api/payments/admin/connect/onboarding` — corpo: `{ "refreshUrl", "returnUrl" }`
-- `GET /api/payments/admin/connect/status`
+- `GET /api/payments/admin/connect/status` — lê apenas o banco master
+- `POST /api/payments/admin/connect/sync` — sincroniza com a Stripe e persiste (sem corpo)
 
 Headers em todas as chamadas: `X-Tenant-Id` (slug do clube), `Authorization: Bearer <token>`.

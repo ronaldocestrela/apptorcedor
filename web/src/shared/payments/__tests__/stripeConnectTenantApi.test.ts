@@ -3,6 +3,7 @@ import { apiClient } from '../../http/client'
 import {
   getTenantStripeConnectStatus,
   startTenantStripeConnectOnboarding,
+  syncTenantStripeConnectStatus,
 } from '../stripeConnectTenantApi'
 
 vi.mock('../../http/client', () => ({
@@ -36,6 +37,25 @@ describe('stripeConnectTenantApi', () => {
       refreshUrl: 'https://r',
       returnUrl: 'https://ret',
     })
+  })
+
+  it('syncTenantStripeConnectStatus posts to admin connect sync', async () => {
+    mockedPost.mockResolvedValue({
+      data: {
+        isConfigured: true,
+        stripeAccountId: 'acct_1',
+        onboardingStatus: 2,
+        chargesEnabled: true,
+        payoutsEnabled: true,
+        detailsSubmitted: true,
+      },
+      headers: {},
+      status: 200,
+      statusText: '',
+      config: {} as never,
+    })
+    await syncTenantStripeConnectStatus()
+    expect(mockedPost).toHaveBeenCalledWith('/api/payments/admin/connect/sync')
   })
 
   it('getTenantStripeConnectStatus gets admin connect status', async () => {

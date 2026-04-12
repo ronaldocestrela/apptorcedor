@@ -4,6 +4,7 @@ import type { StripeConnectStatusDto } from '../../shared/backoffice/types'
 import {
   getTenantStripeConnectStatus,
   startTenantStripeConnectOnboarding,
+  syncTenantStripeConnectStatus,
 } from '../../shared/payments/stripeConnectTenantApi'
 
 function isConnectActive(s: StripeConnectStatusDto): boolean {
@@ -16,12 +17,8 @@ export function AdminStripeConnectPage() {
   const [status, setStatus] = useState<StripeConnectStatusDto | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const loadStatus = useCallback(async (isInitial: boolean) => {
-    if (isInitial) {
-      setLoading(true)
-    } else {
-      setBusy(true)
-    }
+  const loadInitialStatus = useCallback(async () => {
+    setLoading(true)
     setError(null)
     try {
       const s = await getTenantStripeConnectStatus()
@@ -29,17 +26,26 @@ export function AdminStripeConnectPage() {
     } catch (e: unknown) {
       setError(getApiErrorMessage(e, 'Erro ao carregar status.'))
     } finally {
-      if (isInitial) {
-        setLoading(false)
-      } else {
-        setBusy(false)
-      }
+      setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    void loadStatus(true)
-  }, [loadStatus])
+    void loadInitialStatus()
+  }, [loadInitialStatus])
+
+  async function onSyncFromStripe() {
+    setBusy(true)
+    setError(null)
+    try {
+      const s = await syncTenantStripeConnectStatus()
+      setStatus(s)
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e, 'Erro ao sincronizar com a Stripe.'))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function onOnboarding() {
     setBusy(true)
@@ -51,7 +57,13 @@ export function AdminStripeConnectPage() {
         returnUrl: base,
       })
       window.open(url, '_blank', 'noopener,noreferrer')
-      await loadStatus(false)
+      try {
+        const s = await syncTenantStripeConnectStatus()
+        setStatus(s)
+      } catch {
+        const s = await getTenantStripeConnectStatus()
+        setStatus(s)
+      }
     } catch (e: unknown) {
       setError(getApiErrorMessage(e, 'Falha ao gerar link de onboarding.'))
     } finally {
@@ -126,7 +138,7 @@ export function AdminStripeConnectPage() {
           type="button"
           className="admin-plans__btn-secondary"
           disabled={busy}
-          onClick={() => void loadStatus(false)}
+          onClick={() => void onSyncFromStripe()}
         >
           Atualizar status
         </button>

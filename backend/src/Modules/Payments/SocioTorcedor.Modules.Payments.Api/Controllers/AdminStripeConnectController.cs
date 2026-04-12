@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SocioTorcedor.BuildingBlocks.Shared.Results;
 using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
 using SocioTorcedor.Modules.Payments.Application.Commands.StartStripeConnectOnboarding;
+using SocioTorcedor.Modules.Payments.Application.Commands.SyncStripeConnectStatus;
 using SocioTorcedor.Modules.Payments.Application.Queries.GetStripeConnectStatus;
 
 namespace SocioTorcedor.Modules.Payments.Api.Controllers;
@@ -27,6 +28,16 @@ public sealed class AdminStripeConnectController(IMediator mediator, ICurrentTen
     public async Task<IActionResult> GetStatus(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetStripeConnectStatusQuery(tenantContext.TenantId), cancellationToken);
+        return FromResult(result, Ok);
+    }
+
+    /// <summary>
+    /// Consulta a API Stripe para a conta conectada do tenant, atualiza o registro no master e retorna o status.
+    /// </summary>
+    [HttpPost("sync")]
+    public async Task<IActionResult> SyncFromStripe(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new SyncStripeConnectStatusCommand(tenantContext.TenantId), cancellationToken);
         return FromResult(result, Ok);
     }
 

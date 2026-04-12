@@ -12,7 +12,7 @@ Cobrança em dois contextos: **SaaS** (clube paga a plataforma, banco master) e 
 ## Rotas
 - **Backoffice** (`X-Api-Key`): `api/backoffice/payments/saas/...` (assinatura SaaS, faturas, webhook legado com API key onde aplicável)
 - **Backoffice Stripe Connect** (`X-Api-Key`): `api/backoffice/payments/connect/...` — onboarding Express, status da conta (`tenants/{tenantId}/onboarding`, `tenants/{tenantId}/status`)
-- **Tenant admin — Stripe Connect** (`X-Tenant-Id` + JWT + role `Administrador`): `api/payments/admin/connect/onboarding`, `api/payments/admin/connect/status` — mesmos handlers/commands que o backoffice; `TenantId` vem do contexto do tenant (slug no header).
+- **Tenant admin — Stripe Connect** (`X-Tenant-Id` + JWT + role `Administrador`): `api/payments/admin/connect/onboarding`, `api/payments/admin/connect/status` (cache no master), `api/payments/admin/connect/sync` (**pull** na API Stripe + `SyncFromStripe` + save). Onboarding compartilha comando com o backoffice; sync é exclusivo do fluxo tenant-admin.
 - **Tenant** (`X-Tenant-Id` + JWT): `api/payments/member/...` — assinatura sócio, PIX, **sessão Checkout Stripe** quando o gateway Stripe está ativo
 - **`GET api/payments/member/me/subscription`**: assinatura ativa (ou `null`); inclui **`memberPlanId`** e **`planName`**
 - **Webhooks Stripe** (corpo bruto + assinatura `Stripe-Signature`; buffering do body habilitado no host para `/api/webhooks/*`):
@@ -40,7 +40,7 @@ Cobrança em dois contextos: **SaaS** (clube paga a plataforma, banco master) e 
 - Host: `AddPaymentsModule`, migrations após Backoffice no master; após Membership em cada tenant (`DatabaseMigrationExtensions`, `TenantDatabaseProvisioner`).
 
 ## Testes
-- `backend/tests/Modules/Payments/SocioTorcedor.Modules.Payments.Application.Tests` — webhook SaaS (`ProcessTenantSaasWebhookHandler`, idempotência / shadow), Connect (`ProcessStripeConnectWebhookHandler`), normalização thin (`StripeThinEventTypeNormalizer`), envelope (`StripeWebhookEnvelope`), billing do sócio (`GetMyMemberBillingHandler`), onboarding Connect (`StartStripeConnectOnboardingHandler`), status Connect (`GetStripeConnectStatusHandler`).
+- `backend/tests/Modules/Payments/SocioTorcedor.Modules.Payments.Application.Tests` — webhook SaaS (`ProcessTenantSaasWebhookHandler`, idempotência / shadow), Connect (`ProcessStripeConnectWebhookHandler`), normalização thin (`StripeThinEventTypeNormalizer`), envelope (`StripeWebhookEnvelope`), billing do sócio (`GetMyMemberBillingHandler`), onboarding Connect (`StartStripeConnectOnboardingHandler`), status Connect (`GetStripeConnectStatusHandler`), sync Connect (`SyncStripeConnectStatusHandler`).
 
 ## Stripe Dashboard (Event Destinations)
 - Criar destinos com **Use thin events** e apontar para as URLs acima.
