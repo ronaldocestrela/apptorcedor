@@ -50,6 +50,12 @@ jobs:
           EXPOSE_OPENAPI_JSON: "true"
           ASPNETCORE_ENVIRONMENT: Production
           OPENAPI_PORT: "5055"
+          # Placeholders só para o host subir no runner (sem SQL Server); migrations desligadas acima.
+          ConnectionStrings__MasterDb: "Server=127.0.0.1,1433;Database=ci_openapi;User Id=sa;Password=CiOpenApiDummy1;TrustServerCertificate=True"
+          Jwt__Issuer: "SocioTorcedor"
+          Jwt__Audience: "SocioTorcedor"
+          Jwt__SigningKey: "CI_ONLY_MIN_32_CHARS_HMAC_SHA256_SIGNING_KEY!"
+          Backoffice__ApiKey: "CI_BACKOFFICE_OPENAPI_EXPORT_ONLY"
         run: |
           set -euo pipefail
           ./bin/Release/net10.0/SocioTorcedor.Api --urls "http://127.0.0.1:${OPENAPI_PORT}" &
