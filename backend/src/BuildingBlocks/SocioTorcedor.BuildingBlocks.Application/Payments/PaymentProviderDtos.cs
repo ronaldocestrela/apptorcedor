@@ -78,28 +78,6 @@ public sealed record CreateBillingPortalSessionRequest(
 
 public sealed record CreateBillingPortalSessionResult(string Url);
 
-public sealed record CreateConnectExpressAccountRequest(
-    string Country,
-    string? Email,
-    IReadOnlyDictionary<string, string> Metadata,
-    string? IdempotencyKey);
-
-public sealed record CreateConnectExpressAccountResult(string AccountId);
-
-public sealed record CreateConnectAccountLinkRequest(
-    string AccountId,
-    string RefreshUrl,
-    string ReturnUrl,
-    string? IdempotencyKey);
-
-public sealed record CreateConnectAccountLinkResult(string Url);
-
-public sealed record ConnectAccountStatusResult(
-    string AccountId,
-    bool ChargesEnabled,
-    bool PayoutsEnabled,
-    bool DetailsSubmitted);
-
 /// <summary>Item de cartão salvo no customer Stripe (conta plataforma, Billing SaaS).</summary>
 public sealed record SaasPaymentMethodListItem(
     string Id,

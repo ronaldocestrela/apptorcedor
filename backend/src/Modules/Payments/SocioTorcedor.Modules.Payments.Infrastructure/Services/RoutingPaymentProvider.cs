@@ -1,21 +1,19 @@
 using SocioTorcedor.BuildingBlocks.Application.Payments;
 using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
-using SocioTorcedor.Modules.Payments.Infrastructure.Options;
 
 namespace SocioTorcedor.Modules.Payments.Infrastructure.Services;
 
 /// <summary>
 /// Roteia chamadas do <see cref="IPaymentProvider"/>: Billing SaaS na conta da plataforma;
-/// cobrança de sócio na conta Stripe do tenant (chaves diretas) ou stub.
+/// cobrança de sócio na conta Stripe do tenant (chaves diretas).
 /// </summary>
 public sealed class RoutingPaymentProvider(
     StripePaymentProvider platformStripe,
-    StubPaymentProvider stubPaymentProvider,
     ICurrentTenantContext tenantContext,
-    MemberStripeOperationsResolver memberStripeResolver,
-    Microsoft.Extensions.Options.IOptions<PaymentsOptions> paymentsOptions) : IPaymentProvider
+    MemberStripeOperationsResolver memberStripeResolver) : IPaymentProvider
 {
-    private readonly PaymentsOptions _paymentsOptions = paymentsOptions.Value;
+    private static InvalidOperationException MemberGatewayNotConfigured() =>
+        new("Member payment gateway is not configured for this tenant. Configure Stripe Direct in admin.");
 
     public async Task<CreateSubscriptionResult> CreateSubscriptionAsync(
         CreateSubscriptionRequest request,
@@ -31,17 +29,11 @@ public sealed class RoutingPaymentProvider(
             throw new InvalidOperationException("Tenant must be resolved for member payment operations.");
 
         var ops = await memberStripeResolver.TryResolveAsync(tenantContext.TenantId, cancellationToken);
-        if (ops is not null)
-        {
-            var req = request with { ConnectedAccountId = null };
-            return await ops.CreateSubscriptionAsync(req, cancellationToken);
-        }
+        if (ops is null)
+            throw MemberGatewayNotConfigured();
 
-        if (string.IsNullOrWhiteSpace(_paymentsOptions.StripeSecretKey))
-            return await stubPaymentProvider.CreateSubscriptionAsync(request, cancellationToken);
-
-        throw new InvalidOperationException(
-            "Member payment gateway is not configured for this tenant. Configure Stripe API keys in admin.");
+        var req = request with { ConnectedAccountId = null };
+        return await ops.CreateSubscriptionAsync(req, cancellationToken);
     }
 
     public async Task<CreatePixChargeResult> CreatePixAsync(
@@ -55,17 +47,11 @@ public sealed class RoutingPaymentProvider(
             throw new InvalidOperationException("Tenant must be resolved for member payment operations.");
 
         var ops = await memberStripeResolver.TryResolveAsync(tenantContext.TenantId, cancellationToken);
-        if (ops is not null)
-        {
-            var req = request with { ConnectedAccountId = null };
-            return await ops.CreatePixAsync(req, cancellationToken);
-        }
+        if (ops is null)
+            throw MemberGatewayNotConfigured();
 
-        if (string.IsNullOrWhiteSpace(_paymentsOptions.StripeSecretKey))
-            return await stubPaymentProvider.CreatePixAsync(request, cancellationToken);
-
-        throw new InvalidOperationException(
-            "Member payment gateway is not configured for this tenant. Configure Stripe API keys in admin.");
+        var req = request with { ConnectedAccountId = null };
+        return await ops.CreatePixAsync(req, cancellationToken);
     }
 
     public Task<CreateCardChargeResult> CreateCardAsync(
@@ -75,7 +61,7 @@ public sealed class RoutingPaymentProvider(
         if (request.Context == PaymentProviderContext.SaaS)
             return platformStripe.Operations.CreateCardAsync(request, cancellationToken);
 
-        return stubPaymentProvider.CreateCardAsync(request, cancellationToken);
+        throw new NotSupportedException("Card charges for members are not implemented; use Checkout.");
     }
 
     public async Task CancelAsync(
@@ -95,13 +81,10 @@ public sealed class RoutingPaymentProvider(
             throw new InvalidOperationException("Tenant must be resolved for member payment operations.");
 
         var ops = await memberStripeResolver.TryResolveAsync(tenantContext.TenantId, cancellationToken);
-        if (ops is not null)
-        {
-            await ops.CancelAsync(context, externalSubscriptionId, null, idempotencyKey, cancellationToken);
-            return;
-        }
+        if (ops is null)
+            throw MemberGatewayNotConfigured();
 
-        await stubPaymentProvider.CancelAsync(context, externalSubscriptionId, null, idempotencyKey, cancellationToken);
+        await ops.CancelAsync(context, externalSubscriptionId, null, idempotencyKey, cancellationToken);
     }
 
     public async Task<PaymentProviderStatusResult> GetStatusAsync(
@@ -116,10 +99,10 @@ public sealed class RoutingPaymentProvider(
             throw new InvalidOperationException("Tenant must be resolved for member payment operations.");
 
         var ops = await memberStripeResolver.TryResolveAsync(tenantContext.TenantId, cancellationToken);
-        if (ops is not null)
-            return await ops.GetStatusAsync(context, externalId, cancellationToken);
+        if (ops is null)
+            throw MemberGatewayNotConfigured();
 
-        return await stubPaymentProvider.GetStatusAsync(context, externalId, cancellationToken);
+        return await ops.GetStatusAsync(context, externalId, cancellationToken);
     }
 
     public async Task<CreateCheckoutSessionResult> CreateCheckoutSessionAsync(
@@ -133,17 +116,11 @@ public sealed class RoutingPaymentProvider(
             throw new InvalidOperationException("Tenant must be resolved for member payment operations.");
 
         var ops = await memberStripeResolver.TryResolveAsync(tenantContext.TenantId, cancellationToken);
-        if (ops is not null)
-        {
-            var req = request with { ConnectedAccountId = null };
-            return await ops.CreateCheckoutSessionAsync(req, cancellationToken);
-        }
+        if (ops is null)
+            throw MemberGatewayNotConfigured();
 
-        if (string.IsNullOrWhiteSpace(_paymentsOptions.StripeSecretKey))
-            return await stubPaymentProvider.CreateCheckoutSessionAsync(request, cancellationToken);
-
-        throw new InvalidOperationException(
-            "Member payment gateway is not configured for this tenant. Configure Stripe API keys in admin.");
+        var req = request with { ConnectedAccountId = null };
+        return await ops.CreateCheckoutSessionAsync(req, cancellationToken);
     }
 
     public Task<CreateBillingPortalSessionResult> CreateBillingPortalSessionAsync(

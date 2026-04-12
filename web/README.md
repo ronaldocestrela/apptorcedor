@@ -103,7 +103,7 @@ npm run test:watch
 
 ## Fase 4 — Pagamentos (MVP web)
 
-- **`/member/billing`** — assinatura de plano do clube, geração de PIX (stub), assinatura e faturas (`/api/payments/member/*`). A assinatura atual usa **`GET /api/payments/member/me/subscription`**, que inclui **`planName`** (nome do plano) além do id do plano.
+- **`/member/billing`** — assinatura de plano do clube, PIX e checkout Stripe quando o **gateway** do tenant está configurado (`/api/payments/member/*`). A assinatura atual usa **`GET /api/payments/member/me/subscription`**, que inclui **`planName`** (nome do plano) além do id do plano.
 - **`/admin/billing`** — orientação para **admin do clube**: faturamento SaaS ainda é via API backoffice; operadores da plataforma podem usar **`/backoffice`** (UI) ou Scalar com **`X-Api-Key`**.
 
 ## Área do sócio — perfil

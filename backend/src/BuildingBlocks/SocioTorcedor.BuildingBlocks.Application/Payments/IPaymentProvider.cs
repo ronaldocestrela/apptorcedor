@@ -1,8 +1,7 @@
 namespace SocioTorcedor.BuildingBlocks.Application.Payments;
 
 /// <summary>
-/// Abstração de gateway de pagamento (Asaas, Pagar.me, Mercado Pago, etc.).
-/// Implementações concretas ficam na infraestrutura; o MVP usa um provider "stub".
+/// Abstração de gateway de pagamento (roteamento Stripe plataforma + conta do tenant, futuros provedores).
 /// </summary>
 public interface IPaymentProvider
 {

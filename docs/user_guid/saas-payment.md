@@ -23,7 +23,7 @@ Fluxo resumido:
 
 | Papel | Uso típico |
 |--------|------------|
-| **Operação / backoffice da plataforma** | `X-Api-Key`: iniciar billing, consultar assinatura e faturas, abrir portal de cobrança Stripe, opcionalmente webhook legado JSON. |
+| **Operação / backoffice da plataforma** | `X-Api-Key`: iniciar billing, consultar assinatura e faturas, abrir portal de cobrança Stripe. |
 | **Clube** | Não chama essas rotas diretamente no MVP típico; o operador da plataforma gerencia o ciclo. |
 
 ---
@@ -33,9 +33,7 @@ Fluxo resumido:
 1. **Plano ativo do tenant**: o clube deve ter vínculo ativo com um plano SaaS (atribuição de plano no módulo Backoffice).
 2. **Valores válidos**: preço do plano maior que zero no ciclo escolhido.
 3. **Sem assinatura ativa duplicada**: não pode já existir assinatura de billing ativa para o mesmo tenant.
-4. **Stripe (opcional mas usual em produção)**: com `Payments:StripeSecretKey` configurado, o provedor usa **Price IDs** do `SaaSPlan` (`StripePriceMonthlyId` / `StripePriceYearlyId`) ao criar a assinatura no Stripe.
-
-Se o Stripe não estiver configurado, o fluxo pode usar o **stub** interno, conforme implementação atual do `IPaymentProvider`. Assinaturas criadas pelo stub usam IDs internos (`saas_sub_*` no contexto SaaS); ao configurar Stripe de forma definitiva, o cancelamento via `StripePaymentProvider` ignora esses IDs e só chama a API para IDs `sub_*`, conforme **`docs/Stripe/configuracao-chaves-e-webhooks.md`** (migração stub → Stripe).
+4. **Stripe**: com `Payments:StripeSecretKey` configurado, o fluxo de billing SaaS usa **Price IDs** do `SaaSPlan` (`StripePriceMonthlyId` / `StripePriceYearlyId`) ao criar a assinatura na conta da plataforma.
 
 ---
 
@@ -51,13 +49,12 @@ Base path: `api/backoffice/payments/saas`
 | `GET` | `tenants/{tenantId}/subscription` | Consulta assinatura de billing do tenant (valores, período, Stripe, etc., conforme DTO da API). |
 | `GET` | `tenants/{tenantId}/invoices` | Lista faturas com paginação (`page`, `pageSize`). |
 | `POST` | `tenants/{tenantId}/billing/portal` | Cria sessão do **Billing Portal** Stripe para o cliente gerenciar método de pagamento e assinatura. Corpo: `returnUrl`. |
-| `POST` | `webhooks` | Webhook **legado** (JSON próprio + API key). **Não** é o webhook thin da Stripe; útil para integrações customizadas. Corpo: `idempotencyKey`, `eventType`, opcionalmente `rawBody` / `externalSubscriptionId`. |
 
 ---
 
 ## Webhooks Stripe (conta da plataforma)
 
-Eventos de assinatura e fatura da **conta principal** da Stripe (não Connect) devem ser enviados para:
+Eventos de assinatura e fatura da **conta da plataforma** na Stripe devem ser enviados para:
 
 `POST /api/webhooks/stripe/saas`
 

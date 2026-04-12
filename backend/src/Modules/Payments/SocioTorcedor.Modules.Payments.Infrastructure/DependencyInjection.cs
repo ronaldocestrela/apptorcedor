@@ -55,7 +55,6 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<StripePaymentProvider>();
-        services.AddSingleton<StubPaymentProvider>();
         services.AddScoped<IPaymentProvider, RoutingPaymentProvider>();
         services.AddScoped<MemberStripeOperationsResolver>();
         services.AddSingleton<ITenantMemberGatewayCredentialProtector, TenantMemberGatewayCredentialProtector>();

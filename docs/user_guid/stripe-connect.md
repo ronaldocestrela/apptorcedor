@@ -34,12 +34,6 @@ São fluxos **independentes**: cartões salvos para o SaaS ficam na conta da pla
 
 ---
 
-## Migração a partir do stub
-
-Se o ambiente tinha assinaturas com **stub** (`mem_sub_*`), ao ativar Stripe direto a troca de plano continua tratando cancelamentos legados sem falhar — ver `docs/Stripe/configuracao-chaves-e-webhooks.md` e `backend/src/Modules/Payments/AGENTS.md`.
-
----
-
 ## Referência técnica (trecho)
 
 - Backoffice gateway: `api/backoffice/payments/member-gateway/tenants/{tenantId}/status`, `.../provider`

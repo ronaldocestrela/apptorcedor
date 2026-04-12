@@ -23,7 +23,6 @@ using SocioTorcedor.Modules.Payments.Application.Commands.CreateMemberStripeChec
 using SocioTorcedor.Modules.Payments.Application.Commands.CreateTenantSaasBillingPortalSession;
 using SocioTorcedor.Modules.Payments.Application.Commands.ConfigureTenantMemberStripeDirect;
 using SocioTorcedor.Modules.Payments.Application.Commands.ProcessMemberStripeWebhook;
-using SocioTorcedor.Modules.Payments.Application.Commands.ProcessMemberTenantWebhook;
 using SocioTorcedor.Modules.Payments.Application.Commands.ProcessTenantSaasWebhook;
 using SocioTorcedor.Modules.Payments.Application.Commands.SetTenantMemberPaymentProvider;
 using SocioTorcedor.Modules.Payments.Application.Commands.StartTenantSaasBilling;
@@ -75,7 +74,6 @@ public static class ServiceCollectionExtensions
             typeof(ConfigureTenantMemberStripeDirectHandler).Assembly,
             typeof(GetTenantMemberGatewayStatusHandler).Assembly,
             typeof(ProcessMemberStripeWebhookHandler).Assembly,
-            typeof(ProcessMemberTenantWebhookHandler).Assembly,
             typeof(GetMyMemberBillingHandler).Assembly,
             typeof(ListMyMemberInvoicesHandler).Assembly);
 

@@ -9,7 +9,7 @@ using SocioTorcedor.Modules.Payments.Domain.Enums;
 namespace SocioTorcedor.Modules.Payments.Application.Commands.ProcessTenantSaasWebhook;
 
 /// <summary>
-/// Persiste o webhook em inbox (idempotente) e aplica efeitos (legado + eventos Stripe nativos ou corpo sintético thin).
+/// Persiste o webhook em inbox (idempotente) e aplica efeitos (eventos Stripe / corpo sintético thin).
 /// </summary>
 public sealed class ProcessTenantSaasWebhookHandler(
     ITenantMasterPaymentsRepository repository,

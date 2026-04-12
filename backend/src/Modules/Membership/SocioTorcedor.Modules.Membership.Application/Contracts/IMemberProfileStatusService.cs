@@ -1,7 +1,7 @@
 namespace SocioTorcedor.Modules.Membership.Application.Contracts;
 
 /// <summary>
-/// Atualiza status de sócio usando connection string explícita (ex.: webhooks Stripe Connect).
+/// Atualiza status de sócio usando connection string explícita (ex.: efeitos de webhook na conta do tenant).
 /// </summary>
 public interface IMemberProfileStatusService
 {

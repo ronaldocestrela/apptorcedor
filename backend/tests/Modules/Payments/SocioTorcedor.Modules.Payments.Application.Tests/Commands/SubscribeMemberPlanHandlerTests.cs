@@ -27,7 +27,7 @@ public sealed class SubscribeMemberPlanHandlerTests
             () => false);
 
     [Fact]
-    public async Task When_stripe_enabled_and_existing_stub_subscription_cancels_and_creates_new_plan()
+    public async Task When_stripe_enabled_and_existing_subscription_cancels_and_creates_new_plan()
     {
         var profile = TestProfile();
         var oldPlan = MemberPlan.Create("Bronze", null, 50m, null, () => false);
@@ -39,8 +39,8 @@ public sealed class SubscribeMemberPlanHandlerTests
             50m,
             "BRL",
             PaymentMethodKind.Pix,
-            externalCustomerId: "mem_cust_legacy",
-            externalSubscriptionId: "mem_sub_0123456789abcdef0123456789abcdef",
+            externalCustomerId: "cus_prev",
+            externalSubscriptionId: "sub_0123456789abcdef0123456789abcdef",
             BillingSubscriptionStatus.Active,
             DateTime.UtcNow.AddMonths(1));
 
@@ -92,9 +92,9 @@ public sealed class SubscribeMemberPlanHandlerTests
 
         await paymentProvider.Received(1).CancelAsync(
             PaymentProviderContext.Member,
-            "mem_sub_0123456789abcdef0123456789abcdef",
+            "sub_0123456789abcdef0123456789abcdef",
             null,
-            $"cancel:mem_sub_0123456789abcdef0123456789abcdef",
+            "cancel:sub_0123456789abcdef0123456789abcdef",
             Arg.Any<CancellationToken>());
 
         await paymentProvider.Received(1).CreateSubscriptionAsync(

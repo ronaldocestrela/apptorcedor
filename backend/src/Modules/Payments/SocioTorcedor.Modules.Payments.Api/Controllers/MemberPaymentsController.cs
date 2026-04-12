@@ -1,25 +1,20 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using SocioTorcedor.BuildingBlocks.Shared.Results;
 using SocioTorcedor.Modules.Payments.Application.Commands.CreateMemberPixCheckout;
 using SocioTorcedor.Modules.Payments.Application.Commands.CreateMemberStripeCheckoutSession;
-using SocioTorcedor.Modules.Payments.Application.Commands.ProcessMemberTenantWebhook;
 using SocioTorcedor.Modules.Payments.Application.Commands.SubscribeMemberPlan;
 using SocioTorcedor.Modules.Payments.Application.Queries.GetMyMemberBilling;
 using SocioTorcedor.Modules.Payments.Application.Queries.ListMyMemberInvoices;
 using SocioTorcedor.Modules.Payments.Domain.Enums;
-using SocioTorcedor.Modules.Payments.Infrastructure.Options;
 
 namespace SocioTorcedor.Modules.Payments.Api.Controllers;
 
 [ApiController]
 [Route("api/payments/member")]
-public sealed class MemberPaymentsController(IMediator mediator, IOptions<PaymentsOptions> paymentsOptions) : ControllerBase
+public sealed class MemberPaymentsController(IMediator mediator) : ControllerBase
 {
-    private readonly PaymentsOptions _paymentsOptions = paymentsOptions.Value;
-
     [Authorize]
     [HttpPost("subscribe")]
     public async Task<IActionResult> Subscribe([FromBody] SubscribeBody body, CancellationToken cancellationToken)
@@ -69,26 +64,6 @@ public sealed class MemberPaymentsController(IMediator mediator, IOptions<Paymen
         return FromResult(result, Ok);
     }
 
-    [AllowAnonymous]
-    [HttpPost("webhooks")]
-    public async Task<IActionResult> Webhook([FromBody] MemberWebhookBody body, CancellationToken cancellationToken)
-    {
-        var secret = Request.Headers["X-Payments-Webhook-Secret"].ToString().Trim();
-        var expected = _paymentsOptions.MemberWebhookSecret?.Trim() ?? string.Empty;
-        if (string.IsNullOrEmpty(expected) || !string.Equals(secret, expected, StringComparison.Ordinal))
-            return Unauthorized(new { error = "Invalid webhook secret." });
-
-        if (string.IsNullOrWhiteSpace(body.IdempotencyKey))
-            return BadRequest(new { error = "idempotencyKey is required." });
-
-        var raw = string.IsNullOrWhiteSpace(body.RawBody) ? System.Text.Json.JsonSerializer.Serialize(body) : body.RawBody!;
-        var result = await mediator.Send(
-            new ProcessMemberTenantWebhookCommand(body.IdempotencyKey.Trim(), body.EventType ?? string.Empty, raw),
-            cancellationToken);
-
-        return FromResult(result);
-    }
-
     public sealed class SubscribeBody
     {
         public Guid MemberPlanId { get; set; }
@@ -108,19 +83,6 @@ public sealed class MemberPaymentsController(IMediator mediator, IOptions<Paymen
         public string SuccessUrl { get; set; } = string.Empty;
 
         public string CancelUrl { get; set; } = string.Empty;
-    }
-
-    public sealed class MemberWebhookBody
-    {
-        public string? IdempotencyKey { get; set; }
-
-        public string? EventType { get; set; }
-
-        public string? RawBody { get; set; }
-
-        public string? ExternalSubscriptionId { get; set; }
-
-        public string? MemberProfileId { get; set; }
     }
 
     private IActionResult FromResult(Result result)

@@ -2,7 +2,6 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SocioTorcedor.Modules.Backoffice.Api.Controllers;
 using SocioTorcedor.Modules.Payments.Application.Commands.CreateTenantSaasBillingPortalSession;
-using SocioTorcedor.Modules.Payments.Application.Commands.ProcessTenantSaasWebhook;
 using SocioTorcedor.Modules.Payments.Application.Commands.StartTenantSaasBilling;
 using SocioTorcedor.Modules.Payments.Application.Queries.GetTenantSaasBilling;
 using SocioTorcedor.Modules.Payments.Application.Queries.ListTenantSaasInvoices;
@@ -49,31 +48,6 @@ public sealed class BackofficeSaasPaymentsController(IMediator mediator) : Backo
             cancellationToken);
 
         return FromResult(result, Ok);
-    }
-
-    [HttpPost("webhooks")]
-    public async Task<IActionResult> Webhook([FromBody] WebhookBody body, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(body.IdempotencyKey))
-            return BadRequest(new { error = "idempotencyKey is required." });
-
-        var raw = string.IsNullOrWhiteSpace(body.RawBody) ? System.Text.Json.JsonSerializer.Serialize(body) : body.RawBody!;
-        var result = await mediator.Send(
-            new ProcessTenantSaasWebhookCommand(body.IdempotencyKey.Trim(), body.EventType ?? string.Empty, raw),
-            cancellationToken);
-
-        return FromResult(result);
-    }
-
-    public sealed class WebhookBody
-    {
-        public string? IdempotencyKey { get; set; }
-
-        public string? EventType { get; set; }
-
-        public string? RawBody { get; set; }
-
-        public string? ExternalSubscriptionId { get; set; }
     }
 
     public sealed class PortalBody

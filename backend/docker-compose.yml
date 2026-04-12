@@ -31,7 +31,6 @@ services:
       Jwt__SigningKey: "CHANGE_ME_DEV_ONLY_MIN_32_CHARS_HMACSHA256_KEY!"
       Jwt__AccessTokenMinutes: "120"
       Backoffice__ApiKey: "CHANGE_ME_BACKOFFICE_API_KEY"
-      Payments__MemberWebhookSecret: "CHANGE_ME_MEMBER_PAYMENTS_WEBHOOK_SECRET"
     depends_on:
       sqlserver:
         condition: service_healthy

@@ -14,9 +14,6 @@ public sealed class MemberTenantPaymentsRepository(TenantPaymentsDbContext db) :
     public Task AddSubscriptionAsync(MemberBillingSubscription subscription, CancellationToken cancellationToken) =>
         db.MemberBillingSubscriptions.AddAsync(subscription, cancellationToken).AsTask();
 
-    public Task AddWebhookAsync(MemberPaymentWebhookInbox inbox, CancellationToken cancellationToken) =>
-        db.MemberPaymentWebhookInbox.AddAsync(inbox, cancellationToken).AsTask();
-
     public Task<int> CountInvoicesByMemberAsync(Guid memberProfileId, CancellationToken cancellationToken) =>
         db.MemberBillingInvoices
             .Where(i => db.MemberBillingSubscriptions.Any(s => s.Id == i.MemberBillingSubscriptionId && s.MemberProfileId == memberProfileId))
@@ -32,11 +29,6 @@ public sealed class MemberTenantPaymentsRepository(TenantPaymentsDbContext db) :
                 x.Status != BillingSubscriptionStatus.Canceled)
             .OrderByDescending(x => x.CreatedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
-
-    public Task<MemberPaymentWebhookInbox?> GetWebhookByIdempotencyKeyAsync(
-        string idempotencyKey,
-        CancellationToken cancellationToken) =>
-        db.MemberPaymentWebhookInbox.FirstOrDefaultAsync(x => x.IdempotencyKey == idempotencyKey, cancellationToken);
 
     public Task<MemberBillingSubscription?> GetSubscriptionByExternalIdAsync(
         string externalSubscriptionId,

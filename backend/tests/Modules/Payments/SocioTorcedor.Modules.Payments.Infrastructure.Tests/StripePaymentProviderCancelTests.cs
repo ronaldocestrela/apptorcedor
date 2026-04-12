@@ -44,32 +44,6 @@ public sealed class StripePaymentProviderCancelTests
     }
 
     [Fact]
-    public async Task CancelAsync_with_mem_sub_legacy_stub_id_does_not_throw_and_skips_stripe()
-    {
-        var sut = CreateOperations();
-
-        var act = async () => await sut.CancelAsync(
-            PaymentProviderContext.Member,
-            "mem_sub_0123456789abcdef0123456789abcdef",
-            cancellationToken: CancellationToken.None);
-
-        await act.Should().NotThrowAsync();
-    }
-
-    [Fact]
-    public async Task CancelAsync_with_saas_sub_legacy_stub_id_does_not_throw()
-    {
-        var sut = CreateOperations();
-
-        var act = async () => await sut.CancelAsync(
-            PaymentProviderContext.SaaS,
-            "saas_sub_0123456789abcdef0123456789abcdef",
-            cancellationToken: CancellationToken.None);
-
-        await act.Should().NotThrowAsync();
-    }
-
-    [Fact]
     public void ShouldInvokeStripeSubscriptionCancel_is_false_for_null_or_whitespace()
     {
         StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel(null).Should().BeFalse();
@@ -78,10 +52,10 @@ public sealed class StripePaymentProviderCancelTests
     }
 
     [Fact]
-    public void ShouldInvokeStripeSubscriptionCancel_is_false_for_legacy_stub_style_ids()
+    public void ShouldInvokeStripeSubscriptionCancel_is_false_for_ids_not_starting_with_sub_prefix()
     {
-        StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel("mem_sub_abc").Should().BeFalse();
-        StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel("saas_sub_xyz").Should().BeFalse();
+        StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel("inv_abc").Should().BeFalse();
+        StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel("pi_xyz").Should().BeFalse();
     }
 
     [Fact]

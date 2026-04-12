@@ -10,10 +10,6 @@ public interface IMemberTenantPaymentsRepository
 
     Task AddInvoiceAsync(MemberBillingInvoice invoice, CancellationToken cancellationToken);
 
-    Task<MemberPaymentWebhookInbox?> GetWebhookByIdempotencyKeyAsync(string idempotencyKey, CancellationToken cancellationToken);
-
-    Task AddWebhookAsync(MemberPaymentWebhookInbox inbox, CancellationToken cancellationToken);
-
     Task<MemberBillingSubscription?> GetSubscriptionByExternalIdAsync(string externalSubscriptionId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<MemberBillingInvoice>> ListInvoicesByMemberAsync(

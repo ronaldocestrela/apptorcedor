@@ -90,10 +90,6 @@ Valores típicos: `test` ou `live` (informativo).
 
 URL base pública (API ou SPA) para montar success/cancel de Checkout, etc.
 
-### Chaves legadas `Payments:StripeConnectWebhookSecret` / `StripeThinConnectWebhookSecret`
-
-Podem permanecer em `appsettings` por compatibilidade, mas **não** são usadas pelo webhook de sócios atual. O endpoint antigo `POST /api/webhooks/stripe/connect` foi substituído por **`/api/webhooks/stripe/member/{tenantId}`** com segredo por tenant.
-
 ---
 
 ## Comportamento de validação paralela (shadow mode)
@@ -104,17 +100,9 @@ Quando `true`, após validar a assinatura e montar o fluxo thin, os **handlers n
 
 ---
 
-## Webhook do módulo de pagamentos (stub / interno), não Stripe
+## Cancelamento de assinatura na API Stripe
 
-### `Payments__MemberWebhookSecret`
-
-Segredo do webhook **interno** do gateway stub (`X-Payments-Webhook-Secret`), não relacionado aos Event Destinations da Stripe.
-
----
-
-## Migração do gateway stub para Stripe (IDs de assinatura legados)
-
-Ver secção homônima no final do documento histórico e `backend/src/Modules/Payments/AGENTS.md`: o `StripePaymentProvider.CancelAsync` ignora IDs que não são `sub_*` e trata `resource_missing` como idempotente.
+O **`StripePaymentProvider.CancelAsync`** só invoca a API de assinaturas da Stripe quando o ID externo começa com `sub_`. Respostas `resource_missing` / *No such subscription* são tratadas como cancelamento idempotente (evita falha em reprocessamentos).
 
 ---
 

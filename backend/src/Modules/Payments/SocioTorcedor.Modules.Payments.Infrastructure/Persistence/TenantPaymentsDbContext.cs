@@ -16,13 +16,10 @@ public sealed class TenantPaymentsDbContext : BaseDbContext
 
     public DbSet<MemberBillingInvoice> MemberBillingInvoices => Set<MemberBillingInvoice>();
 
-    public DbSet<MemberPaymentWebhookInbox> MemberPaymentWebhookInbox => Set<MemberPaymentWebhookInbox>();
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new MemberBillingSubscriptionConfiguration());
         modelBuilder.ApplyConfiguration(new MemberBillingInvoiceConfiguration());
-        modelBuilder.ApplyConfiguration(new MemberPaymentWebhookInboxConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

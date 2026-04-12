@@ -33,28 +33,6 @@ public sealed class TenantSaasStripeWebhookEffectApplicator(
             await ApplyStripeEventAsync(stripeTypeEl.GetString() ?? string.Empty, dataEl, cancellationToken);
             return;
         }
-
-        var eventType = root.TryGetProperty("eventType", out var et) ? et.GetString() : null;
-        var externalSub = root.TryGetProperty("externalSubscriptionId", out var es) ? es.GetString() : null;
-
-        var isPaid = string.Equals(eventType, "invoice.paid", StringComparison.OrdinalIgnoreCase)
-                     || string.Equals(eventType, "payment.confirmed", StringComparison.OrdinalIgnoreCase);
-
-        if (!isPaid || string.IsNullOrWhiteSpace(externalSub))
-            return;
-
-        var subscription = await repository.GetSubscriptionByExternalIdAsync(externalSub, cancellationToken);
-        if (subscription is null)
-            return;
-
-        var invoices = await repository.ListInvoicesByTenantAsync(subscription.TenantId, 0, 50, cancellationToken);
-        var open = invoices.FirstOrDefault(i => i.Status is BillingInvoiceStatus.Open or BillingInvoiceStatus.Draft);
-        open?.MarkPaid(DateTime.UtcNow);
-
-        var next = subscription.BillingCycle == BillingCycle.Yearly
-            ? DateTime.UtcNow.AddYears(1)
-            : DateTime.UtcNow.AddMonths(1);
-        subscription.MarkStatus(BillingSubscriptionStatus.Active, next);
     }
 
     private async Task ApplyStripeEventAsync(string type, JsonElement data, CancellationToken cancellationToken)

@@ -41,31 +41,6 @@ public sealed class ProcessTenantSaasWebhookHandlerTests
     }
 
     [Fact]
-    public async Task Legacy_invoice_paid_marks_open_invoice_and_extends_subscription()
-    {
-        var sub = MonthlySub("sub_legacy_1");
-        var invoice = TenantBillingInvoice.Create(sub.Id, 99m, "BRL", DateTime.UtcNow.AddDays(1), BillingInvoiceStatus.Open, null);
-
-        var repo = Substitute.For<ITenantMasterPaymentsRepository>();
-        repo.GetWebhookByIdempotencyKeyAsync("evt_1", Arg.Any<CancellationToken>()).Returns((TenantPaymentWebhookInbox?)null);
-        repo.GetSubscriptionByExternalIdAsync("sub_legacy_1", Arg.Any<CancellationToken>()).Returns(sub);
-        repo.ListInvoicesByTenantAsync(sub.TenantId, 0, 50, Arg.Any<CancellationToken>())
-            .Returns(new[] { invoice });
-
-        var handler = CreateHandler(repo);
-        var body = """{"eventType":"invoice.paid","externalSubscriptionId":"sub_legacy_1"}""";
-
-        var r = await handler.Handle(new ProcessTenantSaasWebhookCommand("evt_1", "invoice.paid", body), CancellationToken.None);
-
-        r.IsSuccess.Should().BeTrue();
-        invoice.Status.Should().Be(BillingInvoiceStatus.Paid);
-        sub.Status.Should().Be(BillingSubscriptionStatus.Active);
-        sub.NextBillingAtUtc.Should().NotBeNull();
-        await repo.Received(1).AddWebhookAsync(Arg.Any<TenantPaymentWebhookInbox>(), Arg.Any<CancellationToken>());
-        await repo.Received(2).SaveChangesAsync(Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
     public async Task Stripe_invoice_paid_shape_marks_open_invoice()
     {
         var sub = MonthlySub("sub_stripe_1");
@@ -150,7 +125,7 @@ public sealed class ProcessTenantSaasWebhookHandlerTests
             .Returns(new[] { invoice });
 
         var handler = CreateHandler(repo);
-        var body = """{"eventType":"invoice.paid","externalSubscriptionId":"sub_idem"}""";
+        var body = """{"type":"invoice.paid","data":{"object":{"subscription":"sub_idem"}}}""";
 
         (await handler.Handle(new ProcessTenantSaasWebhookCommand("evt_idem", "invoice.paid", body), CancellationToken.None)).IsSuccess.Should().BeTrue();
         invoice.Status.Should().Be(BillingInvoiceStatus.Paid);
@@ -200,7 +175,7 @@ public sealed class ProcessTenantSaasWebhookHandlerTests
             .Returns(new[] { invoice });
 
         var handler = CreateHandler(repo, new StripeWebhookHandlingOptions { StripeWebhookShadowMode = true });
-        var body = """{"eventType":"invoice.paid","externalSubscriptionId":"sub_shadow"}""";
+        var body = """{"type":"invoice.paid","data":{"object":{"subscription":"sub_shadow"}}}""";
 
         var r = await handler.Handle(new ProcessTenantSaasWebhookCommand("evt_shadow", "invoice.paid", body), CancellationToken.None);
 

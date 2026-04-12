@@ -4,35 +4,21 @@ public sealed class PaymentsOptions
 {
     public const string SectionName = "Payments";
 
-    /// <summary>
-    /// Segredo compartilhado para webhooks do tenant (header X-Payments-Webhook-Secret).
-    /// </summary>
-    public string MemberWebhookSecret { get; set; } = string.Empty;
-
     /// <summary>Chave secreta da API Stripe (sk_test_... / sk_live_...).</summary>
     public string StripeSecretKey { get; set; } = string.Empty;
 
     /// <summary>Opcional: publishable key para o frontend (pk_...).</summary>
     public string StripePublishableKey { get; set; } = string.Empty;
 
-    /// <summary>Webhook signing secret para eventos de Billing SaaS (conta da plataforma), formato snapshot V1 (legado).</summary>
+    /// <summary>Fallback do signing secret SaaS (conta plataforma) quando <see cref="StripeThinSaasWebhookSecret"/> está vazio.</summary>
     public string StripeSaasWebhookSecret { get; set; } = string.Empty;
 
-    /// <summary>Signing secret do Event Destination thin (SaaS). Se vazio, usa <see cref="StripeSaasWebhookSecret"/>.</summary>
+    /// <summary>Signing secret preferido do Event Destination thin (SaaS).</summary>
     public string StripeThinSaasWebhookSecret { get; set; } = string.Empty;
-
-    /// <summary>Legado: não usado pelo endpoint atual de webhooks de sócios na conta do clube.</summary>
-    public string StripeConnectWebhookSecret { get; set; } = string.Empty;
-
-    /// <summary>Legado: não usado pelo endpoint atual de webhooks de sócios na conta do clube.</summary>
-    public string StripeThinConnectWebhookSecret { get; set; } = string.Empty;
 
     /// <summary>Informacional: test ou live.</summary>
     public string StripeEnvironment { get; set; } = "test";
 
-    /// <summary>
-    /// URL base pública (API ou SPA) para montar success/cancel de Checkout e links de Connect
-    /// (ex.: https://app.exemplo.com ou https://api.exemplo.com).
-    /// </summary>
+    /// <summary>URL base pública (API ou SPA) para success/cancel de Checkout (ex.: https://app.exemplo.com).</summary>
     public string PublicAppBaseUrl { get; set; } = string.Empty;
 }
