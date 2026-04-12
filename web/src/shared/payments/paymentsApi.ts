@@ -46,6 +46,11 @@ export interface MemberPixCheckout {
   expiresAtUtc: string | null
 }
 
+export interface MemberStripeCheckoutSession {
+  sessionId: string
+  url: string
+}
+
 export async function fetchMemberPlans(page = 1, pageSize = 50) {
   const { data } = await apiClient.get<{
     items: MemberPlanSummary[]
@@ -68,6 +73,23 @@ export async function createMemberPixCheckout(memberPlanId: string) {
   const { data } = await apiClient.post<MemberPixCheckout>('/api/payments/member/checkout/pix', {
     memberPlanId,
   })
+  return data
+}
+
+/** Stripe Checkout (hospedado) para assinatura com cartão — requer gateway Stripe configurado no tenant. */
+export async function createMemberStripeCheckoutSession(
+  memberPlanId: string,
+  successUrl: string,
+  cancelUrl: string,
+) {
+  const { data } = await apiClient.post<MemberStripeCheckoutSession>(
+    '/api/payments/member/checkout/stripe-session',
+    {
+      memberPlanId,
+      successUrl,
+      cancelUrl,
+    },
+  )
   return data
 }
 

@@ -5,6 +5,7 @@ using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
 using SocioTorcedor.Modules.Membership.Application.Contracts;
 using SocioTorcedor.Modules.Payments.Application.Contracts;
 using SocioTorcedor.Modules.Payments.Application.DTOs;
+using SocioTorcedor.Modules.Payments.Application.Validation;
 
 namespace SocioTorcedor.Modules.Payments.Application.Commands.CreateMemberStripeCheckoutSession;
 
@@ -22,6 +23,12 @@ public sealed class CreateMemberStripeCheckoutSessionHandler(
         CreateMemberStripeCheckoutSessionCommand command,
         CancellationToken cancellationToken)
     {
+        if (!CheckoutReturnUrlValidator.IsValid(command.SuccessUrl, out var successErr))
+            return Result<MemberStripeCheckoutSessionDto>.Fail(Error.Failure("Payments.InvalidSuccessUrl", successErr!));
+
+        if (!CheckoutReturnUrlValidator.IsValid(command.CancelUrl, out var cancelErr))
+            return Result<MemberStripeCheckoutSessionDto>.Fail(Error.Failure("Payments.InvalidCancelUrl", cancelErr!));
+
         if (!paymentsGatewayMetadata.IsStripeEnabled)
             return Result<MemberStripeCheckoutSessionDto>.Fail(Error.Failure("Payments.Stripe.Disabled", "Stripe is not configured."));
 
@@ -48,7 +55,8 @@ public sealed class CreateMemberStripeCheckoutSessionHandler(
         {
             ["tenant_id"] = tenantContext.TenantId.ToString("D"),
             ["member_profile_id"] = profile.Id.ToString("D"),
-            ["member_plan_id"] = plan.Id.ToString("D")
+            ["member_plan_id"] = plan.Id.ToString("D"),
+            ["recurring_amount_brl"] = plan.Preco.ToString(System.Globalization.CultureInfo.InvariantCulture)
         };
 
         var session = await paymentProvider.CreateCheckoutSessionAsync(

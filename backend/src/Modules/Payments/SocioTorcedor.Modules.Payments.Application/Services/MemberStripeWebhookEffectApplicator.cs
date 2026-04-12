@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -81,12 +82,30 @@ public sealed class MemberStripeWebhookEffectApplicator(
             existing.MarkStatus(BillingSubscriptionStatus.Canceled);
 
         var amount = existing?.RecurringAmount ?? 0m;
+        if (amount <= 0m && meta.TryGetProperty("recurring_amount_brl", out var amountEl) &&
+            amountEl.ValueKind == JsonValueKind.String &&
+            decimal.TryParse(
+                amountEl.GetString(),
+                NumberStyles.Any,
+                CultureInfo.InvariantCulture,
+                out var parsedAmount))
+        {
+            amount = parsedAmount;
+        }
+
+        if (amount <= 0m && session.TryGetProperty("amount_total", out var amountTotal) &&
+            amountTotal.ValueKind == JsonValueKind.Number)
+        {
+            // Stripe amounts are in minor units (centavos for BRL).
+            amount = amountTotal.GetInt64() / 100m;
+        }
+
         var sub = MemberBillingSubscription.Start(
             memberId.Value,
             planId.Value,
             amount,
             "BRL",
-            PaymentMethodKind.Unspecified,
+            PaymentMethodKind.Card,
             customerId,
             subscriptionId,
             BillingSubscriptionStatus.Active,
@@ -98,7 +117,7 @@ public sealed class MemberStripeWebhookEffectApplicator(
             sub.Id,
             amount,
             "BRL",
-            PaymentMethodKind.Unspecified,
+            PaymentMethodKind.Card,
             DateTime.UtcNow.AddDays(7),
             BillingInvoiceStatus.Open,
             externalInvoiceId: null,

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   createMemberPixCheckout,
+  createMemberStripeCheckoutSession,
   fetchMemberPlans,
   getMySubscription,
   listMyInvoices,
@@ -18,6 +19,11 @@ const BILLING_SUBSCRIPTION_STATUS_LABELS: Record<number, string> = {
   3: 'Cancelada',
 }
 
+/** Domínio: `PaymentMethodKind` — Pix=1, Card=2 */
+const PAYMENT_METHOD_PIX = 1 as const
+
+type PaymentChoice = 'pix' | 'card_credit' | 'card_debit'
+
 function formatBillingSubscriptionStatus(status: number): string {
   return BILLING_SUBSCRIPTION_STATUS_LABELS[status] ?? `Desconhecido (${status})`
 }
@@ -32,12 +38,22 @@ function formatBillingDateOnlyBr(iso: string | null | undefined): string {
   return new Date(t).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
 }
 
+function readAxiosMessage(e: unknown): string {
+  if (e != null && typeof e === 'object' && 'response' in e) {
+    const data = (e as { response?: { data?: { message?: string } } }).response?.data
+    if (data?.message && typeof data.message === 'string') return data.message
+  }
+  return e instanceof Error ? e.message : 'Erro inesperado.'
+}
+
 export function MemberBillingPage() {
   const [plans, setPlans] = useState<MemberPlanSummary[]>([])
   const [selectedPlanId, setSelectedPlanId] = useState('')
+  const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>('card_credit')
   const [subscription, setSubscription] = useState<MemberBillingSubscription | null | undefined>(undefined)
   const [invoices, setInvoices] = useState<MemberBillingInvoice[]>([])
   const [pixPayload, setPixPayload] = useState<string | null>(null)
+  const [checkoutFlash, setCheckoutFlash] = useState<'success' | 'cancel' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -59,7 +75,7 @@ export function MemberBillingPage() {
         return first ? first.id : ''
       })
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Erro ao carregar dados de pagamento.')
+      setError(readAxiosMessage(e) || 'Erro ao carregar dados de pagamento.')
     }
   }, [])
 
@@ -67,42 +83,85 @@ export function MemberBillingPage() {
     void load()
   }, [load])
 
-  async function onSubscribe() {
-    if (!selectedPlanId) return
-    setBusy(true)
-    setError(null)
-    try {
-      await subscribeMemberPlan(selectedPlanId, 1)
-      await load()
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Falha na assinatura.')
-    } finally {
-      setBusy(false)
+  /** Volta do Stripe Checkout: feedback e remove query string. */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const v = params.get('checkout')
+    if (v === 'success' || v === 'cancel') {
+      setCheckoutFlash(v)
+      params.delete('checkout')
+      const qs = params.toString()
+      const newUrl = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`
+      window.history.replaceState({}, '', newUrl)
     }
-  }
+  }, [])
 
-  async function onPix() {
+  async function onPayWithPix() {
     if (!selectedPlanId) return
     setBusy(true)
     setError(null)
     setPixPayload(null)
     try {
+      await subscribeMemberPlan(selectedPlanId, PAYMENT_METHOD_PIX)
       const r = await createMemberPixCheckout(selectedPlanId)
       setPixPayload(r.pixCopyPaste ?? null)
       await load()
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Falha ao gerar PIX.')
+      setError(readAxiosMessage(e) || 'Falha ao assinar ou gerar PIX.')
     } finally {
       setBusy(false)
     }
   }
 
+  async function onPayWithCard() {
+    if (!selectedPlanId) return
+    setBusy(true)
+    setError(null)
+    try {
+      const base = `${window.location.origin}${window.location.pathname}`
+      const successUrl = `${base}?checkout=success`
+      const cancelUrl = `${base}?checkout=cancel`
+      const session = await createMemberStripeCheckoutSession(selectedPlanId, successUrl, cancelUrl)
+      window.location.assign(session.url)
+    } catch (e: unknown) {
+      setError(readAxiosMessage(e) || 'Falha ao abrir o pagamento com cartão.')
+      setBusy(false)
+    }
+  }
+
+  async function onPrimaryPay() {
+    if (paymentChoice === 'pix') {
+      await onPayWithPix()
+      return
+    }
+    await onPayWithCard()
+  }
+
+  const primaryLabel =
+    paymentChoice === 'pix'
+      ? 'Assinar e gerar PIX'
+      : paymentChoice === 'card_credit'
+        ? 'Pagar com cartão de crédito (Stripe Checkout)'
+        : 'Pagar com cartão de débito (Stripe Checkout)'
+
   return (
     <section className="billing-page">
       <h1>Pagamentos — sócio</h1>
       <p className="billing-page__hint">
-        Escolha um plano ativo do clube, assine e gere cobrança PIX (provider stub no backend).
+        Escolha um plano ativo, o meio de pagamento e conclua a assinatura. Pagamento com cartão ocorre na página segura da
+        Stripe (Checkout).
       </p>
+
+      {checkoutFlash === 'success' ? (
+        <p className="billing-page__hint" role="status">
+          Retorno do checkout: você pode atualizar os dados abaixo para ver a assinatura após confirmação.
+        </p>
+      ) : null}
+      {checkoutFlash === 'cancel' ? (
+        <p className="billing-page__hint" role="status">
+          Pagamento com cartão cancelado na Stripe. Você pode tentar novamente quando quiser.
+        </p>
+      ) : null}
 
       {error ? <p className="billing-page__error">{error}</p> : null}
 
@@ -126,12 +185,47 @@ export function MemberBillingPage() {
             </select>
           </label>
         )}
+        <fieldset className="billing-page__field" style={{ border: 'none', padding: 0, margin: '0.75rem 0 0' }}>
+          <legend className="billing-page__hint" style={{ marginBottom: '0.35rem' }}>
+            Forma de pagamento
+          </legend>
+          <label className="billing-page__field" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="radio"
+              name="pay"
+              checked={paymentChoice === 'pix'}
+              onChange={() => setPaymentChoice('pix')}
+              disabled={busy}
+            />
+            PIX
+          </label>
+          <label className="billing-page__field" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="radio"
+              name="pay"
+              checked={paymentChoice === 'card_credit'}
+              onChange={() => setPaymentChoice('card_credit')}
+              disabled={busy}
+            />
+            Cartão de crédito
+          </label>
+          <label className="billing-page__field" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="radio"
+              name="pay"
+              checked={paymentChoice === 'card_debit'}
+              onChange={() => setPaymentChoice('card_debit')}
+              disabled={busy}
+            />
+            Cartão de débito
+          </label>
+          <p className="billing-page__hint" style={{ marginTop: '0.5rem' }}>
+            Crédito e débito usam o mesmo fluxo de cartão na Stripe; a bandeira/emissor define o tipo na hora do pagamento.
+          </p>
+        </fieldset>
         <div className="billing-page__actions">
-          <button type="button" disabled={busy || !selectedPlanId} onClick={() => void onSubscribe()}>
-            Assinar plano
-          </button>
-          <button type="button" disabled={busy || !selectedPlanId} onClick={() => void onPix()}>
-            Gerar PIX
+          <button type="button" disabled={busy || !selectedPlanId} onClick={() => void onPrimaryPay()}>
+            {primaryLabel}
           </button>
           <button type="button" disabled={busy} onClick={() => void load()}>
             Atualizar
