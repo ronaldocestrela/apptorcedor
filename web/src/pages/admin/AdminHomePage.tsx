@@ -12,6 +12,9 @@ export function AdminHomePage() {
         <li>
           <Link to="/admin/billing">Faturamento SaaS</Link> — orientação sobre cobrança da plataforma.
         </li>
+        <li>
+          <Link to="/admin/stripe">Stripe Connect</Link> — configurar conta Stripe para cobrar sócios.
+        </li>
       </ul>
     </section>
   )

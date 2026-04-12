@@ -63,6 +63,17 @@ export function AppShell() {
                 Faturamento SaaS
               </NavLink>
             ) : null}
+            {isAdmin ? (
+              <NavLink
+                to="/admin/stripe"
+                className={({ isActive }) =>
+                  isActive ? 'app-shell__link app-shell__link--active' : 'app-shell__link'
+                }
+                onClick={closeNav}
+              >
+                Stripe Connect
+              </NavLink>
+            ) : null}
             <NavLink
               to="/member"
               end
