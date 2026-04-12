@@ -35,7 +35,7 @@ Fluxo resumido:
 3. **Sem assinatura ativa duplicada**: não pode já existir assinatura de billing ativa para o mesmo tenant.
 4. **Stripe (opcional mas usual em produção)**: com `Payments:StripeSecretKey` configurado, o provedor usa **Price IDs** do `SaaSPlan` (`StripePriceMonthlyId` / `StripePriceYearlyId`) ao criar a assinatura no Stripe.
 
-Se o Stripe não estiver configurado, o fluxo pode usar o **stub** interno, conforme implementação atual do `IPaymentProvider`.
+Se o Stripe não estiver configurado, o fluxo pode usar o **stub** interno, conforme implementação atual do `IPaymentProvider`. Assinaturas criadas pelo stub usam IDs internos (`saas_sub_*` no contexto SaaS); ao configurar Stripe de forma definitiva, o cancelamento via `StripePaymentProvider` ignora esses IDs e só chama a API para IDs `sub_*`, conforme **`docs/Stripe/configuracao-chaves-e-webhooks.md`** (migração stub → Stripe).
 
 ---
 

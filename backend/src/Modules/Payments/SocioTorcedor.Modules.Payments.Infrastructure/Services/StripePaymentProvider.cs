@@ -34,12 +34,48 @@ public sealed class StripePaymentProvider(IOptions<PaymentsOptions> options) : I
         CancellationToken cancellationToken = default)
     {
         _ = context;
-        var service = new SubscriptionService(Client);
-        await service.CancelAsync(
-            externalSubscriptionId,
-            new SubscriptionCancelOptions(),
-            Req(idempotencyKey, connectedAccountId),
-            cancellationToken);
+        if (!ShouldInvokeStripeSubscriptionCancel(externalSubscriptionId))
+            return;
+
+        var subscriptionId = externalSubscriptionId.Trim();
+        try
+        {
+            var service = new SubscriptionService(Client);
+            await service.CancelAsync(
+                subscriptionId,
+                new SubscriptionCancelOptions(),
+                Req(idempotencyKey, connectedAccountId),
+                cancellationToken);
+        }
+        catch (StripeException ex) when (IsMissingSubscriptionStripeError(ex))
+        {
+            // Assinatura já não existe na Stripe (cancelamento idempotente ou ID obsoleto).
+        }
+    }
+
+    /// <summary>
+    /// Somente IDs com prefixo <c>sub_</c> são cancelados via API Stripe.
+    /// IDs legados (ex.: <c>mem_sub_*</c> do stub) são ignorados.
+    /// </summary>
+    internal static bool ShouldInvokeStripeSubscriptionCancel(string? externalSubscriptionId)
+    {
+        if (string.IsNullOrWhiteSpace(externalSubscriptionId))
+            return false;
+
+        return externalSubscriptionId.Trim().StartsWith("sub_", StringComparison.Ordinal);
+    }
+
+    internal static bool IsMissingSubscriptionStripeError(StripeException ex)
+    {
+        ArgumentNullException.ThrowIfNull(ex);
+
+        if (string.Equals(ex.StripeError?.Code, "resource_missing", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (ex.Message.Contains("No such subscription", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
     }
 
     public async Task<CreateBillingPortalSessionResult> CreateBillingPortalSessionAsync(

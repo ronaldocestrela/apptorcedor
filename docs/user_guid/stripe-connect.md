@@ -34,6 +34,10 @@ Sem Stripe configurado, a API retorna erro ao tentar iniciar onboarding.
 
 3. **Admin do clube:** usuário com role **`Administrador`** no tenant (JWT) para usar as rotas `api/payments/admin/connect/*`.
 
+### Troca de plano e dados criados com o gateway stub
+
+Se o clube ou o ambiente já tinham assinaturas registradas com o **stub** (IDs internos como `mem_sub_*`), ao ativar Stripe Connect e a chave secreta da Stripe a troca de plano do sócio continua funcionando: o backend não envia esses IDs para a API de assinaturas da Stripe e trata cancelamentos já inexistentes na Stripe como concluídos. Referência técnica: `docs/Stripe/configuracao-chaves-e-webhooks.md` (secção **Migração do gateway stub para Stripe**).
+
 ---
 
 ## O que o sistema armazena (conceito)

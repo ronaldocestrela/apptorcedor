@@ -173,6 +173,19 @@ Todas as rotas exigem **thin events** no Dashboard. Os tipos abaixo usam o prefi
 
 ---
 
+## Migração do gateway stub para Stripe (IDs de assinatura legados)
+
+Em ambientes de desenvolvimento ou MVP, o **`StubPaymentProvider`** pode ter gravado `ExternalSubscriptionId` como `mem_sub_*` ou `saas_sub_*` (não são IDs da API Stripe). Ao passar a usar **`Payments:StripeSecretKey`** real, a troca de plano do sócio chama cancelamento da assinatura anterior antes de criar a nova.
+
+O **`StripePaymentProvider.CancelAsync`** trata isso assim:
+
+- IDs **vazios** ou que **não** começam com `sub_` são **ignorados** (não há chamada `SubscriptionService.CancelAsync` na Stripe).
+- IDs `sub_...` seguem o fluxo normal de cancelamento; se a Stripe responder com **`resource_missing`** ou mensagem *No such subscription*, o cancelamento é tratado como **idempotente** (sucesso lógico), para não bloquear troca de plano quando o registro local está desatualizado.
+
+Detalhes de implementação e lista de testes: `backend/src/Modules/Payments/AGENTS.md` (seção **Contrato de gateway** e **Testes**).
+
+---
+
 ## Exemplo de `.env` (Host)
 
 Arquivo de referência: `backend/src/Host/SocioTorcedor.Api/.env.example`.

@@ -28,6 +28,7 @@ Cobrança em dois contextos: **SaaS** (clube paga a plataforma, banco master) e 
 - `IPaymentProvider` em `BuildingBlocks.Application` (`Payments/`).
 - **Stripe ativo** quando `Payments:StripeSecretKey` está preenchido (`IPaymentsGatewayMetadata.IsStripeEnabled`); caso contrário permanece o provider **stub** onde aplicável.
 - Com **Stripe** (SDK **Stripe.net 51**): chaves e segredos em `Payments` (`StripeSecretKey`, `StripePublishableKey`, segredos de webhook thin ou legados, `PublicAppBaseUrl`, `StripeWebhookShadowMode`, etc. — ver `PaymentsOptions`, `StripeWebhookHandlingOptions` e `appsettings`.
+- **Compatibilidade com dados legados do stub:** o `StubPaymentProvider` grava `ExternalSubscriptionId` como `mem_sub_*` / `saas_sub_*`. Ao migrar o ambiente para Stripe real, esses IDs não existem na API. O **`StripePaymentProvider.CancelAsync`** ignora qualquer ID que **não** comece com `sub_` (não chama a Stripe) e trata erro Stripe **`resource_missing`** / mensagem *No such subscription* como cancelamento **idempotente** (no-op), permitindo troca de plano e reprocessamentos sem falhar.
 
 ## SaaS (master)
 - Planos `SaaSPlan` podem referenciar **Price IDs** Stripe (mensal/anual) para `StartTenantSaasBilling`.
@@ -40,7 +41,9 @@ Cobrança em dois contextos: **SaaS** (clube paga a plataforma, banco master) e 
 - Host: `AddPaymentsModule`, migrations após Backoffice no master; após Membership em cada tenant (`DatabaseMigrationExtensions`, `TenantDatabaseProvisioner`).
 
 ## Testes
-- `backend/tests/Modules/Payments/SocioTorcedor.Modules.Payments.Application.Tests` — webhook SaaS (`ProcessTenantSaasWebhookHandler`, idempotência / shadow), Connect (`ProcessStripeConnectWebhookHandler`), normalização thin (`StripeThinEventTypeNormalizer`), envelope (`StripeWebhookEnvelope`), billing do sócio (`GetMyMemberBillingHandler`), onboarding Connect (`StartStripeConnectOnboardingHandler`), status Connect (`GetStripeConnectStatusHandler`), sync Connect (`SyncStripeConnectStatusHandler`).
+- `backend/tests/Modules/Payments/SocioTorcedor.Modules.Payments.Application.Tests` — webhook SaaS (`ProcessTenantSaasWebhookHandler`, idempotência / shadow), Connect (`ProcessStripeConnectWebhookHandler`), normalização thin (`StripeThinEventTypeNormalizer`), envelope (`StripeWebhookEnvelope`), billing do sócio (`GetMyMemberBillingHandler`), onboarding Connect (`StartStripeConnectOnboardingHandler`), status Connect (`GetStripeConnectStatusHandler`), sync Connect (`SyncStripeConnectStatusHandler`), troca de plano do sócio (`SubscribeMemberPlanHandler`).
+  - **`SubscribeMemberPlanHandler`:** `SubscribeMemberPlanHandlerTests` cobre troca de plano com Stripe ativo e assinatura anterior com `ExternalSubscriptionId` no formato legado do stub (`mem_sub_*`): o handler chama `IPaymentProvider.CancelAsync`, marca a assinatura antiga como cancelada e persiste a nova (mock do gateway).
+- `backend/tests/Modules/Payments/SocioTorcedor.Modules.Payments.Infrastructure.Tests` — `StripePaymentProviderCancelTests`: `CancelAsync` sem erro para id vazio, whitespace, `mem_sub_*`, `saas_sub_*` (sem chamada à API Stripe); `ShouldInvokeStripeSubscriptionCancel` para `sub_*`, ids legados e nulos; `IsMissingSubscriptionStripeError` para `resource_missing`, mensagem *No such subscription* e erro não relacionado.
 
 ## Stripe Dashboard (Event Destinations)
 - Criar destinos com **Use thin events** e apontar para as URLs acima.
