@@ -33,8 +33,27 @@ describe('memberGatewayTenantApi', () => {
       statusText: '',
       config: {} as never,
     })
-    await getTenantMemberGatewayStatus()
+    const s = await getTenantMemberGatewayStatus()
     expect(mockedGet).toHaveBeenCalledWith('/api/payments/admin/member-gateway')
+    expect(s.selectedProvider).toBe('StripeDirect')
+  })
+
+  it('getTenantMemberGatewayStatus normalizes PascalCase body', async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        SelectedProvider: 'StripeDirect',
+        Status: 'Ready',
+        PublishableKeyHint: null,
+        WebhookSecretConfigured: false,
+      },
+      headers: {},
+      status: 200,
+      statusText: '',
+      config: {} as never,
+    })
+    const s = await getTenantMemberGatewayStatus()
+    expect(s.selectedProvider).toBe('StripeDirect')
+    expect(s.status).toBe('Ready')
   })
 
   it('configureTenantStripeDirect puts stripe-direct body', async () => {

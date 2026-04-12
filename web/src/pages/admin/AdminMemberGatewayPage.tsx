@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getApiErrorMessage } from '../../shared/auth'
+import { isStripeDirectProvider } from '../../shared/payments/memberGatewayStatus'
 import {
   configureTenantStripeDirect,
   getTenantMemberGatewayStatus,
@@ -68,7 +69,7 @@ export function AdminMemberGatewayPage() {
   }
 
   const provider = status?.selectedProvider ?? 'None'
-  const stripeDirect = provider === 'StripeDirect'
+  const stripeDirect = isStripeDirectProvider(provider)
 
   return (
     <section>

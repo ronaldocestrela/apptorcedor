@@ -35,6 +35,22 @@ describe('AdminMemberGatewayPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('submits credentials when provider string is case-insensitive (stripedirect)', async () => {
+    getStatusMock.mockResolvedValue({
+      selectedProvider: 'stripedirect',
+      status: 'Ready',
+      publishableKeyHint: null,
+      webhookSecretConfigured: false,
+    })
+    configureMock.mockResolvedValue(undefined)
+    const user = userEvent.setup()
+    render(<AdminMemberGatewayPage />)
+    await screen.findByText(/Credenciais Stripe/i)
+    await user.type(screen.getByLabelText(/Secret key/i), 'sk_test_abc')
+    await user.click(screen.getByRole('button', { name: /Salvar credenciais/i }))
+    expect(configureMock).toHaveBeenCalled()
+  })
+
   it('submits credentials when StripeDirect is selected', async () => {
     getStatusMock.mockResolvedValue({
       selectedProvider: 'StripeDirect',

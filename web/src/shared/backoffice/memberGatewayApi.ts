@@ -1,11 +1,12 @@
+import { normalizeMemberGatewayStatus } from '../payments/memberGatewayStatus'
 import { backofficeClient } from '../http/backofficeClient'
 import type { MemberGatewayStatusDto } from './types'
 
 export async function getMemberGatewayStatus(tenantId: string): Promise<MemberGatewayStatusDto> {
-  const { data } = await backofficeClient.get<MemberGatewayStatusDto>(
+  const { data } = await backofficeClient.get<unknown>(
     `/api/backoffice/payments/member-gateway/tenants/${tenantId}/status`,
   )
-  return data
+  return normalizeMemberGatewayStatus(data)
 }
 
 export async function setMemberGatewayProvider(tenantId: string, provider: string): Promise<void> {

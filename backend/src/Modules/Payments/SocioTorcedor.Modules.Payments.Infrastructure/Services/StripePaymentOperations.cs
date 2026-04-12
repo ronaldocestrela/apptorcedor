@@ -126,19 +126,31 @@ public sealed class StripePaymentOperations(StripeClient client)
             Metadata = request.Metadata.ToDictionary(static x => x.Key, static x => x.Value)
         };
 
-        if (!string.IsNullOrWhiteSpace(request.CustomerEmail))
+        if (mode == "subscription")
+        {
+            // Accounts V2: Checkout em testmode exige customer existente; guest checkout (sem customer) falha.
+            var meta = request.Metadata.ToDictionary(static x => x.Key, static x => x.Value);
+            var customerService = new CustomerService(_client);
+            var customerOptions = StripeSubscriptionCheckoutCustomerFactory.BuildCustomerCreateOptions(request);
+
+            var customer = await customerService.CreateAsync(
+                customerOptions,
+                Req(string.IsNullOrWhiteSpace(request.IdempotencyKey)
+                    ? null
+                    : $"{request.IdempotencyKey}:cust",
+                    request.ConnectedAccountId),
+                cancellationToken);
+
+            sessionOptions.Customer = customer.Id;
+            sessionOptions.SubscriptionData = new SessionSubscriptionDataOptions { Metadata = meta };
+        }
+        else if (!string.IsNullOrWhiteSpace(request.CustomerEmail))
+        {
             sessionOptions.CustomerEmail = request.CustomerEmail;
+        }
 
         if (mode == "payment" && string.Equals(request.Currency, "BRL", StringComparison.OrdinalIgnoreCase))
             sessionOptions.PaymentMethodTypes = new List<string> { "card", "pix" };
-
-        if (mode == "subscription")
-        {
-            sessionOptions.SubscriptionData = new SessionSubscriptionDataOptions
-            {
-                Metadata = request.Metadata.ToDictionary(static x => x.Key, static x => x.Value)
-            };
-        }
 
         var service = new SessionService(_client);
         var session = await service.CreateAsync(sessionOptions, Req(request.IdempotencyKey, request.ConnectedAccountId), cancellationToken);
