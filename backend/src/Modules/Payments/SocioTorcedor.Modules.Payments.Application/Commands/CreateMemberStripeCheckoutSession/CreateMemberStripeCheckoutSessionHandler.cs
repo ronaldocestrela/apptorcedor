@@ -13,8 +13,8 @@ public sealed class CreateMemberStripeCheckoutSessionHandler(
     ICurrentTenantContext tenantContext,
     IMemberProfileRepository memberProfileRepository,
     IMemberPlanRepository memberPlanRepository,
-    ITenantMasterPaymentsRepository masterPaymentsRepository,
     IPaymentsGatewayMetadata paymentsGatewayMetadata,
+    IMemberPaymentGatewayService memberPaymentGateway,
     IPaymentProvider paymentProvider)
     : ICommandHandler<CreateMemberStripeCheckoutSessionCommand, MemberStripeCheckoutSessionDto>
 {
@@ -40,9 +40,9 @@ public sealed class CreateMemberStripeCheckoutSessionHandler(
         if (plan.Preco <= 0)
             return Result<MemberStripeCheckoutSessionDto>.Fail(Error.Failure("Payments.InvalidAmount", "Plan price must be greater than zero."));
 
-        var connect = await masterPaymentsRepository.GetStripeConnectByTenantIdAsync(tenantContext.TenantId, cancellationToken);
-        if (connect is null || !connect.ChargesEnabled)
-            return Result<MemberStripeCheckoutSessionDto>.Fail(Error.Failure("Payments.Connect.NotReady", "Stripe Connect is not ready for this club."));
+        var gate = await memberPaymentGateway.EnsureMemberGatewayReadyForChargeAsync(tenantContext.TenantId, cancellationToken);
+        if (!gate.IsSuccess)
+            return Result<MemberStripeCheckoutSessionDto>.Fail(gate.Error!);
 
         var metadata = new Dictionary<string, string>
         {
@@ -62,7 +62,7 @@ public sealed class CreateMemberStripeCheckoutSessionHandler(
                 SuccessUrl: command.SuccessUrl,
                 CancelUrl: command.CancelUrl,
                 Metadata: metadata,
-                ConnectedAccountId: connect.StripeAccountId,
+                ConnectedAccountId: null,
                 CustomerEmail: null,
                 IdempotencyKey: $"member-checkout:{profile.Id:N}:{plan.Id:N}:{Guid.NewGuid():N}"),
             cancellationToken);

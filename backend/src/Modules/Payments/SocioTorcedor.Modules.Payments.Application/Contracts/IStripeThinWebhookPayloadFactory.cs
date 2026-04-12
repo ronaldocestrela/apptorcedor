@@ -1,3 +1,5 @@
+using Stripe;
+
 namespace SocioTorcedor.Modules.Payments.Application.Contracts;
 
 /// <summary>
@@ -6,6 +8,7 @@ namespace SocioTorcedor.Modules.Payments.Application.Contracts;
 public interface IStripeThinWebhookPayloadFactory
 {
     Task<StripeThinSyntheticWebhook?> BuildAsync(
+        StripeClient stripeClient,
         StripeThinWebhookDispatch dispatch,
         string notificationId,
         string notificationType,

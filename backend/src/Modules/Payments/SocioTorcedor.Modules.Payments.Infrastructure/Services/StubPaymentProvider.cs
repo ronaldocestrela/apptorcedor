@@ -58,32 +58,6 @@ public sealed class StubPaymentProvider : IPaymentProvider
             $"https://stub-checkout.example/session/{id}"));
     }
 
-    public Task<CreateConnectAccountLinkResult> CreateConnectAccountLinkAsync(
-        CreateConnectAccountLinkRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        _ = cancellationToken;
-        return Task.FromResult(new CreateConnectAccountLinkResult(
-            $"https://stub-connect.example/onboarding/{request.AccountId}"));
-    }
-
-    public Task<CreateConnectExpressAccountResult> CreateConnectExpressAccountAsync(
-        CreateConnectExpressAccountRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        _ = request;
-        _ = cancellationToken;
-        return Task.FromResult(new CreateConnectExpressAccountResult($"acct_stub_{Guid.NewGuid():N}"));
-    }
-
-    public Task<ConnectAccountStatusResult> GetConnectAccountStatusAsync(
-        string accountId,
-        CancellationToken cancellationToken = default)
-    {
-        _ = cancellationToken;
-        return Task.FromResult(new ConnectAccountStatusResult(accountId, true, true, true));
-    }
-
     public Task<CreatePixChargeResult> CreatePixAsync(
         CreatePixChargeRequest request,
         CancellationToken cancellationToken = default)

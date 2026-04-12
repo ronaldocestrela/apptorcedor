@@ -38,18 +38,6 @@ public interface IPaymentProvider
         CreateBillingPortalSessionRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<CreateConnectExpressAccountResult> CreateConnectExpressAccountAsync(
-        CreateConnectExpressAccountRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<CreateConnectAccountLinkResult> CreateConnectAccountLinkAsync(
-        CreateConnectAccountLinkRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<ConnectAccountStatusResult> GetConnectAccountStatusAsync(
-        string accountId,
-        CancellationToken cancellationToken = default);
-
     Task<ListSaasCustomerPaymentMethodsResult> ListSaasCustomerPaymentMethodsAsync(
         ListSaasCustomerPaymentMethodsRequest request,
         CancellationToken cancellationToken = default);

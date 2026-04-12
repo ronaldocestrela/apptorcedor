@@ -13,6 +13,7 @@ if (File.Exists(envPath))
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddDataProtection();
 builder.Services.Configure<BackofficeOptions>(builder.Configuration.GetSection(BackofficeOptions.SectionName));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentTenantContext, HttpContextTenantContext>();

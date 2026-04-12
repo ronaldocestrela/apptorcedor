@@ -21,10 +21,10 @@ public sealed class PaymentsOptions
     /// <summary>Signing secret do Event Destination thin (SaaS). Se vazio, usa <see cref="StripeSaasWebhookSecret"/>.</summary>
     public string StripeThinSaasWebhookSecret { get; set; } = string.Empty;
 
-    /// <summary>Webhook signing secret para eventos Connect / contas conectadas, formato snapshot V1 (legado).</summary>
+    /// <summary>Legado: não usado pelo endpoint atual de webhooks de sócios na conta do clube.</summary>
     public string StripeConnectWebhookSecret { get; set; } = string.Empty;
 
-    /// <summary>Signing secret do Event Destination thin (Connect). Se vazio, usa <see cref="StripeConnectWebhookSecret"/>.</summary>
+    /// <summary>Legado: não usado pelo endpoint atual de webhooks de sócios na conta do clube.</summary>
     public string StripeThinConnectWebhookSecret { get; set; } = string.Empty;
 
     /// <summary>Informacional: test ou live.</summary>

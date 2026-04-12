@@ -54,17 +54,17 @@ public static class DependencyInjection
             return new Stripe.StripeClient(string.IsNullOrWhiteSpace(key) ? string.Empty : key.Trim());
         });
 
-        services.AddScoped<ITenantSaasStripeWebhookEffectApplicator, TenantSaasStripeWebhookEffectApplicator>();
-        services.AddScoped<IConnectStripeWebhookEffectApplicator, ConnectStripeWebhookEffectApplicator>();
-        services.AddScoped<IStripeThinWebhookPayloadFactory, StripeThinWebhookPayloadFactory>();
+        services.AddSingleton<StripePaymentProvider>();
+        services.AddSingleton<StubPaymentProvider>();
+        services.AddScoped<IPaymentProvider, RoutingPaymentProvider>();
+        services.AddScoped<MemberStripeOperationsResolver>();
+        services.AddSingleton<ITenantMemberGatewayCredentialProtector, TenantMemberGatewayCredentialProtector>();
+        services.AddScoped<IMemberPaymentGatewayService, MemberPaymentGatewayService>();
+        services.AddScoped<IMemberStripeWebhookIngressResolver, MemberStripeWebhookIngressResolver>();
 
-        services.AddSingleton<IPaymentProvider>(sp =>
-        {
-            var opts = sp.GetRequiredService<IOptions<PaymentsOptions>>().Value;
-            return !string.IsNullOrWhiteSpace(opts.StripeSecretKey)
-                ? new StripePaymentProvider(sp.GetRequiredService<IOptions<PaymentsOptions>>())
-                : new StubPaymentProvider();
-        });
+        services.AddScoped<ITenantSaasStripeWebhookEffectApplicator, TenantSaasStripeWebhookEffectApplicator>();
+        services.AddScoped<IMemberStripeWebhookEffectApplicator, MemberStripeWebhookEffectApplicator>();
+        services.AddScoped<IStripeThinWebhookPayloadFactory, StripeThinWebhookPayloadFactory>();
 
         services.AddSingleton<IPaymentsGatewayMetadata, PaymentsGatewayMetadata>();
 

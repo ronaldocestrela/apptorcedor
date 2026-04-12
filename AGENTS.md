@@ -403,7 +403,7 @@ src/
 ### Sessão e papéis no SPA
 
 * Além de `accessToken` e `expiresAtUtc`, a sessão em **`sessionStorage`** guarda **`roles`** extraídas do JWT (claim curta **`role`** ou claim longa do .NET); sessões antigas sem `roles` são normalizadas ao carregar, decodificando o token de novo.
-* **Navegação:** os links **Admin**, **Planos**, **Faturamento SaaS** e **Stripe Connect** só aparecem para usuários com role **`Administrador`**. Usuários apenas **`Socio`** continuam com **Sócio** e **Pagamentos**. Não há bloqueio de rota por papel no front (apenas visibilidade no menu); a API continua a autorizar com JWT + roles.
+* **Navegação:** os links **Admin**, **Planos**, **Faturamento SaaS** e **Gateway** só aparecem para usuários com role **`Administrador`**. Usuários apenas **`Socio`** continuam com **Sócio** e **Pagamentos**. Não há bloqueio de rota por papel no front (apenas visibilidade no menu); a API continua a autorizar com JWT + roles.
 
 ### Áreas
 
@@ -412,7 +412,7 @@ src/
 * sócios
 * planos
 * pagamentos
-* configuração **Stripe Connect** (conta conectada para cobrar sócios — UI **`/admin/stripe`**, API `api/payments/admin/connect/*`)
+* configuração **gateway de pagamentos** (Stripe direto / credenciais do clube — UI **`/admin/stripe`**, API `api/payments/admin/member-gateway/*`)
 * jogos
 * notícias
 * suporte
@@ -472,7 +472,7 @@ src/
 
 * ✅ gestão de tenants
 * ✅ planos SaaS
-* ✅ **MVP web** — UI em **`/backoffice`** (login com API key, tenants, planos SaaS, vínculos, detalhe com domínios/settings/plano/pagamentos SaaS/Stripe Connect); ver **`docs/user_guid/backoffice-frontend.md`**
+* ✅ **MVP web** — UI em **`/backoffice`** (login com API key, tenants, planos SaaS, vínculos, detalhe com domínios/settings/plano/pagamentos SaaS/gateway de sócios); ver **`docs/user_guid/backoffice-frontend.md`**
 
 ### Fase 3 — Sócio
 
@@ -483,8 +483,8 @@ src/
 
 ### Fase 4 — Pagamentos
 
-* ✅ **MVP backend** — módulo `Payments`: assinatura + faturas SaaS (master) e sócio (tenant); `POST/GET` backoffice em `api/backoffice/payments/saas/*`; **`Stripe`** (Stripe.net 51): Billing SaaS com price IDs nos planos, **Stripe Connect Express** por tenant (`api/backoffice/payments/connect/*` e **`api/payments/admin/connect/*`** para o admin do clube com JWT + `Administrador`), checkout sócio e **`POST /api/webhooks/stripe/saas`** + **`POST /api/webhooks/stripe/connect`** — webhooks **thin** (Event Destinations, `v2.core.event`); idempotência alinhada ao snapshot via `snapshot_event` quando a Stripe envia; `Payments:StripeWebhookShadowMode` para validação sem gravar inbox/efeitos; `api/payments/member/*` (subscribe, PIX, sessão Stripe quando configurado, **`GET /api/payments/member/me/subscription`** com `planName`); webhooks legados SaaS (API key) e tenant (`X-Payments-Webhook-Secret`); provider **stub** ou **Stripe** (`IPaymentProvider`); **`StripePaymentProvider.CancelAsync`** ignora IDs que não são `sub_*` (ex.: legados `mem_sub_*` do stub) e trata `resource_missing` como cancelamento idempotente ao trocar plano — ver `backend/src/Modules/Payments/AGENTS.md` e `docs/Stripe/configuracao-chaves-e-webhooks.md`
-* ✅ **MVP web** — rotas `/member` (perfil sócio, `GET /api/members/me`), `/member/billing` (fluxo sócio), `/admin/billing` (orientação SaaS para admins do clube), **`/admin/stripe`** (onboarding/status Stripe Connect para admins do clube) e **`/backoffice`** (operadores da plataforma com `X-Api-Key`); UI responsiva, tema claro/escuro, menu admin do tenant visível só para role **`Administrador`**
+* ✅ **MVP backend** — módulo `Payments`: assinatura + faturas SaaS (master) e sócio (tenant); `POST/GET` backoffice em `api/backoffice/payments/saas/*`; **`Stripe`** (Stripe.net 51): Billing SaaS com price IDs nos planos; **gateway por tenant** — backoffice escolhe provedor (`api/backoffice/payments/member-gateway/*`), admin do clube configura **Stripe direto** (`api/payments/admin/member-gateway/*` com JWT + `Administrador`); checkout sócio e **`POST /api/webhooks/stripe/saas`** (conta plataforma) + **`POST /api/webhooks/stripe/member/{tenantId}`** (conta do clube, um destino por tenant na Stripe do clube) — webhooks **thin** (Event Destinations, `v2.core.event`); idempotência alinhada ao snapshot via `snapshot_event` quando a Stripe envia; `Payments:StripeWebhookShadowMode` para validação sem gravar inbox/efeitos; `api/payments/member/*` (subscribe, PIX, sessão Stripe quando configurado, **`GET /api/payments/member/me/subscription`** com `planName`); webhooks legados SaaS (API key) e stub interno (`X-Payments-Webhook-Secret`); provider **stub** ou roteamento **Stripe** (`IPaymentProvider`); **`StripePaymentProvider.CancelAsync`** ignora IDs que não são `sub_*` (ex.: legados `mem_sub_*` do stub) e trata `resource_missing` como cancelamento idempotente ao trocar plano — ver `backend/src/Modules/Payments/AGENTS.md` e `docs/Stripe/configuracao-chaves-e-webhooks.md`
+* ✅ **MVP web** — rotas `/member` (perfil sócio, `GET /api/members/me`), `/member/billing` (fluxo sócio), `/admin/billing` (orientação SaaS para admins do clube), **`/admin/stripe`** (credenciais e status do **gateway** de sócios) e **`/backoffice`** (operadores da plataforma com `X-Api-Key`); UI responsiva, tema claro/escuro, menu admin do tenant visível só para role **`Administrador`**
 * recorrência end-to-end com gateway de produção (operacionalização, monitoramento)
 * cartão (tokenização / 3DS) além do stub
 * conciliação e jobs de cobrança

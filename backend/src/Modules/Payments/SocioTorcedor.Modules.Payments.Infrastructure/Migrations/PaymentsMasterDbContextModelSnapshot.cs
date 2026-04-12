@@ -22,7 +22,7 @@ namespace SocioTorcedor.Modules.Payments.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("SocioTorcedor.Modules.Payments.Domain.Entities.ConnectStripeWebhookInbox", b =>
+            modelBuilder.Entity("SocioTorcedor.Modules.Payments.Domain.Entities.MemberStripeWebhookInbox", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -60,7 +60,7 @@ namespace SocioTorcedor.Modules.Payments.Infrastructure.Migrations
                     b.HasIndex("IdempotencyKey")
                         .IsUnique();
 
-                    b.ToTable("Payments_ConnectStripeWebhookInbox", (string)null);
+                    b.ToTable("Payments_MemberStripeWebhookInbox", (string)null);
                 });
 
             modelBuilder.Entity("SocioTorcedor.Modules.Payments.Domain.Entities.TenantBillingInvoice", b =>
@@ -167,6 +167,39 @@ namespace SocioTorcedor.Modules.Payments.Infrastructure.Migrations
                     b.ToTable("Payments_TenantBillingSubscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("SocioTorcedor.Modules.Payments.Domain.Entities.TenantMemberGatewayConfiguration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ProtectedCredentials")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SelectedProvider")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.ToTable("Payments_TenantMemberGatewayConfigurations", (string)null);
+                });
+
             modelBuilder.Entity("SocioTorcedor.Modules.Payments.Domain.Entities.TenantPaymentWebhookInbox", b =>
                 {
                     b.Property<Guid>("Id")
@@ -206,48 +239,6 @@ namespace SocioTorcedor.Modules.Payments.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Payments_TenantWebhookInbox", (string)null);
-                });
-
-            modelBuilder.Entity("SocioTorcedor.Modules.Payments.Domain.Entities.TenantStripeConnectAccount", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("ChargesEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("DetailsSubmitted")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("OnboardingStatus")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("PayoutsEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("StripeAccountId")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StripeAccountId");
-
-                    b.HasIndex("TenantId")
-                        .IsUnique();
-
-                    b.ToTable("Payments_TenantStripeConnectAccounts", (string)null);
                 });
 
             modelBuilder.Entity("SocioTorcedor.Modules.Payments.Domain.Entities.TenantBillingInvoice", b =>

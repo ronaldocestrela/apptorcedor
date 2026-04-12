@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminBillingPage } from '../../pages/admin/AdminBillingPage'
 import { AdminHomePage } from '../../pages/admin/AdminHomePage'
 import { AdminPlansPage } from '../../pages/admin/AdminPlansPage'
-import { AdminStripeConnectPage } from '../../pages/admin/AdminStripeConnectPage'
+import { AdminMemberGatewayPage } from '../../pages/admin/AdminMemberGatewayPage'
 import { LoginPage } from '../../pages/auth/LoginPage'
 import { RegisterPage } from '../../pages/auth/RegisterPage'
 import { MemberBillingPage } from '../../pages/member/MemberBillingPage'
@@ -21,7 +21,7 @@ export function AppRouter() {
           <Route path="admin" element={<AdminHomePage />} />
           <Route path="admin/plans" element={<AdminPlansPage />} />
           <Route path="admin/billing" element={<AdminBillingPage />} />
-          <Route path="admin/stripe" element={<AdminStripeConnectPage />} />
+          <Route path="admin/stripe" element={<AdminMemberGatewayPage />} />
           <Route path="member" element={<MemberHomePage />} />
           <Route path="member/billing" element={<MemberBillingPage />} />
         </Route>

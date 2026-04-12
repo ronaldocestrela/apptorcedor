@@ -11,10 +11,11 @@ namespace SocioTorcedor.Modules.Payments.Infrastructure.Services;
 /// <summary>
 /// Converte notificações thin (V2) em payload no formato snapshot esperado pelos applicators.
 /// </summary>
-public sealed class StripeThinWebhookPayloadFactory(StripeClient client, ILogger<StripeThinWebhookPayloadFactory> logger)
+public sealed class StripeThinWebhookPayloadFactory(ILogger<StripeThinWebhookPayloadFactory> logger)
     : IStripeThinWebhookPayloadFactory
 {
     public async Task<StripeThinSyntheticWebhook?> BuildAsync(
+        StripeClient stripeClient,
         StripeThinWebhookDispatch dispatch,
         string notificationId,
         string notificationType,
@@ -29,7 +30,7 @@ public sealed class StripeThinWebhookPayloadFactory(StripeClient client, ILogger
         Stripe.V2.Core.Event fullEvent;
         try
         {
-            fullEvent = await client.V2.Core.Events.GetAsync(notificationId, cancellationToken: cancellationToken);
+            fullEvent = await stripeClient.V2.Core.Events.GetAsync(notificationId, cancellationToken: cancellationToken);
         }
         catch (StripeException ex)
         {
@@ -45,9 +46,7 @@ public sealed class StripeThinWebhookPayloadFactory(StripeClient client, ILogger
         var evRoot = evDoc.RootElement;
 
         var idempotencyKey = ResolveIdempotencyKey(evRoot, notificationId);
-        var stripeAccount = dispatch == StripeThinWebhookDispatch.Connect
-            ? TryGetConnectedAccountId(evRoot)
-            : null;
+        _ = dispatch;
 
         if (!evRoot.TryGetProperty("related_object", out var related) ||
             !related.TryGetProperty("id", out var ridEl) ||
@@ -65,7 +64,7 @@ public sealed class StripeThinWebhookPayloadFactory(StripeClient client, ILogger
             ? rt.GetString() ?? string.Empty
             : string.Empty;
 
-        var resourceJson = await FetchResourceJsonAsync(relatedId, relatedType, stripeAccount, cancellationToken);
+        var resourceJson = await FetchResourceJsonAsync(stripeClient, relatedId, relatedType, cancellationToken);
         if (string.IsNullOrWhiteSpace(resourceJson))
             return null;
 
@@ -85,54 +84,37 @@ public sealed class StripeThinWebhookPayloadFactory(StripeClient client, ILogger
         return notificationId;
     }
 
-    private static string? TryGetConnectedAccountId(JsonElement fullEventRoot)
-    {
-        if (!fullEventRoot.TryGetProperty("context", out var ctx) || ctx.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (ctx.TryGetProperty("stripe_account", out var sa) && sa.ValueKind == JsonValueKind.String)
-            return sa.GetString();
-        if (ctx.TryGetProperty("account", out var a) && a.ValueKind == JsonValueKind.String)
-            return a.GetString();
-
-        return null;
-    }
-
     private async Task<string?> FetchResourceJsonAsync(
+        StripeClient stripeClient,
         string relatedId,
         string relatedType,
-        string? stripeAccountId,
         CancellationToken cancellationToken)
     {
-        var ro = new RequestOptions();
-        if (!string.IsNullOrWhiteSpace(stripeAccountId))
-            ro.StripeAccount = stripeAccountId;
-
         try
         {
             var t = relatedType.ToLowerInvariant();
             if (t.Contains("invoice", StringComparison.Ordinal) || relatedId.StartsWith("in_", StringComparison.Ordinal))
             {
-                var inv = await new InvoiceService(client).GetAsync(relatedId, requestOptions: ro, cancellationToken: cancellationToken);
+                var inv = await new InvoiceService(stripeClient).GetAsync(relatedId, cancellationToken: cancellationToken);
                 return inv.ToJson();
             }
 
             if (t.Contains("subscription", StringComparison.Ordinal) || relatedId.StartsWith("sub_", StringComparison.Ordinal))
             {
-                var sub = await new SubscriptionService(client).GetAsync(relatedId, requestOptions: ro, cancellationToken: cancellationToken);
+                var sub = await new SubscriptionService(stripeClient).GetAsync(relatedId, cancellationToken: cancellationToken);
                 return sub.ToJson();
             }
 
             if ((t.Contains("checkout", StringComparison.Ordinal) && t.Contains("session", StringComparison.Ordinal)) ||
                 relatedId.StartsWith("cs_", StringComparison.Ordinal))
             {
-                var sess = await new SessionService(client).GetAsync(relatedId, requestOptions: ro, cancellationToken: cancellationToken);
+                var sess = await new SessionService(stripeClient).GetAsync(relatedId, cancellationToken: cancellationToken);
                 return sess.ToJson();
             }
 
             if (t.Contains("account", StringComparison.Ordinal) || relatedId.StartsWith("acct_", StringComparison.Ordinal))
             {
-                var acc = await new AccountService(client).GetAsync(relatedId, requestOptions: ro, cancellationToken: cancellationToken);
+                var acc = await new AccountService(stripeClient).GetAsync(relatedId, cancellationToken: cancellationToken);
                 return acc.ToJson();
             }
         }

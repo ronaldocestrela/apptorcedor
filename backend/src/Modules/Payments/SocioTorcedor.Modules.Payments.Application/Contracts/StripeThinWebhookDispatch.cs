@@ -3,7 +3,8 @@ namespace SocioTorcedor.Modules.Payments.Application.Contracts;
 public enum StripeThinWebhookDispatch
 {
     SaaS,
-    Connect
+    /// <summary>Webhooks da conta Stripe do tenant (chaves diretas, sem Connect).</summary>
+    Member
 }
 
 /// <summary>

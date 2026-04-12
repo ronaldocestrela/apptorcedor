@@ -2,32 +2,26 @@
 
 Este documento descreve as variáveis de ambiente / chaves de configuração relacionadas à Stripe no backend (`SocioTorcedor.Api`), o propósito de cada uma e **quais eventos** devem ser assinados em cada **Event Destination** no Dashboard da Stripe.
 
-A API usa **Stripe.net 51** e expõe webhooks **somente no formato thin** (`object: v2.core.event`). É necessário criar **Event Destinations** com a opção **Use thin events** (thin events). O formato snapshot clássico (`ConstructEvent` / `object: event`) **não** é aceito nessas rotas.
+A API usa **Stripe.net 51** e expõe webhooks **somente no formato thin** (`object: v2.core.event`). É necessário criar **Event Destinations** com a opção **Use thin events**. O formato snapshot clássico (`ConstructEvent` / `object: event`) **não** é aceito nessas rotas.
 
 **Pré-requisito:** thin events para recursos V1 podem estar em *private preview* na Stripe; consulte a [documentação oficial](https://stripe.com/docs) e o processo de acesso da Stripe, se aplicável.
 
 ---
 
-## Visão geral: duas rotas, quatro variáveis `whsec_`
+## Visão geral: rotas na API da plataforma
 
-Existem **duas URLs** de webhook na API; no `.env` aparecem **quatro** chaves `whsec_` porque há par **thin + fallback** para cada rota.
+| Rota na API | Conta Stripe | Onde fica o signing secret (`whsec_`) |
+|-------------|--------------|----------------------------------------|
+| `POST /api/webhooks/stripe/saas` | **Plataforma** (Billing SaaS) | Variáveis globais `Payments:StripeThinSaasWebhookSecret` ou fallback `Payments:StripeSaasWebhookSecret` |
+| `POST /api/webhooks/stripe/member/{tenantId}` | **Clube** (cobrança de sócios, um destino por tenant) | Credenciais do gateway guardadas no master (**não** são variáveis `Payments:*` compartilhadas) |
 
-| Rota na API | Variáveis `.env` (ordem de uso pelo código) |
-|-------------|--------------------------------------------|
-| `POST /api/webhooks/stripe/saas` | 1) `Payments__StripeThinSaasWebhookSecret` — se **não** vazio, é este o secret usado na validação. 2) `Payments__StripeSaasWebhookSecret` — usado **só se** o Thin SaaS estiver vazio. |
-| `POST /api/webhooks/stripe/connect` | 1) `Payments__StripeThinConnectWebhookSecret` — se **não** vazio, é este o secret usado. 2) `Payments__StripeConnectWebhookSecret` — usado **só se** o Thin Connect estiver vazio. |
-
-**Recomendação:** preencha os dois **Thin** com o signing secret dos Event Destinations **thin** corretos. Os dois **sem “Thin” no nome** podem ficar vazios ou espelhar o mesmo destino como backup; se **Thin** e **não-Thin** estiverem os dois preenchidos, o backend **sempre prefere o Thin** para validar a assinatura daquela rota.
-
-Substitua o host pela URL pública da sua API (ex.: `https://api.seudominio.com`).
+Substitua o host pela URL pública da sua API (ex.: `https://api.seudominio.com`). O `{tenantId}` é o **GUID** do tenant no banco master.
 
 ---
 
-## As quatro chaves de webhook no `.env` (cada uma com seus eventos)
+## 1. Webhook SaaS (conta da plataforma)
 
-Todas as rotas exigem **thin events** no Dashboard. Os tipos abaixo usam o prefixo `v1.` como a Stripe mostra ao assinar eventos thin.
-
-### 1. `Payments__StripeThinSaasWebhookSecret`
+### `Payments__StripeThinSaasWebhookSecret` (preferido)
 
 | | |
 |---|---|
@@ -43,67 +37,29 @@ Todas as rotas exigem **thin events** no Dashboard. Os tipos abaixo usam o prefi
 3. `v1.customer.subscription.updated`
 4. `v1.customer.subscription.deleted`
 
----
-
-### 2. `Payments__StripeSaasWebhookSecret`
+### `Payments__StripeSaasWebhookSecret` (fallback)
 
 | | |
 |---|---|
 | **appsettings** | `Payments:StripeSaasWebhookSecret` |
-| **URL do Event Destination** | **A mesma** que o item 1: `https://<sua-api>/api/webhooks/stripe/saas` (um único destino thin por ambiente). |
-| **Conta Stripe** | Plataforma (mesma do item 1). |
-| **Para que serve** | Fallback: usado para validar a rota **saas** **apenas quando** `StripeThinSaasWebhookSecret` está vazio. Nome legado (snapshot V1); o endpoint atual continua esperando payload **thin**. |
+| **URL** | **A mesma** que o item acima. |
+| **Para que serve** | Fallback: usado **apenas quando** `StripeThinSaasWebhookSecret` está vazio. |
 
-**Eventos que esse destino deve incluir** (lista completa — **idêntica** à do item 1):
-
-1. `v1.invoice.paid`
-2. `v1.invoice.payment_failed`
-3. `v1.customer.subscription.updated`
-4. `v1.customer.subscription.deleted`
+**Eventos:** idênticos à lista do item anterior.
 
 ---
 
-### 3. `Payments__StripeThinConnectWebhookSecret`
+## 2. Webhook de sócios (conta do clube, por tenant)
 
-| | |
-|---|---|
-| **appsettings** | `Payments:StripeThinConnectWebhookSecret` |
-| **URL do Event Destination** | `https://<sua-api>/api/webhooks/stripe/connect` |
-| **Conta Stripe** | Connect (eventos no contexto de contas conectadas). |
-| **Para que serve** | Signing secret do destino **thin** da rota **connect**; variável **preferida** para essa rota. |
+Cada clube que use **Stripe direto** cria, na **própria conta Stripe**, um Event Destination apontando para:
 
-**Eventos que esse destino deve incluir:**
+`https://<sua-api>/api/webhooks/stripe/member/<tenantId>`
 
-1. `v1.account.updated`
-2. `v1.checkout.session.completed`
-3. `v1.customer.subscription.updated`
-4. `v1.customer.subscription.deleted`
-5. `v1.invoice.paid`
-6. `v1.invoice.payment_failed`
+O **signing secret** (`whsec_...`) desse destino é informado pelo **administrador do clube** em `PUT /api/payments/admin/member-gateway/stripe-direct` (campo webhook secret), junto com as chaves `sk_` e `pk_` da conta.
 
----
+**Eventos:** alinhar aos tipos tratados pelo pipeline de sócios (checkout, fatura, assinatura — ver `MemberStripeWebhookEffectApplicator` e normalização thin no repositório). Em geral incluem, entre outros, eventos equivalentes a checkout completado, assinatura e fatura, conforme a Stripe exibir com prefixo `v1.` no modo thin.
 
-### 4. `Payments__StripeConnectWebhookSecret`
-
-| | |
-|---|---|
-| **appsettings** | `Payments:StripeConnectWebhookSecret` |
-| **URL do Event Destination** | **A mesma** que o item 3: `https://<sua-api>/api/webhooks/stripe/connect`. |
-| **Conta Stripe** | Connect (mesma do item 3). |
-| **Para que serve** | Fallback: usado para validar a rota **connect** **apenas quando** `StripeThinConnectWebhookSecret` está vazio. |
-
-**Eventos que esse destino deve incluir** (lista completa — **idêntica** à do item 3):
-
-1. `v1.account.updated`
-2. `v1.checkout.session.completed`
-3. `v1.customer.subscription.updated`
-4. `v1.customer.subscription.deleted`
-5. `v1.invoice.paid`
-6. `v1.invoice.payment_failed`
-
----
-
-**Normalização no backend:** os tipos `v1.*` são tratados como `invoice.paid`, `account.updated`, etc. (sem o prefixo `v1.`).
+Não há variável de ambiente global única para essa rota: cada tenant pode ter o seu `whsec_` distinto.
 
 ---
 
@@ -115,36 +71,28 @@ Todas as rotas exigem **thin events** no Dashboard. Os tipos abaixo usam o prefi
 |---|---|
 | **Nome em appsettings** | `Payments:StripeSecretKey` |
 | **Formato** | `sk_test_...` ou `sk_live_...` |
-| **Para que serve** | Chave secreta da API Stripe usada pelo servidor (checkout, Connect, busca de recursos após notificação thin, etc.). |
-| **Onde obter** | Dashboard Stripe → Developers → API keys → Secret key. |
-| **Eventos no Dashboard** | Não se aplica (não é webhook). |
+| **Para que serve** | Chave secreta da API Stripe da **plataforma** (SaaS billing, operações que ainda usam a conta global configurada no host). |
+| **Onde obter** | Dashboard Stripe (conta da plataforma) → Developers → API keys. |
 
 ### `Payments__StripePublishableKey`
 
 | | |
 |---|---|
 | **Nome em appsettings** | `Payments:StripePublishableKey` |
-| **Formato** | `pk_test_...` ou `pk_live_...` |
-| **Para que serve** | Chave publicável para o frontend (Stripe.js / Elements), quando necessário. |
-| **Onde obter** | Dashboard Stripe → Developers → API keys → Publishable key. |
-| **Eventos no Dashboard** | Não se aplica. |
+| **Para que serve** | Chave publicável para o frontend (Stripe.js / Elements) quando o SaaS ou fluxos globais precisam. |
+| **Onde obter** | Conta da plataforma na Stripe. |
 
 ### `Payments__StripeEnvironment`
 
-| | |
-|---|---|
-| **Nome em appsettings** | `Payments:StripeEnvironment` |
-| **Valores típicos** | `test` ou `live` |
-| **Para que serve** | Informativo no sistema (ambiente Stripe em uso). |
-| **Eventos no Dashboard** | Não se aplica. |
+Valores típicos: `test` ou `live` (informativo).
 
 ### `Payments__PublicAppBaseUrl`
 
-| | |
-|---|---|
-| **Nome em appsettings** | `Payments:PublicAppBaseUrl` |
-| **Para que serve** | URL base pública (API ou SPA) para montar URLs de retorno de Checkout, Connect, etc. |
-| **Eventos no Dashboard** | Não se aplica. |
+URL base pública (API ou SPA) para montar success/cancel de Checkout, etc.
+
+### Chaves legadas `Payments:StripeConnectWebhookSecret` / `StripeThinConnectWebhookSecret`
+
+Podem permanecer em `appsettings` por compatibilidade, mas **não** são usadas pelo webhook de sócios atual. O endpoint antigo `POST /api/webhooks/stripe/connect` foi substituído por **`/api/webhooks/stripe/member/{tenantId}`** com segredo por tenant.
 
 ---
 
@@ -152,37 +100,21 @@ Todas as rotas exigem **thin events** no Dashboard. Os tipos abaixo usam o prefi
 
 ### `Payments__StripeWebhookShadowMode`
 
-| | |
-|---|---|
-| **Nome em appsettings** | `Payments:StripeWebhookShadowMode` |
-| **Valores** | `true` ou `false` |
-| **Para que serve** | Quando `true`, após validar a assinatura e montar o fluxo thin, os **handlers não gravam inbox nem aplicam efeitos de domínio** (útil para testar em sandbox sem marcar eventos como processados ou alterar dados). **Não** é um secret da Stripe. |
-| **Eventos no Dashboard** | Não se aplica. |
+Quando `true`, após validar a assinatura e montar o fluxo thin, os **handlers não gravam inbox nem aplicam efeitos de domínio** (útil para sandbox).
 
 ---
 
-## Webhook do módulo de pagamentos (stub / tenant), não Stripe
+## Webhook do módulo de pagamentos (stub / interno), não Stripe
 
 ### `Payments__MemberWebhookSecret`
 
-| | |
-|---|---|
-| **Nome em appsettings** | `Payments:MemberWebhookSecret` |
-| **Para que serve** | Segredo do webhook **interno** do gateway stub/tenant (`X-Payments-Webhook-Secret`), **não** relacionado aos Event Destinations da Stripe. |
-| **Eventos Stripe** | Não se aplica. |
+Segredo do webhook **interno** do gateway stub (`X-Payments-Webhook-Secret`), não relacionado aos Event Destinations da Stripe.
 
 ---
 
 ## Migração do gateway stub para Stripe (IDs de assinatura legados)
 
-Em ambientes de desenvolvimento ou MVP, o **`StubPaymentProvider`** pode ter gravado `ExternalSubscriptionId` como `mem_sub_*` ou `saas_sub_*` (não são IDs da API Stripe). Ao passar a usar **`Payments:StripeSecretKey`** real, a troca de plano do sócio chama cancelamento da assinatura anterior antes de criar a nova.
-
-O **`StripePaymentProvider.CancelAsync`** trata isso assim:
-
-- IDs **vazios** ou que **não** começam com `sub_` são **ignorados** (não há chamada `SubscriptionService.CancelAsync` na Stripe).
-- IDs `sub_...` seguem o fluxo normal de cancelamento; se a Stripe responder com **`resource_missing`** ou mensagem *No such subscription*, o cancelamento é tratado como **idempotente** (sucesso lógico), para não bloquear troca de plano quando o registro local está desatualizado.
-
-Detalhes de implementação e lista de testes: `backend/src/Modules/Payments/AGENTS.md` (seção **Contrato de gateway** e **Testes**).
+Ver secção homônima no final do documento histórico e `backend/src/Modules/Payments/AGENTS.md`: o `StripePaymentProvider.CancelAsync` ignora IDs que não são `sub_*` e trata `resource_missing` como idempotente.
 
 ---
 
@@ -196,9 +128,9 @@ No ASP.NET Core, chaves aninhadas usam `__` no nome da variável de ambiente (ex
 
 ## Checklist rápido no Stripe Dashboard
 
-1. **SaaS (uma URL):** Event Destination → thin events ON → `.../api/webhooks/stripe/saas` → assinar os **4** eventos da seção **1** (e **2**) acima → `whsec_` → preferencialmente `Payments__StripeThinSaasWebhookSecret` (e deixar `Payments__StripeSaasWebhookSecret` vazio ou igual, conforme sua política).
-2. **Connect (uma URL):** Event Destination → thin events ON → `.../api/webhooks/stripe/connect` → assinar os **6** eventos da seção **3** (e **4**) acima → `whsec_` → preferencialmente `Payments__StripeThinConnectWebhookSecret`.
-3. Garantir `Payments__StripeSecretKey` no mesmo modo (test/live) dos destinos.
+1. **SaaS (conta plataforma):** Event Destination → thin events ON → `.../api/webhooks/stripe/saas` → os **4** eventos da secção SaaS → `whsec_` → `Payments__StripeThinSaasWebhookSecret` (ou fallback).
+2. **Sócios (conta de cada clube):** Event Destination → thin events ON → `.../api/webhooks/stripe/member/<tenantId>` → `whsec_` informado pelo admin do clube na UI/API (não obrigatoriamente no `.env` do host).
+3. Garantir modo test/live coerente entre chaves e destinos.
 4. Em produção, `Payments__StripeWebhookShadowMode=false` após validação.
 
 ---

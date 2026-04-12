@@ -17,9 +17,6 @@ public sealed class TenantMasterPaymentsRepository(PaymentsMasterDbContext db) :
     public Task AddWebhookAsync(TenantPaymentWebhookInbox inbox, CancellationToken cancellationToken) =>
         db.TenantPaymentWebhookInbox.AddAsync(inbox, cancellationToken).AsTask();
 
-    public Task AddConnectWebhookAsync(ConnectStripeWebhookInbox inbox, CancellationToken cancellationToken) =>
-        db.ConnectStripeWebhookInbox.AddAsync(inbox, cancellationToken).AsTask();
-
     public Task<int> CountInvoicesByTenantAsync(Guid tenantId, CancellationToken cancellationToken) =>
         db.TenantBillingInvoices
             .Where(i => db.TenantBillingSubscriptions.Any(s => s.Id == i.TenantBillingSubscriptionId && s.TenantId == tenantId))
@@ -41,11 +38,6 @@ public sealed class TenantMasterPaymentsRepository(PaymentsMasterDbContext db) :
         CancellationToken cancellationToken) =>
         db.TenantPaymentWebhookInbox.FirstOrDefaultAsync(x => x.IdempotencyKey == idempotencyKey, cancellationToken);
 
-    public Task<ConnectStripeWebhookInbox?> GetConnectWebhookByIdempotencyKeyAsync(
-        string idempotencyKey,
-        CancellationToken cancellationToken) =>
-        db.ConnectStripeWebhookInbox.FirstOrDefaultAsync(x => x.IdempotencyKey == idempotencyKey, cancellationToken);
-
     public Task<TenantBillingSubscription?> GetSubscriptionByExternalIdAsync(
         string externalSubscriptionId,
         CancellationToken cancellationToken) =>
@@ -53,16 +45,21 @@ public sealed class TenantMasterPaymentsRepository(PaymentsMasterDbContext db) :
             x => x.ExternalSubscriptionId == externalSubscriptionId,
             cancellationToken);
 
-    public Task<TenantStripeConnectAccount?> GetStripeConnectByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken) =>
-        db.TenantStripeConnectAccounts.FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
-
-    public Task<TenantStripeConnectAccount?> GetStripeConnectByStripeAccountIdAsync(
-        string stripeAccountId,
+    public Task<TenantMemberGatewayConfiguration?> GetMemberGatewayConfigurationByTenantIdAsync(
+        Guid tenantId,
         CancellationToken cancellationToken) =>
-        db.TenantStripeConnectAccounts.FirstOrDefaultAsync(x => x.StripeAccountId == stripeAccountId, cancellationToken);
+        db.TenantMemberGatewayConfigurations.FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
 
-    public Task AddStripeConnectAsync(TenantStripeConnectAccount account, CancellationToken cancellationToken) =>
-        db.TenantStripeConnectAccounts.AddAsync(account, cancellationToken).AsTask();
+    public Task AddMemberGatewayConfigurationAsync(TenantMemberGatewayConfiguration configuration, CancellationToken cancellationToken) =>
+        db.TenantMemberGatewayConfigurations.AddAsync(configuration, cancellationToken).AsTask();
+
+    public Task<MemberStripeWebhookInbox?> GetMemberStripeWebhookByIdempotencyKeyAsync(
+        string idempotencyKey,
+        CancellationToken cancellationToken) =>
+        db.MemberStripeWebhookInbox.FirstOrDefaultAsync(x => x.IdempotencyKey == idempotencyKey, cancellationToken);
+
+    public Task AddMemberStripeWebhookAsync(MemberStripeWebhookInbox inbox, CancellationToken cancellationToken) =>
+        db.MemberStripeWebhookInbox.AddAsync(inbox, cancellationToken).AsTask();
 
     public async Task<IReadOnlyList<TenantBillingInvoice>> ListInvoicesByTenantAsync(
         Guid tenantId,

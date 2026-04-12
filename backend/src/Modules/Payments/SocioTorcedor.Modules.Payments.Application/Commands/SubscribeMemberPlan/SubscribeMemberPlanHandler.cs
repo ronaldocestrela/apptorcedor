@@ -15,8 +15,8 @@ public sealed class SubscribeMemberPlanHandler(
     IMemberProfileRepository memberProfileRepository,
     IMemberPlanRepository memberPlanRepository,
     IMemberTenantPaymentsRepository paymentsRepository,
-    ITenantMasterPaymentsRepository masterPaymentsRepository,
     IPaymentsGatewayMetadata paymentsGatewayMetadata,
+    IMemberPaymentGatewayService memberPaymentGateway,
     IPaymentProvider paymentProvider)
     : ICommandHandler<SubscribeMemberPlanCommand, Guid>
 {
@@ -37,14 +37,11 @@ public sealed class SubscribeMemberPlanHandler(
         if (plan.Preco <= 0)
             return Result<Guid>.Fail(Error.Failure("Payments.InvalidAmount", "Plan price must be greater than zero."));
 
-        string? connectAccountId = null;
         if (paymentsGatewayMetadata.IsStripeEnabled)
         {
-            var connect = await masterPaymentsRepository.GetStripeConnectByTenantIdAsync(tenantContext.TenantId, cancellationToken);
-            if (connect is null || !connect.ChargesEnabled)
-                return Result<Guid>.Fail(Error.Failure("Payments.Connect.NotReady", "Stripe Connect is not ready for this club."));
-
-            connectAccountId = connect.StripeAccountId;
+            var gate = await memberPaymentGateway.EnsureMemberGatewayReadyForChargeAsync(tenantContext.TenantId, cancellationToken);
+            if (!gate.IsSuccess)
+                return Result<Guid>.Fail(gate.Error!);
         }
 
         var existing = await paymentsRepository.GetActiveSubscriptionByMemberAsync(profile.Id, cancellationToken);
@@ -55,7 +52,7 @@ public sealed class SubscribeMemberPlanHandler(
                 await paymentProvider.CancelAsync(
                     PaymentProviderContext.Member,
                     existing.ExternalSubscriptionId,
-                    connectedAccountId: connectAccountId,
+                    connectedAccountId: null,
                     idempotencyKey: $"cancel:{existing.ExternalSubscriptionId}",
                     cancellationToken);
             }
@@ -64,6 +61,12 @@ public sealed class SubscribeMemberPlanHandler(
         }
 
         var idempotencyKey = $"member-sub:{profile.Id:N}:{plan.Id:N}";
+        var meta = new Dictionary<string, string>
+        {
+            ["tenant_id"] = tenantContext.TenantId.ToString("D"),
+            ["member_profile_id"] = profile.Id.ToString("D"),
+            ["member_plan_id"] = plan.Id.ToString("D")
+        };
         var providerResult = await paymentProvider.CreateSubscriptionAsync(
             new CreateSubscriptionRequest(
                 PaymentProviderContext.Member,
@@ -73,9 +76,10 @@ public sealed class SubscribeMemberPlanHandler(
                 "month",
                 IdempotencyKey: idempotencyKey,
                 StripePriceId: null,
-                ConnectedAccountId: connectAccountId,
+                ConnectedAccountId: null,
                 CustomerEmail: null,
-                ProductName: plan.Nome),
+                ProductName: plan.Nome,
+                AdditionalMetadata: meta),
             cancellationToken);
 
         var subscription = MemberBillingSubscription.Start(

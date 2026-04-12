@@ -9,17 +9,18 @@ namespace SocioTorcedor.Modules.Payments.Infrastructure.Tests;
 
 public sealed class StripePaymentProviderCancelTests
 {
-    private static StripePaymentProvider CreateProvider(string stripeSecretKey = "sk_test_fake_for_unit_tests")
+    private static StripePaymentOperations CreateOperations(string stripeSecretKey = "sk_test_fake_for_unit_tests")
     {
         var options = Microsoft.Extensions.Options.Options.Create(
             new PaymentsOptions { StripeSecretKey = stripeSecretKey });
-        return new StripePaymentProvider(options);
+        var provider = new StripePaymentProvider(options);
+        return provider.Operations;
     }
 
     [Fact]
     public async Task CancelAsync_with_empty_id_does_not_throw()
     {
-        var sut = CreateProvider();
+        var sut = CreateOperations();
 
         var act = async () => await sut.CancelAsync(
             PaymentProviderContext.Member,
@@ -32,7 +33,7 @@ public sealed class StripePaymentProviderCancelTests
     [Fact]
     public async Task CancelAsync_with_whitespace_id_does_not_throw()
     {
-        var sut = CreateProvider();
+        var sut = CreateOperations();
 
         var act = async () => await sut.CancelAsync(
             PaymentProviderContext.Member,
@@ -45,7 +46,7 @@ public sealed class StripePaymentProviderCancelTests
     [Fact]
     public async Task CancelAsync_with_mem_sub_legacy_stub_id_does_not_throw_and_skips_stripe()
     {
-        var sut = CreateProvider();
+        var sut = CreateOperations();
 
         var act = async () => await sut.CancelAsync(
             PaymentProviderContext.Member,
@@ -58,7 +59,7 @@ public sealed class StripePaymentProviderCancelTests
     [Fact]
     public async Task CancelAsync_with_saas_sub_legacy_stub_id_does_not_throw()
     {
-        var sut = CreateProvider();
+        var sut = CreateOperations();
 
         var act = async () => await sut.CancelAsync(
             PaymentProviderContext.SaaS,
@@ -71,28 +72,28 @@ public sealed class StripePaymentProviderCancelTests
     [Fact]
     public void ShouldInvokeStripeSubscriptionCancel_is_false_for_null_or_whitespace()
     {
-        StripePaymentProvider.ShouldInvokeStripeSubscriptionCancel(null).Should().BeFalse();
-        StripePaymentProvider.ShouldInvokeStripeSubscriptionCancel("").Should().BeFalse();
-        StripePaymentProvider.ShouldInvokeStripeSubscriptionCancel(" \t ").Should().BeFalse();
+        StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel(null).Should().BeFalse();
+        StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel("").Should().BeFalse();
+        StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel(" \t ").Should().BeFalse();
     }
 
     [Fact]
     public void ShouldInvokeStripeSubscriptionCancel_is_false_for_legacy_stub_style_ids()
     {
-        StripePaymentProvider.ShouldInvokeStripeSubscriptionCancel("mem_sub_abc").Should().BeFalse();
-        StripePaymentProvider.ShouldInvokeStripeSubscriptionCancel("saas_sub_xyz").Should().BeFalse();
+        StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel("mem_sub_abc").Should().BeFalse();
+        StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel("saas_sub_xyz").Should().BeFalse();
     }
 
     [Fact]
     public void ShouldInvokeStripeSubscriptionCancel_is_true_for_sub_prefix()
     {
-        StripePaymentProvider.ShouldInvokeStripeSubscriptionCancel("sub_123").Should().BeTrue();
+        StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel("sub_123").Should().BeTrue();
     }
 
     [Fact]
     public void ShouldInvokeStripeSubscriptionCancel_trims_whitespace_before_sub_prefix_check()
     {
-        StripePaymentProvider.ShouldInvokeStripeSubscriptionCancel("  sub_123  ").Should().BeTrue();
+        StripePaymentOperations.ShouldInvokeStripeSubscriptionCancel("  sub_123  ").Should().BeTrue();
     }
 
     [Fact]
@@ -101,7 +102,7 @@ public sealed class StripePaymentProviderCancelTests
         var err = new StripeError { Code = "resource_missing" };
         var ex = new StripeException(HttpStatusCode.BadRequest, err, "No such subscription: 'sub_abc'");
 
-        StripePaymentProvider.IsMissingSubscriptionStripeError(ex).Should().BeTrue();
+        StripePaymentOperations.IsMissingSubscriptionStripeError(ex).Should().BeTrue();
     }
 
     [Fact]
@@ -109,7 +110,7 @@ public sealed class StripePaymentProviderCancelTests
     {
         var ex = new StripeException("No such subscription: 'sub_abc'");
 
-        StripePaymentProvider.IsMissingSubscriptionStripeError(ex).Should().BeTrue();
+        StripePaymentOperations.IsMissingSubscriptionStripeError(ex).Should().BeTrue();
     }
 
     [Fact]
@@ -118,6 +119,6 @@ public sealed class StripePaymentProviderCancelTests
         var err = new StripeError { Code = "card_declined" };
         var ex = new StripeException(HttpStatusCode.PaymentRequired, err, "Your card was declined.");
 
-        StripePaymentProvider.IsMissingSubscriptionStripeError(ex).Should().BeFalse();
+        StripePaymentOperations.IsMissingSubscriptionStripeError(ex).Should().BeFalse();
     }
 }

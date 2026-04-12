@@ -71,7 +71,7 @@ export function AppShell() {
                 }
                 onClick={closeNav}
               >
-                Stripe Connect
+                Gateway
               </NavLink>
             ) : null}
             <NavLink

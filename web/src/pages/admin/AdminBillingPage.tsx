@@ -127,7 +127,7 @@ export function AdminBillingPage() {
       <h1>Faturamento SaaS</h1>
       <p className="bo-muted">
         Cobrança da <strong>plataforma</strong> pelo uso do software (plano comercial). É independente do
-        Stripe Connect usado para cobrar sócios.
+        gateway de sócios (Stripe direto ou outro provedor configurado pelo clube).
       </p>
 
       {error ? (
@@ -254,8 +254,9 @@ export function AdminBillingPage() {
 
       <h2>Sócios</h2>
       <p className="bo-muted">
-        Mensalidades e PIX de sócios usam <strong>Stripe Connect</strong> — veja{' '}
-        <a href="/admin/stripe">Stripe Connect</a> e a área do sócio em Pagamentos.
+        Mensalidades e PIX de sócios usam o <strong>gateway configurado pelo clube</strong> (Stripe direto,
+        quando ativado no backoffice) — veja <a href="/admin/stripe">Gateway de pagamentos</a> e a área do
+        sócio em Pagamentos.
       </p>
     </section>
   )

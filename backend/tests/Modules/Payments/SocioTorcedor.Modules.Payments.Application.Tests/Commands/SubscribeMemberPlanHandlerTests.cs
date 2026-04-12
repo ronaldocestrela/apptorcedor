@@ -1,6 +1,7 @@
 using FluentAssertions;
 using NSubstitute;
 using SocioTorcedor.BuildingBlocks.Application.Payments;
+using SocioTorcedor.BuildingBlocks.Shared.Results;
 using SocioTorcedor.BuildingBlocks.Shared.Tenancy;
 using SocioTorcedor.Modules.Membership.Application.Contracts;
 using SocioTorcedor.Modules.Membership.Domain.Entities;
@@ -44,8 +45,6 @@ public sealed class SubscribeMemberPlanHandlerTests
             DateTime.UtcNow.AddMonths(1));
 
         var tenantId = Guid.NewGuid();
-        var connect = TenantStripeConnectAccount.Create(tenantId, "acct_test123");
-        connect.SyncFromStripe(chargesEnabled: true, payoutsEnabled: true, detailsSubmitted: true);
 
         var user = Substitute.For<ICurrentUserAccessor>();
         user.GetUserId().Returns("user-1");
@@ -62,11 +61,13 @@ public sealed class SubscribeMemberPlanHandlerTests
         var payRepo = Substitute.For<IMemberTenantPaymentsRepository>();
         payRepo.GetActiveSubscriptionByMemberAsync(profile.Id, Arg.Any<CancellationToken>()).Returns(existingSub);
 
-        var masterRepo = Substitute.For<ITenantMasterPaymentsRepository>();
-        masterRepo.GetStripeConnectByTenantIdAsync(tenantId, Arg.Any<CancellationToken>()).Returns(connect);
-
         var gateway = Substitute.For<IPaymentsGatewayMetadata>();
         gateway.IsStripeEnabled.Returns(true);
+
+        var memberGateway = Substitute.For<IMemberPaymentGatewayService>();
+        memberGateway
+            .EnsureMemberGatewayReadyForChargeAsync(tenantId, Arg.Any<CancellationToken>())
+            .Returns(Result.Ok());
 
         var paymentProvider = Substitute.For<IPaymentProvider>();
         paymentProvider
@@ -79,8 +80,8 @@ public sealed class SubscribeMemberPlanHandlerTests
             profileRepo,
             planRepo,
             payRepo,
-            masterRepo,
             gateway,
+            memberGateway,
             paymentProvider);
 
         var r = await handler.Handle(
@@ -92,15 +93,17 @@ public sealed class SubscribeMemberPlanHandlerTests
         await paymentProvider.Received(1).CancelAsync(
             PaymentProviderContext.Member,
             "mem_sub_0123456789abcdef0123456789abcdef",
-            connect.StripeAccountId,
+            null,
             $"cancel:mem_sub_0123456789abcdef0123456789abcdef",
             Arg.Any<CancellationToken>());
 
         await paymentProvider.Received(1).CreateSubscriptionAsync(
             Arg.Is<CreateSubscriptionRequest>(x =>
                 x.Context == PaymentProviderContext.Member
-                && x.ConnectedAccountId == connect.StripeAccountId
-                && x.ProductName == newPlan.Nome),
+                && x.ConnectedAccountId == null
+                && x.ProductName == newPlan.Nome
+                && x.AdditionalMetadata != null
+                && x.AdditionalMetadata!["tenant_id"] == tenantId.ToString("D")),
             Arg.Any<CancellationToken>());
 
         existingSub.Status.Should().Be(BillingSubscriptionStatus.Canceled);

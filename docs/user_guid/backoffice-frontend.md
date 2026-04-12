@@ -2,7 +2,7 @@
 
 ## Visão geral
 
-O SPA em `web/` inclui uma área **Backoffice** para operadores da plataforma gerenciarem tenants, planos SaaS, vínculos tenant–plano, cobrança SaaS (Stripe) e Stripe Connect — tudo via API `api/backoffice/*` com autenticação **`X-Api-Key`** (`Backoffice:ApiKey` no servidor).
+O SPA em `web/` inclui uma área **Backoffice** para operadores da plataforma gerenciarem tenants, planos SaaS, vínculos tenant–plano, cobrança SaaS (Stripe) e **gateway de pagamentos de sócios** (escolha de provedor por tenant) — tudo via API `api/backoffice/*` com autenticação **`X-Api-Key`** (`Backoffice:ApiKey` no servidor).
 
 Isso é **independente** da área **Admin** do clube (`/admin/*`), que usa JWT de usuário do tenant e header **`X-Tenant-Id`**.
 
@@ -29,7 +29,7 @@ Isso é **independente** da área **Admin** do clube (`/admin/*`), que usa JWT d
 | `/backoffice/login` | Entrada da chave de API |
 | `/backoffice` | Painel com totais (tenants, planos) |
 | `/backoffice/tenants` | Lista, busca, filtro por status, criação de tenant |
-| `/backoffice/tenants/:id` | Detalhe: dados, status, domínios, configurações, plano SaaS, pagamentos SaaS, Stripe Connect |
+| `/backoffice/tenants/:id` | Detalhe: dados, status, domínios, configurações, plano SaaS, pagamentos SaaS, gateway de sócios |
 | `/backoffice/plans` | CRUD de planos SaaS (features, preços, Stripe Price IDs) |
 | `/backoffice/tenant-plans` | Atribuir plano a tenant; listar tenants por plano |
 
@@ -40,7 +40,7 @@ Isso é **independente** da área **Admin** do clube (`/admin/*`), que usa JWT d
 - **Configurações:** chaves/valores (`POST/PUT/DELETE` settings).
 - **Plano SaaS:** plano ativo (`GET` tenant-plan); atribuir (`POST` tenant-plans) ou revogar (`DELETE`).
 - **Pagamentos SaaS:** iniciar billing, assinatura, faturas, portal Stripe.
-- **Stripe Connect:** link de onboarding e status da conta conectada.
+- **Gateway sócios:** provedor (`None` / `StripeDirect` / outros) e status da configuração no master.
 
 ## Variáveis de ambiente
 

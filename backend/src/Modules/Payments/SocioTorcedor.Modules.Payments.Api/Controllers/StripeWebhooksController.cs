@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using SocioTorcedor.Modules.Payments.Application.Commands.ProcessStripeConnectWebhook;
+using SocioTorcedor.Modules.Payments.Application.Commands.ProcessMemberStripeWebhook;
 using SocioTorcedor.Modules.Payments.Application.Commands.ProcessTenantSaasWebhook;
 using SocioTorcedor.Modules.Payments.Application.Contracts;
 using SocioTorcedor.Modules.Payments.Application.StripeWebhooks;
@@ -17,7 +17,8 @@ public sealed class StripeWebhooksController(
     IMediator mediator,
     IOptions<PaymentsOptions> paymentsOptions,
     StripeClient stripeClient,
-    IStripeThinWebhookPayloadFactory thinPayloadFactory) : ControllerBase
+    IStripeThinWebhookPayloadFactory thinPayloadFactory,
+    IMemberStripeWebhookIngressResolver memberIngressResolver) : ControllerBase
 {
     private const int WebhookSignatureToleranceSeconds = 300;
 
@@ -52,6 +53,7 @@ public sealed class StripeWebhooksController(
             return Ok();
 
         var built = await thinPayloadFactory.BuildAsync(
+            stripeClient,
             StripeThinWebhookDispatch.SaaS,
             notification.Id,
             notification.Type,
@@ -68,16 +70,21 @@ public sealed class StripeWebhooksController(
     }
 
     /// <summary>
-    /// Webhook Connect (thin events / Event Destinations).
+    /// Webhook de cobrança de sócios (thin events) na conta Stripe do tenant. Configure o segredo em <c>WebhookSecret</c> nas credenciais do gateway.
     /// </summary>
-    [HttpPost("connect")]
-    public async Task<IActionResult> Connect(CancellationToken cancellationToken)
+    [HttpPost("member/{tenantId:guid}")]
+    public async Task<IActionResult> Member(Guid tenantId, CancellationToken cancellationToken)
     {
         var json = await ReadBodyAsync(cancellationToken);
         var signature = Request.Headers["Stripe-Signature"].ToString();
-        var secret = ResolveThinConnectSecret();
+
+        var ingress = await memberIngressResolver.ResolveAsync(tenantId, cancellationToken);
+        if (!ingress.IsSuccess)
+            return BadRequest(new { code = ingress.Error?.Code, message = ingress.Error?.Message });
+
+        var secret = ingress.Value!.WebhookSecret;
         if (string.IsNullOrWhiteSpace(secret))
-            return BadRequest(new { error = "Stripe Connect thin webhook secret is not configured (Payments:StripeThinConnectWebhookSecret or Payments:StripeConnectWebhookSecret)." });
+            return BadRequest(new { error = "Webhook signing secret is not configured for this tenant." });
 
         if (!StripeWebhookEnvelope.IsThinEventNotification(json))
             return BadRequest(new { error = "Expected Stripe thin event (object: v2.core.event). Use an Event Destination with thin events enabled." });
@@ -85,7 +92,7 @@ public sealed class StripeWebhooksController(
         EventNotification notification;
         try
         {
-            notification = stripeClient.ParseEventNotification(json, signature, secret, WebhookSignatureToleranceSeconds);
+            notification = ingress.Value.Client.ParseEventNotification(json, signature, secret, WebhookSignatureToleranceSeconds);
         }
         catch (StripeException ex)
         {
@@ -96,7 +103,8 @@ public sealed class StripeWebhooksController(
             return Ok();
 
         var built = await thinPayloadFactory.BuildAsync(
-            StripeThinWebhookDispatch.Connect,
+            ingress.Value.Client,
+            StripeThinWebhookDispatch.Member,
             notification.Id,
             notification.Type,
             cancellationToken);
@@ -105,7 +113,7 @@ public sealed class StripeWebhooksController(
             return Ok();
 
         var result = await mediator.Send(
-            new ProcessStripeConnectWebhookCommand(built.IdempotencyKey, built.EventType, built.SnapshotShapedJson),
+            new ProcessMemberStripeWebhookCommand(built.IdempotencyKey, built.EventType, built.SnapshotShapedJson),
             cancellationToken);
 
         return result.IsSuccess ? Ok() : ProblemWebhook(result.Error?.Message ?? "Webhook processing failed.");
@@ -115,11 +123,6 @@ public sealed class StripeWebhooksController(
         !string.IsNullOrWhiteSpace(_options.StripeThinSaasWebhookSecret)
             ? _options.StripeThinSaasWebhookSecret
             : _options.StripeSaasWebhookSecret;
-
-    private string ResolveThinConnectSecret() =>
-        !string.IsNullOrWhiteSpace(_options.StripeThinConnectWebhookSecret)
-            ? _options.StripeThinConnectWebhookSecret
-            : _options.StripeConnectWebhookSecret;
 
     private async Task<string> ReadBodyAsync(CancellationToken cancellationToken)
     {

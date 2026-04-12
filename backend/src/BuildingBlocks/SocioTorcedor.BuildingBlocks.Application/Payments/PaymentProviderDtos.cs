@@ -10,7 +10,8 @@ public sealed record CreateSubscriptionRequest(
     string? StripePriceId = null,
     string? ConnectedAccountId = null,
     string? CustomerEmail = null,
-    string? ProductName = null);
+    string? ProductName = null,
+    IReadOnlyDictionary<string, string>? AdditionalMetadata = null);
 
 public sealed record CreateSubscriptionResult(
     string ExternalCustomerId,

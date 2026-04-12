@@ -8,7 +8,7 @@ import {
   assignPlanToTenant,
   changeTenantStatus,
   createTenantSaasPortalSession,
-  getStripeConnectStatus,
+  getMemberGatewayStatus,
   getTenantById,
   getTenantPlanByTenant,
   getTenantSaasSubscription,
@@ -17,7 +17,7 @@ import {
   removeTenantDomain,
   removeTenantSetting,
   revokeTenantPlan,
-  startStripeConnectOnboarding,
+  setMemberGatewayProvider,
   startTenantSaasBilling,
   updateTenant,
   updateTenantSetting,
@@ -36,7 +36,7 @@ import {
   formatTenantStatus,
 } from '../../shared/backoffice/formatters'
 
-const TABS = ['geral', 'dominios', 'config', 'plano', 'pagamentos', 'stripe'] as const
+const TABS = ['geral', 'dominios', 'config', 'plano', 'pagamentos', 'gateway'] as const
 type TabId = (typeof TABS)[number]
 
 function isTabId(s: string | null): s is TabId {
@@ -48,6 +48,12 @@ export function TenantDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
   const activeTab: TabId = isTabId(tabParam) ? tabParam : 'geral'
+
+  useEffect(() => {
+    if (tabParam === 'stripe') {
+      setSearchParams({ tab: 'gateway' }, { replace: true })
+    }
+  }, [tabParam, setSearchParams])
 
   const setTab = useCallback(
     (t: TabId) => {
@@ -92,8 +98,9 @@ export function TenantDetailPage() {
   const [payBusy, setPayBusy] = useState(false)
   const [payError, setPayError] = useState<string | null>(null)
 
-  const [connectStatus, setConnectStatus] = useState<Awaited<ReturnType<typeof getStripeConnectStatus>> | null>(null)
-  const [connectBusy, setConnectBusy] = useState(false)
+  const [gatewayStatus, setGatewayStatus] = useState<Awaited<ReturnType<typeof getMemberGatewayStatus>> | null>(null)
+  const [gatewayBusy, setGatewayBusy] = useState(false)
+  const [providerDraft, setProviderDraft] = useState('None')
 
   const reloadTenant = useCallback(async () => {
     if (!tenantId) return
@@ -171,21 +178,22 @@ export function TenantDetailPage() {
     }
   }, [activeTab, reloadBilling])
 
-  const reloadConnect = useCallback(async () => {
+  const reloadGateway = useCallback(async () => {
     if (!tenantId) return
     try {
-      const s = await getStripeConnectStatus(tenantId)
-      setConnectStatus(s)
+      const s = await getMemberGatewayStatus(tenantId)
+      setGatewayStatus(s)
+      setProviderDraft(s.selectedProvider || 'None')
     } catch {
-      setConnectStatus(null)
+      setGatewayStatus(null)
     }
   }, [tenantId])
 
   useEffect(() => {
-    if (activeTab === 'stripe') {
-      void reloadConnect()
+    if (activeTab === 'gateway') {
+      void reloadGateway()
     }
-  }, [activeTab, reloadConnect])
+  }, [activeTab, reloadGateway])
 
   async function onSaveGeneral(e: FormEvent) {
     e.preventDefault()
@@ -360,21 +368,18 @@ export function TenantDetailPage() {
     }
   }
 
-  async function onStripeOnboarding() {
+  async function onSaveGatewayProvider(e: FormEvent) {
+    e.preventDefault()
     if (!tenantId) return
-    setConnectBusy(true)
+    setGatewayBusy(true)
     try {
-      const base = `${window.location.origin}/backoffice/tenants/${tenantId}?tab=stripe`
-      const { url } = await startStripeConnectOnboarding(tenantId, {
-        refreshUrl: base,
-        returnUrl: base,
-      })
-      window.open(url, '_blank', 'noopener,noreferrer')
-      await reloadConnect()
+      await setMemberGatewayProvider(tenantId, providerDraft)
+      setSaveMsg('Provedor de gateway atualizado.')
+      await reloadGateway()
     } catch (err: unknown) {
-      setSaveMsg(getApiErrorMessage(err, 'Falha no onboarding Connect.'))
+      setSaveMsg(getApiErrorMessage(err, 'Falha ao salvar provedor.'))
     } finally {
-      setConnectBusy(false)
+      setGatewayBusy(false)
     }
   }
 
@@ -425,7 +430,7 @@ export function TenantDetailPage() {
             ['config', 'Configurações'],
             ['plano', 'Plano SaaS'],
             ['pagamentos', 'Pagamentos SaaS'],
-            ['stripe', 'Stripe Connect'],
+            ['gateway', 'Gateway sócios'],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -742,25 +747,47 @@ export function TenantDetailPage() {
         </div>
       ) : null}
 
-      {activeTab === 'stripe' ? (
+      {activeTab === 'gateway' ? (
         <div className="bo-panel">
           <p className="bo-muted">
-            Onboarding Express para o tenant receber pagamentos de sócios. Requer gateway Stripe configurado.
+            Define qual provedor o clube usa para cobrar sócios. O admin do clube cadastra as credenciais na
+            área <em>Gateway de pagamentos</em> do tenant (Stripe direto, chaves da conta do clube).
           </p>
-          <button type="button" disabled={connectBusy} onClick={() => void onStripeOnboarding()}>
-            Gerar link de onboarding
-          </button>
-          <button type="button" className="admin-plans__btn-secondary" disabled={connectBusy} onClick={() => void reloadConnect()}>
-            Atualizar status
-          </button>
-          {connectStatus ? (
+          <form className="bo-form-grid" onSubmit={onSaveGatewayProvider}>
+            <label className="billing-page__field">
+              Provedor
+              <select
+                className="auth-field__input"
+                value={providerDraft}
+                onChange={(e) => setProviderDraft(e.target.value)}
+                disabled={gatewayBusy}
+              >
+                <option value="None">Nenhum</option>
+                <option value="StripeDirect">Stripe direto</option>
+                <option value="Asaas">Asaas (em breve)</option>
+                <option value="MercadoPago">Mercado Pago (em breve)</option>
+              </select>
+            </label>
+            <p>
+              <button type="submit" disabled={gatewayBusy}>
+                Salvar provedor
+              </button>
+              <button
+                type="button"
+                className="admin-plans__btn-secondary"
+                disabled={gatewayBusy}
+                onClick={() => void reloadGateway()}
+              >
+                Atualizar status
+              </button>
+            </p>
+          </form>
+          {gatewayStatus ? (
             <ul className="bo-list bo-divider-top">
-              <li>Configurado: {connectStatus.isConfigured ? 'sim' : 'não'}</li>
-              <li>Conta: {connectStatus.stripeAccountId ?? '—'}</li>
-              <li>Onboarding (código): {connectStatus.onboardingStatus}</li>
-              <li>Cobranças habilitadas: {connectStatus.chargesEnabled ? 'sim' : 'não'}</li>
-              <li>Repasses habilitados: {connectStatus.payoutsEnabled ? 'sim' : 'não'}</li>
-              <li>Detalhes enviados: {connectStatus.detailsSubmitted ? 'sim' : 'não'}</li>
+              <li>Provedor: {gatewayStatus.selectedProvider}</li>
+              <li>Status configuração: {gatewayStatus.status}</li>
+              <li>Chave publicável (máscara): {gatewayStatus.publishableKeyHint ?? '—'}</li>
+              <li>Webhook secret: {gatewayStatus.webhookSecretConfigured ? 'configurado' : 'não configurado'}</li>
             </ul>
           ) : (
             <p className="bo-muted">Status não disponível.</p>

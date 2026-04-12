@@ -16,8 +16,8 @@ public sealed class CreateMemberPixCheckoutHandler(
     IMemberProfileRepository memberProfileRepository,
     IMemberPlanRepository memberPlanRepository,
     IMemberTenantPaymentsRepository paymentsRepository,
-    ITenantMasterPaymentsRepository masterPaymentsRepository,
     IPaymentsGatewayMetadata paymentsGatewayMetadata,
+    IMemberPaymentGatewayService memberPaymentGateway,
     IPaymentProvider paymentProvider)
     : ICommandHandler<CreateMemberPixCheckoutCommand, MemberPixCheckoutDto>
 {
@@ -49,12 +49,11 @@ public sealed class CreateMemberPixCheckoutHandler(
                     "Subscribe to this plan first (POST /api/payments/member/subscribe)."));
         }
 
-        string? connectAccountId = null;
         if (paymentsGatewayMetadata.IsStripeEnabled)
         {
-            var connect = await masterPaymentsRepository.GetStripeConnectByTenantIdAsync(tenantContext.TenantId, cancellationToken);
-            if (connect is { ChargesEnabled: true })
-                connectAccountId = connect.StripeAccountId;
+            var gate = await memberPaymentGateway.EnsureMemberGatewayReadyForChargeAsync(tenantContext.TenantId, cancellationToken);
+            if (!gate.IsSuccess)
+                return Result<MemberPixCheckoutDto>.Fail(gate.Error!);
         }
 
         var pix = await paymentProvider.CreatePixAsync(
@@ -64,7 +63,7 @@ public sealed class CreateMemberPixCheckoutHandler(
                 plan.Preco,
                 "BRL",
                 $"Plano {plan.Nome}",
-                ConnectedAccountId: connectAccountId),
+                ConnectedAccountId: null),
             cancellationToken);
 
         var invoice = MemberBillingInvoice.Create(

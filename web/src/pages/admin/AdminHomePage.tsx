@@ -13,7 +13,7 @@ export function AdminHomePage() {
           <Link to="/admin/billing">Faturamento SaaS</Link> — orientação sobre cobrança da plataforma.
         </li>
         <li>
-          <Link to="/admin/stripe">Stripe Connect</Link> — configurar conta Stripe para cobrar sócios.
+          <Link to="/admin/stripe">Gateway de pagamentos</Link> — credenciais Stripe direto (conta do clube) para cobrar sócios.
         </li>
       </ul>
     </section>

@@ -118,12 +118,13 @@ npm run test:watch
 - `/admin` — início admin com links para subáreas (protegida; link no menu só para **`Administrador`**)
 - `/admin/plans` — CRUD de planos de sócio (`/api/plans`; protegida; menu só para **`Administrador`**)
 - `/admin/billing` — faturamento SaaS (instruções; protegida; link no menu só para **`Administrador`**)
+- `/admin/stripe` — gateway de pagamentos / credenciais Stripe direto para sócios (protegida; menu **Gateway** para **`Administrador`**)
 - `/member` — minha conta / perfil do sócio (`GET /api/members/me`; protegida)
 - `/member/billing` — pagamentos do sócio (protegida)
 - `/backoffice/login` — entrada da chave API (sem tenant)
 - `/backoffice` — painel SaaS (protegida pela chave em sessão)
 - `/backoffice/tenants` — lista e criação de tenants
-- `/backoffice/tenants/:id` — detalhe (domínios, settings, plano, pagamentos, Connect)
+- `/backoffice/tenants/:id` — detalhe (domínios, settings, plano, pagamentos, gateway sócios)
 - `/backoffice/plans` — planos SaaS
 - `/backoffice/tenant-plans` — vínculos tenant–plano
 

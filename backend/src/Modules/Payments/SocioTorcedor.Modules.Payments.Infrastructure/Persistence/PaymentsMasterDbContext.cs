@@ -18,17 +18,17 @@ public sealed class PaymentsMasterDbContext : BaseDbContext
 
     public DbSet<TenantPaymentWebhookInbox> TenantPaymentWebhookInbox => Set<TenantPaymentWebhookInbox>();
 
-    public DbSet<TenantStripeConnectAccount> TenantStripeConnectAccounts => Set<TenantStripeConnectAccount>();
+    public DbSet<MemberStripeWebhookInbox> MemberStripeWebhookInbox => Set<MemberStripeWebhookInbox>();
 
-    public DbSet<ConnectStripeWebhookInbox> ConnectStripeWebhookInbox => Set<ConnectStripeWebhookInbox>();
+    public DbSet<TenantMemberGatewayConfiguration> TenantMemberGatewayConfigurations => Set<TenantMemberGatewayConfiguration>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new TenantBillingSubscriptionConfiguration());
         modelBuilder.ApplyConfiguration(new TenantBillingInvoiceConfiguration());
         modelBuilder.ApplyConfiguration(new TenantPaymentWebhookInboxConfiguration());
-        modelBuilder.ApplyConfiguration(new TenantStripeConnectAccountConfiguration());
-        modelBuilder.ApplyConfiguration(new ConnectStripeWebhookInboxConfiguration());
+        modelBuilder.ApplyConfiguration(new MemberStripeWebhookInboxConfiguration());
+        modelBuilder.ApplyConfiguration(new TenantMemberGatewayConfigurationConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

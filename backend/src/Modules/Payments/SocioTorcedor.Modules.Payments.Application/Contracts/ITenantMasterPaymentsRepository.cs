@@ -14,10 +14,6 @@ public interface ITenantMasterPaymentsRepository
 
     Task AddWebhookAsync(TenantPaymentWebhookInbox inbox, CancellationToken cancellationToken);
 
-    Task<ConnectStripeWebhookInbox?> GetConnectWebhookByIdempotencyKeyAsync(string idempotencyKey, CancellationToken cancellationToken);
-
-    Task AddConnectWebhookAsync(ConnectStripeWebhookInbox inbox, CancellationToken cancellationToken);
-
     Task<IReadOnlyList<TenantBillingInvoice>> ListInvoicesByTenantAsync(
         Guid tenantId,
         int skip,
@@ -28,11 +24,17 @@ public interface ITenantMasterPaymentsRepository
 
     Task<TenantBillingSubscription?> GetSubscriptionByExternalIdAsync(string externalSubscriptionId, CancellationToken cancellationToken);
 
-    Task<TenantStripeConnectAccount?> GetStripeConnectByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken);
+    Task<TenantMemberGatewayConfiguration?> GetMemberGatewayConfigurationByTenantIdAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken);
 
-    Task<TenantStripeConnectAccount?> GetStripeConnectByStripeAccountIdAsync(string stripeAccountId, CancellationToken cancellationToken);
+    Task AddMemberGatewayConfigurationAsync(TenantMemberGatewayConfiguration configuration, CancellationToken cancellationToken);
 
-    Task AddStripeConnectAsync(TenantStripeConnectAccount account, CancellationToken cancellationToken);
+    Task<MemberStripeWebhookInbox?> GetMemberStripeWebhookByIdempotencyKeyAsync(
+        string idempotencyKey,
+        CancellationToken cancellationToken);
+
+    Task AddMemberStripeWebhookAsync(MemberStripeWebhookInbox inbox, CancellationToken cancellationToken);
 
     Task SaveChangesAsync(CancellationToken cancellationToken);
 }

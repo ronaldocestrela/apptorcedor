@@ -83,8 +83,8 @@ describe('AdminBillingPage', () => {
       },
     ])
     render(<AdminBillingPage />)
-    expect(await screen.findByText(/Assinatura/i)).toBeInTheDocument()
-    expect(screen.getByText(/99\.00/)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Assinatura/i })).toBeInTheDocument()
+    expect(screen.getByRole('table')).toHaveTextContent('99.00')
     expect(screen.getByText(/visa/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Adicionar cartão/i })).toBeInTheDocument()
   })

@@ -171,15 +171,10 @@ export type TenantSaasStripeConfigDto = {
   publishableKey: string | null
 }
 
-export type StripeOnboardingLinkDto = {
-  url: string
-}
-
-export type StripeConnectStatusDto = {
-  isConfigured: boolean
-  stripeAccountId: string | null
-  onboardingStatus: number
-  chargesEnabled: boolean
-  payoutsEnabled: boolean
-  detailsSubmitted: boolean
+/** Alinhado a `MemberGatewayStatusDto` do backend (cobrança de sócios, sem Connect). */
+export type MemberGatewayStatusDto = {
+  selectedProvider: string
+  status: string
+  publishableKeyHint: string | null
+  webhookSecretConfigured: boolean
 }

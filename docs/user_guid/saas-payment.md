@@ -8,7 +8,7 @@ Este documento explica o **faturamento SaaS**: quando o **clube** paga a **plata
 
 ## O que é
 
-O **SaaS billing** é a cobrança recorrente do **plano comercial** que o clube contratou com a plataforma (ex.: mensal ou anual). É independente da cobrança de **mensalidades de sócio**, que usa outro fluxo (Stripe Connect + rotas do tenant).
+O **SaaS billing** é a cobrança recorrente do **plano comercial** que o clube contratou com a plataforma (ex.: mensal ou anual). É independente da cobrança de **mensalidades de sócio**, que usa outro fluxo (gateway configurado por tenant — ex.: Stripe direto — e rotas do tenant).
 
 Fluxo resumido:
 
