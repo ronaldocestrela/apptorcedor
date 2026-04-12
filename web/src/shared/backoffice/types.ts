@@ -152,6 +152,25 @@ export type TenantSaasPortalSessionDto = {
   url: string
 }
 
+/** Cartão salvo no customer Stripe (Billing SaaS plataforma). */
+export type TenantSaasPaymentMethodDto = {
+  id: string
+  brand: string
+  last4: string
+  expMonth: number
+  expYear: number
+  isDefault: boolean
+}
+
+export type TenantSaasSetupIntentDto = {
+  clientSecret: string
+  setupIntentId: string
+}
+
+export type TenantSaasStripeConfigDto = {
+  publishableKey: string | null
+}
+
 export type StripeOnboardingLinkDto = {
   url: string
 }

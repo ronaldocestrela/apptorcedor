@@ -98,3 +98,29 @@ public sealed record ConnectAccountStatusResult(
     bool ChargesEnabled,
     bool PayoutsEnabled,
     bool DetailsSubmitted);
+
+/// <summary>Item de cartão salvo no customer Stripe (conta plataforma, Billing SaaS).</summary>
+public sealed record SaasPaymentMethodListItem(
+    string Id,
+    string Brand,
+    string Last4,
+    int ExpMonth,
+    int ExpYear,
+    bool IsDefault);
+
+public sealed record ListSaasCustomerPaymentMethodsRequest(string CustomerId);
+
+public sealed record ListSaasCustomerPaymentMethodsResult(IReadOnlyList<SaasPaymentMethodListItem> Items);
+
+public sealed record CreateSaasSetupIntentRequest(string CustomerId, string? IdempotencyKey);
+
+public sealed record CreateSaasSetupIntentResult(string ClientSecret, string SetupIntentId);
+
+public sealed record AttachSaasPaymentMethodRequest(
+    string CustomerId,
+    string PaymentMethodId,
+    bool SetAsDefault,
+    string? ExternalSubscriptionId,
+    string? IdempotencyKey);
+
+public sealed record DetachSaasPaymentMethodRequest(string CustomerId, string PaymentMethodId);

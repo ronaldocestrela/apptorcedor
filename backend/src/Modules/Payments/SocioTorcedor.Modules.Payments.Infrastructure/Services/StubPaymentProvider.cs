@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using SocioTorcedor.BuildingBlocks.Application.Payments;
 
 namespace SocioTorcedor.Modules.Payments.Infrastructure.Services;
@@ -7,6 +8,14 @@ namespace SocioTorcedor.Modules.Payments.Infrastructure.Services;
 /// </summary>
 public sealed class StubPaymentProvider : IPaymentProvider
 {
+    private static readonly ConcurrentDictionary<string, StubSaasCardStore> SaasCardsByCustomer = new();
+
+    private sealed class StubSaasCardStore
+    {
+        public string? DefaultPaymentMethodId { get; set; }
+
+        public List<SaasPaymentMethodListItem> Items { get; } = new();
+    }
     public Task CancelAsync(
         PaymentProviderContext context,
         string externalSubscriptionId,
@@ -106,5 +115,90 @@ public sealed class StubPaymentProvider : IPaymentProvider
     {
         _ = context;
         return Task.FromResult(new PaymentProviderStatusResult(externalId, "unknown", null));
+    }
+
+    public Task<ListSaasCustomerPaymentMethodsResult> ListSaasCustomerPaymentMethodsAsync(
+        ListSaasCustomerPaymentMethodsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        _ = cancellationToken;
+        var store = SaasCardsByCustomer.GetOrAdd(request.CustomerId, _ => new StubSaasCardStore());
+        lock (store.Items)
+        {
+            var items = store.Items
+                .Select(pm => pm with
+                {
+                    IsDefault = string.Equals(pm.Id, store.DefaultPaymentMethodId, StringComparison.Ordinal)
+                })
+                .ToList();
+
+            return Task.FromResult(new ListSaasCustomerPaymentMethodsResult(items));
+        }
+    }
+
+    public Task<CreateSaasSetupIntentResult> CreateSaasSetupIntentAsync(
+        CreateSaasSetupIntentRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        _ = cancellationToken;
+        var id = $"seti_stub_{Guid.NewGuid():N}";
+        return Task.FromResult(new CreateSaasSetupIntentResult(
+            $"stub_secret_{id}",
+            id));
+    }
+
+    public Task AttachSaasPaymentMethodAsync(
+        AttachSaasPaymentMethodRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        _ = cancellationToken;
+        var store = SaasCardsByCustomer.GetOrAdd(request.CustomerId, _ => new StubSaasCardStore());
+        lock (store.Items)
+        {
+            if (!store.Items.Any(x => x.Id == request.PaymentMethodId))
+            {
+                var pm = new SaasPaymentMethodListItem(
+                    request.PaymentMethodId,
+                    "visa",
+                    "4242",
+                    12,
+                    2030,
+                    false);
+                store.Items.Add(pm);
+            }
+
+            if (request.SetAsDefault)
+            {
+                store.DefaultPaymentMethodId = request.PaymentMethodId;
+                for (var i = 0; i < store.Items.Count; i++)
+                {
+                    var x = store.Items[i];
+                    store.Items[i] = x with
+                    {
+                        IsDefault = x.Id == request.PaymentMethodId
+                    };
+                }
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task DetachSaasPaymentMethodAsync(
+        DetachSaasPaymentMethodRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        _ = cancellationToken;
+        if (!SaasCardsByCustomer.TryGetValue(request.CustomerId, out var store))
+            return Task.CompletedTask;
+
+        lock (store.Items)
+        {
+            store.Items.RemoveAll(x => x.Id == request.PaymentMethodId);
+            if (string.Equals(store.DefaultPaymentMethodId, request.PaymentMethodId, StringComparison.Ordinal))
+                store.DefaultPaymentMethodId = store.Items.Count > 0 ? store.Items[0].Id : null;
+        }
+
+        return Task.CompletedTask;
     }
 }

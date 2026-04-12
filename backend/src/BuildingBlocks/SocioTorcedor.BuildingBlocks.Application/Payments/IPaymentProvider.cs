@@ -49,4 +49,20 @@ public interface IPaymentProvider
     Task<ConnectAccountStatusResult> GetConnectAccountStatusAsync(
         string accountId,
         CancellationToken cancellationToken = default);
+
+    Task<ListSaasCustomerPaymentMethodsResult> ListSaasCustomerPaymentMethodsAsync(
+        ListSaasCustomerPaymentMethodsRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<CreateSaasSetupIntentResult> CreateSaasSetupIntentAsync(
+        CreateSaasSetupIntentRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task AttachSaasPaymentMethodAsync(
+        AttachSaasPaymentMethodRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task DetachSaasPaymentMethodAsync(
+        DetachSaasPaymentMethodRequest request,
+        CancellationToken cancellationToken = default);
 }

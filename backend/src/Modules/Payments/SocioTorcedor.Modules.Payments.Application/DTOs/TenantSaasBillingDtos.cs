@@ -27,3 +27,15 @@ public sealed record TenantSaasBillingInvoiceDto(
     string? ExternalInvoiceId,
     DateTime? PaidAtUtc,
     DateTime CreatedAtUtc);
+
+public sealed record TenantSaasPaymentMethodDto(
+    string Id,
+    string Brand,
+    string Last4,
+    int ExpMonth,
+    int ExpYear,
+    bool IsDefault);
+
+public sealed record TenantSaasSetupIntentDto(string ClientSecret, string SetupIntentId);
+
+public sealed record TenantSaasStripeConfigDto(string? PublishableKey);

@@ -321,4 +321,102 @@ public sealed class StripePaymentProvider(IOptions<PaymentsOptions> options) : I
 
         return price.Id;
     }
+
+    public async Task<ListSaasCustomerPaymentMethodsResult> ListSaasCustomerPaymentMethodsAsync(
+        ListSaasCustomerPaymentMethodsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var customerService = new Stripe.CustomerService(Client);
+        var customer = await customerService.GetAsync(request.CustomerId, cancellationToken: cancellationToken);
+        var defaultPmId = customer.InvoiceSettings?.DefaultPaymentMethodId;
+
+        var pmService = new Stripe.PaymentMethodService(Client);
+        var list = await pmService.ListAsync(
+            new Stripe.PaymentMethodListOptions
+            {
+                Customer = request.CustomerId,
+                Type = "card"
+            },
+            cancellationToken: cancellationToken);
+
+        var items = list.Data.Select(pm => new SaasPaymentMethodListItem(
+            pm.Id,
+            pm.Card?.Brand ?? "card",
+            pm.Card?.Last4 ?? "0000",
+            (int)(pm.Card?.ExpMonth ?? 0),
+            (int)(pm.Card?.ExpYear ?? 0),
+            string.Equals(pm.Id, defaultPmId, StringComparison.Ordinal))).ToList();
+
+        return new ListSaasCustomerPaymentMethodsResult(items);
+    }
+
+    public async Task<CreateSaasSetupIntentResult> CreateSaasSetupIntentAsync(
+        CreateSaasSetupIntentRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var service = new Stripe.SetupIntentService(Client);
+        var si = await service.CreateAsync(
+            new Stripe.SetupIntentCreateOptions
+            {
+                Customer = request.CustomerId,
+                PaymentMethodTypes = new List<string> { "card" },
+                Usage = "off_session"
+            },
+            Req(request.IdempotencyKey),
+            cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(si.ClientSecret))
+            throw new InvalidOperationException("Stripe SetupIntent returned no client secret.");
+
+        return new CreateSaasSetupIntentResult(si.ClientSecret, si.Id);
+    }
+
+    public async Task AttachSaasPaymentMethodAsync(
+        AttachSaasPaymentMethodRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var pmService = new Stripe.PaymentMethodService(Client);
+        await pmService.AttachAsync(
+            request.PaymentMethodId,
+            new Stripe.PaymentMethodAttachOptions { Customer = request.CustomerId },
+            Req($"{request.IdempotencyKey}:attach"),
+            cancellationToken);
+
+        if (!request.SetAsDefault)
+            return;
+
+        var customerService = new Stripe.CustomerService(Client);
+        await customerService.UpdateAsync(
+            request.CustomerId,
+            new Stripe.CustomerUpdateOptions
+            {
+                InvoiceSettings = new Stripe.CustomerInvoiceSettingsOptions
+                {
+                    DefaultPaymentMethod = request.PaymentMethodId
+                }
+            },
+            Req($"{request.IdempotencyKey}:custdef"),
+            cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(request.ExternalSubscriptionId))
+        {
+            var subService = new Stripe.SubscriptionService(Client);
+            await subService.UpdateAsync(
+                request.ExternalSubscriptionId,
+                new Stripe.SubscriptionUpdateOptions
+                {
+                    DefaultPaymentMethod = request.PaymentMethodId
+                },
+                Req($"{request.IdempotencyKey}:subdef"),
+                cancellationToken);
+        }
+    }
+
+    public async Task DetachSaasPaymentMethodAsync(
+        DetachSaasPaymentMethodRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var pmService = new Stripe.PaymentMethodService(Client);
+        await pmService.DetachAsync(request.PaymentMethodId, cancellationToken: cancellationToken);
+    }
 }

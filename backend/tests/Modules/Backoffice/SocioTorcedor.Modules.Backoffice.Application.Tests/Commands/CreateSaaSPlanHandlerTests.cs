@@ -15,7 +15,7 @@ public sealed class CreateSaaSPlanHandlerTests
         var handler = new CreateSaaSPlanHandler(repo);
 
         var result = await handler.Handle(
-            new CreateSaaSPlanCommand("Pro", null, 9.99m, 99m, 1000, null),
+            new CreateSaaSPlanCommand("Pro", null, 9.99m, 99m, 1000, null, null, null),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
