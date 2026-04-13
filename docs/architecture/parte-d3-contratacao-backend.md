@@ -60,4 +60,4 @@ Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (D
 
 ## Próximos passos (D.4+)
 
-- Endpoint HTTP + `IPaymentProvider` e transição `PendingPayment` → `Ativo` após confirmação de pagamento.
+- ~~Endpoint HTTP + `IPaymentProvider` e transição `PendingPayment` → `Ativo` após confirmação de pagamento.~~ Entregue em [parte-d4-integracao-pagamento-contratacao.md](parte-d4-integracao-pagamento-contratacao.md) (D.5+ confirmação na SPA / resumo de assinatura).

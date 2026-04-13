@@ -29,6 +29,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ProfilePhotoStorageOptions>(configuration.GetSection(ProfilePhotoStorageOptions.SectionName));
+        services.Configure<PaymentWebhookOptions>(configuration.GetSection(PaymentWebhookOptions.SectionName));
         services.Configure<SupportTicketAttachmentStorageOptions>(
             configuration.GetSection(SupportTicketAttachmentStorageOptions.SectionName));
         services.AddScoped<CurrentAuditContext>();
@@ -107,6 +108,7 @@ public static class DependencyInjection
         services.AddScoped<IBenefitsAdministrationPort, BenefitsAdministrationService>();
         services.AddScoped<IInAppNotificationDispatchService, InAppNotificationDispatchService>();
         services.AddScoped<IPaymentDelinquencySweep, PaymentDelinquencySweep>();
+        services.AddScoped<ITorcedorSubscriptionCheckoutPort, TorcedorSubscriptionCheckoutService>();
         services.AddHostedService<PaymentDelinquencyHostedService>();
         services.AddHostedService<InAppNotificationDispatchHostedService>();
 

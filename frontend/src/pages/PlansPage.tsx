@@ -56,7 +56,7 @@ export function PlansPage() {
       </p>
       <h1>Planos de sócio</h1>
       <p style={{ color: '#555' }}>
-        Confira os planos disponíveis. Toque em Assinar para ver o detalhe completo; a contratação online será habilitada nas partes D.3 e D.4.
+        Confira os planos disponíveis. Toque em Assinar para ver o detalhe e seguir para o checkout (PIX ou cartão).
       </p>
       {loading ? <p>Carregando…</p> : null}
       {error ? <p style={{ color: '#721c24' }}>{error}</p> : null}

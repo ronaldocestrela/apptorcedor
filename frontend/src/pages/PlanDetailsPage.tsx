@@ -153,24 +153,26 @@ export function PlanDetailsPage() {
             </section>
           ) : null}
           <p style={{ margin: '1.5rem 0 0' }}>
-            <button
-              type="button"
-              disabled
-              title="A contratação online será habilitada nas partes D.3 e D.4 do roadmap."
+            <Link
+              to={`/plans/${plan.planId}/checkout`}
               style={{
+                display: 'block',
+                textAlign: 'center',
                 padding: '0.5rem 1rem',
                 borderRadius: 6,
-                border: '1px solid #ccc',
-                background: '#eee',
-                cursor: 'not-allowed',
+                border: '1px solid #1976d2',
+                background: '#1976d2',
+                color: '#fff',
+                textDecoration: 'none',
                 width: '100%',
+                boxSizing: 'border-box',
               }}
             >
               Contratar
-            </button>
+            </Link>
           </p>
           <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#666' }}>
-            O checkout e pagamento serão disponibilizados nas próximas etapas do projeto.
+            Você será direcionado ao checkout para escolher PIX ou cartão.
           </p>
         </article>
       ) : null}

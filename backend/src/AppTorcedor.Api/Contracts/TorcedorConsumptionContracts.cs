@@ -1,3 +1,5 @@
+using AppTorcedor.Application.Abstractions;
+
 namespace AppTorcedor.Api.Contracts;
 
 public sealed record TorcedorNewsFeedItemResponse(
@@ -106,3 +108,31 @@ public sealed record TorcedorLoyaltyRankingPageResponse(
     int TotalCount,
     IReadOnlyList<TorcedorLoyaltyRankingRowResponse> Items,
     TorcedorLoyaltyMyStandingResponse? Me);
+
+public sealed class TorcedorSubscriptionCheckoutRequest
+{
+    public Guid PlanId { get; set; }
+
+    public TorcedorSubscriptionPaymentMethod PaymentMethod { get; set; }
+}
+
+public sealed record TorcedorSubscriptionCheckoutPixResponse(string QrCodePayload, string? CopyPasteKey);
+
+public sealed record TorcedorSubscriptionCheckoutCardResponse(string CheckoutUrl);
+
+public sealed record TorcedorSubscriptionCheckoutResponse(
+    Guid MembershipId,
+    Guid PaymentId,
+    string PaymentMethod,
+    decimal Amount,
+    string Currency,
+    string MembershipStatus,
+    TorcedorSubscriptionCheckoutPixResponse? Pix,
+    TorcedorSubscriptionCheckoutCardResponse? Card);
+
+public sealed class TorcedorSubscriptionPaymentCallbackRequest
+{
+    public Guid PaymentId { get; set; }
+
+    public string? Secret { get; set; }
+}

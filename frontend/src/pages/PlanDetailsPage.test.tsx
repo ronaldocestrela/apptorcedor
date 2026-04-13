@@ -53,7 +53,8 @@ describe('PlanDetailsPage', () => {
     expect(screen.getByText(/Regra 1/)).toBeInTheDocument()
     expect(screen.getByText(/B1/)).toBeInTheDocument()
     expect(screen.getByText(/R\$\s*90,00/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Contratar/i })).toBeDisabled()
+    const cta = screen.getByRole('link', { name: /Contratar/i })
+    expect(cta).toHaveAttribute('href', '/plans/p1/checkout')
   })
 
   it('shows not found message on 404', async () => {

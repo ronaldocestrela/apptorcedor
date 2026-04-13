@@ -209,15 +209,17 @@ Ordem de execução sugerida: `D.1 → D.2 → D.3 → D.4 → D.5 → D.6 → D
 ### D.4 — Integração de pagamento na contratação
 
 **Backend**
-- [ ] `D.4.1` Endpoint `POST /api/subscriptions` (JWT obrigatório) — recebe `planId` e `paymentMethod` (Pix | Card), chama `SubscribeMemberCommand` e `IPaymentProvider.CreateSubscriptionAsync` / `CreatePixAsync` / `CreateCardAsync`
-- [ ] `D.4.2` Retornar no response: `membershipId`, `paymentId`, instruções de pagamento (QR Code PIX ou link cartão)
-- [ ] `D.4.3` Webhook/callback de confirmação de pagamento — atualizar `Payment.Status` e `Membership.Status` para `Active` via `RegisterPaymentCommand`
-- [ ] `D.4.4` Testes de integração do fluxo completo com `MockPaymentProvider`
+- [x] `D.4.1` Endpoint `POST /api/subscriptions` (JWT obrigatório) — recebe `planId` e `paymentMethod` (Pix | Card), chama `SubscribeMemberCommand` e `IPaymentProvider.CreatePixAsync` / `CreateCardAsync` (cobrança inicial; `CreateSubscriptionAsync` permanece para evolução de recorrência/gateway real)
+- [x] `D.4.2` Retornar no response: `membershipId`, `paymentId`, instruções de pagamento (payload PIX mock / URL checkout cartão)
+- [x] `D.4.3` Webhook/callback de confirmação de pagamento — `POST /api/subscriptions/payments/callback` com `secret` (`Payments:WebhookSecret`); atualiza `Payment` para `Paid` e `Membership` de `PendingPayment` para `Ativo` (`ConfirmTorcedorSubscriptionPaymentCommand`)
+- [x] `D.4.4` Testes de integração do fluxo completo com `MockPaymentProvider`
 
 **Frontend**
-- [ ] `D.4.5` Tela de checkout: seleção de método (PIX / Cartão), resumo do plano, botão "Confirmar"
-- [ ] `D.4.6` Exibição de QR Code PIX ou redirecionamento para cartão após confirmação
-- [ ] `D.4.7` Serviço Axios `subscriptionsService.subscribe(planId, paymentMethod)`
+- [x] `D.4.5` Tela de checkout: seleção de método (PIX / Cartão), resumo do plano, botão "Confirmar"
+- [x] `D.4.6` Exibição de instruções PIX (payload / copia-e-cola) ou link de checkout para cartão após confirmação
+- [x] `D.4.7` Serviço Axios `subscriptionsService.subscribe(planId, paymentMethod)`
+
+Detalhes: [docs/architecture/parte-d4-integracao-pagamento-contratacao.md](architecture/parte-d4-integracao-pagamento-contratacao.md).
 
 ---
 
