@@ -62,6 +62,7 @@ export const ADMIN_AREA_PERMISSIONS: readonly ApplicationPermission[] = [
   ApplicationPermissions.JogosEditar,
   ApplicationPermissions.IngressosVisualizar,
   ApplicationPermissions.IngressosGerenciar,
+  ApplicationPermissions.NoticiasPublicar,
 ]
 
 /** Mirrors backend <c>SystemRoles.All</c> for matrix UI. */

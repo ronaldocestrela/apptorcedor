@@ -32,6 +32,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<DigitalCardRecord> DigitalCards => Set<DigitalCardRecord>();
     public DbSet<GameRecord> Games => Set<GameRecord>();
     public DbSet<TicketRecord> Tickets => Set<TicketRecord>();
+    public DbSet<NewsArticleRecord> NewsArticles => Set<NewsArticleRecord>();
+    public DbSet<InAppNotificationRecord> InAppNotifications => Set<InAppNotificationRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -298,6 +300,40 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .WithMany()
                 .HasForeignKey(x => x.GameId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<NewsArticleRecord>(entity =>
+        {
+            entity.ToTable("NewsArticles");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Title).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Summary).HasMaxLength(2000);
+            entity.Property(x => x.Content).IsRequired();
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.HasIndex(x => x.Status);
+            entity.HasIndex(x => x.UpdatedAt);
+        });
+
+        builder.Entity<InAppNotificationRecord>(entity =>
+        {
+            entity.ToTable("InAppNotifications");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Title).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.PreviewText).HasMaxLength(500);
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.HasIndex(x => new { x.UserId, x.Status });
+            entity.HasIndex(x => new { x.Status, x.ScheduledAt });
+            entity.HasIndex(x => x.NewsArticleId);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne<NewsArticleRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.NewsArticleId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<PrivacyRequestRecord>(entity =>

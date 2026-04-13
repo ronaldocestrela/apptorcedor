@@ -96,6 +96,8 @@ public sealed class AuditSaveChangesInterceptor(ICurrentAuditContext auditContex
             or UserConsentRecord
             or PrivacyRequestRecord
             or UserProfileRecord
+            or NewsArticleRecord
+            or InAppNotificationRecord
             or ApplicationUser;
 
     private static readonly string[] ApplicationUserAuditPropertyNames =

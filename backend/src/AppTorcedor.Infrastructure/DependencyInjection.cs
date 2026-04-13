@@ -9,6 +9,7 @@ using AppTorcedor.Infrastructure.Services.DigitalCards;
 using AppTorcedor.Infrastructure.Services.Games;
 using AppTorcedor.Infrastructure.Services.Payments;
 using AppTorcedor.Infrastructure.Services.Tickets;
+using AppTorcedor.Infrastructure.Services.News;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -75,8 +76,11 @@ public static class DependencyInjection
         services.AddScoped<IGameAdministrationPort, GameAdministrationService>();
         services.AddScoped<ITicketAdministrationPort, TicketAdministrationService>();
         services.AddScoped<IDigitalCardAdministrationPort, DigitalCardAdministrationService>();
+        services.AddScoped<INewsAdministrationPort, NewsAdministrationService>();
+        services.AddScoped<IInAppNotificationDispatchService, InAppNotificationDispatchService>();
         services.AddScoped<IPaymentDelinquencySweep, PaymentDelinquencySweep>();
         services.AddHostedService<PaymentDelinquencyHostedService>();
+        services.AddHostedService<InAppNotificationDispatchHostedService>();
 
         return services;
     }

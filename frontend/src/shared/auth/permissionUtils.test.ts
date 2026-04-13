@@ -49,4 +49,10 @@ describe('permissionUtils', () => {
       canAccessAdminArea({ permissions: [ApplicationPermissions.JogosVisualizar] }, ADMIN_AREA_PERMISSIONS),
     ).toBe(true)
   })
+
+  it('allows admin area with Noticias.Publicar alone', () => {
+    expect(
+      canAccessAdminArea({ permissions: [ApplicationPermissions.NoticiasPublicar] }, ADMIN_AREA_PERMISSIONS),
+    ).toBe(true)
+  })
 })

@@ -686,3 +686,84 @@ export async function syncAdminTicket(ticketId: string): Promise<void> {
 export async function redeemAdminTicket(ticketId: string): Promise<void> {
   await api.post(`/api/admin/tickets/${encodeURIComponent(ticketId)}/redeem`, {})
 }
+
+export type NewsEditorialStatus = 'Draft' | 'Published' | 'Unpublished'
+
+export type AdminNewsListItem = {
+  newsId: string
+  title: string
+  status: NewsEditorialStatus
+  createdAt: string
+  updatedAt: string
+  publishedAt: string | null
+  unpublishedAt: string | null
+}
+
+export type AdminNewsListPage = {
+  totalCount: number
+  items: AdminNewsListItem[]
+}
+
+export type AdminNewsDetail = {
+  newsId: string
+  title: string
+  summary: string | null
+  content: string
+  status: NewsEditorialStatus
+  createdAt: string
+  updatedAt: string
+  publishedAt: string | null
+  unpublishedAt: string | null
+}
+
+export type UpsertNewsBody = {
+  title: string
+  summary?: string | null
+  content: string
+}
+
+export async function listAdminNews(params: {
+  search?: string
+  status?: NewsEditorialStatus | ''
+  page?: number
+  pageSize?: number
+}): Promise<AdminNewsListPage> {
+  const { data } = await api.get<AdminNewsListPage>('/api/admin/news', {
+    params: {
+      search: params.search?.trim() || undefined,
+      status: params.status || undefined,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getAdminNews(newsId: string): Promise<AdminNewsDetail> {
+  const { data } = await api.get<AdminNewsDetail>(`/api/admin/news/${encodeURIComponent(newsId)}`)
+  return data
+}
+
+export async function createAdminNews(body: UpsertNewsBody): Promise<{ newsId: string }> {
+  const { data } = await api.post<{ newsId: string }>('/api/admin/news', body)
+  return data
+}
+
+export async function updateAdminNews(newsId: string, body: UpsertNewsBody): Promise<void> {
+  await api.put(`/api/admin/news/${encodeURIComponent(newsId)}`, body)
+}
+
+export async function publishAdminNews(newsId: string): Promise<void> {
+  await api.post(`/api/admin/news/${encodeURIComponent(newsId)}/publish`, {})
+}
+
+export async function unpublishAdminNews(newsId: string): Promise<void> {
+  await api.post(`/api/admin/news/${encodeURIComponent(newsId)}/unpublish`, {})
+}
+
+export async function createNewsInAppNotifications(
+  newsId: string,
+  body: { scheduledAt?: string | null; userIds?: string[] | null },
+): Promise<void> {
+  await api.post(`/api/admin/news/${encodeURIComponent(newsId)}/notifications`, body)
+}

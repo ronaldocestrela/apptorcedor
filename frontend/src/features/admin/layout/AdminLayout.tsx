@@ -73,6 +73,9 @@ export function AdminLayout() {
             || hasPermission(user, ApplicationPermissions.IngressosGerenciar)) ? (
             <NavLink to="tickets" style={linkStyle}>Ingressos</NavLink>
           ) : null}
+          {hasPermission(user, ApplicationPermissions.NoticiasPublicar) ? (
+            <NavLink to="news" style={linkStyle}>Notícias</NavLink>
+          ) : null}
           {hasPermission(user, ApplicationPermissions.LgpdDocumentosVisualizar) ? (
             <NavLink to="lgpd/documents" style={linkStyle}>LGPD — Documentos</NavLink>
           ) : null}

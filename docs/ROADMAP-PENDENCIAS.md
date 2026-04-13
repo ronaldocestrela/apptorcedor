@@ -96,8 +96,10 @@ Detalhes: [docs/architecture/parte-b8-games-tickets-admin.md](architecture/parte
 
 ### B.9 News (gestão de conteúdo)
 
-- [ ] **Editoria:** criar, editar, publicar e despublicar notícias.
-- [ ] **Notificações:** disparo ou agendamento (definir canal: push, e-mail, in-app).
+- [x] **Editoria:** criar, editar, publicar e despublicar notícias.
+- [x] **Notificações:** disparo ou agendamento **in-app** (sem push/e-mail nesta entrega).
+
+Detalhes: [docs/architecture/parte-b9-news-admin.md](architecture/parte-b9-news-admin.md).
 
 ### B.10 Loyalty e Benefits (gestão)
 

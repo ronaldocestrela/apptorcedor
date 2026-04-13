@@ -39,6 +39,8 @@ export function AdminIndexRedirect() {
   if (hasPermission(user, ApplicationPermissions.IngressosVisualizar)
     || hasPermission(user, ApplicationPermissions.IngressosGerenciar))
     return <Navigate to="tickets" replace />
+  if (hasPermission(user, ApplicationPermissions.NoticiasPublicar))
+    return <Navigate to="news" replace />
 
   return <p>Nenhuma seção disponível para seu usuário.</p>
 }
