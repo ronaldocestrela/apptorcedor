@@ -59,10 +59,22 @@ echo "Compose build/up (release ${RELEASE_ID})..."
 compose_cmd -f "$COMPOSE_PATH" --project-directory "$REPO_DIR" build --pull
 compose_cmd -f "$COMPOSE_PATH" --project-directory "$REPO_DIR" up -d --remove-orphans
 
-sleep 3
+HEALTH_RETRIES=20
+HEALTH_INTERVAL_SEC=2
+health_ok=0
+for ((attempt = 1; attempt <= HEALTH_RETRIES; attempt++)); do
+  if curl -sf --max-time 30 "${HEALTH_URL}" >/dev/null; then
+    health_ok=1
+    break
+  fi
+  echo "Health check (${attempt}/${HEALTH_RETRIES}) ainda sem resposta OK em ${HEALTH_URL}" >&2
+  if [[ "$attempt" -lt "$HEALTH_RETRIES" ]]; then
+    sleep "$HEALTH_INTERVAL_SEC"
+  fi
+done
 
-if ! curl -sf --max-time 30 "${HEALTH_URL}" >/dev/null; then
-  echo "Health check falhou: ${HEALTH_URL}" >&2
+if [[ "$health_ok" -ne 1 ]]; then
+  echo "Health check falhou após ${HEALTH_RETRIES} tentativas: ${HEALTH_URL}" >&2
   compose_cmd -f "$COMPOSE_PATH" --project-directory "$REPO_DIR" logs --tail 80 api || true
   exit 1
 fi
