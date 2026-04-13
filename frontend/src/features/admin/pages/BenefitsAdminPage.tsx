@@ -25,7 +25,6 @@ export function BenefitsAdminPage() {
   const [redeemUserId, setRedeemUserId] = useState('')
 
   const load = useCallback(async () => {
-    setError(null)
     try {
       const [p, o, r] = await Promise.all([
         listBenefitPartners({ pageSize: 100 }),
@@ -35,13 +34,16 @@ export function BenefitsAdminPage() {
       setPartners(p.items)
       setOffers(o.items)
       setRedemptions(r.items)
+      setError(null)
     } catch {
       setError('Falha ao carregar benefícios.')
     }
   }, [])
 
   useEffect(() => {
-    void load()
+    queueMicrotask(() => {
+      void load()
+    })
   }, [load])
 
   async function onCreatePartner(e: FormEvent) {
