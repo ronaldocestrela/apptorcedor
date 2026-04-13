@@ -30,6 +30,8 @@ export function DashboardPage() {
         <Link to="/news">Notícias</Link>
         {' · '}
         <Link to="/benefits">Benefícios</Link>
+        {' · '}
+        <Link to="/digital-card">Carteirinha</Link>
       </p>
       <p>
         <button type="button" onClick={() => void logout()}>

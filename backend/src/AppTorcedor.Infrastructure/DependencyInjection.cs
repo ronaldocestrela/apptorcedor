@@ -85,6 +85,7 @@ public static class DependencyInjection
         services.AddScoped<IGameAdministrationPort, GameAdministrationService>();
         services.AddScoped<ITicketAdministrationPort, TicketAdministrationService>();
         services.AddScoped<IDigitalCardAdministrationPort, DigitalCardAdministrationService>();
+        services.AddScoped<IDigitalCardTorcedorPort, DigitalCardTorcedorReadService>();
         services.AddScoped<INewsAdministrationPort, NewsAdministrationService>();
         services.AddScoped<ITorcedorNewsReadPort, TorcedorNewsReadService>();
         services.AddScoped<ITorcedorBenefitsReadPort, TorcedorBenefitsReadService>();

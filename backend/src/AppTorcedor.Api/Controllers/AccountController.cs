@@ -4,9 +4,10 @@ using AppTorcedor.Api.Services;
 using AppTorcedor.Application.Modules.Account;
 using AppTorcedor.Application.Modules.Account.Commands.RegisterTorcedor;
 using AppTorcedor.Application.Modules.Account.Commands.UpsertMyProfile;
+using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.Modules.Account.Queries.GetMyDigitalCard;
 using AppTorcedor.Application.Modules.Account.Queries.GetMyProfile;
 using AppTorcedor.Application.Modules.Account.Queries.GetRegistrationLegalRequirements;
-using AppTorcedor.Application.Abstractions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -56,6 +57,17 @@ public sealed class AccountController(
         if (session is null)
             return StatusCode(StatusCodes.Status500InternalServerError);
         return Ok(session);
+    }
+
+    [HttpGet("digital-card")]
+    [Authorize]
+    public async Task<ActionResult<MyDigitalCardViewDto>> GetMyDigitalCard(CancellationToken cancellationToken)
+    {
+        var userId = GetUserIdOrDefault();
+        if (userId is null)
+            return Unauthorized();
+        var dto = await mediator.Send(new GetMyDigitalCardQuery(userId.Value), cancellationToken).ConfigureAwait(false);
+        return Ok(dto);
     }
 
     [HttpGet("profile")]

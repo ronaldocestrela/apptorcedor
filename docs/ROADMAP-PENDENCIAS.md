@@ -139,8 +139,10 @@ Detalhes: [docs/architecture/parte-c2-noticias-beneficios-torcedor.md](architect
 
 ### C.3 Carteirinha digital (torcedor)
 
-- [ ] **Visualização da carteirinha** para sócio ativo (e regras diferentes por status, se aplicável).
-- [ ] **Offline / cache** (opcional, especialmente no Flutter).
+- [x] **Visualização da carteirinha** para sócio ativo (e regras diferentes por status, se aplicável).
+- [x] **Offline / cache** (opcional, especialmente no Flutter) — **web:** cache local com validade alinhada a `cacheValidUntilUtc` e fallback em falha de rede; Flutter permanece na Parte E.
+
+Detalhes: [docs/architecture/parte-c3-carteirinha-torcedor.md](architecture/parte-c3-carteirinha-torcedor.md).
 
 ### C.4 Jogos e ingressos (torcedor)
 

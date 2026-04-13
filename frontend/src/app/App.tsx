@@ -28,6 +28,7 @@ import { ProtectedRoute } from '../features/auth/ProtectedRoute'
 import { AcceptStaffInvitePage } from '../pages/AcceptStaffInvitePage'
 import { AccountPage } from '../pages/AccountPage'
 import { BenefitsEligiblePage } from '../pages/BenefitsEligiblePage'
+import { DigitalCardPage } from '../pages/DigitalCardPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { NewsDetailPage } from '../pages/NewsDetailPage'
 import { NewsFeedPage } from '../pages/NewsFeedPage'
@@ -47,6 +48,7 @@ export function App() {
           <Route path="news" element={<NewsFeedPage />} />
           <Route path="news/:newsId" element={<NewsDetailPage />} />
           <Route path="benefits" element={<BenefitsEligiblePage />} />
+          <Route path="digital-card" element={<DigitalCardPage />} />
           <Route element={<PermissionRoute />}>
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminIndexRedirect />} />

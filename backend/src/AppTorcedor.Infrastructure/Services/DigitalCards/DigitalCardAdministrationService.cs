@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.DigitalCard;
 using AppTorcedor.Identity;
 using AppTorcedor.Infrastructure.Entities;
 using AppTorcedor.Infrastructure.Persistence;
@@ -83,9 +84,9 @@ public sealed class DigitalCardAdministrationService(AppDbContext db) : IDigital
             return null;
 
         var planName = row.p?.Name;
-        var docMasked = MaskDocument(row.prof?.Document);
+        var docMasked = DigitalCardTemplatePreview.MaskDocument(row.prof?.Document);
 
-        var preview = BuildTemplatePreviewLines(
+        var preview = DigitalCardTemplatePreview.Build(
             row.u.Name,
             row.c.Version,
             row.m.Status.ToString(),
@@ -242,33 +243,4 @@ public sealed class DigitalCardAdministrationService(AppDbContext db) : IDigital
         return Convert.ToHexString(bytes);
     }
 
-    private static string? MaskDocument(string? document)
-    {
-        if (string.IsNullOrWhiteSpace(document))
-            return null;
-        var d = document.Trim();
-        return d.Length <= 4 ? "****" : $"***{d[^4..]}";
-    }
-
-    private static IReadOnlyList<string> BuildTemplatePreviewLines(
-        string holderName,
-        int version,
-        string membershipStatus,
-        string? planName,
-        string? documentMasked,
-        string cardStatus)
-    {
-        var plan = string.IsNullOrWhiteSpace(planName) ? "Sem plano" : planName;
-        var doc = documentMasked ?? "(documento não informado)";
-        return
-        [
-            "Carteirinha digital — layout fixo (B.7)",
-            $"Titular: {holderName}",
-            $"Versão: {version}",
-            $"Status da associação: {membershipStatus}",
-            $"Plano: {plan}",
-            $"Documento (mascarado): {doc}",
-            $"Status da emissão: {cardStatus}",
-        ];
-    }
 }

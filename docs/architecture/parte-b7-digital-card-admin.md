@@ -1,6 +1,6 @@
 # Parte B.7 — Digital Card (gestão / admin)
 
-Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B.7) e [AGENTS.md](../../AGENTS.md): **carteirinha digital** na visão administrativa com **template de exibição fixo em código** (sem editor de layout nesta entrega), **versionamento** por associação, **token opaco** por emissão, **regeneração** (invalida a versão ativa e cria nova) e **invalidação** com motivo obrigatório. Emissão e regeneração exigem `Membership.Status == Ativo`. Consumo pelo torcedor (C.3) e branding configurável ficam fora deste escopo.
+Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B.7) e [AGENTS.md](../../AGENTS.md): **carteirinha digital** na visão administrativa com **template de exibição fixo em código** (sem editor de layout nesta entrega), **versionamento** por associação, **token opaco** por emissão, **regeneração** (invalida a versão ativa e cria nova) e **invalidação** com motivo obrigatório. Emissão e regeneração exigem `Membership.Status == Ativo`. **Leitura pelo torcedor:** ver [parte-c3-carteirinha-torcedor.md](parte-c3-carteirinha-torcedor.md). Branding configurável fora deste escopo.
 
 ## Modelo de dados
 
