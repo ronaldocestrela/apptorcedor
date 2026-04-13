@@ -64,9 +64,11 @@ Detalhes técnicos: [docs/architecture/parte-b4-membership-admin.md](architectur
 
 ### B.5 Plans (gestão de oferta)
 
-- [ ] **CRUD de planos** (`MembershipPlan`: nome, preço, ciclo de cobrança, desconto, ativo).
-- [ ] **Benefícios e regras** por plano (conforme módulo Benefits/Plans em AGENTS.md).
-- [ ] **Publicação / despublicação** de planos para o canal do torcedor.
+Detalhes técnicos: [docs/architecture/parte-b5-plans-admin.md](architecture/parte-b5-plans-admin.md).
+
+- [x] **CRUD de planos** (`MembershipPlan`: nome, preço, ciclo de cobrança, desconto, ativo).
+- [x] **Benefícios e regras** por plano (benefícios persistidos em `MembershipPlanBenefits`; regras básicas em `RulesNotes`; motor completo de parceiros/vantagens permanece B.10).
+- [x] **Publicação / despublicação** de planos para o canal do torcedor (`IsPublished` / `PublishedAt`; catálogo público na Parte D).
 
 ### B.6 Payments (visão financeira / admin)
 

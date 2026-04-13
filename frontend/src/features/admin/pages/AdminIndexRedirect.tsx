@@ -21,6 +21,10 @@ export function AdminIndexRedirect() {
     return <Navigate to="configurations" replace />
   if (hasPermission(user, ApplicationPermissions.SociosGerenciar))
     return <Navigate to="membership" replace />
+  if (hasPermission(user, ApplicationPermissions.PlanosVisualizar)
+    || hasPermission(user, ApplicationPermissions.PlanosCriar)
+    || hasPermission(user, ApplicationPermissions.PlanosEditar))
+    return <Navigate to="plans" replace />
 
   return <p>Nenhuma seção disponível para seu usuário.</p>
 }

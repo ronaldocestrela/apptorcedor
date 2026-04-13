@@ -1,6 +1,6 @@
 # Parte B.4 — Membership (visão administrativa)
 
-Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B.4) e [AGENTS.md](../../AGENTS.md): consulta administrativa da associação, alteração manual de **status** com **motivo obrigatório**, histórico operacional em tabela dedicada e trilha técnica em `AuditLogs`. **Plano e datas** (`PlanId`, `StartDate`, `EndDate`, `NextDueDate`) permanecem **somente leitura** nesta fase (edição manual de plano/datas fica para evolução junto a B.5/B.6).
+Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B.4) e [AGENTS.md](../../AGENTS.md): consulta administrativa da associação, alteração manual de **status** com **motivo obrigatório**, histórico operacional em tabela dedicada e trilha técnica em `AuditLogs`. **Plano e datas** (`PlanId`, `StartDate`, `EndDate`, `NextDueDate`) permanecem **somente leitura** na visão de membership; a gestão da **oferta** (cadastro/publicação do plano) está em [parte-b5-plans-admin.md](parte-b5-plans-admin.md) (edição do vínculo `PlanId` na membership permanece fora deste escopo até regra explícita com B.6).
 
 ## Modelo de dados
 

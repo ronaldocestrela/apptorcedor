@@ -46,18 +46,22 @@ O endpoint `GET /api/auth/me` devolve a mesma lista em **`permissions`**, para o
 | GET | `/api/admin/users/{userId}/audit-logs` | `Usuarios.Visualizar` |
 | PATCH | `/api/admin/users/{userId}/active` | `Usuarios.Editar` |
 | PUT | `/api/admin/users/{userId}/profile` | `Usuarios.Editar` |
+| GET | `/api/admin/plans` | `Planos.Visualizar` |
+| GET | `/api/admin/plans/{id}` | `Planos.Visualizar` |
+| POST | `/api/admin/plans` | `Planos.Criar` |
+| PUT | `/api/admin/plans/{id}` | `Planos.Editar` |
 
-Corpo do PATCH de membership: `{ "status": "Ativo", "reason": "..." }` (enum `MembershipStatus` como string JSON; motivo obrigatório). Superfície completa e histórico de domínio: [parte-b4-membership-admin.md](parte-b4-membership-admin.md).
+Corpo do PATCH de membership: `{ "status": "Ativo", "reason": "..." }` (enum `MembershipStatus` como string JSON; motivo obrigatório). Superfície completa e histórico de domínio: [parte-b4-membership-admin.md](parte-b4-membership-admin.md). Planos (B.5): [parte-b5-plans-admin.md](parte-b5-plans-admin.md).
 
 ## Migração
 
-- `PartAFoundation`, `PartB1StaffInvites` (tabela `StaffInvites`), `PartB2Lgpd`, `PartB3UserProfiles` (`UserProfiles`) e `PartB4MembershipHistory` (`MembershipHistories`) em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
+- `PartAFoundation`, `PartB1StaffInvites` (tabela `StaffInvites`), `PartB2Lgpd`, `PartB3UserProfiles` (`UserProfiles`), `PartB4MembershipHistory` (`MembershipHistories`) e `PartB5PlansAdmin` (`MembershipPlanBenefits` + colunas em `MembershipPlans`) em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
 
 ## Testes
 
 - `AppTorcedor.Application.Tests`: handler de diagnóstico (porta de conectividade).
-- `AppTorcedor.Api.Tests`: permissão negada para torcedor sem claims; health; governança; auditoria após alteração de membership e configuração; Parte B.1 (staff, matriz editável, dashboard); Parte B.2 LGPD (`PartB2LgpdTests`); Parte B.3 usuários admin (`PartB3UsersAdminTests`); Parte B.4 membership admin (`PartB4MembershipAdminTests`).
-- `AppTorcedor.Application.Tests`: handler de publicação de versão de documento legal (delegação ao port LGPD); handlers de membership admin (`MembershipAdminHandlersTests`).
+- `AppTorcedor.Api.Tests`: permissão negada para torcedor sem claims; health; governança; auditoria após alteração de membership e configuração; Parte B.1 (staff, matriz editável, dashboard); Parte B.2 LGPD (`PartB2LgpdTests`); Parte B.3 usuários admin (`PartB3UsersAdminTests`); Parte B.4 membership admin (`PartB4MembershipAdminTests`); Parte B.5 planos admin (`PartB5PlansAdminTests`).
+- `AppTorcedor.Application.Tests`: handler de publicação de versão de documento legal (delegação ao port LGPD); handlers de membership admin (`MembershipAdminHandlersTests`); handlers de planos admin (`PlansAdminHandlersTests`).
 
 ### Testes e banco in-memory
 

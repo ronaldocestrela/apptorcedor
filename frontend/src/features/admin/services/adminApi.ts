@@ -305,3 +305,86 @@ export async function listUserAuditLogsForUser(userId: string, take?: number): P
   })
   return data
 }
+
+export type AdminPlanListItem = {
+  planId: string
+  name: string
+  price: number
+  billingCycle: string
+  discountPercentage: number
+  isActive: boolean
+  isPublished: boolean
+  publishedAt: string | null
+  benefitCount: number
+}
+
+export type AdminPlanListPage = {
+  totalCount: number
+  items: AdminPlanListItem[]
+}
+
+export type AdminPlanBenefit = {
+  id: string
+  sortOrder: number
+  title: string
+  description: string | null
+}
+
+export type AdminPlanDetail = {
+  planId: string
+  name: string
+  price: number
+  billingCycle: string
+  discountPercentage: number
+  isActive: boolean
+  isPublished: boolean
+  publishedAt: string | null
+  summary: string | null
+  rulesNotes: string | null
+  benefits: AdminPlanBenefit[]
+}
+
+export type UpsertPlanBody = {
+  name: string
+  price: number
+  billingCycle: string
+  discountPercentage: number
+  isActive: boolean
+  isPublished: boolean
+  summary?: string | null
+  rulesNotes?: string | null
+  benefits: { sortOrder: number; title: string; description?: string | null }[]
+}
+
+export async function listAdminPlans(params: {
+  search?: string
+  isActive?: boolean
+  isPublished?: boolean
+  page?: number
+  pageSize?: number
+}): Promise<AdminPlanListPage> {
+  const { data } = await api.get<AdminPlanListPage>('/api/admin/plans', {
+    params: {
+      search: params.search || undefined,
+      isActive: params.isActive,
+      isPublished: params.isPublished,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getAdminPlan(planId: string): Promise<AdminPlanDetail> {
+  const { data } = await api.get<AdminPlanDetail>(`/api/admin/plans/${encodeURIComponent(planId)}`)
+  return data
+}
+
+export async function createAdminPlan(body: UpsertPlanBody): Promise<{ planId: string }> {
+  const { data } = await api.post<{ planId: string }>('/api/admin/plans', body)
+  return data
+}
+
+export async function updateAdminPlan(planId: string, body: UpsertPlanBody): Promise<void> {
+  await api.put(`/api/admin/plans/${encodeURIComponent(planId)}`, body)
+}

@@ -17,6 +17,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<AppPermission> Permissions => Set<AppPermission>();
     public DbSet<AppRolePermission> RolePermissions => Set<AppRolePermission>();
     public DbSet<MembershipPlanRecord> MembershipPlans => Set<MembershipPlanRecord>();
+    public DbSet<MembershipPlanBenefitRecord> MembershipPlanBenefits => Set<MembershipPlanBenefitRecord>();
     public DbSet<MembershipRecord> Memberships => Set<MembershipRecord>();
     public DbSet<MembershipHistoryRecord> MembershipHistories => Set<MembershipHistoryRecord>();
     public DbSet<PaymentRecord> Payments => Set<PaymentRecord>();
@@ -57,6 +58,23 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             entity.Property(x => x.BillingCycle).HasMaxLength(64).IsRequired();
             entity.Property(x => x.Price).HasPrecision(18, 2);
             entity.Property(x => x.DiscountPercentage).HasPrecision(5, 2);
+            entity.Property(x => x.Summary).HasMaxLength(2000);
+            entity.Property(x => x.RulesNotes).HasMaxLength(4000);
+            entity.HasIndex(x => x.IsPublished);
+        });
+
+        builder.Entity<MembershipPlanBenefitRecord>(entity =>
+        {
+            entity.ToTable("MembershipPlanBenefits");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Title).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.HasIndex(x => x.PlanId);
+            entity
+                .HasOne<MembershipPlanRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.PlanId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<MembershipRecord>(entity =>

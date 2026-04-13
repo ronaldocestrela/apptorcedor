@@ -50,6 +50,11 @@ export function AdminLayout() {
           {hasPermission(user, ApplicationPermissions.SociosGerenciar) ? (
             <NavLink to="membership" style={linkStyle}>Membership</NavLink>
           ) : null}
+          {(hasPermission(user, ApplicationPermissions.PlanosVisualizar)
+            || hasPermission(user, ApplicationPermissions.PlanosCriar)
+            || hasPermission(user, ApplicationPermissions.PlanosEditar)) ? (
+            <NavLink to="plans" style={linkStyle}>Planos</NavLink>
+          ) : null}
           {hasPermission(user, ApplicationPermissions.LgpdDocumentosVisualizar) ? (
             <NavLink to="lgpd/documents" style={linkStyle}>LGPD — Documentos</NavLink>
           ) : null}

@@ -56,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<IDatabaseConnectivityCheck, DatabaseConnectivityCheck>();
         services.AddScoped<IPermissionResolver, PermissionResolver>();
         services.AddScoped<IMembershipAdministrationPort, MembershipAdministrationService>();
+        services.AddScoped<IPlansAdministrationPort, PlanAdministrationService>();
         services.AddScoped<IAppConfigurationPort, AppConfigurationPort>();
         services.AddScoped<IRolePermissionReadPort, RolePermissionReadPort>();
         services.AddScoped<IRolePermissionWritePort, RolePermissionWritePort>();
