@@ -1,6 +1,0 @@
-@SocioTorcedor.Api_HostAddress = http://localhost:5015
-
-GET {{SocioTorcedor.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
