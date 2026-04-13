@@ -5,13 +5,19 @@ export type UserWithPermissions = {
 }
 
 export function hasPermission(user: UserWithPermissions | null, permission: string): boolean {
-  return user?.permissions.includes(permission) ?? false
+  return user?.permissions?.includes(permission) ?? false
 }
 
-export function hasAnyPermission(user: UserWithPermissions | null, permissions: readonly string[]): boolean {
-  if (!user?.permissions.length)
+export function hasAnyPermission(
+  user: UserWithPermissions | null,
+  permissions: readonly string[] | undefined | null,
+): boolean {
+  if (!permissions?.length)
     return false
-  return permissions.some((p) => user.permissions.includes(p))
+  const ups = user?.permissions
+  if (!ups?.length)
+    return false
+  return permissions.some((p) => ups.includes(p))
 }
 
 export function canAccessAdminArea(user: UserWithPermissions | null, areaPermissions: readonly ApplicationPermission[]): boolean {

@@ -32,6 +32,13 @@ export function AdminIndexRedirect() {
   if (hasPermission(user, ApplicationPermissions.CarteirinhaVisualizar)
     || hasPermission(user, ApplicationPermissions.CarteirinhaGerenciar))
     return <Navigate to="digital-cards" replace />
+  if (hasPermission(user, ApplicationPermissions.JogosVisualizar)
+    || hasPermission(user, ApplicationPermissions.JogosCriar)
+    || hasPermission(user, ApplicationPermissions.JogosEditar))
+    return <Navigate to="games" replace />
+  if (hasPermission(user, ApplicationPermissions.IngressosVisualizar)
+    || hasPermission(user, ApplicationPermissions.IngressosGerenciar))
+    return <Navigate to="tickets" replace />
 
   return <p>Nenhuma seção disponível para seu usuário.</p>
 }

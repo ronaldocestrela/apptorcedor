@@ -64,6 +64,15 @@ export function AdminLayout() {
             || hasPermission(user, ApplicationPermissions.CarteirinhaGerenciar)) ? (
             <NavLink to="digital-cards" style={linkStyle}>Carteirinha</NavLink>
           ) : null}
+          {(hasPermission(user, ApplicationPermissions.JogosVisualizar)
+            || hasPermission(user, ApplicationPermissions.JogosCriar)
+            || hasPermission(user, ApplicationPermissions.JogosEditar)) ? (
+            <NavLink to="games" style={linkStyle}>Jogos</NavLink>
+          ) : null}
+          {(hasPermission(user, ApplicationPermissions.IngressosVisualizar)
+            || hasPermission(user, ApplicationPermissions.IngressosGerenciar)) ? (
+            <NavLink to="tickets" style={linkStyle}>Ingressos</NavLink>
+          ) : null}
           {hasPermission(user, ApplicationPermissions.LgpdDocumentosVisualizar) ? (
             <NavLink to="lgpd/documents" style={linkStyle}>LGPD — Documentos</NavLink>
           ) : null}

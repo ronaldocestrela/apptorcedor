@@ -14,7 +14,10 @@ public static class ApplicationPermissions
     public const string PagamentosVisualizar = "Pagamentos.Visualizar";
     public const string PagamentosGerenciar = "Pagamentos.Gerenciar";
     public const string PagamentosEstornar = "Pagamentos.Estornar";
+    public const string JogosVisualizar = "Jogos.Visualizar";
     public const string JogosCriar = "Jogos.Criar";
+    public const string JogosEditar = "Jogos.Editar";
+    public const string IngressosVisualizar = "Ingressos.Visualizar";
     public const string IngressosGerenciar = "Ingressos.Gerenciar";
     public const string NoticiasPublicar = "Noticias.Publicar";
     public const string ChamadosResponder = "Chamados.Responder";
@@ -43,7 +46,10 @@ public static class ApplicationPermissions
         PagamentosVisualizar,
         PagamentosGerenciar,
         PagamentosEstornar,
+        JogosVisualizar,
         JogosCriar,
+        JogosEditar,
+        IngressosVisualizar,
         IngressosGerenciar,
         NoticiasPublicar,
         ChamadosResponder,

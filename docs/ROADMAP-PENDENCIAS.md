@@ -87,10 +87,12 @@ Detalhes: [docs/architecture/parte-b7-digital-card-admin.md](architecture/parte-
 
 ### B.8 Games e Tickets (gestão)
 
-- [ ] **CRUD de jogos** (`Game`).
+- [x] **CRUD de jogos** (`Game`).
 - [ ] **Regras de benefício** vinculadas a jogos/ingressos (se aplicável).
-- [ ] **Integração `ITicketProvider`:** reserva, compra, consulta; gestão de resgates e QR Code no backoffice.
-- [ ] **Ingressos:** listagem administrativa, status, vínculo com usuário e jogo.
+- [x] **Integração `ITicketProvider`:** reserva, compra, consulta; gestão de resgates e QR Code no backoffice.
+- [x] **Ingressos:** listagem administrativa, status, vínculo com usuário e jogo.
+
+Detalhes: [docs/architecture/parte-b8-games-tickets-admin.md](architecture/parte-b8-games-tickets-admin.md).
 
 ### B.9 News (gestão de conteúdo)
 

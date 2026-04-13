@@ -542,3 +542,147 @@ export async function regenerateAdminDigitalCard(digitalCardId: string, body?: {
 export async function invalidateAdminDigitalCard(digitalCardId: string, body: { reason: string }): Promise<void> {
   await api.post(`/api/admin/digital-cards/${encodeURIComponent(digitalCardId)}/invalidate`, body)
 }
+
+export type AdminGameListItem = {
+  gameId: string
+  opponent: string
+  competition: string
+  gameDate: string
+  isActive: boolean
+  createdAt: string
+}
+
+export type AdminGameListPage = {
+  totalCount: number
+  items: AdminGameListItem[]
+}
+
+export type AdminGameDetail = {
+  gameId: string
+  opponent: string
+  competition: string
+  gameDate: string
+  isActive: boolean
+  createdAt: string
+}
+
+export type UpsertGameBody = {
+  opponent: string
+  competition: string
+  gameDate: string
+  isActive: boolean
+}
+
+export async function listAdminGames(params: {
+  search?: string
+  isActive?: boolean
+  page?: number
+  pageSize?: number
+}): Promise<AdminGameListPage> {
+  const { data } = await api.get<AdminGameListPage>('/api/admin/games', {
+    params: {
+      search: params.search?.trim() || undefined,
+      isActive: params.isActive,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getAdminGame(gameId: string): Promise<AdminGameDetail> {
+  const { data } = await api.get<AdminGameDetail>(`/api/admin/games/${encodeURIComponent(gameId)}`)
+  return data
+}
+
+export async function createAdminGame(body: UpsertGameBody): Promise<{ gameId: string }> {
+  const { data } = await api.post<{ gameId: string }>('/api/admin/games', body)
+  return data
+}
+
+export async function updateAdminGame(gameId: string, body: UpsertGameBody): Promise<void> {
+  await api.put(`/api/admin/games/${encodeURIComponent(gameId)}`, body)
+}
+
+export async function deactivateAdminGame(gameId: string): Promise<void> {
+  await api.delete(`/api/admin/games/${encodeURIComponent(gameId)}`)
+}
+
+export type AdminTicketListItem = {
+  ticketId: string
+  userId: string
+  userEmail: string
+  userName: string | null
+  gameId: string
+  opponent: string
+  competition: string
+  gameDate: string
+  status: string
+  externalTicketId: string | null
+  qrCode: string | null
+  createdAt: string
+  redeemedAt: string | null
+}
+
+export type AdminTicketListPage = {
+  totalCount: number
+  items: AdminTicketListItem[]
+}
+
+export type AdminTicketDetail = {
+  ticketId: string
+  userId: string
+  userEmail: string
+  userName: string | null
+  gameId: string
+  opponent: string
+  competition: string
+  gameDate: string
+  status: string
+  externalTicketId: string | null
+  qrCode: string | null
+  createdAt: string
+  updatedAt: string
+  redeemedAt: string | null
+}
+
+export async function listAdminTickets(params: {
+  userId?: string
+  gameId?: string
+  status?: string
+  page?: number
+  pageSize?: number
+}): Promise<AdminTicketListPage> {
+  const { data } = await api.get<AdminTicketListPage>('/api/admin/tickets', {
+    params: {
+      userId: params.userId?.trim() || undefined,
+      gameId: params.gameId?.trim() || undefined,
+      status: params.status || undefined,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getAdminTicket(ticketId: string): Promise<AdminTicketDetail> {
+  const { data } = await api.get<AdminTicketDetail>(`/api/admin/tickets/${encodeURIComponent(ticketId)}`)
+  return data
+}
+
+export async function reserveAdminTicket(body: { userId: string; gameId: string }): Promise<{ ticketId: string }> {
+  const { data } = await api.post<{ ticketId: string }>('/api/admin/tickets/reserve', body)
+  return data
+}
+
+export async function purchaseAdminTicket(ticketId: string): Promise<void> {
+  await api.post(`/api/admin/tickets/${encodeURIComponent(ticketId)}/purchase`, {})
+}
+
+export async function syncAdminTicket(ticketId: string): Promise<void> {
+  await api.post(`/api/admin/tickets/${encodeURIComponent(ticketId)}/sync`, {})
+}
+
+export async function redeemAdminTicket(ticketId: string): Promise<void> {
+  await api.post(`/api/admin/tickets/${encodeURIComponent(ticketId)}/redeem`, {})
+}

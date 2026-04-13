@@ -30,6 +30,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<PrivacyRequestRecord> PrivacyRequests => Set<PrivacyRequestRecord>();
     public DbSet<UserProfileRecord> UserProfiles => Set<UserProfileRecord>();
     public DbSet<DigitalCardRecord> DigitalCards => Set<DigitalCardRecord>();
+    public DbSet<GameRecord> Games => Set<GameRecord>();
+    public DbSet<TicketRecord> Tickets => Set<TicketRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -263,6 +265,38 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<GameRecord>(entity =>
+        {
+            entity.ToTable("Games");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Opponent).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Competition).HasMaxLength(256).IsRequired();
+            entity.HasIndex(x => x.GameDate);
+            entity.HasIndex(x => x.IsActive);
+        });
+
+        builder.Entity<TicketRecord>(entity =>
+        {
+            entity.ToTable("Tickets");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.Property(x => x.ExternalTicketId).HasMaxLength(128);
+            entity.Property(x => x.QrCode).HasMaxLength(2048);
+            entity.HasIndex(x => x.UserId);
+            entity.HasIndex(x => x.GameId);
+            entity.HasIndex(x => x.ExternalTicketId);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity
+                .HasOne<GameRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.GameId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

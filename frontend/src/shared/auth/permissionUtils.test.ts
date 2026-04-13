@@ -43,4 +43,10 @@ describe('permissionUtils', () => {
       canAccessAdminArea({ permissions: [ApplicationPermissions.CarteirinhaVisualizar] }, ADMIN_AREA_PERMISSIONS),
     ).toBe(true)
   })
+
+  it('allows admin area with Jogos.Visualizar alone', () => {
+    expect(
+      canAccessAdminArea({ permissions: [ApplicationPermissions.JogosVisualizar] }, ADMIN_AREA_PERMISSIONS),
+    ).toBe(true)
+  })
 })

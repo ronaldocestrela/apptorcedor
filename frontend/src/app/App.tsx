@@ -8,6 +8,8 @@ import { MembershipAdminPage } from '../features/admin/pages/MembershipAdminPage
 import { PlansAdminPage } from '../features/admin/pages/PlansAdminPage'
 import { PaymentsAdminPage } from '../features/admin/pages/PaymentsAdminPage'
 import { DigitalCardsAdminPage } from '../features/admin/pages/DigitalCardsAdminPage'
+import { GamesAdminPage } from '../features/admin/pages/GamesAdminPage'
+import { TicketsAdminPage } from '../features/admin/pages/TicketsAdminPage'
 import { LegalDocumentsPage } from '../features/admin/pages/LegalDocumentsPage'
 import { UserConsentsPage } from '../features/admin/pages/UserConsentsPage'
 import { PrivacyOpsPage } from '../features/admin/pages/PrivacyOpsPage'
@@ -46,6 +48,8 @@ export function App() {
               <Route path="plans" element={<PlansAdminPage />} />
               <Route path="payments" element={<PaymentsAdminPage />} />
               <Route path="digital-cards" element={<DigitalCardsAdminPage />} />
+              <Route path="games" element={<GamesAdminPage />} />
+              <Route path="tickets" element={<TicketsAdminPage />} />
               <Route path="lgpd/documents" element={<LegalDocumentsPage />} />
               <Route path="lgpd/consents" element={<UserConsentsPage />} />
               <Route path="lgpd/privacy" element={<PrivacyOpsPage />} />

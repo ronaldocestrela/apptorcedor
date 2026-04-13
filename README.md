@@ -152,3 +152,4 @@ Não commite chaves reais; use secrets ou variáveis de ambiente no deploy.
 - [docs/ROADMAP-PENDENCIAS.md](docs/ROADMAP-PENDENCIAS.md) — backlog do que falta fazer, com prioridade para gestão e contratação de planos pelo torcedor ao final.
 - [docs/architecture/parte-b2-lgpd.md](docs/architecture/parte-b2-lgpd.md) — Parte B.2: documentos legais, consentimentos, exportação e anonimização.
 - [docs/architecture/parte-b7-digital-card-admin.md](docs/architecture/parte-b7-digital-card-admin.md) — Parte B.7: carteirinha digital (admin), versionamento e token.
+- [docs/architecture/parte-b8-games-tickets-admin.md](docs/architecture/parte-b8-games-tickets-admin.md) — Parte B.8: jogos e ingressos (admin), `ITicketProvider` mock e fluxos de reserva/compra/sync/redeem.
