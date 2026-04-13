@@ -115,6 +115,26 @@ public sealed class TorcedorSubscriptionCheckoutService(
         if (membership is null)
             return ConfirmTorcedorSubscriptionPaymentResult.Failure(ConfirmTorcedorSubscriptionPaymentError.NotFound);
 
+        var now = DateTimeOffset.UtcNow;
+        var isPlanChangeProration =
+            payment.StatusReason?.StartsWith(TorcedorPlanChangePaymentReasons.ProrationPrefix, StringComparison.Ordinal)
+            == true;
+
+        if (membership.Status == MembershipStatus.Ativo && isPlanChangeProration)
+        {
+            payment.Status = PaymentChargeStatuses.Paid;
+            payment.PaidAt = now;
+            payment.UpdatedAt = now;
+            payment.LastProviderSyncAt = now;
+            payment.StatusReason = "Pagamento confirmado — troca de plano (D.6).";
+
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            await loyaltyPoints.AwardPointsForPaymentPaidAsync(payment.Id, cancellationToken).ConfigureAwait(false);
+
+            return ConfirmTorcedorSubscriptionPaymentResult.Success();
+        }
+
         if (membership.Status != MembershipStatus.PendingPayment)
             return ConfirmTorcedorSubscriptionPaymentResult.Failure(ConfirmTorcedorSubscriptionPaymentError.InvalidState);
 
@@ -122,7 +142,6 @@ public sealed class TorcedorSubscriptionCheckoutService(
             ? await db.MembershipPlans.AsNoTracking().FirstOrDefaultAsync(p => p.Id == pid, cancellationToken).ConfigureAwait(false)
             : null;
 
-        var now = DateTimeOffset.UtcNow;
         payment.Status = PaymentChargeStatuses.Paid;
         payment.PaidAt = now;
         payment.UpdatedAt = now;

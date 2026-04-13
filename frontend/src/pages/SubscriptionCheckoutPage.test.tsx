@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AxiosError } from 'axios'
 import { SubscriptionCheckoutPage } from './SubscriptionCheckoutPage'
+import { SubscriptionConfirmationPage } from './SubscriptionConfirmationPage'
 
 vi.mock('../features/plans/plansService', () => ({
   plansService: {
@@ -14,6 +15,7 @@ vi.mock('../features/plans/plansService', () => ({
 vi.mock('../features/plans/subscriptionsService', () => ({
   subscriptionsService: {
     subscribe: vi.fn(),
+    getMySummary: vi.fn(),
   },
 }))
 
@@ -25,6 +27,7 @@ function renderAtCheckout(planId: string) {
     <MemoryRouter initialEntries={[`/plans/${planId}/checkout`]}>
       <Routes>
         <Route path="plans/:planId/checkout" element={<SubscriptionCheckoutPage />} />
+        <Route path="subscription/confirmation" element={<SubscriptionConfirmationPage />} />
       </Routes>
     </MemoryRouter>,
   )
@@ -34,6 +37,22 @@ describe('SubscriptionCheckoutPage', () => {
   beforeEach(() => {
     vi.mocked(plansService.getById).mockReset()
     vi.mocked(subscriptionsService.subscribe).mockReset()
+    vi.mocked(subscriptionsService.getMySummary).mockReset()
+    vi.mocked(subscriptionsService.getMySummary).mockResolvedValue({
+      hasMembership: true,
+      membershipId: 'm1',
+      membershipStatus: 'PendingPayment',
+      startDate: null,
+      endDate: null,
+      nextDueDate: null,
+      plan: null,
+      lastPayment: null,
+      digitalCard: {
+        state: 'MembershipInactive',
+        membershipStatusLabel: 'PendingPayment',
+        message: 'Aguardando pagamento',
+      },
+    })
   })
 
   afterEach(() => {
@@ -70,6 +89,7 @@ describe('SubscriptionCheckoutPage', () => {
     await waitFor(() => {
       expect(subscriptionsService.subscribe).toHaveBeenCalledWith('p1', 'Pix')
     })
+    expect(await screen.findByText(/Contratação registrada/i)).toBeInTheDocument()
     expect(await screen.findByText(/MOCK_PIX\|x/)).toBeInTheDocument()
   })
 

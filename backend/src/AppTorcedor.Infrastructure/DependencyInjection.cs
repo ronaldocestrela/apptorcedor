@@ -86,6 +86,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogReadPort, AuditLogReadPort>();
         services.AddScoped<ILgpdAdministrationPort, LgpdAdministrationService>();
         services.AddSingleton<ITicketProvider, MockTicketProvider>();
+        services.AddSingleton(TimeProvider.System);
         services.AddScoped<IPaymentProvider, MockPaymentProvider>();
         services.AddScoped<IPaymentsAdministrationPort, PaymentAdministrationService>();
         services.AddScoped<IGameAdministrationPort, GameAdministrationService>();
@@ -109,6 +110,8 @@ public static class DependencyInjection
         services.AddScoped<IInAppNotificationDispatchService, InAppNotificationDispatchService>();
         services.AddScoped<IPaymentDelinquencySweep, PaymentDelinquencySweep>();
         services.AddScoped<ITorcedorSubscriptionCheckoutPort, TorcedorSubscriptionCheckoutService>();
+        services.AddScoped<ITorcedorSubscriptionSummaryPort, TorcedorSubscriptionSummaryReadService>();
+        services.AddScoped<ITorcedorPlanChangePort, TorcedorPlanChangeService>();
         services.AddHostedService<PaymentDelinquencyHostedService>();
         services.AddHostedService<InAppNotificationDispatchHostedService>();
 

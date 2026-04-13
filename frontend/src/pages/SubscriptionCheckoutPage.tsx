@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { isAxiosError } from 'axios'
 import { plansService, type TorcedorPublishedPlanDetail } from '../features/plans/plansService'
-import {
-  subscriptionsService,
-  type SubscriptionPaymentMethod,
-  type TorcedorSubscriptionCheckoutResponse,
-} from '../features/plans/subscriptionsService'
+import { subscriptionsService, type SubscriptionPaymentMethod } from '../features/plans/subscriptionsService'
 
 function billingCycleLabel(cycle: string): string {
   switch (cycle) {
@@ -26,6 +22,7 @@ function formatPrice(value: number): string {
 }
 
 export function SubscriptionCheckoutPage() {
+  const navigate = useNavigate()
   const { planId } = useParams<{ planId: string }>()
   const [plan, setPlan] = useState<TorcedorPublishedPlanDetail | null>(null)
   const [method, setMethod] = useState<SubscriptionPaymentMethod>('Pix')
@@ -33,7 +30,6 @@ export function SubscriptionCheckoutPage() {
   const [planError, setPlanError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [checkout, setCheckout] = useState<TorcedorSubscriptionCheckoutResponse | null>(null)
 
   const discountedPrice = useMemo(() => {
     if (!plan)
@@ -90,7 +86,12 @@ export function SubscriptionCheckoutPage() {
     setSubmitting(true)
     try {
       const res = await subscriptionsService.subscribe(planId, method)
-      setCheckout(res)
+      if (!plan)
+        return
+      navigate('/subscription/confirmation', {
+        replace: true,
+        state: { checkout: res, planName: plan.name, billingCycle: plan.billingCycle },
+      })
     }
     catch (err) {
       if (isAxiosError(err)) {
@@ -152,103 +153,48 @@ export function SubscriptionCheckoutPage() {
             </p>
           ) : null}
 
-          {!checkout ? (
-            <form onSubmit={e => void onConfirm(e)} style={{ marginTop: '1.25rem' }}>
-              <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
-                <legend style={{ fontWeight: 600, marginBottom: 8 }}>Forma de pagamento</legend>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  <input
-                    type="radio"
-                    name="pay"
-                    checked={method === 'Pix'}
-                    onChange={() => setMethod('Pix')}
-                  />
-                  {' '}
-                  PIX
-                </label>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  <input
-                    type="radio"
-                    name="pay"
-                    checked={method === 'Card'}
-                    onChange={() => setMethod('Card')}
-                  />
-                  {' '}
-                  Cartão (checkout externo)
-                </label>
-              </fieldset>
-              {submitError ? <p style={{ color: '#721c24' }}>{submitError}</p> : null}
-              <button
-                type="submit"
-                disabled={submitting}
-                style={{
-                  marginTop: '1rem',
-                  padding: '0.5rem 1rem',
-                  borderRadius: 6,
-                  border: '1px solid #1976d2',
-                  background: '#1976d2',
-                  color: '#fff',
-                  cursor: submitting ? 'wait' : 'pointer',
-                  width: '100%',
-                }}
-              >
-                {submitting ? 'Confirmando…' : 'Confirmar contratação'}
-              </button>
-            </form>
-          ) : (
-            <div style={{ marginTop: '1.25rem' }}>
-              <p style={{ margin: 0, fontSize: '0.95rem' }}>
-                Cobrança criada. Status da associação:
+          <form onSubmit={e => void onConfirm(e)} style={{ marginTop: '1.25rem' }}>
+            <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+              <legend style={{ fontWeight: 600, marginBottom: 8 }}>Forma de pagamento</legend>
+              <label style={{ display: 'block', marginBottom: 8 }}>
+                <input
+                  type="radio"
+                  name="pay"
+                  checked={method === 'Pix'}
+                  onChange={() => setMethod('Pix')}
+                />
                 {' '}
-                <strong>{checkout.membershipStatus}</strong>
-              </p>
-              {checkout.pix ? (
-                <div style={{ marginTop: '1rem' }}>
-                  <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>PIX</h3>
-                  <p style={{ margin: '0 0 0.35rem', fontSize: '0.85rem', color: '#555' }}>
-                    Payload do QR (mock / gateway):
-                  </p>
-                  <pre
-                    style={{
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-all',
-                      background: '#fff',
-                      border: '1px solid #ccc',
-                      borderRadius: 6,
-                      padding: '0.75rem',
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    {checkout.pix.qrCodePayload}
-                  </pre>
-                  {checkout.pix.copyPasteKey ? (
-                    <p style={{ margin: '0.75rem 0 0', fontSize: '0.85rem' }}>
-                      Copia e cola:
-                      {' '}
-                      <code>{checkout.pix.copyPasteKey}</code>
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-              {checkout.card ? (
-                <div style={{ marginTop: '1rem' }}>
-                  <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Cartão</h3>
-                  <a
-                    href={checkout.card.checkoutUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: '#1976d2' }}
-                  >
-                    Abrir página de pagamento
-                  </a>
-                </div>
-              ) : null}
-              <p style={{ margin: '1.25rem 0 0', fontSize: '0.85rem', color: '#666' }}>
-                Após o pagamento ser confirmado pelo provedor, sua associação será ativada automaticamente. Em ambiente de
-                demonstração, um callback de teste pode ser usado pela API.
-              </p>
-            </div>
-          )}
+                PIX
+              </label>
+              <label style={{ display: 'block', marginBottom: 8 }}>
+                <input
+                  type="radio"
+                  name="pay"
+                  checked={method === 'Card'}
+                  onChange={() => setMethod('Card')}
+                />
+                {' '}
+                Cartão (checkout externo)
+              </label>
+            </fieldset>
+            {submitError ? <p style={{ color: '#721c24' }}>{submitError}</p> : null}
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                marginTop: '1rem',
+                padding: '0.5rem 1rem',
+                borderRadius: 6,
+                border: '1px solid #1976d2',
+                background: '#1976d2',
+                color: '#fff',
+                cursor: submitting ? 'wait' : 'pointer',
+                width: '100%',
+              }}
+            >
+              {submitting ? 'Confirmando…' : 'Confirmar contratação'}
+            </button>
+          </form>
         </section>
       ) : null}
     </main>

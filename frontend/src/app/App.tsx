@@ -37,6 +37,7 @@ import { NewsDetailPage } from '../pages/NewsDetailPage'
 import { NewsFeedPage } from '../pages/NewsFeedPage'
 import { PlanDetailsPage } from '../pages/PlanDetailsPage'
 import { SubscriptionCheckoutPage } from '../pages/SubscriptionCheckoutPage'
+import { SubscriptionConfirmationPage } from '../pages/SubscriptionConfirmationPage'
 import { PlansPage } from '../pages/PlansPage'
 import { LoginPage } from '../pages/LoginPage'
 import { RegisterPage } from '../pages/RegisterPage'
@@ -59,6 +60,7 @@ export function App() {
           <Route path="plans" element={<PlansPage />} />
           <Route path="plans/:planId" element={<PlanDetailsPage />} />
           <Route path="plans/:planId/checkout" element={<SubscriptionCheckoutPage />} />
+          <Route path="subscription/confirmation" element={<SubscriptionConfirmationPage />} />
           <Route path="digital-card" element={<DigitalCardPage />} />
           <Route path="games" element={<GamesPage />} />
           <Route path="tickets" element={<MyTicketsPage />} />

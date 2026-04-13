@@ -225,27 +225,31 @@ Detalhes: [docs/architecture/parte-d4-integracao-pagamento-contratacao.md](archi
 
 ### D.5 — Pós-contratação (confirmação e recibo)
 
+Detalhes: [docs/architecture/parte-d5-pos-contratacao-confirmacao-recibo-torcedor.md](architecture/parte-d5-pos-contratacao-confirmacao-recibo-torcedor.md).
+
 **Backend**
-- [ ] `D.5.1` Query `GetMySubscriptionSummaryQuery` — retorna `Membership` ativo, datas de vencimento, último pagamento, status da carteirinha
-- [ ] `D.5.2` Endpoint `GET /api/account/subscription` (JWT) — usado pela SPA pós-contratação
-- [ ] `D.5.3` Testes unitários da query
+- [x] `D.5.1` Query `GetMySubscriptionSummaryQuery` — retorna `Membership` ativo, datas de vencimento, último pagamento, status da carteirinha
+- [x] `D.5.2` Endpoint `GET /api/account/subscription` (JWT) — usado pela SPA pós-contratação
+- [x] `D.5.3` Testes unitários da query
 
 **Frontend**
-- [ ] `D.5.4` Página `/subscription/confirmation` (ou redirect pós-checkout) com: confirmação visual, recibo (plano, valor pago, próximo vencimento), link para `/digital-card`
-- [ ] `D.5.5` Atualizar `/account` ("Minha conta") para exibir status da assinatura e próximo vencimento
+- [x] `D.5.4` Página `/subscription/confirmation` (ou redirect pós-checkout) com: confirmação visual, recibo (plano, valor pago, próximo vencimento), link para `/digital-card`
+- [x] `D.5.5` Atualizar `/account` ("Minha conta") para exibir status da assinatura e próximo vencimento
 
 ---
 
 ### D.6 — Troca de plano (`ChangePlan`)
 
+Detalhes: [docs/architecture/parte-d6-troca-plano-torcedor.md](architecture/parte-d6-troca-plano-torcedor.md).
+
 **Backend**
-- [ ] `D.6.1` Command `ChangePlanCommand` + handler — regras de upgrade/downgrade: calcular proporcional, cancelar cobrança atual, criar nova via `IPaymentProvider`
-- [ ] `D.6.2` Registrar mudança em `MembershipHistories` com motivo `PlanChanged`
-- [ ] `D.6.3` Endpoint `PUT /api/account/subscription/plan` (JWT)
-- [ ] `D.6.4` Testes unitários: upgrade, downgrade, tentativa com plano inválido
+- [x] `D.6.1` Command `ChangePlanCommand` + handler — regras de upgrade/downgrade: calcular proporcional, cancelar cobrança atual, criar nova via `IPaymentProvider`
+- [x] `D.6.2` Registrar mudança em `MembershipHistories` com motivo `PlanChanged`
+- [x] `D.6.3` Endpoint `PUT /api/account/subscription/plan` (JWT)
+- [x] `D.6.4` Testes: Application (`ChangePlanCommandHandlerTests`), Infrastructure (`TorcedorPlanChangeServiceTests`), API (`PartD6ChangePlanApiTests`)
 
 **Frontend**
-- [ ] `D.6.5` Seção "Trocar plano" em `/account` ou `/subscription`: lista de outros planos publicados, comparativo, confirmação de troca
+- [x] `D.6.5` Seção "Trocar plano" em `/account`: lista de outros planos publicados, seleção de método de pagamento, confirmação de troca e instruções pós-sucesso
 
 ---
 

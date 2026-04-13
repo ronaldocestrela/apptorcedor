@@ -25,4 +25,7 @@ public static class MembershipHistoryEventTypes
 
     /// <summary>Início de contratação pelo torcedor (Parte D.3).</summary>
     public const string Subscribed = "Subscribed";
+
+    /// <summary>Troca de plano pelo torcedor com ajuste proporcional quando aplicável (Parte D.6).</summary>
+    public const string PlanChanged = "PlanChanged";
 }

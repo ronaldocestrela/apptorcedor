@@ -130,6 +130,32 @@ public sealed record TorcedorSubscriptionCheckoutResponse(
     TorcedorSubscriptionCheckoutPixResponse? Pix,
     TorcedorSubscriptionCheckoutCardResponse? Card);
 
+public sealed class TorcedorChangePlanRequest
+{
+    public Guid PlanId { get; set; }
+
+    public TorcedorSubscriptionPaymentMethod PaymentMethod { get; set; }
+}
+
+public sealed record TorcedorChangePlanPlanSnapshotResponse(
+    Guid PlanId,
+    string Name,
+    decimal Price,
+    string BillingCycle,
+    decimal DiscountPercentage);
+
+public sealed record TorcedorChangePlanResponse(
+    Guid MembershipId,
+    string MembershipStatus,
+    TorcedorChangePlanPlanSnapshotResponse FromPlan,
+    TorcedorChangePlanPlanSnapshotResponse ToPlan,
+    decimal ProrationAmount,
+    Guid? PaymentId,
+    string Currency,
+    string? PaymentMethod,
+    TorcedorSubscriptionCheckoutPixResponse? Pix,
+    TorcedorSubscriptionCheckoutCardResponse? Card);
+
 public sealed class TorcedorSubscriptionPaymentCallbackRequest
 {
     public Guid PaymentId { get; set; }

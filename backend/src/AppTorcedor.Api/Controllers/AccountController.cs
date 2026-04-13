@@ -2,11 +2,13 @@ using System.Security.Claims;
 using AppTorcedor.Api.Contracts;
 using AppTorcedor.Api.Services;
 using AppTorcedor.Application.Modules.Account;
+using AppTorcedor.Application.Modules.Account.Commands.ChangePlan;
 using AppTorcedor.Application.Modules.Account.Commands.RegisterTorcedor;
 using AppTorcedor.Application.Modules.Account.Commands.UpsertMyProfile;
 using AppTorcedor.Application.Abstractions;
 using AppTorcedor.Application.Modules.Account.Queries.GetMyDigitalCard;
 using AppTorcedor.Application.Modules.Account.Queries.GetMyProfile;
+using AppTorcedor.Application.Modules.Account.Queries.GetMySubscriptionSummary;
 using AppTorcedor.Application.Modules.Account.Queries.GetRegistrationLegalRequirements;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -69,6 +71,72 @@ public sealed class AccountController(
         var dto = await mediator.Send(new GetMyDigitalCardQuery(userId.Value), cancellationToken).ConfigureAwait(false);
         return Ok(dto);
     }
+
+    [HttpGet("subscription")]
+    [Authorize]
+    public async Task<ActionResult<MySubscriptionSummaryDto>> GetMySubscriptionSummary(CancellationToken cancellationToken)
+    {
+        var userId = GetUserIdOrDefault();
+        if (userId is null)
+            return Unauthorized();
+        var dto = await mediator.Send(new GetMySubscriptionSummaryQuery(userId.Value), cancellationToken).ConfigureAwait(false);
+        return Ok(dto);
+    }
+
+    [HttpPut("subscription/plan")]
+    [Authorize]
+    [ProducesResponseType(typeof(TorcedorChangePlanResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ChangeSubscriptionPlan(
+        [FromBody] TorcedorChangePlanRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetUserIdOrDefault();
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await mediator
+            .Send(
+                new ChangePlanCommand(userId.Value, request.PlanId, request.PaymentMethod),
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!result.Ok)
+            return MapChangePlanFailure(result.Error!.Value);
+
+        return Ok(
+            new TorcedorChangePlanResponse(
+                result.MembershipId!.Value,
+                result.MembershipStatus!.Value.ToString(),
+                new TorcedorChangePlanPlanSnapshotResponse(
+                    result.FromPlan!.PlanId,
+                    result.FromPlan.Name,
+                    result.FromPlan.Price,
+                    result.FromPlan.BillingCycle,
+                    result.FromPlan.DiscountPercentage),
+                new TorcedorChangePlanPlanSnapshotResponse(
+                    result.ToPlan!.PlanId,
+                    result.ToPlan.Name,
+                    result.ToPlan.Price,
+                    result.ToPlan.BillingCycle,
+                    result.ToPlan.DiscountPercentage),
+                result.ProrationAmount,
+                result.PaymentId,
+                result.Currency!,
+                result.PaymentMethod?.ToString(),
+                result.Pix is { } px ? new TorcedorSubscriptionCheckoutPixResponse(px.QrCodePayload, px.CopyPasteKey) : null,
+                result.Card is { } cd ? new TorcedorSubscriptionCheckoutCardResponse(cd.CheckoutUrl) : null));
+    }
+
+    private IActionResult MapChangePlanFailure(ChangePlanError err) =>
+        err switch
+        {
+            ChangePlanError.MembershipNotFound => NotFound(new { error = "membership_not_found" }),
+            ChangePlanError.MembershipNotActive => Conflict(new { error = "membership_not_active" }),
+            ChangePlanError.MissingBillingCycleContext => Conflict(new { error = "missing_billing_context" }),
+            ChangePlanError.PlanNotFoundOrNotAvailable => BadRequest(new { error = "plan_not_available" }),
+            ChangePlanError.SamePlan => BadRequest(new { error = "same_plan" }),
+            _ => BadRequest(),
+        };
 
     [HttpGet("profile")]
     [Authorize]

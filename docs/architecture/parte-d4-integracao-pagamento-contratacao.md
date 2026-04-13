@@ -50,5 +50,6 @@ Ambiente de testes da API define `Payments:WebhookSecret` via `AppWebApplication
 
 ## Próximos passos (D.5+)
 
-- Tela de confirmação pós-pagamento e resumo da assinatura (`GET /api/account/subscription`).
+- **D.5 entregue:** ver [parte-d5-pos-contratacao-confirmacao-recibo-torcedor.md](parte-d5-pos-contratacao-confirmacao-recibo-torcedor.md) (`GET /api/account/subscription`, `/subscription/confirmation`, resumo em Minha conta).
+- **D.6 entregue:** ver [parte-d6-troca-plano-torcedor.md](parte-d6-troca-plano-torcedor.md) (`PUT /api/account/subscription/plan`, troca com proporcional em `/account`).
 - Gateway real (assinatura recorrente, assinatura + `CreateSubscriptionAsync` conforme produto).
