@@ -1,0 +1,6 @@
+@AppTorcedor.Api_HostAddress = http://localhost:5031
+
+GET {{AppTorcedor.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

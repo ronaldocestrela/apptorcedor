@@ -529,3 +529,11 @@ Este sistema deve ser:
 5. Não acoplar regras de negócio indevidamente
 6. Garantir código limpo e organizado
 7. Seguir arquitetura modular definida
+
+---
+
+## Estado do repositório (bootstrap)
+
+* **Backend:** solução em `backend/` — `AppTorcedor.Api` + `AppTorcedor.Identity` + `AppTorcedor.Infrastructure`; Identity com JWT (access + refresh), seed de **Administrador Master** e roles base; testes xUnit (API + domínio).
+* **Frontend:** `frontend/` — React + Vite, login, armazenamento de tokens, interceptor Axios com refresh, rotas protegidas e página restrita a **Administrador Master**.
+* **Infra local:** `docker-compose.yml` (SQL Server opcional); documentação da fase em `docs/architecture/auth-bootstrap.md` e visão geral em `README.md`.
