@@ -51,4 +51,45 @@ public sealed class TorcedorPublishedPlansReadService(AppDbContext db) : ITorced
 
         return new TorcedorPublishedPlansCatalogDto(items);
     }
+
+    public async Task<TorcedorPublishedPlanDetailDto?> GetPublishedActiveByIdAsync(
+        Guid planId,
+        CancellationToken cancellationToken = default)
+    {
+        var plan = await db.MembershipPlans.AsNoTracking()
+            .Where(p => p.Id == planId && p.IsPublished && p.IsActive)
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Price,
+                p.BillingCycle,
+                p.DiscountPercentage,
+                p.Summary,
+                p.RulesNotes,
+            })
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (plan is null)
+            return null;
+
+        var benefits = await db.MembershipPlanBenefits.AsNoTracking()
+            .Where(b => b.PlanId == planId)
+            .OrderBy(b => b.SortOrder)
+            .ThenBy(b => b.Title)
+            .Select(b => new TorcedorPublishedPlanDetailBenefitDto(b.Id, b.SortOrder, b.Title, b.Description))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return new TorcedorPublishedPlanDetailDto(
+            plan.Id,
+            plan.Name,
+            plan.Price,
+            plan.BillingCycle,
+            plan.DiscountPercentage,
+            plan.Summary,
+            plan.RulesNotes,
+            benefits);
+    }
 }

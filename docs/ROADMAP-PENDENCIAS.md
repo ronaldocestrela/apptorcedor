@@ -187,12 +187,12 @@ Ordem de execução sugerida: `D.1 → D.2 → D.3 → D.4 → D.5 → D.6 → D
 ### D.2 — Simulação / detalhe do plano
 
 **Backend**
-- [ ] `D.2.1` Query `GetPlanDetailsQuery` + handler — retorna todos os campos do plano + benefícios completos + regras (`RulesNotes`)
-- [ ] `D.2.2` Endpoint `GET /api/plans/{id}` (público ou JWT opcional)
-- [ ] `D.2.3` Testes unitários e de API
+- [x] `D.2.1` Query `GetPlanDetailsQuery` + handler — retorna todos os campos do plano + benefícios completos + regras (`RulesNotes`)
+- [x] `D.2.2` Endpoint `GET /api/plans/{id}` (**JWT obrigatório**, alinhado ao D.1)
+- [x] `D.2.3` Testes unitários e de API
 
 **Frontend**
-- [ ] `D.2.4` Página `/plans/{id}` (ou drawer/modal de detalhe) com resumo completo: preço, ciclo, desconto calculado, lista de benefícios, botão "Contratar"
+- [x] `D.2.4` Página `/plans/{id}` com resumo completo: preço, ciclo, desconto calculado, lista de benefícios, botão "Contratar" (desabilitado até D.3/D.4)
 
 ---
 

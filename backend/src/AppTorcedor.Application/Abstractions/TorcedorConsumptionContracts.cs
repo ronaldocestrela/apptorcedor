@@ -45,10 +45,25 @@ public sealed record TorcedorPublishedPlanItemDto(
 
 public sealed record TorcedorPublishedPlansCatalogDto(IReadOnlyList<TorcedorPublishedPlanItemDto> Items);
 
+public sealed record TorcedorPublishedPlanDetailBenefitDto(Guid BenefitId, int SortOrder, string Title, string? Description);
+
+public sealed record TorcedorPublishedPlanDetailDto(
+    Guid PlanId,
+    string Name,
+    decimal Price,
+    string BillingCycle,
+    decimal DiscountPercentage,
+    string? Summary,
+    string? RulesNotes,
+    IReadOnlyList<TorcedorPublishedPlanDetailBenefitDto> Benefits);
+
 /// <summary>Read-only port for plan catalog visible to torcedor (Parte D.1): published and active plans.</summary>
 public interface ITorcedorPublishedPlansReadPort
 {
     Task<TorcedorPublishedPlansCatalogDto> ListPublishedActiveAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Detail for a single plan when it is published and active; otherwise null.</summary>
+    Task<TorcedorPublishedPlanDetailDto?> GetPublishedActiveByIdAsync(Guid planId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Read-only port for published news (torcedor feed / detail).</summary>

@@ -14,7 +14,7 @@ Monólito modular para **sócio torcedor** de um único clube (single tenant). A
 
 ```text
 backend/          → Solução .NET (API, Identity, Infrastructure, testes)
-frontend/         → React + Vite (login, **cadastro e Minha conta (C.1)**, **notícias e benefícios (C.2)** no `/news` e `/benefits`, **catálogo de planos (D.1)** em `/plans`, **carteirinha (C.3)** em `/digital-card`, **jogos e ingressos (C.4)** em `/games` e `/tickets`, **fidelidade (C.5)** em `/loyalty`, login Google opcional, convite staff, **usuários admin**, dashboard admin, **pagamentos admin (B.6)**, **notícias admin (B.9)**, **fidelidade/benefícios admin (B.10)**, **chamados/suporte admin (B.11)**, gestão de matriz de permissões, refresh de token)
+frontend/         → React + Vite (login, **cadastro e Minha conta (C.1)**, **notícias e benefícios (C.2)** no `/news` e `/benefits`, **catálogo de planos (D.1)** em `/plans`, **detalhe de plano (D.2)** em `/plans/:planId`, **carteirinha (C.3)** em `/digital-card`, **jogos e ingressos (C.4)** em `/games` e `/tickets`, **fidelidade (C.5)** em `/loyalty`, login Google opcional, convite staff, **usuários admin**, dashboard admin, **pagamentos admin (B.6)**, **notícias admin (B.9)**, **fidelidade/benefícios admin (B.10)**, **chamados/suporte admin (B.11)**, gestão de matriz de permissões, refresh de token)
 docs/             → Documentação técnica por fase
 docker-compose.yml → SQL Server opcional
 AGENTS.md         → Visão de produto, regras e arquitetura alvo

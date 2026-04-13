@@ -1,4 +1,5 @@
 using AppTorcedor.Api.Contracts;
+using AppTorcedor.Application.Modules.Torcedor.Queries.GetPlanDetails;
 using AppTorcedor.Application.Modules.Torcedor.Queries.ListPublishedPlans;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -28,5 +29,28 @@ public sealed class TorcedorPlansController(IMediator mediator) : ControllerBase
                     .ToList()))
             .ToList();
         return Ok(new TorcedorPublishedPlansCatalogResponse(items));
+    }
+
+    [HttpGet("{planId:guid}")]
+    public async Task<ActionResult<TorcedorPublishedPlanDetailResponse>> GetById(Guid planId, CancellationToken cancellationToken)
+    {
+        var dto = await mediator.Send(new GetPlanDetailsQuery(planId), cancellationToken).ConfigureAwait(false);
+        if (dto is null)
+            return NotFound();
+
+        var benefits = dto.Benefits
+            .Select(b => new TorcedorPublishedPlanDetailBenefitResponse(b.BenefitId, b.SortOrder, b.Title, b.Description))
+            .ToList();
+
+        return Ok(
+            new TorcedorPublishedPlanDetailResponse(
+                dto.PlanId,
+                dto.Name,
+                dto.Price,
+                dto.BillingCycle,
+                dto.DiscountPercentage,
+                dto.Summary,
+                dto.RulesNotes,
+                benefits));
     }
 }

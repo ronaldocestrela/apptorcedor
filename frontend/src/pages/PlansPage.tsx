@@ -56,7 +56,7 @@ export function PlansPage() {
       </p>
       <h1>Planos de sócio</h1>
       <p style={{ color: '#555' }}>
-        Confira os planos disponíveis para contratação. A contratação online será habilitada nas próximas etapas do projeto.
+        Confira os planos disponíveis. Toque em Assinar para ver o detalhe completo; a contratação online será habilitada nas partes D.3 e D.4.
       </p>
       {loading ? <p>Carregando…</p> : null}
       {error ? <p style={{ color: '#721c24' }}>{error}</p> : null}
@@ -119,21 +119,23 @@ export function PlansPage() {
               </div>
             ) : null}
             <p style={{ margin: '1rem 0 0' }}>
-              <button
-                type="button"
-                disabled
-                title="Contratação será disponibilizada nas partes D.2 e D.4 do roadmap."
+              <Link
+                to={`/plans/${plan.planId}`}
                 style={{
+                  display: 'block',
+                  textAlign: 'center',
                   padding: '0.5rem 1rem',
                   borderRadius: 6,
-                  border: '1px solid #ccc',
-                  background: '#eee',
-                  cursor: 'not-allowed',
+                  border: '1px solid #1976d2',
+                  background: '#1976d2',
+                  color: '#fff',
+                  textDecoration: 'none',
                   width: '100%',
+                  boxSizing: 'border-box',
                 }}
               >
                 Assinar
-              </button>
+              </Link>
             </p>
           </article>
         ))}

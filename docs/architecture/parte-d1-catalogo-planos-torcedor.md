@@ -53,5 +53,5 @@ Controller: `TorcedorPlansController`.
 
 ## Próximos passos (roadmap)
 
-- D.2: detalhe `GET /api/plans/{id}` e página de detalhe.
+- D.2: detalhe `GET /api/plans/{id}` e página de detalhe — ver [parte-d2-simulacao-detalhe-plano-torcedor.md](parte-d2-simulacao-detalhe-plano-torcedor.md).
 - D.3–D.4: contratação e checkout.
