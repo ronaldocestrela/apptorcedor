@@ -1,36 +1,43 @@
-# App Torcedor (single tenant)
+# App Torcedor
 
-Monólito modular para **sócio torcedor** de um único clube. Esta entrega inicial cobre **Identity**, **JWT (access + refresh)**, **seed do Administrador Master + roles**, API .NET 10 e SPA React (Vite).
+Monólito modular para **sócio torcedor** de um único clube (single tenant). Nesta fase o foco é a **base de autenticação**: ASP.NET Core **Identity**, **JWT** (access + refresh), seed do **Administrador Master** e **roles** do sistema, além da **SPA** em React (Vite).
 
-## Requisitos
+## Pré-requisitos
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- Node.js 20+ (para o frontend)
-- Docker (opcional, para SQL Server)
+| Ferramenta | Uso |
+|------------|-----|
+| [.NET 10 SDK](https://dotnet.microsoft.com/download) | API e testes |
+| Node.js 20+ e npm | Frontend |
+| Docker (opcional) | SQL Server local via `docker compose` |
 
-## Subir SQL Server (opcional)
+## Estrutura do repositório
 
-```bash
-docker compose up -d
+```text
+backend/          → Solução .NET (API, Identity, Infrastructure, testes)
+frontend/         → React + Vite (login, rotas protegidas, refresh de token)
+docs/             → Documentação técnica por fase
+docker-compose.yml → SQL Server opcional
+AGENTS.md         → Visão de produto, regras e arquitetura alvo
 ```
 
-A connection string padrão em `backend/src/AppTorcedor.Api/appsettings.json` aponta para `localhost,1433` com a senha de exemplo alinhada ao `docker-compose.yml`.
+## Uso rápido (desenvolvimento)
 
-## Backend
+### 1. Backend (API)
+
+No ambiente **Development** o padrão é **banco em memória** (não precisa de SQL Server para subir a API).
 
 ```bash
 cd backend
 dotnet restore
-dotnet test
 dotnet run --project src/AppTorcedor.Api/AppTorcedor.Api.csproj
 ```
 
-- API HTTP: `http://localhost:5031` (perfil `http` em `Properties/launchSettings.json`).
-- Development usa **banco em memória** por padrão (`UseInMemoryDatabase` em `appsettings.Development.json`). Para SQL Server, defina `UseInMemoryDatabase: false` e garanta o banco acessível.
-- OpenAPI (Development): `GET /openapi/v1.json`
-- Senha inicial do admin em dev: `Seed:AdminMaster:Password` em `appsettings.Development.json` ou `ADMIN_MASTER_INITIAL_PASSWORD`.
+- URL HTTP padrão: **http://localhost:5031** (definida em [`backend/src/AppTorcedor.Api/Properties/launchSettings.json`](backend/src/AppTorcedor.Api/Properties/launchSettings.json)).
+- Documentação OpenAPI (somente Development): **GET** `http://localhost:5031/openapi/v1.json`.
 
-## Frontend
+### 2. Frontend (SPA)
+
+Em outro terminal:
 
 ```bash
 cd frontend
@@ -38,16 +45,81 @@ npm install
 npm run dev
 ```
 
-Configure `VITE_API_URL` (veja `frontend/.env.development`).
+- A URL do Vite aparece no terminal (geralmente `http://localhost:5173`).
+- A API é configurada pela variável **`VITE_API_URL`**. O arquivo [`frontend/.env.development`](frontend/.env.development) já aponta para `http://localhost:5031`. Para outro host/porta, ajuste ou copie de [`frontend/.env.example`](frontend/.env.example).
 
-## Documentação
+### 3. Fluxo na interface
 
-- Regras do produto e arquitetura alvo: [AGENTS.md](AGENTS.md)
-- Detalhes desta fase de autenticação: [docs/architecture/auth-bootstrap.md](docs/architecture/auth-bootstrap.md)
+1. Com a API e o frontend rodando, abra a URL do Vite.
+2. Faça login com o e-mail e senha do seed (veja a seção **Credenciais iniciais** abaixo).
+3. Após autenticar, você acessa a área logada; usuários com perfil **Administrador Master** podem abrir a rota **/admin**.
 
-## Testes
+## SQL Server com Docker (opcional)
+
+Se quiser persistir dados em SQL Server em vez do banco em memória:
+
+1. Suba o container:
+
+   ```bash
+   docker compose up -d
+   ```
+
+2. Em [`backend/src/AppTorcedor.Api/appsettings.Development.json`](backend/src/AppTorcedor.Api/appsettings.Development.json):
+   - defina **`UseInMemoryDatabase`** como **`false`**;
+   - confira se **`ConnectionStrings:DefaultConnection`** em [`appsettings.json`](backend/src/AppTorcedor.Api/appsettings.json) corresponde ao usuário/senha do `docker-compose.yml`.
+
+3. Aplique as migrations na primeira vez (a partir da pasta `backend`):
+
+   ```bash
+   dotnet ef database update --project src/AppTorcedor.Infrastructure/AppTorcedor.Infrastructure.csproj --startup-project src/AppTorcedor.Api/AppTorcedor.Api.csproj
+   ```
+
+   É necessário ter a [CLI do EF](https://learn.microsoft.com/ef/core/cli/dotnet) instalada (`dotnet tool install --global dotnet-ef`).
+
+## Credenciais iniciais (seed)
+
+Na primeira execução, o sistema cria as **roles** (Administrador Master, Administrador, Financeiro, etc.) e o usuário administrador.
+
+| Configuração | Descrição |
+|--------------|-----------|
+| `Seed:AdminMaster:Email` | E-mail do administrador (padrão em dev: `admin@torcedor.local`) |
+| `Seed:AdminMaster:Password` | Senha em desenvolvimento ([`appsettings.Development.json`](backend/src/AppTorcedor.Api/appsettings.Development.json)) |
+| `ADMIN_MASTER_INITIAL_PASSWORD` | Variável de ambiente; **use em produção** em vez de senha em arquivo |
+
+Fora dos ambientes Development/Testing, a senha do seed **de** estar em configuração ou em `ADMIN_MASTER_INITIAL_PASSWORD`, caso contrário a aplicação falha na inicialização (comportamento intencional).
+
+## Endpoints principais da API
+
+| Método | Rota | Autenticação | Função |
+|--------|------|--------------|--------|
+| POST | `/api/auth/login` | Não | Retorna `accessToken`, `refreshToken`, `expiresIn`, `roles` |
+| POST | `/api/auth/refresh` | Não | Troca o refresh por um novo par de tokens |
+| POST | `/api/auth/logout` | Não | Revoga o refresh informado |
+| GET | `/api/auth/me` | Bearer (JWT) | Dados do usuário e roles |
+| GET | `/api/diagnostics/admin-master-only` | Bearer + role *Administrador Master* | Teste de política por perfil |
+
+## Testes automatizados
 
 ```bash
-cd backend && dotnet test
-cd frontend && npm test
+# Backend (xUnit)
+cd backend
+dotnet test
+
+# Frontend (Vitest)
+cd frontend
+npm test
 ```
+
+## Configuração JWT (produção)
+
+Em [`appsettings.json`](backend/src/AppTorcedor.Api/appsettings.json) (ou variáveis de ambiente), ajuste a seção **`Jwt`**:
+
+- **`Key`**: chave simétrica com **pelo menos 32 bytes** em UTF-8.
+- **`Issuer`** e **`Audience`**: devem bater com a validação configurada na API.
+
+Não commite chaves reais; use secrets ou variáveis de ambiente no deploy.
+
+## Documentação adicional
+
+- [AGENTS.md](AGENTS.md) — escopo do produto, módulos e regras do projeto.
+- [docs/architecture/auth-bootstrap.md](docs/architecture/auth-bootstrap.md) — decisões da fase de autenticação, detalhes técnicos e variáveis.
