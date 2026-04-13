@@ -72,11 +72,11 @@ Detalhes técnicos: [docs/architecture/parte-b5-plans-admin.md](architecture/par
 
 ### B.6 Payments (visão financeira / admin)
 
-- [ ] **Listagem de cobranças e pagamentos** (`Payment`: valores, status, vencimento, pago em).
-- [ ] **Conciliação básica** e estados de cobrança.
-- [ ] **Estorno / cancelamento** (permissão `Pagamentos.Estornar` ou equivalente).
-- [ ] **Inadimplência:** regras automáticas ou gatilhos para mudança de status de Membership.
-- [ ] **Implementação de `IPaymentProvider`:** integração real ou adaptadores mock para PIX, cartão, assinatura recorrente.
+- [x] **Listagem de cobranças e pagamentos** (`Payment`: valores, status, vencimento, pago em).
+- [x] **Conciliação básica** e estados de cobrança.
+- [x] **Estorno / cancelamento** (permissão `Pagamentos.Estornar` ou equivalente).
+- [x] **Inadimplência:** regras automáticas ou gatilhos para mudança de status de Membership.
+- [x] **Implementação de `IPaymentProvider`:** integração real ou adaptadores mock para PIX, cartão, assinatura recorrente.
 
 ### B.7 Digital Card (gestão)
 

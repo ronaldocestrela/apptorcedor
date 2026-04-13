@@ -55,6 +55,11 @@ export function AdminLayout() {
             || hasPermission(user, ApplicationPermissions.PlanosEditar)) ? (
             <NavLink to="plans" style={linkStyle}>Planos</NavLink>
           ) : null}
+          {(hasPermission(user, ApplicationPermissions.PagamentosVisualizar)
+            || hasPermission(user, ApplicationPermissions.PagamentosGerenciar)
+            || hasPermission(user, ApplicationPermissions.PagamentosEstornar)) ? (
+            <NavLink to="payments" style={linkStyle}>Pagamentos</NavLink>
+          ) : null}
           {hasPermission(user, ApplicationPermissions.LgpdDocumentosVisualizar) ? (
             <NavLink to="lgpd/documents" style={linkStyle}>LGPD — Documentos</NavLink>
           ) : null}

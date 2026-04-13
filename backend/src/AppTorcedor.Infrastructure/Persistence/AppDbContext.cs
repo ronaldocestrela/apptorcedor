@@ -123,6 +123,10 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             entity.ToTable("Payments");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Status).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.PaymentMethod).HasMaxLength(32);
+            entity.Property(x => x.ExternalReference).HasMaxLength(256);
+            entity.Property(x => x.ProviderName).HasMaxLength(64);
+            entity.Property(x => x.StatusReason).HasMaxLength(512);
             entity.Property(x => x.Amount).HasPrecision(18, 2);
             entity.HasIndex(x => x.UserId);
             entity.HasIndex(x => x.MembershipId);

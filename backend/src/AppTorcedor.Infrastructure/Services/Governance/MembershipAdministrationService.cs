@@ -139,4 +139,57 @@ public sealed class MembershipAdministrationService(AppDbContext db) : IMembersh
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return new MembershipStatusUpdateResult(true, null);
     }
+
+    public async Task<MembershipStatusUpdateResult> ApplySystemMembershipTransitionAsync(
+        Guid membershipId,
+        MembershipStatus toStatus,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        var membership = await db.Memberships.FirstOrDefaultAsync(m => m.Id == membershipId, cancellationToken).ConfigureAwait(false);
+        if (membership is null)
+            return new MembershipStatusUpdateResult(false, MembershipStatusUpdateError.NotFound);
+        if (membership.Status == toStatus)
+            return new MembershipStatusUpdateResult(false, MembershipStatusUpdateError.Unchanged);
+
+        var from = membership.Status;
+        if (toStatus == MembershipStatus.Inadimplente)
+        {
+            if (from != MembershipStatus.Ativo)
+                return new MembershipStatusUpdateResult(false, MembershipStatusUpdateError.InvalidTransition);
+        }
+        else if (toStatus == MembershipStatus.Ativo)
+        {
+            if (from != MembershipStatus.Inadimplente)
+                return new MembershipStatusUpdateResult(false, MembershipStatusUpdateError.InvalidTransition);
+        }
+        else
+            return new MembershipStatusUpdateResult(false, MembershipStatusUpdateError.InvalidTransition);
+
+        if (from is MembershipStatus.Cancelado or MembershipStatus.Suspenso)
+            return new MembershipStatusUpdateResult(false, MembershipStatusUpdateError.InvalidTransition);
+
+        var utc = DateTimeOffset.UtcNow;
+        var planId = membership.PlanId;
+        membership.Status = toStatus;
+
+        db.MembershipHistories.Add(
+            new MembershipHistoryRecord
+            {
+                Id = Guid.NewGuid(),
+                MembershipId = membership.Id,
+                UserId = membership.UserId,
+                EventType = MembershipHistoryEventTypes.StatusChanged,
+                FromStatus = from,
+                ToStatus = toStatus,
+                FromPlanId = planId,
+                ToPlanId = planId,
+                Reason = reason,
+                ActorUserId = null,
+                CreatedAt = utc,
+            });
+
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return new MembershipStatusUpdateResult(true, null);
+    }
 }

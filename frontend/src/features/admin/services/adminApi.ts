@@ -388,3 +388,85 @@ export async function createAdminPlan(body: UpsertPlanBody): Promise<{ planId: s
 export async function updateAdminPlan(planId: string, body: UpsertPlanBody): Promise<void> {
   await api.put(`/api/admin/plans/${encodeURIComponent(planId)}`, body)
 }
+
+export type AdminPaymentListItem = {
+  paymentId: string
+  userId: string
+  userEmail: string
+  userName: string
+  membershipId: string
+  amount: number
+  status: string
+  dueDate: string
+  paidAt: string | null
+  paymentMethod: string | null
+  externalReference: string | null
+}
+
+export type AdminPaymentListPage = {
+  totalCount: number
+  items: AdminPaymentListItem[]
+}
+
+export type AdminPaymentDetail = {
+  paymentId: string
+  userId: string
+  userEmail: string
+  userName: string
+  membershipId: string
+  amount: number
+  status: string
+  dueDate: string
+  paidAt: string | null
+  paymentMethod: string | null
+  externalReference: string | null
+  providerName: string | null
+  cancelledAt: string | null
+  refundedAt: string | null
+  createdAt: string
+  updatedAt: string
+  lastProviderSyncAt: string | null
+  statusReason: string | null
+}
+
+export async function listAdminPayments(params: {
+  status?: string
+  userId?: string
+  membershipId?: string
+  paymentMethod?: string
+  dueFrom?: string
+  dueTo?: string
+  page?: number
+  pageSize?: number
+}): Promise<AdminPaymentListPage> {
+  const { data } = await api.get<AdminPaymentListPage>('/api/admin/payments', {
+    params: {
+      status: params.status || undefined,
+      userId: params.userId?.trim() || undefined,
+      membershipId: params.membershipId?.trim() || undefined,
+      paymentMethod: params.paymentMethod || undefined,
+      dueFrom: params.dueFrom || undefined,
+      dueTo: params.dueTo || undefined,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getAdminPayment(paymentId: string): Promise<AdminPaymentDetail> {
+  const { data } = await api.get<AdminPaymentDetail>(`/api/admin/payments/${encodeURIComponent(paymentId)}`)
+  return data
+}
+
+export async function conciliateAdminPayment(paymentId: string, body?: { paidAt?: string | null }): Promise<void> {
+  await api.post(`/api/admin/payments/${encodeURIComponent(paymentId)}/conciliate`, body ?? {})
+}
+
+export async function cancelAdminPayment(paymentId: string, body?: { reason?: string | null }): Promise<void> {
+  await api.post(`/api/admin/payments/${encodeURIComponent(paymentId)}/cancel`, body ?? {})
+}
+
+export async function refundAdminPayment(paymentId: string, body?: { reason?: string | null }): Promise<void> {
+  await api.post(`/api/admin/payments/${encodeURIComponent(paymentId)}/refund`, body ?? {})
+}

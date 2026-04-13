@@ -72,8 +72,10 @@ public sealed class MembershipAdminHandlersTests
         public List<Guid> DetailCalls { get; } = [];
         public List<(Guid MembershipId, int Take)> HistoryCalls { get; } = [];
         public List<(Guid MembershipId, MembershipStatus Status, string Reason, Guid ActorUserId)> UpdateCalls { get; } = [];
+        public List<(Guid MembershipId, MembershipStatus ToStatus, string Reason)> SystemTransitionCalls { get; } = [];
 
         public MembershipStatusUpdateResult UpdateResult { get; init; } = new(false, MembershipStatusUpdateError.NotFound);
+        public MembershipStatusUpdateResult SystemTransitionResult { get; init; } = new(true, null);
 
         public Task<AdminMembershipListPageDto> ListMembershipsAsync(
             MembershipStatus? status,
@@ -110,6 +112,16 @@ public sealed class MembershipAdminHandlersTests
         {
             UpdateCalls.Add((membershipId, status, reason, actorUserId));
             return Task.FromResult(UpdateResult);
+        }
+
+        public Task<MembershipStatusUpdateResult> ApplySystemMembershipTransitionAsync(
+            Guid membershipId,
+            MembershipStatus toStatus,
+            string reason,
+            CancellationToken cancellationToken = default)
+        {
+            SystemTransitionCalls.Add((membershipId, toStatus, reason));
+            return Task.FromResult(SystemTransitionResult);
         }
     }
 }

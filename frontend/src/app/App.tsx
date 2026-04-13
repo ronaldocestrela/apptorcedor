@@ -6,6 +6,7 @@ import { ConfigurationsPage } from '../features/admin/pages/ConfigurationsPage'
 import { DiagnosticsPage } from '../features/admin/pages/DiagnosticsPage'
 import { MembershipAdminPage } from '../features/admin/pages/MembershipAdminPage'
 import { PlansAdminPage } from '../features/admin/pages/PlansAdminPage'
+import { PaymentsAdminPage } from '../features/admin/pages/PaymentsAdminPage'
 import { LegalDocumentsPage } from '../features/admin/pages/LegalDocumentsPage'
 import { UserConsentsPage } from '../features/admin/pages/UserConsentsPage'
 import { PrivacyOpsPage } from '../features/admin/pages/PrivacyOpsPage'
@@ -42,6 +43,7 @@ export function App() {
               <Route path="role-permissions" element={<RolePermissionsPage />} />
               <Route path="membership" element={<MembershipAdminPage />} />
               <Route path="plans" element={<PlansAdminPage />} />
+              <Route path="payments" element={<PaymentsAdminPage />} />
               <Route path="lgpd/documents" element={<LegalDocumentsPage />} />
               <Route path="lgpd/consents" element={<UserConsentsPage />} />
               <Route path="lgpd/privacy" element={<PrivacyOpsPage />} />

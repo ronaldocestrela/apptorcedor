@@ -24,6 +24,13 @@ public interface IMembershipAdministrationPort
         string reason,
         Guid actorUserId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Automation/system transitions (e.g. delinquency sweep). History records use a null actor user id.</summary>
+    Task<MembershipStatusUpdateResult> ApplySystemMembershipTransitionAsync(
+        Guid membershipId,
+        MembershipStatus toStatus,
+        string reason,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record AdminMembershipListPageDto(int TotalCount, IReadOnlyList<AdminMembershipListItemDto> Items);
@@ -67,4 +74,5 @@ public enum MembershipStatusUpdateError
 {
     NotFound,
     Unchanged,
+    InvalidTransition,
 }

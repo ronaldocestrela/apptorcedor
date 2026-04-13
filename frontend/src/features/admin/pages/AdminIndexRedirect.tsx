@@ -25,6 +25,10 @@ export function AdminIndexRedirect() {
     || hasPermission(user, ApplicationPermissions.PlanosCriar)
     || hasPermission(user, ApplicationPermissions.PlanosEditar))
     return <Navigate to="plans" replace />
+  if (hasPermission(user, ApplicationPermissions.PagamentosVisualizar)
+    || hasPermission(user, ApplicationPermissions.PagamentosGerenciar)
+    || hasPermission(user, ApplicationPermissions.PagamentosEstornar))
+    return <Navigate to="payments" replace />
 
   return <p>Nenhuma seção disponível para seu usuário.</p>
 }

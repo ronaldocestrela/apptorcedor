@@ -11,6 +11,8 @@ public static class ApplicationPermissions
     public const string PlanosVisualizar = "Planos.Visualizar";
     public const string PlanosCriar = "Planos.Criar";
     public const string PlanosEditar = "Planos.Editar";
+    public const string PagamentosVisualizar = "Pagamentos.Visualizar";
+    public const string PagamentosGerenciar = "Pagamentos.Gerenciar";
     public const string PagamentosEstornar = "Pagamentos.Estornar";
     public const string JogosCriar = "Jogos.Criar";
     public const string IngressosGerenciar = "Ingressos.Gerenciar";
@@ -36,6 +38,8 @@ public static class ApplicationPermissions
         PlanosVisualizar,
         PlanosCriar,
         PlanosEditar,
+        PagamentosVisualizar,
+        PagamentosGerenciar,
         PagamentosEstornar,
         JogosCriar,
         IngressosGerenciar,

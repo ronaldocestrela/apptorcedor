@@ -5,6 +5,7 @@ using AppTorcedor.Infrastructure.Persistence;
 using AppTorcedor.Infrastructure.Services;
 using AppTorcedor.Infrastructure.Services.Governance;
 using AppTorcedor.Infrastructure.Services.Lgpd;
+using AppTorcedor.Infrastructure.Services.Payments;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -65,6 +66,10 @@ public static class DependencyInjection
         services.AddScoped<IAdminDashboardReadPort, AdminDashboardReadPort>();
         services.AddScoped<IAuditLogReadPort, AuditLogReadPort>();
         services.AddScoped<ILgpdAdministrationPort, LgpdAdministrationService>();
+        services.AddScoped<IPaymentProvider, MockPaymentProvider>();
+        services.AddScoped<IPaymentsAdministrationPort, PaymentAdministrationService>();
+        services.AddScoped<IPaymentDelinquencySweep, PaymentDelinquencySweep>();
+        services.AddHostedService<PaymentDelinquencyHostedService>();
 
         return services;
     }

@@ -2,7 +2,7 @@
 
 ## Escopo
 
-A SPA consome autenticação, permissões granulares, diagnóstico, configurações, auditoria, matriz role × permissão (leitura e edição), gestão de staff (convites e usuários internos), dashboard administrativo, **módulo Membership (B.4)** (listagem, detalhe, histórico operacional e alteração de status com motivo obrigatório) e **módulo Plans (B.5)** (CRUD de planos, benefícios por plano, publicação para catálogo do torcedor).
+A SPA consome autenticação, permissões granulares, diagnóstico, configurações, auditoria, matriz role × permissão (leitura e edição), gestão de staff (convites e usuários internos), dashboard administrativo, **módulo Membership (B.4)** (listagem, detalhe, histórico operacional e alteração de status com motivo obrigatório), **módulo Plans (B.5)** (CRUD de planos, benefícios por plano, publicação para catálogo do torcedor) e **módulo Payments (B.6)** (listagem de cobranças, detalhe, conciliação, cancelamento e estorno conforme permissões).
 
 ## Rotas
 
@@ -19,6 +19,7 @@ A SPA consome autenticação, permissões granulares, diagnóstico, configuraç�
 | `/admin/role-permissions` | `Configuracoes.Visualizar` (edição exige `Configuracoes.Editar`) |
 | `/admin/membership` | `Socios.Gerenciar` (filtros `?userId=` / `?membershipId=`; ver [parte-b4-membership-admin.md](../architecture/parte-b4-membership-admin.md)) |
 | `/admin/plans` | `Planos.Visualizar` (criação `Planos.Criar`, edição/publicação `Planos.Editar`; ver [parte-b5-plans-admin.md](../architecture/parte-b5-plans-admin.md)) |
+| `/admin/payments` | `Pagamentos.Visualizar` para listar/detalhar; `Pagamentos.Gerenciar` para conciliar/cancelar; `Pagamentos.Estornar` para estorno (ver [parte-b6-payments-admin.md](../architecture/parte-b6-payments-admin.md)) |
 | `/admin/lgpd/documents` | `Lgpd.Documentos.Visualizar` (edição: `Lgpd.Documentos.Editar`) |
 | `/admin/lgpd/consents` | `Lgpd.Consentimentos.Visualizar` (registro: `Lgpd.Consentimentos.Registrar`) |
 | `/admin/lgpd/privacy` | `Lgpd.Dados.Exportar` e/ou `Lgpd.Dados.Anonimizar` |
@@ -27,7 +28,7 @@ A SPA consome autenticação, permissões granulares, diagnóstico, configuraç�
 ## Autorização
 
 - `GET /api/auth/me` retorna `roles` e **`permissions`** (lista de strings alinhada ao catálogo do backend).
-- O frontend usa [`frontend/src/shared/auth/permissionUtils.ts`](../../frontend/src/shared/auth/permissionUtils.ts) e constantes em [`applicationPermissions.ts`](../../frontend/src/shared/auth/applicationPermissions.ts) (nomes idênticos ao backend). `ADMIN_AREA_PERMISSIONS` inclui `Usuarios.Visualizar` / `Usuarios.Editar` para liberar o shell admin a operadores de RH/staff e permissões de **planos** para perfis só de produto/oferta.
+- O frontend usa [`frontend/src/shared/auth/permissionUtils.ts`](../../frontend/src/shared/auth/permissionUtils.ts) e constantes em [`applicationPermissions.ts`](../../frontend/src/shared/auth/applicationPermissions.ts) (nomes idênticos ao backend). `ADMIN_AREA_PERMISSIONS` inclui `Usuarios.Visualizar` / `Usuarios.Editar` para liberar o shell admin a operadores de RH/staff, permissões de **planos** para perfis só de produto/oferta e permissões de **pagamentos** para o perfil financeiro.
 - `PermissionRoute` protege a árvore `/admin`; `PermissionGate` protege cada seção contra acesso direto por URL.
 - Permissões **LGPD** também entram em `ADMIN_AREA_PERMISSIONS` para permitir acesso ao shell admin a perfis só de compliance (sem `Usuarios.*` / `Configuracoes.*`).
 
