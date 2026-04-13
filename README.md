@@ -116,6 +116,11 @@ Fora dos ambientes Development/Testing, a senha do seed **de** estar em configur
 | POST | `/api/admin/lgpd/users/{userId}/consents` | Bearer + `Lgpd.Consentimentos.Registrar` | Registra aceite (versão publicada) |
 | POST | `/api/admin/lgpd/users/{userId}/export` | Bearer + `Lgpd.Dados.Exportar` | Exporta JSON de dados da conta |
 | POST | `/api/admin/lgpd/users/{userId}/anonymize` | Bearer + `Lgpd.Dados.Anonimizar` | Anonimiza PII e revoga refresh tokens |
+| GET | `/api/admin/digital-cards` | Bearer + `Carteirinha.Visualizar` | Lista emissões da carteirinha (filtros `userId`, `membershipId`, `status`, paginação) |
+| GET | `/api/admin/digital-cards/{id}` | Bearer + `Carteirinha.Visualizar` | Detalhe com `token` e linhas de preview do template fixo |
+| POST | `/api/admin/digital-cards/issue` | Bearer + `Carteirinha.Gerenciar` | Emite carteirinha (`membershipId`; exige associação **Ativa** e sem emissão ativa) |
+| POST | `/api/admin/digital-cards/{id}/regenerate` | Bearer + `Carteirinha.Gerenciar` | Regenera versão (invalida a ativa, novo token) |
+| POST | `/api/admin/digital-cards/{id}/invalidate` | Bearer + `Carteirinha.Gerenciar` | Invalida emissão ativa (`reason` obrigatório) |
 
 ## Testes automatizados
 
@@ -146,3 +151,4 @@ Não commite chaves reais; use secrets ou variáveis de ambiente no deploy.
 - [docs/frontend/backoffice.md](docs/frontend/backoffice.md) — painel administrativo na SPA (rotas e permissões).
 - [docs/ROADMAP-PENDENCIAS.md](docs/ROADMAP-PENDENCIAS.md) — backlog do que falta fazer, com prioridade para gestão e contratação de planos pelo torcedor ao final.
 - [docs/architecture/parte-b2-lgpd.md](docs/architecture/parte-b2-lgpd.md) — Parte B.2: documentos legais, consentimentos, exportação e anonimização.
+- [docs/architecture/parte-b7-digital-card-admin.md](docs/architecture/parte-b7-digital-card-admin.md) — Parte B.7: carteirinha digital (admin), versionamento e token.

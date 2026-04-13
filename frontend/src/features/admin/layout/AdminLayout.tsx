@@ -60,6 +60,10 @@ export function AdminLayout() {
             || hasPermission(user, ApplicationPermissions.PagamentosEstornar)) ? (
             <NavLink to="payments" style={linkStyle}>Pagamentos</NavLink>
           ) : null}
+          {(hasPermission(user, ApplicationPermissions.CarteirinhaVisualizar)
+            || hasPermission(user, ApplicationPermissions.CarteirinhaGerenciar)) ? (
+            <NavLink to="digital-cards" style={linkStyle}>Carteirinha</NavLink>
+          ) : null}
           {hasPermission(user, ApplicationPermissions.LgpdDocumentosVisualizar) ? (
             <NavLink to="lgpd/documents" style={linkStyle}>LGPD — Documentos</NavLink>
           ) : null}

@@ -37,4 +37,10 @@ describe('permissionUtils', () => {
       canAccessAdminArea({ permissions: [ApplicationPermissions.LgpdDocumentosVisualizar] }, ADMIN_AREA_PERMISSIONS),
     ).toBe(true)
   })
+
+  it('allows admin area with Carteirinha.Visualizar alone', () => {
+    expect(
+      canAccessAdminArea({ permissions: [ApplicationPermissions.CarteirinhaVisualizar] }, ADMIN_AREA_PERMISSIONS),
+    ).toBe(true)
+  })
 })

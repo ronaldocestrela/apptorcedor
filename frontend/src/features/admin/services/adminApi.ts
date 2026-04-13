@@ -470,3 +470,75 @@ export async function cancelAdminPayment(paymentId: string, body?: { reason?: st
 export async function refundAdminPayment(paymentId: string, body?: { reason?: string | null }): Promise<void> {
   await api.post(`/api/admin/payments/${encodeURIComponent(paymentId)}/refund`, body ?? {})
 }
+
+export type AdminDigitalCardListItem = {
+  digitalCardId: string
+  userId: string
+  membershipId: string
+  version: number
+  status: string
+  issuedAt: string
+  invalidatedAt: string | null
+  userEmail: string
+  membershipStatus: string
+}
+
+export type AdminDigitalCardListPage = {
+  totalCount: number
+  items: AdminDigitalCardListItem[]
+}
+
+export type AdminDigitalCardDetail = {
+  digitalCardId: string
+  userId: string
+  membershipId: string
+  version: number
+  status: string
+  token: string
+  issuedAt: string
+  invalidatedAt: string | null
+  invalidationReason: string | null
+  userEmail: string
+  userName: string
+  membershipStatus: string
+  planId: string | null
+  planName: string | null
+  documentMasked: string | null
+  templatePreviewLines: string[]
+}
+
+export async function listAdminDigitalCards(params: {
+  userId?: string
+  membershipId?: string
+  status?: string
+  page?: number
+  pageSize?: number
+}): Promise<AdminDigitalCardListPage> {
+  const { data } = await api.get<AdminDigitalCardListPage>('/api/admin/digital-cards', {
+    params: {
+      userId: params.userId?.trim() || undefined,
+      membershipId: params.membershipId?.trim() || undefined,
+      status: params.status || undefined,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getAdminDigitalCard(digitalCardId: string): Promise<AdminDigitalCardDetail> {
+  const { data } = await api.get<AdminDigitalCardDetail>(`/api/admin/digital-cards/${encodeURIComponent(digitalCardId)}`)
+  return data
+}
+
+export async function issueAdminDigitalCard(membershipId: string): Promise<void> {
+  await api.post('/api/admin/digital-cards/issue', { membershipId })
+}
+
+export async function regenerateAdminDigitalCard(digitalCardId: string, body?: { reason?: string | null }): Promise<void> {
+  await api.post(`/api/admin/digital-cards/${encodeURIComponent(digitalCardId)}/regenerate`, body ?? {})
+}
+
+export async function invalidateAdminDigitalCard(digitalCardId: string, body: { reason: string }): Promise<void> {
+  await api.post(`/api/admin/digital-cards/${encodeURIComponent(digitalCardId)}/invalidate`, body)
+}

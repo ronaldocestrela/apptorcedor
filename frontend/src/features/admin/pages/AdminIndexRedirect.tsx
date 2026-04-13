@@ -29,6 +29,9 @@ export function AdminIndexRedirect() {
     || hasPermission(user, ApplicationPermissions.PagamentosGerenciar)
     || hasPermission(user, ApplicationPermissions.PagamentosEstornar))
     return <Navigate to="payments" replace />
+  if (hasPermission(user, ApplicationPermissions.CarteirinhaVisualizar)
+    || hasPermission(user, ApplicationPermissions.CarteirinhaGerenciar))
+    return <Navigate to="digital-cards" replace />
 
   return <p>Nenhuma seção disponível para seu usuário.</p>
 }

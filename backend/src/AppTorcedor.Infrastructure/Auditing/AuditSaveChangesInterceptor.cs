@@ -84,6 +84,7 @@ public sealed class AuditSaveChangesInterceptor(ICurrentAuditContext auditContex
 
     private static bool ShouldAudit(object entity) =>
         entity is MembershipRecord
+            or DigitalCardRecord
             or MembershipPlanRecord
             or MembershipPlanBenefitRecord
             or PaymentRecord

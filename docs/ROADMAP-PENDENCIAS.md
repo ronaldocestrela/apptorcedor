@@ -80,8 +80,10 @@ Detalhes técnicos: [docs/architecture/parte-b5-plans-admin.md](architecture/par
 
 ### B.7 Digital Card (gestão)
 
-- [ ] **Definição de layout/regra** de exibição da carteirinha (campos obrigatórios, branding).
-- [ ] **Regeneração / invalidação** em casos administrativos (fraude, troca de documento).
+- [x] **Definição de layout/regra** de exibição da carteirinha (campos obrigatórios, branding).
+- [x] **Regeneração / invalidação** em casos administrativos (fraude, troca de documento).
+
+Detalhes: [docs/architecture/parte-b7-digital-card-admin.md](architecture/parte-b7-digital-card-admin.md).
 
 ### B.8 Games e Tickets (gestão)
 

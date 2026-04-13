@@ -29,6 +29,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<UserConsentRecord> UserConsents => Set<UserConsentRecord>();
     public DbSet<PrivacyRequestRecord> PrivacyRequests => Set<PrivacyRequestRecord>();
     public DbSet<UserProfileRecord> UserProfiles => Set<UserProfileRecord>();
+    public DbSet<DigitalCardRecord> DigitalCards => Set<DigitalCardRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -237,6 +238,32 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .WithOne()
                 .HasForeignKey<UserProfileRecord>(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<DigitalCardRecord>(entity =>
+        {
+            entity.ToTable("DigitalCards");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.Property(x => x.Token).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.InvalidationReason).HasMaxLength(2000);
+            entity.HasIndex(x => x.Token).IsUnique();
+            entity.HasIndex(x => new { x.MembershipId, x.Version }).IsUnique();
+            entity.HasIndex(x => x.UserId);
+            entity
+                .HasIndex(x => x.MembershipId)
+                .IsUnique()
+                .HasFilter("[Status] = 1");
+            entity
+                .HasOne<MembershipRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.MembershipId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<PrivacyRequestRecord>(entity =>

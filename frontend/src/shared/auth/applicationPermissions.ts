@@ -17,6 +17,8 @@ export const ApplicationPermissions = {
   IngressosGerenciar: 'Ingressos.Gerenciar',
   NoticiasPublicar: 'Noticias.Publicar',
   ChamadosResponder: 'Chamados.Responder',
+  CarteirinhaVisualizar: 'Carteirinha.Visualizar',
+  CarteirinhaGerenciar: 'Carteirinha.Gerenciar',
   ConfiguracoesVisualizar: 'Configuracoes.Visualizar',
   ConfiguracoesEditar: 'Configuracoes.Editar',
   LgpdDocumentosVisualizar: 'Lgpd.Documentos.Visualizar',
@@ -50,6 +52,8 @@ export const ADMIN_AREA_PERMISSIONS: readonly ApplicationPermission[] = [
   ApplicationPermissions.PagamentosVisualizar,
   ApplicationPermissions.PagamentosGerenciar,
   ApplicationPermissions.PagamentosEstornar,
+  ApplicationPermissions.CarteirinhaVisualizar,
+  ApplicationPermissions.CarteirinhaGerenciar,
 ]
 
 /** Mirrors backend <c>SystemRoles.All</c> for matrix UI. */
