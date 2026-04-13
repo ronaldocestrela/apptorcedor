@@ -29,3 +29,39 @@ public sealed record TorcedorEligibleBenefitOfferResponse(
 public sealed record TorcedorEligibleBenefitOffersPageResponse(
     int TotalCount,
     IReadOnlyList<TorcedorEligibleBenefitOfferResponse> Items);
+
+public sealed record TorcedorGameListItemResponse(
+    Guid GameId,
+    string Opponent,
+    string Competition,
+    DateTimeOffset GameDate,
+    DateTimeOffset CreatedAt);
+
+public sealed record TorcedorGameListPageResponse(int TotalCount, IReadOnlyList<TorcedorGameListItemResponse> Items);
+
+public sealed record TorcedorTicketListItemResponse(
+    Guid TicketId,
+    Guid GameId,
+    string Opponent,
+    string Competition,
+    DateTimeOffset GameDate,
+    string Status,
+    string? ExternalTicketId,
+    string? QrCode,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? RedeemedAt);
+
+public sealed record TorcedorTicketListPageResponse(int TotalCount, IReadOnlyList<TorcedorTicketListItemResponse> Items);
+
+public sealed record TorcedorTicketDetailResponse(
+    Guid TicketId,
+    Guid GameId,
+    string Opponent,
+    string Competition,
+    DateTimeOffset GameDate,
+    string Status,
+    string? ExternalTicketId,
+    string? QrCode,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    DateTimeOffset? RedeemedAt);

@@ -146,8 +146,10 @@ Detalhes: [docs/architecture/parte-c3-carteirinha-torcedor.md](architecture/part
 
 ### C.4 Jogos e ingressos (torcedor)
 
-- [ ] **Lista de jogos** disponíveis (`ListGames`).
-- [ ] **Resgate/visualização de ingressos** e QR Code (`GetTickets`, `RedeemTicket`).
+- [x] **Lista de jogos** disponíveis (`ListGames`).
+- [x] **Resgate/visualização de ingressos** e QR Code (`GetTickets`, `RedeemTicket`).
+
+Detalhes: [docs/architecture/parte-c4-jogos-ingressos-torcedor.md](architecture/parte-c4-jogos-ingressos-torcedor.md).
 
 ### C.5 Fidelidade (torcedor)
 

@@ -29,7 +29,9 @@ import { AcceptStaffInvitePage } from '../pages/AcceptStaffInvitePage'
 import { AccountPage } from '../pages/AccountPage'
 import { BenefitsEligiblePage } from '../pages/BenefitsEligiblePage'
 import { DigitalCardPage } from '../pages/DigitalCardPage'
+import { GamesPage } from '../pages/GamesPage'
 import { DashboardPage } from '../pages/DashboardPage'
+import { MyTicketsPage } from '../pages/MyTicketsPage'
 import { NewsDetailPage } from '../pages/NewsDetailPage'
 import { NewsFeedPage } from '../pages/NewsFeedPage'
 import { LoginPage } from '../pages/LoginPage'
@@ -49,6 +51,8 @@ export function App() {
           <Route path="news/:newsId" element={<NewsDetailPage />} />
           <Route path="benefits" element={<BenefitsEligiblePage />} />
           <Route path="digital-card" element={<DigitalCardPage />} />
+          <Route path="games" element={<GamesPage />} />
+          <Route path="tickets" element={<MyTicketsPage />} />
           <Route element={<PermissionRoute />}>
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminIndexRedirect />} />

@@ -14,7 +14,7 @@ Monólito modular para **sócio torcedor** de um único clube (single tenant). A
 
 ```text
 backend/          → Solução .NET (API, Identity, Infrastructure, testes)
-frontend/         → React + Vite (login, **cadastro e Minha conta (C.1)**, **notícias e benefícios (C.2)** no `/news` e `/benefits`, **carteirinha (C.3)** em `/digital-card`, login Google opcional, convite staff, **usuários admin**, dashboard admin, **pagamentos admin (B.6)**, **notícias admin (B.9)**, **fidelidade/benefícios admin (B.10)**, **chamados/suporte admin (B.11)**, gestão de matriz de permissões, refresh de token)
+frontend/         → React + Vite (login, **cadastro e Minha conta (C.1)**, **notícias e benefícios (C.2)** no `/news` e `/benefits`, **carteirinha (C.3)** em `/digital-card`, **jogos e ingressos (C.4)** em `/games` e `/tickets`, login Google opcional, convite staff, **usuários admin**, dashboard admin, **pagamentos admin (B.6)**, **notícias admin (B.9)**, **fidelidade/benefícios admin (B.10)**, **chamados/suporte admin (B.11)**, gestão de matriz de permissões, refresh de token)
 docs/             → Documentação técnica por fase
 docker-compose.yml → SQL Server opcional
 AGENTS.md         → Visão de produto, regras e arquitetura alvo
@@ -52,7 +52,7 @@ npm run dev
 
 1. Com a API e o frontend rodando, abra a URL do Vite.
 2. Faça login com o e-mail e senha do seed (veja a seção **Credenciais iniciais** abaixo).
-3. Após autenticar, você acessa a área logada (**/**, **/account**, **/news**, **/benefits**, **/digital-card**); usuários com permissões administrativas podem abrir **/admin** e sub-rotas (ver [docs/frontend/backoffice.md](docs/frontend/backoffice.md)).
+3. Após autenticar, você acessa a área logada (**/**, **/account**, **/news**, **/benefits**, **/digital-card**, **/games**, **/tickets**); usuários com permissões administrativas podem abrir **/admin** e sub-rotas (ver [docs/frontend/backoffice.md](docs/frontend/backoffice.md)).
 
 ## SQL Server com Docker (opcional)
 
