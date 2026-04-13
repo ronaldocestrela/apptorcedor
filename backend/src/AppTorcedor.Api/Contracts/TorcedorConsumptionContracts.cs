@@ -30,6 +30,19 @@ public sealed record TorcedorEligibleBenefitOffersPageResponse(
     int TotalCount,
     IReadOnlyList<TorcedorEligibleBenefitOfferResponse> Items);
 
+public sealed record TorcedorPublishedPlanBenefitResponse(Guid BenefitId, string Title, string? Description);
+
+public sealed record TorcedorPublishedPlanItemResponse(
+    Guid PlanId,
+    string Name,
+    decimal Price,
+    string BillingCycle,
+    decimal DiscountPercentage,
+    string? Summary,
+    IReadOnlyList<TorcedorPublishedPlanBenefitResponse> Benefits);
+
+public sealed record TorcedorPublishedPlansCatalogResponse(IReadOnlyList<TorcedorPublishedPlanItemResponse> Items);
+
 public sealed record TorcedorGameListItemResponse(
     Guid GameId,
     string Opponent,

@@ -35,6 +35,7 @@ import { LoyaltyPage } from '../pages/LoyaltyPage'
 import { MyTicketsPage } from '../pages/MyTicketsPage'
 import { NewsDetailPage } from '../pages/NewsDetailPage'
 import { NewsFeedPage } from '../pages/NewsFeedPage'
+import { PlansPage } from '../pages/PlansPage'
 import { LoginPage } from '../pages/LoginPage'
 import { RegisterPage } from '../pages/RegisterPage'
 import { SupportTicketDetailPage } from '../pages/SupportTicketDetailPage'
@@ -53,6 +54,7 @@ export function App() {
           <Route path="news" element={<NewsFeedPage />} />
           <Route path="news/:newsId" element={<NewsDetailPage />} />
           <Route path="benefits" element={<BenefitsEligiblePage />} />
+          <Route path="plans" element={<PlansPage />} />
           <Route path="digital-card" element={<DigitalCardPage />} />
           <Route path="games" element={<GamesPage />} />
           <Route path="tickets" element={<MyTicketsPage />} />

@@ -62,4 +62,4 @@ Corpo de escrita (`UpsertPlanRequest`): `name`, `price`, `billingCycle`, `discou
 ## Relação com B.4 e Parte D
 
 - B.4 permanece com **plano e datas somente leitura** na visão de membership; alteração de oferta é feita neste módulo.
-- Parte D (`ListPlans`) deve filtrar planos **ativos e publicados** (implementação futura).
+- Parte D.1 (catálogo torcedor): `GET /api/plans` com `ListPublishedPlansQuery` — filtra planos **ativos e publicados**; ver [parte-d1-catalogo-planos-torcedor.md](parte-d1-catalogo-planos-torcedor.md).

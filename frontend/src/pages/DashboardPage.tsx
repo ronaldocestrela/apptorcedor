@@ -31,6 +31,8 @@ export function DashboardPage() {
         {' · '}
         <Link to="/benefits">Benefícios</Link>
         {' · '}
+        <Link to="/plans">Planos</Link>
+        {' · '}
         <Link to="/digital-card">Carteirinha</Link>
         {' · '}
         <Link to="/games">Jogos</Link>

@@ -174,13 +174,13 @@ Ordem de execução sugerida: `D.1 → D.2 → D.3 → D.4 → D.5 → D.6 → D
 ### D.1 — Catálogo de planos (torcedor)
 
 **Backend**
-- [ ] `D.1.1` Query `ListPublishedPlansQuery` + handler (`Application`) — filtra `IsPublished = true` e `IsActive = true`, retorna nome, preço, ciclo, desconto e lista de benefícios
-- [ ] `D.1.2` Endpoint `GET /api/plans` (público ou JWT opcional) — sem exigir sócio
-- [ ] `D.1.3` Testes unitários do handler e testes de API do endpoint
+- [x] `D.1.1` Query `ListPublishedPlansQuery` + handler (`Application`) — filtra `IsPublished = true` e `IsActive = true`, retorna nome, preço, ciclo, desconto e lista de benefícios
+- [x] `D.1.2` Endpoint `GET /api/plans` (**JWT obrigatório**, alinhado à SPA autenticada) — sem exigir sócio
+- [x] `D.1.3` Testes unitários do handler e testes de API do endpoint
 
 **Frontend**
-- [ ] `D.1.4` Página `/plans` com cards de planos (nome, preço, benefícios resumidos, CTA "Assinar")
-- [ ] `D.1.5` Serviço Axios `plansService.listPublished()`
+- [x] `D.1.4` Página `/plans` com cards de planos (nome, preço, benefícios resumidos, CTA "Assinar")
+- [x] `D.1.5` Serviço Axios `plansService.listPublished()`
 
 ---
 

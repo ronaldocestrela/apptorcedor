@@ -2,6 +2,7 @@ using AppTorcedor.Application.Abstractions;
 using AppTorcedor.Application.Modules.Torcedor.Queries.GetNewsFeed;
 using AppTorcedor.Application.Modules.Torcedor.Queries.GetPublishedNewsDetail;
 using AppTorcedor.Application.Modules.Torcedor.Queries.ListEligibleBenefitOffers;
+using AppTorcedor.Application.Modules.Torcedor.Queries.ListPublishedPlans;
 
 namespace AppTorcedor.Application.Tests;
 
@@ -42,6 +43,16 @@ public sealed class TorcedorConsumptionHandlersTests
         Assert.Equal(uid, fake.ListEligibleCalls[0].UserId);
     }
 
+    [Fact]
+    public async Task ListPublishedPlans_delegates_to_port()
+    {
+        var fake = new FakeTorcedorPublishedPlansPort();
+        var handler = new ListPublishedPlansQueryHandler(fake);
+        var catalog = await handler.Handle(new ListPublishedPlansQuery(), CancellationToken.None);
+        Assert.NotNull(catalog);
+        Assert.Single(fake.ListCalls);
+    }
+
     private sealed class FakeTorcedorNewsPort : ITorcedorNewsReadPort
     {
         public List<(string? Search, int Page, int PageSize)> ListCalls { get; } = [];
@@ -76,6 +87,17 @@ public sealed class TorcedorConsumptionHandlersTests
         {
             ListEligibleCalls.Add((userId, page, pageSize));
             return Task.FromResult(new TorcedorEligibleBenefitOffersPageDto(0, []));
+        }
+    }
+
+    private sealed class FakeTorcedorPublishedPlansPort : ITorcedorPublishedPlansReadPort
+    {
+        public List<int> ListCalls { get; } = [];
+
+        public Task<TorcedorPublishedPlansCatalogDto> ListPublishedActiveAsync(CancellationToken cancellationToken = default)
+        {
+            ListCalls.Add(1);
+            return Task.FromResult(new TorcedorPublishedPlansCatalogDto([]));
         }
     }
 }
