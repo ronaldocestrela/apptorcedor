@@ -86,6 +86,8 @@ public static class DependencyInjection
         services.AddScoped<ITicketAdministrationPort, TicketAdministrationService>();
         services.AddScoped<IDigitalCardAdministrationPort, DigitalCardAdministrationService>();
         services.AddScoped<INewsAdministrationPort, NewsAdministrationService>();
+        services.AddScoped<ITorcedorNewsReadPort, TorcedorNewsReadService>();
+        services.AddScoped<ITorcedorBenefitsReadPort, TorcedorBenefitsReadService>();
         services.AddScoped<ISupportAdministrationPort, SupportAdministrationService>();
         services.AddScoped<LoyaltyAdministrationService>();
         services.AddScoped<ILoyaltyAdministrationPort>(sp => sp.GetRequiredService<LoyaltyAdministrationService>());

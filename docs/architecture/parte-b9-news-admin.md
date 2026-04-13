@@ -65,5 +65,5 @@ Mutações em `NewsArticleRecord` e `InAppNotificationRecord` geram entradas em 
 
 ## Relação com outras partes
 
-- **C.2:** consumo do feed e detalhe pelo torcedor.
+- **C.2:** consumo do feed e detalhe pelo torcedor (ver [parte-c2-noticias-beneficios-torcedor.md](parte-c2-noticias-beneficios-torcedor.md)).
 - **Conta vs associação:** notícia e notificação não acoplam regras de sócio; segmentação futura é evolução opcional.

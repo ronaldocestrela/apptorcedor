@@ -258,18 +258,15 @@ public sealed class BenefitsAdministrationService(AppDbContext db) : IBenefitsAd
         var planRows = await db.BenefitOfferPlanEligibilities.Where(x => x.OfferId == offerId).ToListAsync(cancellationToken).ConfigureAwait(false);
         var statusRows = await db.BenefitOfferMembershipStatusEligibilities.Where(x => x.OfferId == offerId).ToListAsync(cancellationToken).ConfigureAwait(false);
         var membership = await db.Memberships.FirstOrDefaultAsync(m => m.UserId == userId, cancellationToken).ConfigureAwait(false);
+        var snapshot = membership is null
+            ? null
+            : new MembershipRecordSnapshot(membership.PlanId, membership.Status);
 
-        if (planRows.Count > 0)
-        {
-            if (membership?.PlanId is not { } pid || planRows.All(p => p.PlanId != pid))
-                return BenefitRedeemResult.Fail(BenefitMutationError.Validation);
-        }
-
-        if (statusRows.Count > 0)
-        {
-            if (membership is null || statusRows.All(s => s.Status != membership.Status))
-                return BenefitRedeemResult.Fail(BenefitMutationError.Validation);
-        }
+        if (!BenefitOfferEligibility.MatchesPlanAndStatus(
+                planRows.Select(p => p.PlanId).ToList(),
+                statusRows.Select(s => s.Status).ToList(),
+                snapshot))
+            return BenefitRedeemResult.Fail(BenefitMutationError.Validation);
 
         var redemptionId = Guid.NewGuid();
         db.BenefitRedemptions.Add(

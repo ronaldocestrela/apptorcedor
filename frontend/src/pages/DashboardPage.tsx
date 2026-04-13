@@ -27,6 +27,11 @@ export function DashboardPage() {
         ) : null}
       </p>
       <p>
+        <Link to="/news">Notícias</Link>
+        {' · '}
+        <Link to="/benefits">Benefícios</Link>
+      </p>
+      <p>
         <button type="button" onClick={() => void logout()}>
           Sair
         </button>

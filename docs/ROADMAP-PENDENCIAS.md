@@ -132,8 +132,10 @@ Funcionalidades voltadas ao **usuário final**, mantendo a regra: administrador 
 
 ### C.2 Notícias e benefícios (consumo)
 
-- [ ] **Feed de notícias** e detalhe (`GetNewsFeed`).
-- [ ] **Listagem de benefícios** elegíveis ao usuário/plano.
+- [x] **Feed de notícias** e detalhe (`GetNewsFeed`).
+- [x] **Listagem de benefícios** elegíveis ao usuário/plano.
+
+Detalhes: [docs/architecture/parte-c2-noticias-beneficios-torcedor.md](architecture/parte-c2-noticias-beneficios-torcedor.md).
 
 ### C.3 Carteirinha digital (torcedor)
 

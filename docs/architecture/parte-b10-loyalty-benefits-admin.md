@@ -90,5 +90,5 @@ Mutações nas novas entidades geram entradas em `AuditLogs` via interceptor exi
 
 ## Relação com outras partes
 
-- **C.2 / C.5:** consumo de benefícios e fidelidade pelo torcedor.
+- **C.2 / C.5:** consumo de benefícios e fidelidade pelo torcedor (benefícios elegíveis: [parte-c2-noticias-beneficios-torcedor.md](parte-c2-noticias-beneficios-torcedor.md)).
 - **Conta vs associação:** pontos são da **conta** (`UserId`); regras de benefício usam **Membership** apenas para elegibilidade, sem acoplar permissões administrativas.

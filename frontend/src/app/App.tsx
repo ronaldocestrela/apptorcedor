@@ -27,7 +27,10 @@ import { PermissionRoute } from '../features/auth/PermissionRoute'
 import { ProtectedRoute } from '../features/auth/ProtectedRoute'
 import { AcceptStaffInvitePage } from '../pages/AcceptStaffInvitePage'
 import { AccountPage } from '../pages/AccountPage'
+import { BenefitsEligiblePage } from '../pages/BenefitsEligiblePage'
 import { DashboardPage } from '../pages/DashboardPage'
+import { NewsDetailPage } from '../pages/NewsDetailPage'
+import { NewsFeedPage } from '../pages/NewsFeedPage'
 import { LoginPage } from '../pages/LoginPage'
 import { RegisterPage } from '../pages/RegisterPage'
 
@@ -41,6 +44,9 @@ export function App() {
         <Route element={<ProtectedRoute />}>
           <Route index element={<DashboardPage />} />
           <Route path="account" element={<AccountPage />} />
+          <Route path="news" element={<NewsFeedPage />} />
+          <Route path="news/:newsId" element={<NewsDetailPage />} />
+          <Route path="benefits" element={<BenefitsEligiblePage />} />
           <Route element={<PermissionRoute />}>
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminIndexRedirect />} />
