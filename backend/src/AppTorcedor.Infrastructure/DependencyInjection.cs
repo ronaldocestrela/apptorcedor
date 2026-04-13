@@ -95,6 +95,7 @@ public static class DependencyInjection
         services.AddScoped<LoyaltyAdministrationService>();
         services.AddScoped<ILoyaltyAdministrationPort>(sp => sp.GetRequiredService<LoyaltyAdministrationService>());
         services.AddScoped<ILoyaltyPointsTriggerPort>(sp => sp.GetRequiredService<LoyaltyAdministrationService>());
+        services.AddScoped<ILoyaltyTorcedorReadPort, LoyaltyTorcedorReadService>();
         services.AddScoped<IBenefitsAdministrationPort, BenefitsAdministrationService>();
         services.AddScoped<IInAppNotificationDispatchService, InAppNotificationDispatchService>();
         services.AddScoped<IPaymentDelinquencySweep, PaymentDelinquencySweep>();

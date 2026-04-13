@@ -36,6 +36,8 @@ export function DashboardPage() {
         <Link to="/games">Jogos</Link>
         {' · '}
         <Link to="/tickets">Ingressos</Link>
+        {' · '}
+        <Link to="/loyalty">Fidelidade</Link>
       </p>
       <p>
         <button type="button" onClick={() => void logout()}>

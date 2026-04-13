@@ -65,3 +65,19 @@ public sealed record TorcedorTicketDetailResponse(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     DateTimeOffset? RedeemedAt);
+
+public sealed record TorcedorLoyaltySummaryResponse(
+    int TotalPoints,
+    int MonthlyPoints,
+    int? MonthlyRank,
+    int? AllTimeRank,
+    DateTimeOffset AsOfUtc);
+
+public sealed record TorcedorLoyaltyRankingRowResponse(int Rank, Guid UserId, string UserName, int TotalPoints);
+
+public sealed record TorcedorLoyaltyMyStandingResponse(int Rank, Guid UserId, string UserName, int TotalPoints);
+
+public sealed record TorcedorLoyaltyRankingPageResponse(
+    int TotalCount,
+    IReadOnlyList<TorcedorLoyaltyRankingRowResponse> Items,
+    TorcedorLoyaltyMyStandingResponse? Me);

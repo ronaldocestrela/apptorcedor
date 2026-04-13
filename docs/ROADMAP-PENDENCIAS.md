@@ -153,7 +153,7 @@ Detalhes: [docs/architecture/parte-c4-jogos-ingressos-torcedor.md](architecture/
 
 ### C.5 Fidelidade (torcedor)
 
-- [ ] **Saldo de pontos** e posição no ranking (conforme regras).
+- [x] **Saldo de pontos** e posição no ranking (conforme regras).
 
 ### C.6 Suporte (torcedor)
 

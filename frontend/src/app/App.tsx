@@ -31,6 +31,7 @@ import { BenefitsEligiblePage } from '../pages/BenefitsEligiblePage'
 import { DigitalCardPage } from '../pages/DigitalCardPage'
 import { GamesPage } from '../pages/GamesPage'
 import { DashboardPage } from '../pages/DashboardPage'
+import { LoyaltyPage } from '../pages/LoyaltyPage'
 import { MyTicketsPage } from '../pages/MyTicketsPage'
 import { NewsDetailPage } from '../pages/NewsDetailPage'
 import { NewsFeedPage } from '../pages/NewsFeedPage'
@@ -53,6 +54,7 @@ export function App() {
           <Route path="digital-card" element={<DigitalCardPage />} />
           <Route path="games" element={<GamesPage />} />
           <Route path="tickets" element={<MyTicketsPage />} />
+          <Route path="loyalty" element={<LoyaltyPage />} />
           <Route element={<PermissionRoute />}>
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminIndexRedirect />} />
