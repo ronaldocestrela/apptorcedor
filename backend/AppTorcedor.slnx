@@ -1,11 +1,14 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/AppTorcedor.Api/AppTorcedor.Api.csproj" />
+    <Project Path="src/AppTorcedor.Application/AppTorcedor.Application.csproj" />
     <Project Path="src/AppTorcedor.Identity/AppTorcedor.Identity.csproj" />
     <Project Path="src/AppTorcedor.Infrastructure/AppTorcedor.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/AppTorcedor.Api.Tests/AppTorcedor.Api.Tests.csproj" />
+    <Project Path="tests/AppTorcedor.Application.Tests/AppTorcedor.Application.Tests.csproj" />
+    <Project Path="tests/AppTorcedor.Infrastructure.Tests/AppTorcedor.Infrastructure.Tests.csproj" />
     <Project Path="tests/AppTorcedor.Identity.Tests/AppTorcedor.Identity.Tests.csproj" />
   </Folder>
 </Solution>

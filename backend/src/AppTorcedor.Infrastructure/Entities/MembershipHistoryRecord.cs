@@ -22,4 +22,7 @@ public sealed class MembershipHistoryRecord
 public static class MembershipHistoryEventTypes
 {
     public const string StatusChanged = "StatusChanged";
+
+    /// <summary>Início de contratação pelo torcedor (Parte D.3).</summary>
+    public const string Subscribed = "Subscribed";
 }

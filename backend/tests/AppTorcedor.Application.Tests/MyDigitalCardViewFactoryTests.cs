@@ -29,6 +29,7 @@ public sealed class MyDigitalCardViewFactoryTests
     [InlineData(MembershipStatus.Inadimplente)]
     [InlineData(MembershipStatus.Suspenso)]
     [InlineData(MembershipStatus.Cancelado)]
+    [InlineData(MembershipStatus.PendingPayment)]
     public void InactiveMembership_sets_inactive_state(MembershipStatus status)
     {
         var mid = Guid.NewGuid();

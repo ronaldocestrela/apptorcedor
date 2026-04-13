@@ -11,6 +11,7 @@ using AppTorcedor.Infrastructure.Services.Payments;
 using AppTorcedor.Infrastructure.Services.Tickets;
 using AppTorcedor.Infrastructure.Services.Loyalty;
 using AppTorcedor.Infrastructure.Services.Benefits;
+using AppTorcedor.Infrastructure.Services.Membership;
 using AppTorcedor.Infrastructure.Services.News;
 using AppTorcedor.Infrastructure.Services.Plans;
 using AppTorcedor.Infrastructure.Services.Support;
@@ -95,6 +96,7 @@ public static class DependencyInjection
         services.AddScoped<INewsAdministrationPort, NewsAdministrationService>();
         services.AddScoped<ITorcedorNewsReadPort, TorcedorNewsReadService>();
         services.AddScoped<ITorcedorPublishedPlansReadPort, TorcedorPublishedPlansReadService>();
+        services.AddScoped<ITorcedorMembershipSubscriptionPort, TorcedorMembershipSubscriptionService>();
         services.AddScoped<ITorcedorBenefitsReadPort, TorcedorBenefitsReadService>();
         services.AddScoped<ISupportAdministrationPort, SupportAdministrationService>();
         services.AddScoped<ISupportTorcedorPort, SupportTorcedorService>();

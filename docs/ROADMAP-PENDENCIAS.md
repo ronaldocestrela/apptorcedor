@@ -199,10 +199,10 @@ Ordem de execução sugerida: `D.1 → D.2 → D.3 → D.4 → D.5 → D.6 → D
 ### D.3 — Command `SubscribeMember` (contratação backend)
 
 **Backend**
-- [ ] `D.3.1` Command `SubscribeMemberCommand` + handler (`Application`) — cria `Membership` com status inicial (`PendingPayment` ou `Active` conforme regra de negócio)
-- [ ] `D.3.2` Regra: impedir dupla assinatura ativa; validar plano publicado e ativo
-- [ ] `D.3.3` Publicar evento de domínio `MemberSubscribedEvent` (para desencadear pontos de fidelidade, carteirinha, etc.)
-- [ ] `D.3.4` Testes unitários do command/handler (incluindo casos de erro: plano inativo, já associado ativo)
+- [x] `D.3.1` Command `SubscribeMemberCommand` + handler (`Application`) — cria/atualiza `Membership` com status inicial **`PendingPayment`**
+- [x] `D.3.2` Regra: impedir dupla assinatura ativa; validar plano publicado e ativo
+- [x] `D.3.3` Publicar evento de domínio `MemberSubscribedEvent` (para desencadear pontos de fidelidade, carteirinha, etc.)
+- [x] `D.3.4` Testes unitários do command/handler (incluindo casos de erro: plano inativo, já associado ativo)
 
 ---
 

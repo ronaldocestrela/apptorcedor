@@ -36,6 +36,7 @@ export type MembershipStatus =
   | 'Inadimplente'
   | 'Suspenso'
   | 'Cancelado'
+  | 'PendingPayment'
 
 export type AdminDashboardResult = {
   activeMembersCount: number

@@ -131,9 +131,9 @@ Fora dos ambientes Development/Testing, a senha do seed **de** estar em configur
 ## Testes automatizados
 
 ```bash
-# Backend (xUnit)
+# Backend (xUnit) — inclui Application, Infrastructure, API e Identity
 cd backend
-dotnet test
+dotnet test AppTorcedor.slnx
 
 # Frontend (Vitest)
 cd frontend

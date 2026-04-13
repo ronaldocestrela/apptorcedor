@@ -44,6 +44,8 @@ public static class MyDigitalCardViewFactory
                     "Sua associação está inadimplente. Regularize para voltar a acessar a carteirinha digital.",
                 MembershipStatus.Suspenso => "Sua associação está suspensa. Entre em contato com o clube.",
                 MembershipStatus.Cancelado => "Sua associação foi cancelada.",
+                MembershipStatus.PendingPayment =>
+                    "Sua contratação está aguardando confirmação de pagamento. Após a confirmação, sua carteirinha poderá ser emitida.",
                 _ => "Não é possível exibir a carteirinha digital no momento.",
             },
             membershipId,
