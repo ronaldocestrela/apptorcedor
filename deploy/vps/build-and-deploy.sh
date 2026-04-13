@@ -11,6 +11,24 @@
 # Pré-requisitos na VPS: git clone em repo_dir, .NET SDK 10, Node.js 22+, npm, curl, sudo para systemctl.
 set -euo pipefail
 
+# PATH em contextos não interativos (sudo, Jenkins): não carregam ~/.bashrc nem NVM.
+export PATH="/usr/local/bin:/usr/bin:${PATH:-}"
+if [[ -n "${NODEJS_HOME:-}" ]]; then
+  export PATH="${NODEJS_HOME}/bin:${PATH}"
+fi
+if [[ -n "${NVM_DIR:-}" && -f "${NVM_DIR}/nvm.sh" ]]; then
+  # shellcheck disable=SC1091
+  source "${NVM_DIR}/nvm.sh"
+fi
+if ! command -v npm >/dev/null 2>&1; then
+  echo "npm não encontrado no PATH (PATH=${PATH}). Defina NODEJS_HOME, NVM_DIR ou instale Node em /usr/local/bin." >&2
+  exit 127
+fi
+if ! command -v dotnet >/dev/null 2>&1; then
+  echo "dotnet não encontrado no PATH." >&2
+  exit 127
+fi
+
 BRANCH="${1:-}"
 VITE_URL_FILE="${2:-}"
 DEPLOY_ROOT="${3:-/opt/apptorcedor}"

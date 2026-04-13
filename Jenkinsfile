@@ -16,7 +16,7 @@
 // - vps-host                  (Secret text) hostname ou IP (sem https://)
 //
 // Variáveis de job (opcional, não secret): DEPLOY_ROOT, APP_SERVICE_NAME, APP_HEALTHCHECK_URL, VPS_PORT,
-// DEPLOY_BRANCH, VPS_REPO_DIR, JENKINS_LOCAL_DEPLOY (default: true — deploy na mesma máquina sem SSH)
+// DEPLOY_BRANCH, VPS_REPO_DIR, JENKINS_LOCAL_DEPLOY (default: true), NODEJS_HOME (prefixo Node se NVM/PATH do sudo não achar npm)
 
 pipeline {
   agent any
@@ -37,6 +37,8 @@ pipeline {
     VPS_REPO_DIR = "${env.VPS_REPO_DIR ?: '/opt/apptorcedor/repo'}"
     // true = sem scp/ssh; usa WORKSPACE como repositório git no deploy local (Jenkins na mesma VPS).
     JENKINS_LOCAL_DEPLOY = "${env.JENKINS_LOCAL_DEPLOY ?: 'true'}"
+    // Opcional: ex. saída de `dirname $(nvm which node)` ou /usr (Node de sistema). Repasse ao sudo para npm/dotnet.
+    NODEJS_HOME = "${env.NODEJS_HOME ?: ''}"
   }
 
   stages {
@@ -110,9 +112,26 @@ pipeline {
                 cp "${WORKSPACE}/deploy/vps/build-and-deploy.sh" "${REMOTE_SH}"
                 chmod +x "${REMOTE_SH}"
                 rm -f "${API_ENV_LOCAL}" "${VITE_LOCAL}"
+                if [ -n "${NODEJS_HOME:-}" ]; then
+                  export PATH="${NODEJS_HOME}/bin:${PATH}"
+                fi
+                if [ -f "${HOME}/.nvm/nvm.sh" ]; then
+                  export NVM_DIR="${HOME}/.nvm"
+                  # shellcheck disable=SC1090
+                  . "${NVM_DIR}/nvm.sh"
+                fi
+                DEPLOY_PATH="${PATH}"
+                if command -v npm >/dev/null 2>&1; then
+                  DEPLOY_PATH="$(dirname "$(command -v npm)"):${DEPLOY_PATH}"
+                fi
+                if command -v dotnet >/dev/null 2>&1; then
+                  DEPLOY_PATH="$(dirname "$(command -v dotnet)"):${DEPLOY_PATH}"
+                fi
+                DEPLOY_PATH="/usr/local/bin:/usr/bin:${DEPLOY_PATH}"
                 sudo mkdir -p /etc/apptorcedor
                 sudo install -m 600 -o root -g root "${REMOTE_ENV}" /etc/apptorcedor/api.env
-                sudo bash "${REMOTE_SH}" "${DEPLOY_BRANCH}" "${REMOTE_VITE}" "${DEPLOY_ROOT}" "${APP_SERVICE_NAME}" "${APP_HEALTHCHECK_URL}" "${RELEASE_ID}" "${WORKSPACE}"
+                sudo env PATH="${DEPLOY_PATH}" HOME="${HOME}" NVM_DIR="${NVM_DIR:-}" NODEJS_HOME="${NODEJS_HOME:-}" \
+                  bash "${REMOTE_SH}" "${DEPLOY_BRANCH}" "${REMOTE_VITE}" "${DEPLOY_ROOT}" "${APP_SERVICE_NAME}" "${APP_HEALTHCHECK_URL}" "${RELEASE_ID}" "${WORKSPACE}"
               '''
             }
           } else {
@@ -154,7 +173,7 @@ pipeline {
                 rm -f "${API_ENV_LOCAL}" "${VITE_LOCAL}"
                 ssh -i "${SSH_KEY}" -p "${VPS_PORT}" -o StrictHostKeyChecking=accept-new \
                   "${SSH_USER}@${VPS_HOST}" \
-                  "set -eu; sudo mkdir -p /etc/apptorcedor; sudo install -m 600 -o root -g root \"${REMOTE_ENV}\" /etc/apptorcedor/api.env; sudo bash \"${REMOTE_SH}\" \"${DEPLOY_BRANCH}\" \"${REMOTE_VITE}\" \"${DEPLOY_ROOT}\" \"${APP_SERVICE_NAME}\" \"${APP_HEALTHCHECK_URL}\" \"${RELEASE_ID}\" \"${VPS_REPO_DIR}\""
+                  "export NODEJS_HOME='${NODEJS_HOME:-}'; set -eu; [ -n \"\${NODEJS_HOME}\" ] && export PATH=\"\${NODEJS_HOME}/bin:\${PATH}\"; [ -f \"\${HOME}/.nvm/nvm.sh\" ] && export NVM_DIR=\"\${HOME}/.nvm\" && . \"\${HOME}/.nvm/nvm.sh\"; DPATH=\"/usr/local/bin:/usr/bin:\${PATH}\"; command -v npm >/dev/null 2>&1 && DPATH=\"\$(dirname \"\$(command -v npm)\"):\${DPATH}\"; command -v dotnet >/dev/null 2>&1 && DPATH=\"\$(dirname \"\$(command -v dotnet)\"):\${DPATH}\"; sudo mkdir -p /etc/apptorcedor; sudo install -m 600 -o root -g root \"${REMOTE_ENV}\" /etc/apptorcedor/api.env; sudo env PATH=\"\${DPATH}\" HOME=\"\${HOME}\" NVM_DIR=\"\${NVM_DIR:-}\" NODEJS_HOME=\"\${NODEJS_HOME}\" bash \"${REMOTE_SH}\" \"${DEPLOY_BRANCH}\" \"${REMOTE_VITE}\" \"${DEPLOY_ROOT}\" \"${APP_SERVICE_NAME}\" \"${APP_HEALTHCHECK_URL}\" \"${RELEASE_ID}\" \"${VPS_REPO_DIR}\""
               '''
             }
           }

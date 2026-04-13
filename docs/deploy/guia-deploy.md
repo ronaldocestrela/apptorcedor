@@ -154,6 +154,7 @@ Configuráveis como variáveis de ambiente do job ou do folder:
 | `DEPLOY_BRANCH` | `single-tenant` | Só executa deploy se a branch do job for esta |
 | `DEPLOY_ROOT` | `/opt/apptorcedor` | Raiz: `releases/<id>` e symlink `current` |
 | `JENKINS_LOCAL_DEPLOY` | `true` | `true` = deploy na mesma máquina (usa `WORKSPACE` como repo git); `false` = `scp`/`ssh` e `VPS_REPO_DIR` |
+| `NODEJS_HOME` | *(vazio)* | Se Node foi instalado com NVM ou fora do PATH do `root`/`sudo`, defina o prefixo (ex.: `/home/jenkins/.nvm/versions/node/v22.14.0`). O pipeline repassa o PATH ao `sudo bash` que corre o `build-and-deploy.sh`. |
 | `VPS_REPO_DIR` | `/opt/apptorcedor/repo` | Usado só com **`JENKINS_LOCAL_DEPLOY=false`**: clone git na VPS remota |
 | `APP_SERVICE_NAME` | `apptorcedor-api` | Unidade systemd |
 | `APP_HEALTHCHECK_URL` | `http://127.0.0.1:5031/health/live` | Liveness após restart |
