@@ -9,6 +9,7 @@ public sealed class AppWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("UseInMemoryDatabase", "true");
+        builder.UseSetting("Testing:InMemoryDatabaseName", Guid.NewGuid().ToString("N"));
         builder.UseSetting("Jwt:Issuer", "test-issuer");
         builder.UseSetting("Jwt:Audience", "test-audience");
         builder.UseSetting("Jwt:Key", "unit-test-signing-key-min-32-bytes!!");
@@ -16,5 +17,6 @@ public sealed class AppWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:RefreshTokenDays", "14");
         builder.UseSetting("Seed:AdminMaster:Email", "admin@test.local");
         builder.UseSetting("Seed:AdminMaster:Password", "TestPassword123!");
+        builder.UseSetting("Testing:SeedSampleUsers", "true");
     }
 }

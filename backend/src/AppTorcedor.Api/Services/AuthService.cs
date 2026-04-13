@@ -11,6 +11,7 @@ namespace AppTorcedor.Api.Services;
 public sealed class AuthService(
     UserManager<ApplicationUser> userManager,
     IRefreshTokenStore refreshTokens,
+    IPermissionResolver permissionResolver,
     IJwtTokenIssuer jwt,
     IOptions<JwtOptions> jwtOptions) : IAuthService
 {
@@ -23,7 +24,8 @@ public sealed class AuthService(
             return null;
 
         var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
-        var (access, expiresIn) = jwt.IssueAccessToken(user, roles);
+        var permissions = await permissionResolver.GetPermissionsForRolesAsync(roles, cancellationToken).ConfigureAwait(false);
+        var (access, expiresIn) = jwt.IssueAccessToken(user, roles, permissions);
         var refreshLifetime = TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays);
         var refresh = await refreshTokens.CreateAsync(user.Id, refreshLifetime, cancellationToken).ConfigureAwait(false);
         return new AuthResponse(access, refresh, expiresIn, roles.ToList());
@@ -41,7 +43,8 @@ public sealed class AuthService(
             return null;
 
         var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
-        var (access, expiresIn) = jwt.IssueAccessToken(user, roles);
+        var permissions = await permissionResolver.GetPermissionsForRolesAsync(roles, cancellationToken).ConfigureAwait(false);
+        var (access, expiresIn) = jwt.IssueAccessToken(user, roles, permissions);
         return new AuthResponse(access, rotated.Value.NewPlainRefreshToken, expiresIn, roles.ToList());
     }
 

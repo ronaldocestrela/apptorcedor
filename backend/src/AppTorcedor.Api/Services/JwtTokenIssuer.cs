@@ -10,7 +10,10 @@ namespace AppTorcedor.Api.Services;
 
 public sealed class JwtTokenIssuer(IOptions<JwtOptions> options) : IJwtTokenIssuer
 {
-    public (string AccessToken, int ExpiresInSeconds) IssueAccessToken(ApplicationUser user, IList<string> roles)
+    public (string AccessToken, int ExpiresInSeconds) IssueAccessToken(
+        ApplicationUser user,
+        IList<string> roles,
+        IReadOnlyList<string> permissions)
     {
         var jwt = options.Value;
         if (string.IsNullOrWhiteSpace(jwt.Key) || Encoding.UTF8.GetByteCount(jwt.Key) < 32)
@@ -28,6 +31,8 @@ public sealed class JwtTokenIssuer(IOptions<JwtOptions> options) : IJwtTokenIssu
         };
         foreach (var r in roles)
             claims.Add(new Claim(ClaimTypes.Role, r));
+        foreach (var p in permissions)
+            claims.Add(new Claim(AppClaimTypes.Permission, p));
 
         var token = new JwtSecurityToken(
             issuer: jwt.Issuer,

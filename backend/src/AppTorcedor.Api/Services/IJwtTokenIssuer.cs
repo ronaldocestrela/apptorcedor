@@ -4,5 +4,5 @@ namespace AppTorcedor.Api.Services;
 
 public interface IJwtTokenIssuer
 {
-    (string AccessToken, int ExpiresInSeconds) IssueAccessToken(ApplicationUser user, IList<string> roles);
+    (string AccessToken, int ExpiresInSeconds) IssueAccessToken(ApplicationUser user, IList<string> roles, IReadOnlyList<string> permissions);
 }

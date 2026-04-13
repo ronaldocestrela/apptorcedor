@@ -534,6 +534,6 @@ Este sistema deve ser:
 
 ## Estado do repositório (bootstrap)
 
-* **Backend:** solução em `backend/` — `AppTorcedor.Api` + `AppTorcedor.Identity` + `AppTorcedor.Infrastructure`; Identity com JWT (access + refresh), seed de **Administrador Master** e roles base; testes xUnit (API + domínio).
-* **Frontend:** `frontend/` — React + Vite, login, armazenamento de tokens, interceptor Axios com refresh, rotas protegidas e página restrita a **Administrador Master**.
-* **Infra local:** `docker-compose.yml` (SQL Server opcional); documentação da fase em `docs/architecture/auth-bootstrap.md` e visão geral em `README.md`.
+* **Backend:** solução em `backend/` — `AppTorcedor.Api` + `AppTorcedor.Application` (CQRS/MediatR) + `AppTorcedor.Identity` + `AppTorcedor.Infrastructure`; Identity com JWT (access + refresh) e claims de **permissões granulares**; seed de **Administrador Master**, roles base e catálogo de permissões (todas atribuídas ao Master); auditoria (`AuditLogs`), configurações (`AppConfigurationEntries`), entidades iniciais de sócio/plano/pagamento; health checks e correlação HTTP; testes xUnit (API, Application, Identity).
+* **Frontend:** `frontend/` — React + Vite, login, armazenamento de tokens, interceptor Axios com refresh, rotas protegidas e página restrita a **Administrador Master** (evoluir para checagem por permissão quando o backoffice consumir as novas políticas).
+* **Infra local:** `docker-compose.yml` (SQL Server opcional); documentação em `docs/architecture/auth-bootstrap.md`, `docs/architecture/parte-a-fundacao.md` e `README.md`.

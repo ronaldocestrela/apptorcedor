@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\AppTorcedor.Application\AppTorcedor.Application.csproj" />
     <ProjectReference Include="..\AppTorcedor.Identity\AppTorcedor.Identity.csproj" />
   </ItemGroup>
 

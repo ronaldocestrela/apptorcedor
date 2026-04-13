@@ -1,6 +1,9 @@
+using AppTorcedor.Application.Abstractions;
 using AppTorcedor.Identity;
+using AppTorcedor.Infrastructure.Auditing;
 using AppTorcedor.Infrastructure.Persistence;
 using AppTorcedor.Infrastructure.Services;
+using AppTorcedor.Infrastructure.Services.Governance;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -12,20 +15,28 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options =>
-        {
-            var useInMemory = configuration.GetValue<bool>("UseInMemoryDatabase");
-            if (useInMemory)
+        services.AddScoped<CurrentAuditContext>();
+        services.AddScoped<ICurrentAuditContext>(sp => sp.GetRequiredService<CurrentAuditContext>());
+        services.AddScoped<AuditSaveChangesInterceptor>();
+
+        services.AddDbContext<AppDbContext>(
+            (sp, options) =>
             {
-                options.UseInMemoryDatabase("AppTorcedor");
-            }
-            else
-            {
-                var cs = configuration.GetConnectionString("DefaultConnection")
-                    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
-                options.UseSqlServer(cs);
-            }
-        });
+                var useInMemory = configuration.GetValue<bool>("UseInMemoryDatabase");
+                if (useInMemory)
+                {
+                    var inMemoryName = configuration["Testing:InMemoryDatabaseName"] ?? "AppTorcedor";
+                    options.UseInMemoryDatabase(inMemoryName);
+                }
+                else
+                {
+                    var cs = configuration.GetConnectionString("DefaultConnection")
+                        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+                    options.UseSqlServer(cs);
+                }
+
+                options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
+            });
 
         services
             .AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
@@ -41,6 +52,12 @@ public static class DependencyInjection
             .AddDefaultTokenProviders();
 
         services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
+        services.AddScoped<IDatabaseConnectivityCheck, DatabaseConnectivityCheck>();
+        services.AddScoped<IPermissionResolver, PermissionResolver>();
+        services.AddScoped<IMembershipWritePort, MembershipWritePort>();
+        services.AddScoped<IAppConfigurationPort, AppConfigurationPort>();
+        services.AddScoped<IRolePermissionReadPort, RolePermissionReadPort>();
+        services.AddScoped<IAuditLogReadPort, AuditLogReadPort>();
 
         return services;
     }

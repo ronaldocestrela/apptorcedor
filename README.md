@@ -1,6 +1,6 @@
 # App Torcedor
 
-Monólito modular para **sócio torcedor** de um único clube (single tenant). Nesta fase o foco é a **base de autenticação**: ASP.NET Core **Identity**, **JWT** (access + refresh), seed do **Administrador Master** e **roles** do sistema, além da **SPA** em React (Vite).
+Monólito modular para **sócio torcedor** de um único clube (single tenant). A base inclui **Identity**, **JWT** (access + refresh), **permissões granulares** (claims `permission` + políticas na API), **CQRS (MediatR)** no projeto `AppTorcedor.Application`, **auditoria** e **configurações** administráveis, além da **SPA** em React (Vite).
 
 ## Pré-requisitos
 
@@ -96,7 +96,14 @@ Fora dos ambientes Development/Testing, a senha do seed **de** estar em configur
 | POST | `/api/auth/refresh` | Não | Troca o refresh por um novo par de tokens |
 | POST | `/api/auth/logout` | Não | Revoga o refresh informado |
 | GET | `/api/auth/me` | Bearer (JWT) | Dados do usuário e roles |
-| GET | `/api/diagnostics/admin-master-only` | Bearer + role *Administrador Master* | Teste de política por perfil |
+| GET | `/api/diagnostics/admin-master-only` | Bearer + permissão `Administracao.Diagnostics` | Diagnóstico (via MediatR); JWT inclui claims `permission` conforme role |
+| GET | `/health/live` | Não | Liveness (tag `live`) |
+| GET | `/health/ready` | Não | Readiness (inclui checagem do banco; tag `ready`) |
+| PATCH | `/api/admin/memberships/{id}/status` | Bearer + `Socios.Gerenciar` | Atualiza status da associação (auditoria) |
+| GET | `/api/admin/config` | Bearer + `Configuracoes.Visualizar` | Lista configurações |
+| PUT | `/api/admin/config/{key}` | Bearer + `Configuracoes.Editar` | Cria/atualiza configuração (auditoria) |
+| GET | `/api/admin/role-permissions` | Bearer + `Configuracoes.Visualizar` | Matriz role × permissão |
+| GET | `/api/admin/audit-logs` | Bearer + `Configuracoes.Visualizar` | Consulta recente de auditoria (query `entityType`, `take`) |
 
 ## Testes automatizados
 
@@ -123,3 +130,5 @@ Não commite chaves reais; use secrets ou variáveis de ambiente no deploy.
 
 - [AGENTS.md](AGENTS.md) — escopo do produto, módulos e regras do projeto.
 - [docs/architecture/auth-bootstrap.md](docs/architecture/auth-bootstrap.md) — decisões da fase de autenticação, detalhes técnicos e variáveis.
+- [docs/architecture/parte-a-fundacao.md](docs/architecture/parte-a-fundacao.md) — Parte A: CQRS, permissões, auditoria, configurações e observabilidade.
+- [docs/ROADMAP-PENDENCIAS.md](docs/ROADMAP-PENDENCIAS.md) — backlog do que falta fazer, com prioridade para gestão e contratação de planos pelo torcedor ao final.
