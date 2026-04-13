@@ -166,7 +166,7 @@ public sealed class PartB1AdministrationTests(AppWebApplicationFactory factory) 
             Assert.NotNull(body);
             Assert.True(body!.ActiveMembersCount >= 0);
             Assert.True(body.DelinquentMembersCount >= 0);
-            Assert.Null(body.OpenSupportTickets);
+            Assert.Equal(0, body.OpenSupportTickets);
         }
     }
 
@@ -203,5 +203,5 @@ public sealed class PartB1AdministrationTests(AppWebApplicationFactory factory) 
 
     private sealed record CreateInviteResponseDto(Guid Id, string Token, DateTimeOffset ExpiresAt);
 
-    private sealed record DashboardDto(int ActiveMembersCount, int DelinquentMembersCount, int? OpenSupportTickets);
+    private sealed record DashboardDto(int ActiveMembersCount, int DelinquentMembersCount, int OpenSupportTickets);
 }

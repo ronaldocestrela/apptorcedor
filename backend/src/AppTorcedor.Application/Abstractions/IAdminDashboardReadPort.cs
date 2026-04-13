@@ -5,4 +5,4 @@ public interface IAdminDashboardReadPort
     Task<AdminDashboardDto> GetAsync(CancellationToken cancellationToken = default);
 }
 
-public sealed record AdminDashboardDto(int ActiveMembersCount, int DelinquentMembersCount, int? OpenSupportTickets);
+public sealed record AdminDashboardDto(int ActiveMembersCount, int DelinquentMembersCount, int OpenSupportTickets);

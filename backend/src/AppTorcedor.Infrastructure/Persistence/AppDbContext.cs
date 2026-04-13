@@ -43,6 +43,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<BenefitOfferMembershipStatusEligibilityRecord> BenefitOfferMembershipStatusEligibilities =>
         Set<BenefitOfferMembershipStatusEligibilityRecord>();
     public DbSet<BenefitRedemptionRecord> BenefitRedemptions => Set<BenefitRedemptionRecord>();
+    public DbSet<SupportTicketRecord> SupportTickets => Set<SupportTicketRecord>();
+    public DbSet<SupportTicketMessageRecord> SupportTicketMessages => Set<SupportTicketMessageRecord>();
+    public DbSet<SupportTicketHistoryRecord> SupportTicketHistories => Set<SupportTicketHistoryRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -481,6 +484,71 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<SupportTicketRecord>(entity =>
+        {
+            entity.ToTable("SupportTickets");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Queue).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.Subject).HasMaxLength(500).IsRequired();
+            entity.Property(x => x.Priority).HasConversion<int>();
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.HasIndex(x => x.RequesterUserId);
+            entity.HasIndex(x => x.AssignedAgentUserId);
+            entity.HasIndex(x => new { x.Status, x.Queue });
+            entity.HasIndex(x => x.SlaDeadlineUtc);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.RequesterUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.AssignedAgentUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<SupportTicketMessageRecord>(entity =>
+        {
+            entity.ToTable("SupportTicketMessages");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Body).HasMaxLength(8000).IsRequired();
+            entity.HasIndex(x => x.TicketId);
+            entity.HasIndex(x => x.CreatedAtUtc);
+            entity
+                .HasOne<SupportTicketRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.AuthorUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<SupportTicketHistoryRecord>(entity =>
+        {
+            entity.ToTable("SupportTicketHistories");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.EventType).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.FromValue).HasMaxLength(256);
+            entity.Property(x => x.ToValue).HasMaxLength(256);
+            entity.Property(x => x.Reason).HasMaxLength(2000);
+            entity.HasIndex(x => x.TicketId);
+            entity.HasIndex(x => x.CreatedAtUtc);
+            entity
+                .HasOne<SupportTicketRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.ActorUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

@@ -36,7 +36,7 @@ Foco em **quem opera o clube**: administradores, financeiro, atendimento, market
 
 - [x] **Gestão de usuários internos:** convite/cadastro de staff (token + `POST /api/auth/accept-staff-invite`), vínculo com **roles** (permissões herdadas da matriz role × permissão), ativação/desativação (`Usuarios.Editar`).
 - [x] **Gestão de permissões:** API e SPA para consultar e **editar** matriz perfil × permissão (`PUT /api/admin/role-permissions`, `Configuracoes.Editar`); sem acoplar Membership.
-- [x] **Painel inicial admin:** dashboard com KPIs de sócios ativos e inadimplentes (`GET /api/admin/dashboard`). **Chamados abertos:** `openSupportTickets` fica `null` até o módulo de suporte (B.11).
+- [x] **Painel inicial admin:** dashboard com KPIs de sócios ativos e inadimplentes (`GET /api/admin/dashboard`). **Chamados abertos:** `openSupportTickets` conta chamados em aberto (Open, InProgress, WaitingUser); ver B.11.
 
 ### B.2 LGPD (lado gestão e compliance)
 
@@ -111,9 +111,11 @@ Detalhes: [docs/architecture/parte-b10-loyalty-benefits-admin.md](architecture/p
 
 ### B.11 Support (atendimento)
 
-- [ ] **Filas de chamados** para perfis Atendimento/Operador.
-- [ ] **SLA e estados** do chamado; respostas e histórico.
-- [ ] **Permissão** `Chamados.Responder` e segregação de dados.
+- [x] **Filas de chamados** para perfis Atendimento/Operador.
+- [x] **SLA e estados** do chamado; respostas e histórico.
+- [x] **Permissão** `Chamados.Responder` e segregação de dados (API: somente JWT com permissão; torcedor sem permissão recebe 403).
+
+Detalhes: [docs/architecture/parte-b11-support-admin.md](architecture/parte-b11-support-admin.md).
 
 ---
 

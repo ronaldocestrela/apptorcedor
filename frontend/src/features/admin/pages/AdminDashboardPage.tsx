@@ -32,7 +32,7 @@ export function AdminDashboardPage() {
     >
       <h1>Painel administrativo</h1>
       <p style={{ color: '#555', maxWidth: 640 }}>
-        Indicadores mínimos de associação. Chamados abertos dependem do módulo de suporte (B.11).
+        Indicadores mínimos de associação e chamados em aberto (Open, InProgress, WaitingUser).
       </p>
       {error ? <p role="alert" style={{ color: 'crimson' }}>{error}</p> : null}
       {loading ? <p>Carregando...</p> : null}
@@ -40,11 +40,7 @@ export function AdminDashboardPage() {
         <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginTop: '1rem' }}>
           <KpiCard label="Sócios ativos" value={data.activeMembersCount} />
           <KpiCard label="Inadimplentes" value={data.delinquentMembersCount} />
-          <KpiCard
-            label="Chamados abertos"
-            value={data.openSupportTickets === null ? '—' : String(data.openSupportTickets)}
-            hint={data.openSupportTickets === null ? 'Indisponível (módulo não implementado)' : undefined}
-          />
+          <KpiCard label="Chamados abertos" value={data.openSupportTickets} />
         </div>
       ) : null}
     </PermissionGate>

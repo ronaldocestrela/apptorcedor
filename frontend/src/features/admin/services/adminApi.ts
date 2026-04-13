@@ -40,7 +40,7 @@ export type MembershipStatus =
 export type AdminDashboardResult = {
   activeMembersCount: number
   delinquentMembersCount: number
-  openSupportTickets: number | null
+  openSupportTickets: number
 }
 
 export type StaffInviteRow = {
@@ -1092,4 +1092,123 @@ export async function listBenefitRedemptions(params: {
     },
   })
   return data
+}
+
+/** B.11 Support (chamados) — admin */
+export type SupportTicketStatus =
+  | 'Open'
+  | 'InProgress'
+  | 'WaitingUser'
+  | 'Resolved'
+  | 'Closed'
+
+export type SupportTicketPriority = 'Normal' | 'High' | 'Urgent'
+
+export type AdminSupportTicketListItem = {
+  ticketId: string
+  requesterUserId: string
+  assignedAgentUserId: string | null
+  queue: string
+  subject: string
+  priority: SupportTicketPriority
+  status: SupportTicketStatus
+  slaDeadlineUtc: string
+  isSlaBreached: boolean
+  firstResponseAtUtc: string | null
+  createdAtUtc: string
+  updatedAtUtc: string
+}
+
+export type AdminSupportTicketListPage = {
+  totalCount: number
+  items: AdminSupportTicketListItem[]
+}
+
+export type SupportTicketMessage = {
+  messageId: string
+  authorUserId: string
+  body: string
+  isInternal: boolean
+  createdAtUtc: string
+}
+
+export type SupportTicketHistoryEntry = {
+  entryId: string
+  eventType: string
+  fromValue: string | null
+  toValue: string | null
+  actorUserId: string
+  reason: string | null
+  createdAtUtc: string
+}
+
+export type AdminSupportTicketDetail = {
+  ticketId: string
+  requesterUserId: string
+  assignedAgentUserId: string | null
+  queue: string
+  subject: string
+  priority: SupportTicketPriority
+  status: SupportTicketStatus
+  slaDeadlineUtc: string
+  isSlaBreached: boolean
+  firstResponseAtUtc: string | null
+  createdAtUtc: string
+  updatedAtUtc: string
+  messages: SupportTicketMessage[]
+  history: SupportTicketHistoryEntry[]
+}
+
+export async function listAdminSupportTickets(params: {
+  queue?: string
+  status?: SupportTicketStatus
+  assignedUserId?: string
+  unassignedOnly?: boolean
+  slaBreachedOnly?: boolean
+  page?: number
+  pageSize?: number
+}): Promise<AdminSupportTicketListPage> {
+  const { data } = await api.get<AdminSupportTicketListPage>('/api/admin/support/tickets', {
+    params: {
+      queue: params.queue || undefined,
+      status: params.status,
+      assignedUserId: params.assignedUserId || undefined,
+      unassignedOnly: params.unassignedOnly,
+      slaBreachedOnly: params.slaBreachedOnly,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getAdminSupportTicket(ticketId: string): Promise<AdminSupportTicketDetail> {
+  const { data } = await api.get<AdminSupportTicketDetail>(`/api/admin/support/tickets/${encodeURIComponent(ticketId)}`)
+  return data
+}
+
+export async function createAdminSupportTicket(body: {
+  requesterUserId: string
+  queue: string
+  subject: string
+  priority: SupportTicketPriority
+  initialMessage?: string | null
+}): Promise<{ ticketId: string }> {
+  const { data } = await api.post<{ ticketId: string }>('/api/admin/support/tickets', body)
+  return data
+}
+
+export async function replyAdminSupportTicket(ticketId: string, body: { body: string; isInternal: boolean }): Promise<void> {
+  await api.post(`/api/admin/support/tickets/${encodeURIComponent(ticketId)}/reply`, body)
+}
+
+export async function assignAdminSupportTicket(ticketId: string, agentUserId: string | null): Promise<void> {
+  await api.post(`/api/admin/support/tickets/${encodeURIComponent(ticketId)}/assign`, { agentUserId })
+}
+
+export async function changeAdminSupportTicketStatus(
+  ticketId: string,
+  body: { status: SupportTicketStatus; reason?: string | null },
+): Promise<void> {
+  await api.post(`/api/admin/support/tickets/${encodeURIComponent(ticketId)}/status`, body)
 }

@@ -16,6 +16,14 @@ public sealed class AdminDashboardReadPort(AppDbContext db) : IAdminDashboardRea
             .CountAsync(m => m.Status == MembershipStatus.Inadimplente, cancellationToken)
             .ConfigureAwait(false);
 
-        return new AdminDashboardDto(active, delinquent, OpenSupportTickets: null);
+        var openTickets = await db.SupportTickets.AsNoTracking()
+            .CountAsync(
+                t => t.Status == SupportTicketStatus.Open
+                    || t.Status == SupportTicketStatus.InProgress
+                    || t.Status == SupportTicketStatus.WaitingUser,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return new AdminDashboardDto(active, delinquent, openTickets);
     }
 }

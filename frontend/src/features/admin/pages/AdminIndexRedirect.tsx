@@ -47,6 +47,8 @@ export function AdminIndexRedirect() {
   if (hasPermission(user, ApplicationPermissions.BeneficiosVisualizar)
     || hasPermission(user, ApplicationPermissions.BeneficiosGerenciar))
     return <Navigate to="benefits" replace />
+  if (hasPermission(user, ApplicationPermissions.ChamadosResponder))
+    return <Navigate to="support" replace />
 
   return <p>Nenhuma seção disponível para seu usuário.</p>
 }

@@ -12,6 +12,7 @@ using AppTorcedor.Infrastructure.Services.Tickets;
 using AppTorcedor.Infrastructure.Services.Loyalty;
 using AppTorcedor.Infrastructure.Services.Benefits;
 using AppTorcedor.Infrastructure.Services.News;
+using AppTorcedor.Infrastructure.Services.Support;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -79,6 +80,7 @@ public static class DependencyInjection
         services.AddScoped<ITicketAdministrationPort, TicketAdministrationService>();
         services.AddScoped<IDigitalCardAdministrationPort, DigitalCardAdministrationService>();
         services.AddScoped<INewsAdministrationPort, NewsAdministrationService>();
+        services.AddScoped<ISupportAdministrationPort, SupportAdministrationService>();
         services.AddScoped<LoyaltyAdministrationService>();
         services.AddScoped<ILoyaltyAdministrationPort>(sp => sp.GetRequiredService<LoyaltyAdministrationService>());
         services.AddScoped<ILoyaltyPointsTriggerPort>(sp => sp.GetRequiredService<LoyaltyAdministrationService>());

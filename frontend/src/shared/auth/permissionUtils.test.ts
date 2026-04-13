@@ -61,4 +61,10 @@ describe('permissionUtils', () => {
       canAccessAdminArea({ permissions: [ApplicationPermissions.FidelidadeVisualizar] }, ADMIN_AREA_PERMISSIONS),
     ).toBe(true)
   })
+
+  it('allows admin area with Chamados.Responder alone', () => {
+    expect(
+      canAccessAdminArea({ permissions: [ApplicationPermissions.ChamadosResponder] }, ADMIN_AREA_PERMISSIONS),
+    ).toBe(true)
+  })
 })

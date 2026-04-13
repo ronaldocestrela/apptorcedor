@@ -84,6 +84,9 @@ export function AdminLayout() {
             || hasPermission(user, ApplicationPermissions.BeneficiosGerenciar)) ? (
             <NavLink to="benefits" style={linkStyle}>Benefícios</NavLink>
             ) : null}
+          {hasPermission(user, ApplicationPermissions.ChamadosResponder) ? (
+            <NavLink to="support" style={linkStyle}>Chamados</NavLink>
+          ) : null}
           {hasPermission(user, ApplicationPermissions.LgpdDocumentosVisualizar) ? (
             <NavLink to="lgpd/documents" style={linkStyle}>LGPD — Documentos</NavLink>
           ) : null}

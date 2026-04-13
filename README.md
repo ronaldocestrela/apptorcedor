@@ -14,7 +14,7 @@ Monólito modular para **sócio torcedor** de um único clube (single tenant). A
 
 ```text
 backend/          → Solução .NET (API, Identity, Infrastructure, testes)
-frontend/         → React + Vite (login, convite staff, **usuários admin**, dashboard admin, **pagamentos admin (B.6)**, **notícias admin (B.9)**, **fidelidade/benefícios admin (B.10)**, gestão de matriz de permissões, refresh de token)
+frontend/         → React + Vite (login, convite staff, **usuários admin**, dashboard admin, **pagamentos admin (B.6)**, **notícias admin (B.9)**, **fidelidade/benefícios admin (B.10)**, **chamados/suporte admin (B.11)**, gestão de matriz de permissões, refresh de token)
 docs/             → Documentação técnica por fase
 docker-compose.yml → SQL Server opcional
 AGENTS.md         → Visão de produto, regras e arquitetura alvo
