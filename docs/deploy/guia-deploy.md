@@ -106,10 +106,12 @@ Modelo comentado: [`deploy/vps/api.env.example`](../../deploy/vps/api.env.exampl
 1. Push na branch configurada (padrão **`single-tenant`**).
 2. GitHub Actions executa o workflow **`CI`** (backend, frontend, tooling, compose).
 3. Se todos os jobs passarem, o job **`trigger-jenkins`** faz `POST` para o Jenkins (**build token** + **API token** do usuário Jenkins).
-4. Jenkins: **checkout** (para `GIT_COMMIT` / `GITHUB_REPOSITORY`), gera `api.env` + ficheiro com `VITE_API_URL` e corre [`deploy/vps/build-and-deploy.sh`](../../deploy/vps/build-and-deploy.sh).
-   - **`JENKINS_LOCAL_DEPLOY=true`** (padrão no [`Jenkinsfile`](../../Jenkinsfile)): Jenkins na **mesma** máquina que a app — **sem** `ssh`/`scp`; copia ficheiros para `/tmp`, `sudo install` em `/etc/apptorcedor/api.env`, e o script usa o **`WORKSPACE`** do job como diretório git (`git pull` + build).
-   - **`JENKINS_LOCAL_DEPLOY=false`**: agente remoto — **`scp`/`ssh`** para a VPS com credenciais `vps-ssh-key` e `vps-host`; o script usa `VPS_REPO_DIR` (clone em `/opt/...` por omissão).
-5. Na VPS: `sudo install` grava `/etc/apptorcedor/api.env`; o script faz **`git pull`** no diretório de repo, **`dotnet publish`**, **`npm ci` / `npm run build`**, copia o SPA para `wwwroot`, atualiza `releases/<id>`, symlink **`current`**, **`systemctl restart`**, **`curl`** em `/health/live`.
+4. Jenkins: **checkout**, gera `api.env` (referência em `/etc/apptorcedor`) e, conforme o modo:
+   - **`DEPLOY_USE_COMPOSE=true`** (padrão): gera também `.env` no formato do [`docker-compose.yml`](../../docker-compose.yml) e executa [`deploy/vps/build-and-deploy-compose.sh`](../../deploy/vps/build-and-deploy-compose.sh) — **`docker compose build`** e **`up -d`** (serviços `api` + `web`). Não usa `dotnet`/`npm` no host.
+   - **`DEPLOY_USE_COMPOSE=false`**: fluxo legado com [`deploy/vps/build-and-deploy.sh`](../../deploy/vps/build-and-deploy.sh) — `dotnet publish`, `npm run build`, `wwwroot`, `releases/`, **`systemctl`**.
+   - **`JENKINS_LOCAL_DEPLOY=true`**: na mesma máquina — sem `ssh`; `WORKSPACE` como repo (Compose) ou como no fluxo systemd.
+   - **`JENKINS_LOCAL_DEPLOY=false`**: **`scp`/`ssh`** com `vps-ssh-key` e `vps-host`; no remoto usa `VPS_REPO_DIR` quando não é o workspace.
+5. Health check com **`curl`** em `APP_HEALTHCHECK_URL` (API exposta pelo mapeamento de portas do Compose, padrão `5031`).
 6. Jenkins envia **commit status** ao GitHub (`jenkins/cd-vps`).
 
 ### 4.2 Secrets no GitHub (repositório)
@@ -154,45 +156,54 @@ Configuráveis como variáveis de ambiente do job ou do folder:
 | `DEPLOY_BRANCH` | `single-tenant` | Só executa deploy se a branch do job for esta |
 | `DEPLOY_ROOT` | `/opt/apptorcedor` | Raiz: `releases/<id>` e symlink `current` |
 | `JENKINS_LOCAL_DEPLOY` | `true` | `true` = deploy na mesma máquina (usa `WORKSPACE` como repo git); `false` = `scp`/`ssh` e `VPS_REPO_DIR` |
-| `NODEJS_HOME` | *(vazio)* | Se Node foi instalado com NVM ou fora do PATH do `root`/`sudo`, defina o prefixo (ex.: `/home/jenkins/.nvm/versions/node/v22.14.0`). O pipeline repassa o PATH ao `sudo bash` que corre o `build-and-deploy.sh`. |
-| `VPS_REPO_DIR` | `/opt/apptorcedor/repo` | Usado só com **`JENKINS_LOCAL_DEPLOY=false`**: clone git na VPS remota |
-| `APP_SERVICE_NAME` | `apptorcedor-api` | Unidade systemd |
+| `DEPLOY_USE_COMPOSE` | `true` | `true` = **Docker Compose** ([`build-and-deploy-compose.sh`](../../deploy/vps/build-and-deploy-compose.sh)); `false` = systemd + publish no host ([`build-and-deploy.sh`](../../deploy/vps/build-and-deploy.sh)). |
+| `COMPOSE_FILE` | `docker-compose.yml` | Ficheiro Compose na raiz do repositório. |
+| `API_PORT` / `WEB_PORT` | `5031` / `5173` | Publicação no host (`docker-compose.yml`). |
+| `NODEJS_HOME` | *(vazio)* | Só **`DEPLOY_USE_COMPOSE=false`**: PATH para npm/dotnet sob `sudo`. |
+| `VPS_REPO_DIR` | `/opt/apptorcedor/repo` | Usado com **`JENKINS_LOCAL_DEPLOY=false`** no deploy remoto. |
+| `APP_SERVICE_NAME` | `apptorcedor-api` | Só fluxo **systemd** (`DEPLOY_USE_COMPOSE=false`) |
 | `APP_HEALTHCHECK_URL` | `http://127.0.0.1:5031/health/live` | Liveness após restart |
 | `VPS_PORT` | `22` | Porta SSH (só fluxo remoto) |
 
 ### 4.5 Agente Jenkins
 
-**Com `JENKINS_LOCAL_DEPLOY=true` (Jenkins na mesma VPS que a app):** o agente precisa de **.NET SDK 10**, **Node.js 22+**, **npm**, **git**, **curl**, **Python 3** (status no GitHub), **sudo** para `install` e para o script de deploy (alinhado a [4.6](#46-preparar-a-vps-uma-vez)). **OpenSSH** não é obrigatório para o deploy em si.
+**Com `DEPLOY_USE_COMPOSE=true` e `JENKINS_LOCAL_DEPLOY=true`:** **Docker Engine** + plugin **`docker compose`**, **git**, **curl**, **Python 3** (status GitHub), **sudo** para gravar `/etc/apptorcedor/api.env` e para `docker` se o user Jenkins não estiver no grupo `docker`. Não é necessário .NET SDK nem Node no host.
 
-**Com `JENKINS_LOCAL_DEPLOY=false` (agente remoto):** o agente precisa de **OpenSSH** (`ssh`, `scp`) e **Python 3**; o build ocorre **na VPS** remota (não precisa de .NET/Node no agente).
+**Com `DEPLOY_USE_COMPOSE=false` e `JENKINS_LOCAL_DEPLOY=true`:** **.NET SDK 10**, **Node 22+**, **npm**, **git**, **curl**, **Python 3**, **sudo** (ver [4.6](#46-preparar-a-vps-uma-vez)).
+
+**Com `JENKINS_LOCAL_DEPLOY=false`:** **OpenSSH** no agente; o build corre na VPS remota.
 
 ### 4.6 Preparar a VPS (uma vez)
 
 Execute como root ou com `sudo` onde indicado.
 
-**4.6.1 .NET SDK e Node na VPS**
+**4.6.1 Docker (deploy Compose — padrão Jenkins)**
 
-Instale **.NET SDK 10.x** (para `dotnet publish`), **Node.js 22+**, **npm**, **git** e **curl**.
+Instale **Docker Engine** e o plugin **Compose** (`docker compose version`). Coloque o utilizador do Jenkins no grupo **`docker`** *ou* conceda **`sudo NOPASSWD`** para `docker` (e opcionalmente os mesmos `mkdir`/`install` de `/etc`). O [`docker-compose.yml`](../../docker-compose.yml) faz **build** das imagens a partir de [`backend/Dockerfile`](../../backend/Dockerfile) e [`frontend/Dockerfile`](../../frontend/Dockerfile).
+
+**4.6.1b .NET SDK e Node (só fluxo `DEPLOY_USE_COMPOSE=false`)**
+
+Instale **.NET SDK 10.x**, **Node.js 22+**, **npm**, **git** e **curl** na VPS onde corre o publish nativo.
 
 **4.6.2 Clone do repositório**
 
 - **`JENKINS_LOCAL_DEPLOY=true`:** o pipeline usa o **workspace** do job como repositório (`git pull` no checkout do Jenkins). Garante permissão de **`git pull`** (credencial Git no Jenkins ou acesso HTTPS/SSH ao remoto).
 - **`JENKINS_LOCAL_DEPLOY=false`:** mantém um clone em `VPS_REPO_DIR` (padrão `/opt/apptorcedor/repo`) na VPS remota, com **`git pull`** (deploy key ou HTTPS).
 
-**4.6.3 Diretórios de release**
+**4.6.3 Diretórios de release (fluxo systemd)**
 
 ```bash
 sudo mkdir -p /opt/apptorcedor/releases
 sudo chown root:root /opt/apptorcedor
 ```
 
-O deploy cria releases dentro de `releases/` e aponta o symlink `/opt/apptorcedor/current` para a versão ativa.
+Com **`DEPLOY_USE_COMPOSE=false`**, o deploy cria releases em `releases/` e o symlink `/opt/apptorcedor/current`. Com **Compose**, as imagens são reconstruídas no diretório do repo; não usa essa árvore de releases.
 
 **4.6.4 Segredos da API**
 
 No fluxo atual, **`/etc/apptorcedor/api.env`** é criado/atualizado pelo Jenkins a cada deploy (`sudo install`). Não é obrigatório preencher manualmente antes do primeiro deploy; mantenha apenas o diretório pai criado se desejar (`sudo mkdir -p /etc/apptorcedor`).
 
-**4.6.5 Systemd**
+**4.6.5 Systemd (só `DEPLOY_USE_COMPOSE=false`)**
 
 Copie e ajuste o exemplo:
 
@@ -212,15 +223,18 @@ Na **primeira** vez, o serviço pode falhar até existir `current` e DLL; após 
 
 **4.6.6 Sudo para o usuário de deploy**
 
-Com **`JENKINS_LOCAL_DEPLOY=false`**, o pipeline faz `ssh` para a VPS com `sudo install ... api.env` e `sudo bash /tmp/apptorcedor-build-deploy-*.sh`. O utilizador da chave SSH precisa de permissão para esses comandos (política em `sudoers`). Com **`JENKINS_LOCAL_DEPLOY=true`**, os mesmos `sudo` correm **no próprio agente** (utilizador do Jenkins com `sudo`). O script reinicia o serviço com `systemctl`.
+Com **`JENKINS_LOCAL_DEPLOY=false`**, o pipeline faz `ssh` com `sudo install ... api.env` e `sudo bash` no script de deploy. Com **`JENKINS_LOCAL_DEPLOY=true`**, o mesmo ocorre no agente local.
 
-Exemplo de entrada no `sudoers` (ajuste usuário e valide com `visudo`):
+- **Compose (`DEPLOY_USE_COMPOSE=true`):** o script é `/tmp/apptorcedor-build-deploy-compose-*.sh` (nome gerado pelo Jenkins) e chama [`build-and-deploy-compose.sh`](../../deploy/vps/build-and-deploy-compose.sh). Se o Jenkins não estiver no grupo `docker`, inclua **`/usr/bin/docker`** (ou prefira `usermod -aG docker jenkins` e não use `sudo docker`).
+- **Systemd (`DEPLOY_USE_COMPOSE=false`):** `apptorcedor-build-deploy-*.sh` e `systemctl restart`.
+
+Exemplo de entrada no `sudoers` (ajuste utilizador e valide com `visudo`):
 
 ```text
-deployuser ALL=(root) NOPASSWD: /usr/bin/install, /bin/bash /tmp/apptorcedor-build-deploy-*.sh, /bin/mkdir, /bin/systemctl restart apptorcedor-api
+deployuser ALL=(root) NOPASSWD: /usr/bin/install, /bin/bash /tmp/apptorcedor-build-deploy-compose-*.sh, /bin/bash /tmp/apptorcedor-build-deploy-*.sh, /bin/mkdir, /usr/bin/docker, /bin/systemctl restart apptorcedor-api
 ```
 
-(Ajuste caminhos exatos conforme a sua distro; inclua `/bin/mkdir` se necessário para `mkdir -p /etc/apptorcedor`.)
+(Ajuste caminhos exatos conforme a distro; inclua apenas as linhas que o seu fluxo usa.)
 
 **4.6.7 Persistência de uploads**
 
@@ -240,8 +254,8 @@ O disparo após push é feito pelo GitHub Actions (`trigger-jenkins`); não é o
 1. Configure secrets no GitHub e credenciais no Jenkins.
 2. Faça push para `single-tenant` com CI verde ou execute o job Jenkins manualmente (mesma branch).
 3. Acompanhe logs: scp → deploy remoto → status no GitHub.
-4. Na VPS: `sudo systemctl status apptorcedor-api` e `journalctl -u apptorcedor-api -f`.
-5. Teste `curl -sS http://127.0.0.1:5031/health/live` (ou URL configurada).
+4. Na VPS: com **Compose**, `docker compose ps` e `docker compose logs -f api`; com **systemd**, `sudo systemctl status apptorcedor-api` e `journalctl -u apptorcedor-api -f`.
+5. Teste `curl -sS` em `APP_HEALTHCHECK_URL` (ex.: `http://127.0.0.1:5031/health/live` alinhado a `API_PORT`).
 
 ### 4.9 Reverse proxy em frente à API (ex.: Nginx)
 
@@ -249,7 +263,7 @@ O Kestrel pode escutar só em `127.0.0.1:5031`; o Nginx termina TLS e faz `proxy
 
 ### 4.10 Rollback
 
-O [`deploy/vps/build-and-deploy.sh`](../../deploy/vps/build-and-deploy.sh) (e o fluxo legado [`deploy/vps/deploy.sh`](../../deploy/vps/deploy.sh)) restaura o symlink `current` para a release anterior se o health check falhar após o restart. Para rollback manual:
+**Systemd:** o [`build-and-deploy.sh`](../../deploy/vps/build-and-deploy.sh) (e [`deploy.sh`](../../deploy/vps/deploy.sh)) pode restaurar o symlink `current` para a release anterior se o health check falhar. Rollback manual:
 
 ```bash
 sudo ls -la /opt/apptorcedor/releases
@@ -257,11 +271,13 @@ sudo ln -sfn /opt/apptorcedor/releases/<release_anterior> /opt/apptorcedor/curre
 sudo systemctl restart apptorcedor-api
 ```
 
+**Compose:** faça `git checkout` no commit anterior no clone usado pelo deploy, rode de novo o job Jenkins ou execute manualmente `docker compose build && docker compose up -d` no diretório do repo (ou mantenha tags de imagem versionadas e `docker compose up` com tag fixa).
+
 ---
 
-## 5. Deploy com Docker Compose (passo a passo)
+## 5. Deploy com Docker Compose (passo a passo manual)
 
-Indicado quando você quer **API + nginx (SPA)** no mesmo host Docker, com SQL remoto.
+Indicado quando você quer **API + web (SPA)** no mesmo host Docker, com SQL remoto — mesmo stack que o Jenkins usa quando **`DEPLOY_USE_COMPOSE=true`** (ver [§4](#4-deploy-com-jenkins-e-vps-passo-a-passo)).
 
 ### 5.1 No servidor
 
