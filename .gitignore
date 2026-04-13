@@ -128,3 +128,6 @@ appsettings.Local.json
 *.key
 *.pem
 secrets.json
+
+## Jenkins
+jenkinsErros/

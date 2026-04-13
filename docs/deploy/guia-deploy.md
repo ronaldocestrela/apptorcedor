@@ -106,8 +106,10 @@ Modelo comentado: [`deploy/vps/api.env.example`](../../deploy/vps/api.env.exampl
 1. Push na branch configurada (padrão **`single-tenant`**).
 2. GitHub Actions executa o workflow **`CI`** (backend, frontend, tooling, compose).
 3. Se todos os jobs passarem, o job **`trigger-jenkins`** faz `POST` para o Jenkins (**build token** + **API token** do usuário Jenkins).
-4. Jenkins: **checkout** leve (para `GIT_COMMIT` / `GITHUB_REPOSITORY`), **scp** de `api.env` gerado + arquivo com `VITE_API_URL` + [`deploy/vps/build-and-deploy.sh`](../../deploy/vps/build-and-deploy.sh).
-5. Na VPS: `sudo install` grava `/etc/apptorcedor/api.env`; o script faz **`git pull`** no clone do repositório, **`dotnet publish`**, **`npm ci` / `npm run build`**, copia o SPA para `wwwroot`, atualiza `releases/<id>`, symlink **`current`**, **`systemctl restart`**, **`curl`** em `/health/live`.
+4. Jenkins: **checkout** (para `GIT_COMMIT` / `GITHUB_REPOSITORY`), gera `api.env` + ficheiro com `VITE_API_URL` e corre [`deploy/vps/build-and-deploy.sh`](../../deploy/vps/build-and-deploy.sh).
+   - **`JENKINS_LOCAL_DEPLOY=true`** (padrão no [`Jenkinsfile`](../../Jenkinsfile)): Jenkins na **mesma** máquina que a app — **sem** `ssh`/`scp`; copia ficheiros para `/tmp`, `sudo install` em `/etc/apptorcedor/api.env`, e o script usa o **`WORKSPACE`** do job como diretório git (`git pull` + build).
+   - **`JENKINS_LOCAL_DEPLOY=false`**: agente remoto — **`scp`/`ssh`** para a VPS com credenciais `vps-ssh-key` e `vps-host`; o script usa `VPS_REPO_DIR` (clone em `/opt/...` por omissão).
+5. Na VPS: `sudo install` grava `/etc/apptorcedor/api.env`; o script faz **`git pull`** no diretório de repo, **`dotnet publish`**, **`npm ci` / `npm run build`**, copia o SPA para `wwwroot`, atualiza `releases/<id>`, symlink **`current`**, **`systemctl restart`**, **`curl`** em `/health/live`.
 6. Jenkins envia **commit status** ao GitHub (`jenkins/cd-vps`).
 
 ### 4.2 Secrets no GitHub (repositório)
@@ -138,8 +140,10 @@ Crie credenciais (IDs podem ser alterados no [`Jenkinsfile`](../../Jenkinsfile) 
 | `api-aspnetcore-urls` | Secret text | `ASPNETCORE_URLS` (ex.: `http://127.0.0.1:5031`) |
 | `vite-public-api-url` | Secret text | `VITE_API_URL` (build do Vite na VPS) |
 | `github-token-deploy-status` | Secret text | PAT com escopo **`repo:status`** |
-| `vps-ssh-key` | SSH Username with private key | Usuário SSH + chave privada para a VPS |
-| `vps-host` | Secret text | Hostname ou IP da VPS |
+| `vps-ssh-key` | SSH Username with private key | Só se **`JENKINS_LOCAL_DEPLOY=false`**: utilizador + chave privada para `scp`/`ssh` |
+| `vps-host` | Secret text | Só se **`JENKINS_LOCAL_DEPLOY=false`**: hostname ou IP (sem `https://`) |
+
+Com **`JENKINS_LOCAL_DEPLOY=true`** (Jenkins na mesma VPS), **não** são necessárias `vps-ssh-key` nem `vps-host`. Para deploy remoto por SSH, gera e configura chaves conforme [chave-ssh-gerar-e-configurar.md](chave-ssh-gerar-e-configurar.md).
 
 ### 4.4 Variáveis de job Jenkins (opcionais)
 
@@ -149,20 +153,17 @@ Configuráveis como variáveis de ambiente do job ou do folder:
 |----------|--------|-----|
 | `DEPLOY_BRANCH` | `single-tenant` | Só executa deploy se a branch do job for esta |
 | `DEPLOY_ROOT` | `/opt/apptorcedor` | Raiz: `releases/<id>` e symlink `current` |
-| `VPS_REPO_DIR` | `/opt/apptorcedor/repo` | Diretório do **clone git** na VPS |
+| `JENKINS_LOCAL_DEPLOY` | `true` | `true` = deploy na mesma máquina (usa `WORKSPACE` como repo git); `false` = `scp`/`ssh` e `VPS_REPO_DIR` |
+| `VPS_REPO_DIR` | `/opt/apptorcedor/repo` | Usado só com **`JENKINS_LOCAL_DEPLOY=false`**: clone git na VPS remota |
 | `APP_SERVICE_NAME` | `apptorcedor-api` | Unidade systemd |
 | `APP_HEALTHCHECK_URL` | `http://127.0.0.1:5031/health/live` | Liveness após restart |
-| `VPS_PORT` | `22` | Porta SSH |
+| `VPS_PORT` | `22` | Porta SSH (só fluxo remoto) |
 
 ### 4.5 Agente Jenkins
 
-O agente precisa apenas de:
+**Com `JENKINS_LOCAL_DEPLOY=true` (Jenkins na mesma VPS que a app):** o agente precisa de **.NET SDK 10**, **Node.js 22+**, **npm**, **git**, **curl**, **Python 3** (status no GitHub), **sudo** para `install` e para o script de deploy (alinhado a [4.6](#46-preparar-a-vps-uma-vez)). **OpenSSH** não é obrigatório para o deploy em si.
 
-- **OpenSSH client** (`ssh`, `scp`)
-- **Python 3** (status no GitHub no `post`)
-- **Git** (checkout SCM)
-
-**Não** é necessário .NET SDK nem Node no agente: o build ocorre na VPS.
+**Com `JENKINS_LOCAL_DEPLOY=false` (agente remoto):** o agente precisa de **OpenSSH** (`ssh`, `scp`) e **Python 3**; o build ocorre **na VPS** remota (não precisa de .NET/Node no agente).
 
 ### 4.6 Preparar a VPS (uma vez)
 
@@ -174,7 +175,8 @@ Instale **.NET SDK 10.x** (para `dotnet publish`), **Node.js 22+**, **npm**, **g
 
 **4.6.2 Clone do repositório**
 
-Clone o repositório em `VPS_REPO_DIR` (padrão `/opt/apptorcedor/repo`), com permissão de **`git pull`** (deploy key ou credencial HTTPS).
+- **`JENKINS_LOCAL_DEPLOY=true`:** o pipeline usa o **workspace** do job como repositório (`git pull` no checkout do Jenkins). Garante permissão de **`git pull`** (credencial Git no Jenkins ou acesso HTTPS/SSH ao remoto).
+- **`JENKINS_LOCAL_DEPLOY=false`:** mantém um clone em `VPS_REPO_DIR` (padrão `/opt/apptorcedor/repo`) na VPS remota, com **`git pull`** (deploy key ou HTTPS).
 
 **4.6.3 Diretórios de release**
 
@@ -209,7 +211,7 @@ Na **primeira** vez, o serviço pode falhar até existir `current` e DLL; após 
 
 **4.6.6 Sudo para o usuário de deploy**
 
-O pipeline faz `ssh` com `sudo install ... api.env` e `sudo bash /tmp/apptorcedor-build-deploy-*.sh`. O usuário da chave SSH precisa poder executar esses comandos (política restrita em `sudoers`) e o script interno reinicia o serviço com `systemctl`.
+Com **`JENKINS_LOCAL_DEPLOY=false`**, o pipeline faz `ssh` para a VPS com `sudo install ... api.env` e `sudo bash /tmp/apptorcedor-build-deploy-*.sh`. O utilizador da chave SSH precisa de permissão para esses comandos (política em `sudoers`). Com **`JENKINS_LOCAL_DEPLOY=true`**, os mesmos `sudo` correm **no próprio agente** (utilizador do Jenkins com `sudo`). O script reinicia o serviço com `systemctl`.
 
 Exemplo de entrada no `sudoers` (ajuste usuário e valide com `visudo`):
 
@@ -312,7 +314,7 @@ O callback usa o segredo `Payments__WebhookSecret`. O provedor de pagamento deve
 - [ ] TLS ativo no proxy; HTTP redirecionado para HTTPS se aplicável.
 - [ ] `GET /health/live` e `GET /health/ready` OK.
 - [ ] Estratégia de backup do banco e de arquivos de upload definida.
-- [ ] GitHub: secrets `JENKINS_*` para o job `trigger-jenkins`; Jenkins: credenciais de API + PAT `repo:status` + chave SSH só para deploy.
+- [ ] GitHub: secrets `JENKINS_*` para o job `trigger-jenkins`; Jenkins: credenciais de API + PAT `repo:status`; se deploy remoto (`JENKINS_LOCAL_DEPLOY=false`), credenciais SSH + `vps-host`.
 
 ---
 
@@ -329,4 +331,4 @@ O callback usa o segredo `Payments__WebhookSecret`. O provedor de pagamento deve
 | CORS no navegador | Origem da SPA exata em `Cors__AllowedOrigins__0`; HTTPS vs HTTP. |
 |502 no proxy | Upstream Kestrel parado; `proxy_pass` para host/porta corretos. |
 
-Documentação relacionada: [parte-f1-jenkins-cd-pos-ci.md](../architecture/parte-f1-jenkins-cd-pos-ci.md) (visão técnica do Jenkins), [README.md](../../README.md) (visão geral do projeto).
+Documentação relacionada: [chave-ssh-gerar-e-configurar.md](chave-ssh-gerar-e-configurar.md) (gerar e configurar SSH para deploy), [parte-f1-jenkins-cd-pos-ci.md](../architecture/parte-f1-jenkins-cd-pos-ci.md) (visão técnica do Jenkins), [README.md](../../README.md) (visão geral do projeto).

@@ -10,11 +10,13 @@
 // - api-aspnetcore-urls       (Secret text) ASPNETCORE_URLS (ex.: http://127.0.0.1:5031)
 // - vite-public-api-url       (Secret text) URL pública da API para build do Vite (gravada também no arquivo vite na VPS)
 // - github-token-deploy-status (Secret text) PAT com escopo repo:status (commit statuses)
+//
+// Quando Jenkins corre noutra máquina e faz SSH para a VPS (JENKINS_LOCAL_DEPLOY=false):
 // - vps-ssh-key               (SSH Username with private key)
-// - vps-host                  (Secret text) hostname ou IP
+// - vps-host                  (Secret text) hostname ou IP (sem https://)
 //
 // Variáveis de job (opcional, não secret): DEPLOY_ROOT, APP_SERVICE_NAME, APP_HEALTHCHECK_URL, VPS_PORT,
-// DEPLOY_BRANCH, VPS_REPO_DIR
+// DEPLOY_BRANCH, VPS_REPO_DIR, JENKINS_LOCAL_DEPLOY (default: true — deploy na mesma máquina sem SSH)
 
 pipeline {
   agent any
@@ -33,6 +35,8 @@ pipeline {
     APP_HEALTHCHECK_URL = "${env.APP_HEALTHCHECK_URL ?: 'http://127.0.0.1:5031/health/live'}"
     VPS_PORT = "${env.VPS_PORT ?: '22'}"
     VPS_REPO_DIR = "${env.VPS_REPO_DIR ?: '/opt/apptorcedor/repo'}"
+    // true = sem scp/ssh; usa WORKSPACE como repositório git no deploy local (Jenkins na mesma VPS).
+    JENKINS_LOCAL_DEPLOY = "${env.JENKINS_LOCAL_DEPLOY ?: 'true'}"
   }
 
   stages {
@@ -62,59 +66,98 @@ pipeline {
         }
       }
       steps {
-        withCredentials([
-          string(credentialsId: 'api-connection-string', variable: 'API_CONN'),
-          string(credentialsId: 'api-jwt-key', variable: 'API_JWT_KEY'),
-          string(credentialsId: 'api-admin-password', variable: 'API_ADMIN_PW'),
-          string(credentialsId: 'api-webhook-secret', variable: 'API_WEBHOOK'),
-          string(credentialsId: 'api-cors-origin', variable: 'API_CORS'),
-          string(credentialsId: 'api-aspnetcore-urls', variable: 'API_ASPNET_URLS'),
-          string(credentialsId: 'vite-public-api-url', variable: 'VITE_API_URL'),
-          sshUserPrivateKey(
-            credentialsId: 'vps-ssh-key',
-            keyFileVariable: 'SSH_KEY',
-            usernameVariable: 'SSH_USER'
-          ),
-          string(credentialsId: 'vps-host', variable: 'VPS_HOST')
-        ]) {
-          script {
-            env.RELEASE_ID = sh(
-              returnStdout: true,
-              script: 'echo "$(date -u +%Y%m%d%H%M%S)-$(git rev-parse --short HEAD)"'
-            ).trim()
+        script {
+          env.RELEASE_ID = sh(
+            returnStdout: true,
+            script: 'echo "$(date -u +%Y%m%d%H%M%S)-$(git rev-parse --short HEAD)"'
+          ).trim()
+          def localDeploy = (env.JENKINS_LOCAL_DEPLOY ?: 'true').trim().equalsIgnoreCase('true')
+
+          def secretCreds = [
+            string(credentialsId: 'api-connection-string', variable: 'API_CONN'),
+            string(credentialsId: 'api-jwt-key', variable: 'API_JWT_KEY'),
+            string(credentialsId: 'api-admin-password', variable: 'API_ADMIN_PW'),
+            string(credentialsId: 'api-webhook-secret', variable: 'API_WEBHOOK'),
+            string(credentialsId: 'api-cors-origin', variable: 'API_CORS'),
+            string(credentialsId: 'api-aspnetcore-urls', variable: 'API_ASPNET_URLS'),
+            string(credentialsId: 'vite-public-api-url', variable: 'VITE_API_URL')
+          ]
+
+          if (localDeploy) {
+            withCredentials(secretCreds) {
+              sh '''#!/bin/bash
+                set -euo pipefail
+                API_ENV_LOCAL="$(pwd)/api.env.jenkins.${BUILD_NUMBER}"
+                VITE_LOCAL="$(pwd)/vite-api-url.jenkins.${BUILD_NUMBER}"
+                REMOTE_ENV="/tmp/apptorcedor-api.env.${BUILD_NUMBER}"
+                REMOTE_VITE="/tmp/apptorcedor-vite-url.${BUILD_NUMBER}"
+                REMOTE_SH="/tmp/apptorcedor-build-deploy-${BUILD_NUMBER}.sh"
+                {
+                  echo "ASPNETCORE_ENVIRONMENT=Production"
+                  printf 'ConnectionStrings__DefaultConnection=%s\n' "${API_CONN}"
+                  printf 'Jwt__Key=%s\n' "${API_JWT_KEY}"
+                  echo "Jwt__Issuer=AppTorcedor"
+                  echo "Jwt__Audience=AppTorcedor"
+                  printf 'Payments__WebhookSecret=%s\n' "${API_WEBHOOK}"
+                  printf 'ADMIN_MASTER_INITIAL_PASSWORD=%s\n' "${API_ADMIN_PW}"
+                  printf 'Cors__AllowedOrigins__0=%s\n' "${API_CORS}"
+                  printf 'ASPNETCORE_URLS=%s\n' "${API_ASPNET_URLS}"
+                  echo 'Google__Auth__ClientId='
+                } > "${API_ENV_LOCAL}"
+                printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"
+                cp "${API_ENV_LOCAL}" "${REMOTE_ENV}"
+                cp "${VITE_LOCAL}" "${REMOTE_VITE}"
+                cp "${WORKSPACE}/deploy/vps/build-and-deploy.sh" "${REMOTE_SH}"
+                chmod +x "${REMOTE_SH}"
+                rm -f "${API_ENV_LOCAL}" "${VITE_LOCAL}"
+                sudo mkdir -p /etc/apptorcedor
+                sudo install -m 600 -o root -g root "${REMOTE_ENV}" /etc/apptorcedor/api.env
+                sudo bash "${REMOTE_SH}" "${DEPLOY_BRANCH}" "${REMOTE_VITE}" "${DEPLOY_ROOT}" "${APP_SERVICE_NAME}" "${APP_HEALTHCHECK_URL}" "${RELEASE_ID}" "${WORKSPACE}"
+              '''
+            }
+          } else {
+            withCredentials(secretCreds + [
+              sshUserPrivateKey(
+                credentialsId: 'vps-ssh-key',
+                keyFileVariable: 'SSH_KEY',
+                usernameVariable: 'SSH_USER'
+              ),
+              string(credentialsId: 'vps-host', variable: 'VPS_HOST')
+            ]) {
+              sh '''#!/bin/bash
+                set -euo pipefail
+                chmod 600 "${SSH_KEY}"
+                API_ENV_LOCAL="$(pwd)/api.env.jenkins.${BUILD_NUMBER}"
+                VITE_LOCAL="$(pwd)/vite-api-url.jenkins.${BUILD_NUMBER}"
+                REMOTE_ENV="/tmp/apptorcedor-api.env.${BUILD_NUMBER}"
+                REMOTE_VITE="/tmp/apptorcedor-vite-url.${BUILD_NUMBER}"
+                REMOTE_SH="/tmp/apptorcedor-build-deploy-${BUILD_NUMBER}.sh"
+                {
+                  echo "ASPNETCORE_ENVIRONMENT=Production"
+                  printf 'ConnectionStrings__DefaultConnection=%s\n' "${API_CONN}"
+                  printf 'Jwt__Key=%s\n' "${API_JWT_KEY}"
+                  echo "Jwt__Issuer=AppTorcedor"
+                  echo "Jwt__Audience=AppTorcedor"
+                  printf 'Payments__WebhookSecret=%s\n' "${API_WEBHOOK}"
+                  printf 'ADMIN_MASTER_INITIAL_PASSWORD=%s\n' "${API_ADMIN_PW}"
+                  printf 'Cors__AllowedOrigins__0=%s\n' "${API_CORS}"
+                  printf 'ASPNETCORE_URLS=%s\n' "${API_ASPNET_URLS}"
+                  echo 'Google__Auth__ClientId='
+                } > "${API_ENV_LOCAL}"
+                printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"
+                scp -i "${SSH_KEY}" -P "${VPS_PORT}" -o StrictHostKeyChecking=accept-new \
+                  "${API_ENV_LOCAL}" "${SSH_USER}@${VPS_HOST}:${REMOTE_ENV}"
+                scp -i "${SSH_KEY}" -P "${VPS_PORT}" -o StrictHostKeyChecking=accept-new \
+                  "${VITE_LOCAL}" "${SSH_USER}@${VPS_HOST}:${REMOTE_VITE}"
+                scp -i "${SSH_KEY}" -P "${VPS_PORT}" -o StrictHostKeyChecking=accept-new \
+                  "${WORKSPACE}/deploy/vps/build-and-deploy.sh" "${SSH_USER}@${VPS_HOST}:${REMOTE_SH}"
+                rm -f "${API_ENV_LOCAL}" "${VITE_LOCAL}"
+                ssh -i "${SSH_KEY}" -p "${VPS_PORT}" -o StrictHostKeyChecking=accept-new \
+                  "${SSH_USER}@${VPS_HOST}" \
+                  "set -eu; sudo mkdir -p /etc/apptorcedor; sudo install -m 600 -o root -g root \"${REMOTE_ENV}\" /etc/apptorcedor/api.env; sudo bash \"${REMOTE_SH}\" \"${DEPLOY_BRANCH}\" \"${REMOTE_VITE}\" \"${DEPLOY_ROOT}\" \"${APP_SERVICE_NAME}\" \"${APP_HEALTHCHECK_URL}\" \"${RELEASE_ID}\" \"${VPS_REPO_DIR}\""
+              '''
+            }
           }
-          sh '''#!/bin/bash
-            set -euo pipefail
-            chmod 600 "${SSH_KEY}"
-            API_ENV_LOCAL="$(pwd)/api.env.jenkins.${BUILD_NUMBER}"
-            VITE_LOCAL="$(pwd)/vite-api-url.jenkins.${BUILD_NUMBER}"
-            REMOTE_ENV="/tmp/apptorcedor-api.env.${BUILD_NUMBER}"
-            REMOTE_VITE="/tmp/apptorcedor-vite-url.${BUILD_NUMBER}"
-            REMOTE_SH="/tmp/apptorcedor-build-deploy-${BUILD_NUMBER}.sh"
-            {
-              echo "ASPNETCORE_ENVIRONMENT=Production"
-              printf 'ConnectionStrings__DefaultConnection=%s\n' "${API_CONN}"
-              printf 'Jwt__Key=%s\n' "${API_JWT_KEY}"
-              echo "Jwt__Issuer=AppTorcedor"
-              echo "Jwt__Audience=AppTorcedor"
-              printf 'Payments__WebhookSecret=%s\n' "${API_WEBHOOK}"
-              printf 'ADMIN_MASTER_INITIAL_PASSWORD=%s\n' "${API_ADMIN_PW}"
-              printf 'Cors__AllowedOrigins__0=%s\n' "${API_CORS}"
-              printf 'ASPNETCORE_URLS=%s\n' "${API_ASPNET_URLS}"
-              echo 'Google__Auth__ClientId='
-            } > "${API_ENV_LOCAL}"
-            printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"
-            scp -i "${SSH_KEY}" -P "${VPS_PORT}" -o StrictHostKeyChecking=accept-new \
-              "${API_ENV_LOCAL}" "${SSH_USER}@${VPS_HOST}:${REMOTE_ENV}"
-            scp -i "${SSH_KEY}" -P "${VPS_PORT}" -o StrictHostKeyChecking=accept-new \
-              "${VITE_LOCAL}" "${SSH_USER}@${VPS_HOST}:${REMOTE_VITE}"
-            scp -i "${SSH_KEY}" -P "${VPS_PORT}" -o StrictHostKeyChecking=accept-new \
-              deploy/vps/build-and-deploy.sh "${SSH_USER}@${VPS_HOST}:${REMOTE_SH}"
-            rm -f "${API_ENV_LOCAL}" "${VITE_LOCAL}"
-            ssh -i "${SSH_KEY}" -p "${VPS_PORT}" -o StrictHostKeyChecking=accept-new \
-              "${SSH_USER}@${VPS_HOST}" \
-              "set -eu; sudo mkdir -p /etc/apptorcedor; sudo install -m 600 -o root -g root \"${REMOTE_ENV}\" /etc/apptorcedor/api.env; sudo bash \"${REMOTE_SH}\" \"${DEPLOY_BRANCH}\" \"${REMOTE_VITE}\" \"${DEPLOY_ROOT}\" \"${APP_SERVICE_NAME}\" \"${APP_HEALTHCHECK_URL}\" \"${RELEASE_ID}\" \"${VPS_REPO_DIR}\""
-          '''
         }
       }
     }
