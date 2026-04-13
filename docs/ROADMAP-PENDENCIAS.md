@@ -167,13 +167,97 @@ Detalhes: [docs/architecture/parte-c6-suporte-torcedor.md](architecture/parte-c6
 
 Implementar **depois** de: gestão de planos (B.5), pagamentos mínimos (B.6), e membership admin (B.4) — para o fluxo público reutilizar as mesmas regras e evitar inconsistência.
 
-- [ ] **Catálogo de planos** na área logada do torcedor (`ListPlans` — somente planos ativos/publicados).
-- [ ] **Simulação / resumo** do plano (preço, ciclo, desconto, benefícios principais).
-- [ ] **Command `SubscribeMember`:** criar/atualizar `Membership`, status inicial coerente (ex.: aguardando pagamento ou ativo conforme regra).
-- [ ] **Integração com pagamento na contratação:** escolha PIX ou cartão, criação de assinatura recorrente via `IPaymentProvider`.
-- [ ] **Pós-contratação:** confirmação, recibo, próximos vencimentos, acesso à carteirinha quando **Ativo**.
-- [ ] **Troca de plano** (`ChangePlan`) com regras de upgrade/downgrade e impacto financeiro.
-- [ ] **Cancelamento** pelo torcedor (com política de arrependimento/cancelamento definida pelo clube).
+Ordem de execução sugerida: `D.1 → D.2 → D.3 → D.4 → D.5 → D.6 → D.7` (D.6 e D.7 podem ser desenvolvidos em paralelo após D.5).
+
+---
+
+### D.1 — Catálogo de planos (torcedor)
+
+**Backend**
+- [ ] `D.1.1` Query `ListPublishedPlansQuery` + handler (`Application`) — filtra `IsPublished = true` e `IsActive = true`, retorna nome, preço, ciclo, desconto e lista de benefícios
+- [ ] `D.1.2` Endpoint `GET /api/plans` (público ou JWT opcional) — sem exigir sócio
+- [ ] `D.1.3` Testes unitários do handler e testes de API do endpoint
+
+**Frontend**
+- [ ] `D.1.4` Página `/plans` com cards de planos (nome, preço, benefícios resumidos, CTA "Assinar")
+- [ ] `D.1.5` Serviço Axios `plansService.listPublished()`
+
+---
+
+### D.2 — Simulação / detalhe do plano
+
+**Backend**
+- [ ] `D.2.1` Query `GetPlanDetailsQuery` + handler — retorna todos os campos do plano + benefícios completos + regras (`RulesNotes`)
+- [ ] `D.2.2` Endpoint `GET /api/plans/{id}` (público ou JWT opcional)
+- [ ] `D.2.3` Testes unitários e de API
+
+**Frontend**
+- [ ] `D.2.4` Página `/plans/{id}` (ou drawer/modal de detalhe) com resumo completo: preço, ciclo, desconto calculado, lista de benefícios, botão "Contratar"
+
+---
+
+### D.3 — Command `SubscribeMember` (contratação backend)
+
+**Backend**
+- [ ] `D.3.1` Command `SubscribeMemberCommand` + handler (`Application`) — cria `Membership` com status inicial (`PendingPayment` ou `Active` conforme regra de negócio)
+- [ ] `D.3.2` Regra: impedir dupla assinatura ativa; validar plano publicado e ativo
+- [ ] `D.3.3` Publicar evento de domínio `MemberSubscribedEvent` (para desencadear pontos de fidelidade, carteirinha, etc.)
+- [ ] `D.3.4` Testes unitários do command/handler (incluindo casos de erro: plano inativo, já associado ativo)
+
+---
+
+### D.4 — Integração de pagamento na contratação
+
+**Backend**
+- [ ] `D.4.1` Endpoint `POST /api/subscriptions` (JWT obrigatório) — recebe `planId` e `paymentMethod` (Pix | Card), chama `SubscribeMemberCommand` e `IPaymentProvider.CreateSubscriptionAsync` / `CreatePixAsync` / `CreateCardAsync`
+- [ ] `D.4.2` Retornar no response: `membershipId`, `paymentId`, instruções de pagamento (QR Code PIX ou link cartão)
+- [ ] `D.4.3` Webhook/callback de confirmação de pagamento — atualizar `Payment.Status` e `Membership.Status` para `Active` via `RegisterPaymentCommand`
+- [ ] `D.4.4` Testes de integração do fluxo completo com `MockPaymentProvider`
+
+**Frontend**
+- [ ] `D.4.5` Tela de checkout: seleção de método (PIX / Cartão), resumo do plano, botão "Confirmar"
+- [ ] `D.4.6` Exibição de QR Code PIX ou redirecionamento para cartão após confirmação
+- [ ] `D.4.7` Serviço Axios `subscriptionsService.subscribe(planId, paymentMethod)`
+
+---
+
+### D.5 — Pós-contratação (confirmação e recibo)
+
+**Backend**
+- [ ] `D.5.1` Query `GetMySubscriptionSummaryQuery` — retorna `Membership` ativo, datas de vencimento, último pagamento, status da carteirinha
+- [ ] `D.5.2` Endpoint `GET /api/account/subscription` (JWT) — usado pela SPA pós-contratação
+- [ ] `D.5.3` Testes unitários da query
+
+**Frontend**
+- [ ] `D.5.4` Página `/subscription/confirmation` (ou redirect pós-checkout) com: confirmação visual, recibo (plano, valor pago, próximo vencimento), link para `/digital-card`
+- [ ] `D.5.5` Atualizar `/account` ("Minha conta") para exibir status da assinatura e próximo vencimento
+
+---
+
+### D.6 — Troca de plano (`ChangePlan`)
+
+**Backend**
+- [ ] `D.6.1` Command `ChangePlanCommand` + handler — regras de upgrade/downgrade: calcular proporcional, cancelar cobrança atual, criar nova via `IPaymentProvider`
+- [ ] `D.6.2` Registrar mudança em `MembershipHistories` com motivo `PlanChanged`
+- [ ] `D.6.3` Endpoint `PUT /api/account/subscription/plan` (JWT)
+- [ ] `D.6.4` Testes unitários: upgrade, downgrade, tentativa com plano inválido
+
+**Frontend**
+- [ ] `D.6.5` Seção "Trocar plano" em `/account` ou `/subscription`: lista de outros planos publicados, comparativo, confirmação de troca
+
+---
+
+### D.7 — Cancelamento pelo torcedor
+
+**Backend**
+- [ ] `D.7.1` Command `CancelMembershipCommand` + handler — aplica política de arrependimento (configurável via `AppConfigurationEntries`), chama `IPaymentProvider.CancelAsync`, atualiza `Membership.Status = Cancelado`
+- [ ] `D.7.2` Registrar em `MembershipHistories` com motivo `CancelledByMember`
+- [ ] `D.7.3` Endpoint `DELETE /api/account/subscription` (JWT)
+- [ ] `D.7.4` Testes unitários: dentro do prazo de arrependimento, fora do prazo, membership já cancelada
+
+**Frontend**
+- [ ] `D.7.5` Botão/seção "Cancelar assinatura" em `/account` com modal de confirmação explicando a política do clube
+- [ ] `D.7.6` Feedback pós-cancelamento: status atualizado, prazo de acesso restante
 
 ---
 
