@@ -5,6 +5,7 @@ import { getMyProfile, resolvePublicAssetUrl, upsertMyProfile, uploadProfilePhot
 import { plansService } from '../features/plans/plansService'
 import {
   subscriptionsService,
+  type CancelMembershipResponse,
   type ChangePlanResponse,
   type MySubscriptionSummary,
   type SubscriptionPaymentMethod,
@@ -29,6 +30,27 @@ export function AccountPage() {
   const [changeBusy, setChangeBusy] = useState(false)
   const [changeError, setChangeError] = useState<string | null>(null)
   const [changeResult, setChangeResult] = useState<ChangePlanResponse | null>(null)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [cancelBusy, setCancelBusy] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
+  const [cancelResult, setCancelResult] = useState<CancelMembershipResponse | null>(null)
+
+  const scheduledCancellation = useMemo(() => {
+    if (!subscription?.hasMembership)
+      return false
+    return subscription.membershipStatus === 'Ativo' && !!subscription.endDate
+  }, [subscription])
+
+  const canRequestCancellation = useMemo(() => {
+    if (!subscription?.hasMembership)
+      return false
+    const st = subscription.membershipStatus
+    if (st === 'Cancelado')
+      return false
+    if (scheduledCancellation)
+      return false
+    return st === 'Ativo' || st === 'PendingPayment'
+  }, [subscription, scheduledCancellation])
 
   const otherPlans = useMemo(() => {
     if (!publishedPlans || !subscription?.plan)
@@ -144,6 +166,36 @@ export function AccountPage() {
     }
   }
 
+  async function onConfirmCancelSubscription() {
+    setCancelError(null)
+    setCancelBusy(true)
+    try {
+      const r = await subscriptionsService.cancelMembership()
+      setCancelResult(r)
+      setShowCancelModal(false)
+      await refreshSubscription()
+    }
+    catch (err) {
+      if (axios.isAxiosError(err)) {
+        const code = (err.response?.data as { error?: string } | undefined)?.error
+        const map: Record<string, string> = {
+          membership_not_found: 'Assinatura não encontrada.',
+          membership_already_cancelled: 'Esta assinatura já está cancelada.',
+          cancellation_already_scheduled: 'O cancelamento já está agendado.',
+          membership_not_cancellable: 'Não é possível cancelar esta assinatura no momento.',
+          missing_billing_context: 'Não há dados suficientes do ciclo para agendar o cancelamento.',
+        }
+        setCancelError(code ? (map[code] ?? 'Não foi possível cancelar.') : 'Não foi possível cancelar.')
+      }
+      else {
+        setCancelError('Não foi possível cancelar.')
+      }
+    }
+    finally {
+      setCancelBusy(false)
+    }
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setSaveError(null)
@@ -228,6 +280,51 @@ export function AccountPage() {
             {' · '}
             <Link to="/plans">Planos</Link>
           </p>
+          {subscription.membershipStatus === 'Cancelado' ? (
+            <p style={{ margin: '0.75rem 0 0', fontSize: '0.9rem', color: '#555' }}>
+              Assinatura cancelada.
+            </p>
+          ) : null}
+          {scheduledCancellation ? (
+            <p style={{ margin: '0.75rem 0 0', fontSize: '0.9rem', color: '#555' }}>
+              Cancelamento agendado. Acesso até
+              {' '}
+              {subscription.endDate
+                ? new Date(subscription.endDate).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+                : '—'}
+            </p>
+          ) : null}
+          {canRequestCancellation ? (
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
+              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Cancelar assinatura</h3>
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#444' }}>
+                O clube pode oferecer prazo de arrependimento (configurável). Dentro desse prazo o cancelamento é imediato;
+                depois dele, o acesso segue até a data do fim do ciclo atual.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setCancelError(null)
+                  setShowCancelModal(true)
+                }}
+                style={{ color: '#721c24', borderColor: '#721c24', background: '#fff' }}
+              >
+                Cancelar assinatura
+              </button>
+              {cancelResult ? (
+                <div style={{ marginTop: 12, fontSize: '0.9rem', background: '#fff', padding: 8, borderRadius: 6 }}>
+                  <p style={{ margin: 0 }}>{cancelResult.message}</p>
+                  {cancelResult.mode === 'ScheduledEndOfCycle' && cancelResult.accessValidUntilUtc ? (
+                    <p style={{ margin: '0.5rem 0 0' }}>
+                      Acesso até
+                      {' '}
+                      {new Date(cancelResult.accessValidUntilUtc).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           {subscription.membershipStatus === 'Ativo' && subscription.plan ? (
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
               <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Trocar plano</h3>
@@ -387,6 +484,64 @@ export function AccountPage() {
       <p style={{ marginTop: 24 }}>
         <Link to="/">Voltar</Link>
       </p>
+      {showCancelModal ? (
+        <div
+          role="presentation"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 16,
+          }}
+          onClick={() => !cancelBusy && setShowCancelModal(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && !cancelBusy)
+              setShowCancelModal(false)
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-dialog-title"
+            style={{
+              background: '#fff',
+              borderRadius: 8,
+              padding: '1.25rem',
+              maxWidth: 400,
+              width: '100%',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+            }}
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+          >
+            <h2 id="cancel-dialog-title" style={{ margin: '0 0 0.75rem', fontSize: '1.1rem' }}>
+              Confirmar cancelamento
+            </h2>
+            <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: '#333' }}>
+              Tem certeza? Se você estiver no prazo de arrependimento, o cancelamento será imediato. Caso contrário, você
+              mantém o acesso até o fim do período já pago (próximo vencimento).
+            </p>
+            {cancelError ? <p role="alert" style={{ color: 'crimson', fontSize: '0.9rem', margin: '0 0 1rem' }}>{cancelError}</p> : null}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button type="button" disabled={cancelBusy} onClick={() => setShowCancelModal(false)}>
+                Voltar
+              </button>
+              <button
+                type="button"
+                disabled={cancelBusy}
+                onClick={() => void onConfirmCancelSubscription()}
+                style={{ background: '#721c24', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4 }}
+              >
+                {cancelBusy ? 'Processando…' : 'Confirmar cancelamento'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   )
 }

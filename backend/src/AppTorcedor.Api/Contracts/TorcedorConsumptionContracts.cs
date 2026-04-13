@@ -156,6 +156,13 @@ public sealed record TorcedorChangePlanResponse(
     TorcedorSubscriptionCheckoutPixResponse? Pix,
     TorcedorSubscriptionCheckoutCardResponse? Card);
 
+public sealed record TorcedorCancelMembershipResponse(
+    Guid MembershipId,
+    string MembershipStatus,
+    string Mode,
+    DateTimeOffset? AccessValidUntilUtc,
+    string Message);
+
 public sealed class TorcedorSubscriptionPaymentCallbackRequest
 {
     public Guid PaymentId { get; set; }

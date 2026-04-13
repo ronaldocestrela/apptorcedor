@@ -70,6 +70,14 @@ export type ChangePlanResponse = {
   card: { checkoutUrl: string } | null
 }
 
+export type CancelMembershipResponse = {
+  membershipId: string
+  membershipStatus: string
+  mode: string
+  accessValidUntilUtc: string | null
+  message: string
+}
+
 export const subscriptionsService = {
   async subscribe(
     planId: string,
@@ -95,6 +103,11 @@ export const subscriptionsService = {
       planId,
       paymentMethod,
     })
+    return data
+  },
+
+  async cancelMembership(): Promise<CancelMembershipResponse> {
+    const { data } = await api.delete<CancelMembershipResponse>('/api/account/subscription')
     return data
   },
 }

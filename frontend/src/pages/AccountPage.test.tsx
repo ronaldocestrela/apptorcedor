@@ -21,6 +21,7 @@ vi.mock('../features/plans/subscriptionsService', () => ({
   subscriptionsService: {
     getMySummary: vi.fn(),
     changePlan: vi.fn(),
+    cancelMembership: vi.fn(),
   },
 }))
 
@@ -46,6 +47,7 @@ describe('AccountPage', () => {
     })
     vi.mocked(subscriptionsService.getMySummary).mockReset()
     vi.mocked(subscriptionsService.changePlan).mockReset()
+    vi.mocked(subscriptionsService.cancelMembership).mockReset()
     vi.mocked(plansService.listPublished).mockReset()
   })
 
@@ -72,7 +74,7 @@ describe('AccountPage', () => {
       </MemoryRouter>,
     )
     await waitFor(() => {
-      expect(screen.getByText(/Assinatura/i)).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Assinatura', level: 2 })).toBeInTheDocument()
     })
     expect(screen.getByText(/Ativo/)).toBeInTheDocument()
     expect(screen.getByText(/Gold/)).toBeInTheDocument()
@@ -125,6 +127,50 @@ describe('AccountPage', () => {
     await user.click(screen.getByRole('button', { name: /Confirmar troca/i }))
     await waitFor(() => {
       expect(subscriptionsService.changePlan).toHaveBeenCalledWith('p2', 'Pix')
+    })
+  })
+
+  it('cancel subscription opens modal and calls cancelMembership on confirm', async () => {
+    const user = userEvent.setup()
+    const summary = {
+      hasMembership: true,
+      membershipId: 'm1',
+      membershipStatus: 'Ativo',
+      startDate: '2025-01-01T00:00:00Z',
+      endDate: null,
+      nextDueDate: '2025-02-01T12:00:00Z',
+      plan: { planId: 'p1', name: 'Gold', price: 50, billingCycle: 'Monthly', discountPercentage: 0 },
+      lastPayment: null,
+      digitalCard: null,
+    }
+    vi.mocked(subscriptionsService.getMySummary).mockResolvedValue(summary)
+    vi.mocked(plansService.listPublished).mockResolvedValue({
+      items: [
+        { planId: 'p1', name: 'Gold', price: 50, billingCycle: 'Monthly', discountPercentage: 0, summary: null, benefits: [] },
+      ],
+    })
+    vi.mocked(subscriptionsService.cancelMembership).mockResolvedValue({
+      membershipId: 'm1',
+      membershipStatus: 'Cancelado',
+      mode: 'Immediate',
+      accessValidUntilUtc: null,
+      message: 'Sua assinatura foi cancelada imediatamente.',
+    })
+    render(
+      <MemoryRouter>
+        <AccountPage />
+      </MemoryRouter>,
+    )
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Cancelar assinatura/i })).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('button', { name: /^Cancelar assinatura$/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: /Confirmar cancelamento/i })).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('button', { name: /Confirmar cancelamento/i }))
+    await waitFor(() => {
+      expect(subscriptionsService.cancelMembership).toHaveBeenCalled()
     })
   })
 

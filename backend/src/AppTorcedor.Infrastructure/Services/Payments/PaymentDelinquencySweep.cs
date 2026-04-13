@@ -6,7 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AppTorcedor.Infrastructure.Services.Payments;
 
-public sealed class PaymentDelinquencySweep(AppDbContext db, IMembershipAdministrationPort membership) : IPaymentDelinquencySweep
+public sealed class PaymentDelinquencySweep(
+    AppDbContext db,
+    IMembershipAdministrationPort membership,
+    IMembershipScheduledCancellationEffectiveSweep scheduledCancellationEffective) : IPaymentDelinquencySweep
 {
     public async Task<PaymentDelinquencySweepResult> RunAsync(CancellationToken cancellationToken = default)
     {
@@ -49,6 +52,10 @@ public sealed class PaymentDelinquencySweep(AppDbContext db, IMembershipAdminist
                 marked++;
         }
 
-        return new PaymentDelinquencySweepResult(overdueCount, marked);
+        var effectivelyCancelled = await scheduledCancellationEffective
+            .ApplyAsync(now, cancellationToken)
+            .ConfigureAwait(false);
+
+        return new PaymentDelinquencySweepResult(overdueCount, marked, effectivelyCancelled);
     }
 }

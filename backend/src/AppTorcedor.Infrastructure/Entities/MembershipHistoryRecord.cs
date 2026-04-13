@@ -28,4 +28,7 @@ public static class MembershipHistoryEventTypes
 
     /// <summary>Troca de plano pelo torcedor com ajuste proporcional quando aplicável (Parte D.6).</summary>
     public const string PlanChanged = "PlanChanged";
+
+    /// <summary>Cancelamento solicitado pelo próprio torcedor (Parte D.7).</summary>
+    public const string CancelledByMember = "CancelledByMember";
 }

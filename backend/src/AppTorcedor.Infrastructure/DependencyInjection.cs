@@ -109,9 +109,11 @@ public static class DependencyInjection
         services.AddScoped<IBenefitsAdministrationPort, BenefitsAdministrationService>();
         services.AddScoped<IInAppNotificationDispatchService, InAppNotificationDispatchService>();
         services.AddScoped<IPaymentDelinquencySweep, PaymentDelinquencySweep>();
+        services.AddScoped<IMembershipScheduledCancellationEffectiveSweep, MembershipScheduledCancellationEffectiveSweep>();
         services.AddScoped<ITorcedorSubscriptionCheckoutPort, TorcedorSubscriptionCheckoutService>();
         services.AddScoped<ITorcedorSubscriptionSummaryPort, TorcedorSubscriptionSummaryReadService>();
         services.AddScoped<ITorcedorPlanChangePort, TorcedorPlanChangeService>();
+        services.AddScoped<ITorcedorMembershipCancellationPort, TorcedorMembershipCancellationService>();
         services.AddHostedService<PaymentDelinquencyHostedService>();
         services.AddHostedService<InAppNotificationDispatchHostedService>();
 

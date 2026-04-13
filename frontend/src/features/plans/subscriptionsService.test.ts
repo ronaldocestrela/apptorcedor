@@ -6,6 +6,7 @@ vi.mock('../../shared/api/http', () => ({
     post: vi.fn(),
     get: vi.fn(),
     put: vi.fn(),
+    delete: vi.fn(),
   },
 }))
 
@@ -16,6 +17,7 @@ describe('subscriptionsService', () => {
     vi.mocked(api.post).mockReset()
     vi.mocked(api.get).mockReset()
     vi.mocked(api.put).mockReset()
+    vi.mocked(api.delete).mockReset()
   })
 
   it('subscribe posts /api/subscriptions with planId and paymentMethod', async () => {
@@ -54,6 +56,21 @@ describe('subscriptionsService', () => {
     const r = await subscriptionsService.changePlan('plan-b', 'Card')
     expect(r.paymentId).toBe('pay2')
     expect(api.put).toHaveBeenCalledWith('/api/account/subscription/plan', { planId: 'plan-b', paymentMethod: 'Card' })
+  })
+
+  it('cancelMembership deletes /api/account/subscription', async () => {
+    vi.mocked(api.delete).mockResolvedValue({
+      data: {
+        membershipId: 'm1',
+        membershipStatus: 'Cancelado',
+        mode: 'Immediate',
+        accessValidUntilUtc: '2025-01-02T12:00:00Z',
+        message: 'ok',
+      },
+    })
+    const r = await subscriptionsService.cancelMembership()
+    expect(r.membershipStatus).toBe('Cancelado')
+    expect(api.delete).toHaveBeenCalledWith('/api/account/subscription')
   })
 
   it('getMySummary gets /api/account/subscription', async () => {

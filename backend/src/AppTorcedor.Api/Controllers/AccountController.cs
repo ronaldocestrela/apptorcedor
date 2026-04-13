@@ -2,6 +2,7 @@ using System.Security.Claims;
 using AppTorcedor.Api.Contracts;
 using AppTorcedor.Api.Services;
 using AppTorcedor.Application.Modules.Account;
+using AppTorcedor.Application.Modules.Account.Commands.CancelMembership;
 using AppTorcedor.Application.Modules.Account.Commands.ChangePlan;
 using AppTorcedor.Application.Modules.Account.Commands.RegisterTorcedor;
 using AppTorcedor.Application.Modules.Account.Commands.UpsertMyProfile;
@@ -135,6 +136,42 @@ public sealed class AccountController(
             ChangePlanError.MissingBillingCycleContext => Conflict(new { error = "missing_billing_context" }),
             ChangePlanError.PlanNotFoundOrNotAvailable => BadRequest(new { error = "plan_not_available" }),
             ChangePlanError.SamePlan => BadRequest(new { error = "same_plan" }),
+            _ => BadRequest(),
+        };
+
+    [HttpDelete("subscription")]
+    [Authorize]
+    [ProducesResponseType(typeof(TorcedorCancelMembershipResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> CancelSubscription(CancellationToken cancellationToken)
+    {
+        var userId = GetUserIdOrDefault();
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await mediator
+            .Send(new CancelMembershipCommand(userId.Value), cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!result.Ok)
+            return MapCancelMembershipFailure(result.Error!.Value);
+
+        return Ok(
+            new TorcedorCancelMembershipResponse(
+                result.MembershipId!.Value,
+                result.MembershipStatus!.Value.ToString(),
+                result.Mode!.Value.ToString(),
+                result.AccessValidUntilUtc,
+                result.Message ?? string.Empty));
+    }
+
+    private IActionResult MapCancelMembershipFailure(CancelMembershipError err) =>
+        err switch
+        {
+            CancelMembershipError.MembershipNotFound => NotFound(new { error = "membership_not_found" }),
+            CancelMembershipError.MembershipAlreadyCancelled => Conflict(new { error = "membership_already_cancelled" }),
+            CancelMembershipError.CancellationAlreadyScheduled => Conflict(new { error = "cancellation_already_scheduled" }),
+            CancelMembershipError.MembershipNotCancellable => Conflict(new { error = "membership_not_cancellable" }),
+            CancelMembershipError.MissingBillingContext => Conflict(new { error = "missing_billing_context" }),
             _ => BadRequest(),
         };
 

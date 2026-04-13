@@ -256,14 +256,14 @@ Detalhes: [docs/architecture/parte-d6-troca-plano-torcedor.md](architecture/part
 ### D.7 — Cancelamento pelo torcedor
 
 **Backend**
-- [ ] `D.7.1` Command `CancelMembershipCommand` + handler — aplica política de arrependimento (configurável via `AppConfigurationEntries`), chama `IPaymentProvider.CancelAsync`, atualiza `Membership.Status = Cancelado`
-- [ ] `D.7.2` Registrar em `MembershipHistories` com motivo `CancelledByMember`
-- [ ] `D.7.3` Endpoint `DELETE /api/account/subscription` (JWT)
-- [ ] `D.7.4` Testes unitários: dentro do prazo de arrependimento, fora do prazo, membership já cancelada
+- [x] `D.7.1` Command `CancelMembershipCommand` + handler — aplica política de arrependimento (configurável via `AppConfigurationEntries`), chama `IPaymentProvider.CancelAsync`, atualiza `Membership.Status = Cancelado`
+- [x] `D.7.2` Registrar em `MembershipHistories` com motivo `CancelledByMember`
+- [x] `D.7.3` Endpoint `DELETE /api/account/subscription` (JWT)
+- [x] `D.7.4` Testes unitários: dentro do prazo de arrependimento, fora do prazo, membership já cancelada
 
 **Frontend**
-- [ ] `D.7.5` Botão/seção "Cancelar assinatura" em `/account` com modal de confirmação explicando a política do clube
-- [ ] `D.7.6` Feedback pós-cancelamento: status atualizado, prazo de acesso restante
+- [x] `D.7.5` Botão/seção "Cancelar assinatura" em `/account` com modal de confirmação explicando a política do clube
+- [x] `D.7.6` Feedback pós-cancelamento: status atualizado, prazo de acesso restante
 
 ---
 
