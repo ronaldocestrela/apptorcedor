@@ -25,6 +25,15 @@ public sealed class AuthEndpointsTests(AppWebApplicationFactory factory) : IClas
     }
 
     [Fact]
+    public async Task Accept_staff_invite_with_invalid_token_returns_unauthorized()
+    {
+        var res = await _client.PostAsJsonAsync(
+            "/api/auth/accept-staff-invite",
+            new { token = "invalid-token", password = "TestPassword123!" });
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
     public async Task Login_with_bad_password_returns_unauthorized()
     {
         var res = await _client.PostAsJsonAsync(

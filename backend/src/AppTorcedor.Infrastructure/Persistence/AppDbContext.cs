@@ -21,6 +21,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<PaymentRecord> Payments => Set<PaymentRecord>();
     public DbSet<AuditLogEntry> AuditLogs => Set<AuditLogEntry>();
     public DbSet<AppConfigurationEntry> AppConfigurationEntries => Set<AppConfigurationEntry>();
+    public DbSet<StaffInviteRecord> StaffInvites => Set<StaffInviteRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -116,6 +117,18 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             entity.Property(x => x.TokenHash).HasMaxLength(128).IsRequired();
             entity.HasIndex(x => x.TokenHash).IsUnique();
             entity.HasIndex(x => x.UserId);
+        });
+
+        builder.Entity<StaffInviteRecord>(entity =>
+        {
+            entity.ToTable("StaffInvites");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.NormalizedEmail).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Email).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Name).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.TokenHash).HasMaxLength(128).IsRequired();
+            entity.HasIndex(x => x.TokenHash).IsUnique();
+            entity.HasIndex(x => x.NormalizedEmail);
         });
     }
 }

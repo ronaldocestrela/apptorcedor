@@ -25,6 +25,13 @@ export function AdminLayout() {
       >
         <h2 style={{ fontSize: '1rem', marginTop: 0 }}>Admin</h2>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {(hasPermission(user, ApplicationPermissions.UsuariosVisualizar)
+            || hasPermission(user, ApplicationPermissions.ConfiguracoesVisualizar)) ? (
+            <NavLink to="dashboard" style={linkStyle}>Painel</NavLink>
+            ) : null}
+          {hasPermission(user, ApplicationPermissions.UsuariosVisualizar) ? (
+            <NavLink to="staff" style={linkStyle}>Staff</NavLink>
+          ) : null}
           {hasPermission(user, ApplicationPermissions.AdministracaoDiagnostics) ? (
             <NavLink to="diagnostics" style={linkStyle}>Diagnóstico</NavLink>
           ) : null}

@@ -6,6 +6,8 @@ public sealed record RefreshRequest(string RefreshToken);
 
 public sealed record LogoutRequest(string RefreshToken);
 
+public sealed record AcceptStaffInviteRequest(string Token, string Password, string? Name);
+
 public sealed record AuthResponse(
     string AccessToken,
     string RefreshToken,

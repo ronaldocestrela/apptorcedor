@@ -30,6 +30,7 @@ Estabelecer o monólito inicial com **ASP.NET Core Identity**, **JWT (access + r
 | POST | `/api/auth/refresh` | Anônimo | Rotação do refresh token |
 | POST | `/api/auth/logout` | Anônimo | Revoga refresh token informado |
 | GET | `/api/auth/me` | Bearer | Perfil + roles + **permissions** (catálogo granular) |
+| POST | `/api/auth/accept-staff-invite` | Anônimo | Corpo `{ token, password, name? }` — cria usuário staff a partir de convite e retorna access + refresh + roles |
 | GET | `/api/diagnostics/admin-master-only` | Bearer + permissão | Política `Administracao.Diagnostics` |
 
 ### Migrations

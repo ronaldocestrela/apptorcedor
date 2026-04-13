@@ -12,6 +12,9 @@ export function AdminIndexRedirect() {
   if (!user)
     return <Navigate to="/login" replace />
 
+  if (hasPermission(user, ApplicationPermissions.UsuariosVisualizar)
+    || hasPermission(user, ApplicationPermissions.ConfiguracoesVisualizar))
+    return <Navigate to="dashboard" replace />
   if (hasPermission(user, ApplicationPermissions.AdministracaoDiagnostics))
     return <Navigate to="diagnostics" replace />
   if (hasPermission(user, ApplicationPermissions.ConfiguracoesVisualizar))

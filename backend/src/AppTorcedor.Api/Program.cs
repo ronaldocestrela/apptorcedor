@@ -6,6 +6,7 @@ using AppTorcedor.Api.Middleware;
 using AppTorcedor.Api.Options;
 using AppTorcedor.Api.Services;
 using AppTorcedor.Application;
+using AppTorcedor.Identity;
 using AppTorcedor.Infrastructure;
 using AppTorcedor.Infrastructure.Identity;
 using AppTorcedor.Infrastructure.Persistence;
@@ -63,7 +64,15 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        Policies.AdminDashboard,
+        policy =>
+            policy.RequireAssertion(ctx =>
+                ctx.User.HasClaim(AppClaimTypes.Permission, ApplicationPermissions.UsuariosVisualizar)
+                || ctx.User.HasClaim(AppClaimTypes.Permission, ApplicationPermissions.ConfiguracoesVisualizar)));
+});
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 

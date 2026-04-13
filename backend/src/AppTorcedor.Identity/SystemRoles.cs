@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace AppTorcedor.Identity;
 
 /// <summary>Role names aligned with AGENTS.md profiles.</summary>
@@ -21,4 +23,18 @@ public static class SystemRoles
         Operador,
         Torcedor,
     ];
+
+    /// <summary>Roles that can operate the club backoffice (excludes <see cref="Torcedor"/>).</summary>
+    public static IReadOnlyList<string> AllExceptTorcedor { get; } =
+    [
+        AdministradorMaster,
+        Administrador,
+        Financeiro,
+        Atendimento,
+        Marketing,
+        Operador,
+    ];
+
+    public static bool IsAssignableStaffRole(string roleName) =>
+        AllExceptTorcedor.Any(r => r == roleName);
 }

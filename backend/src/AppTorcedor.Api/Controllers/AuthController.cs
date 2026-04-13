@@ -46,4 +46,17 @@ public sealed class AuthController(IAuthService auth) : ControllerBase
             return Unauthorized();
         return Ok(me);
     }
+
+    [HttpPost("accept-staff-invite")]
+    [AllowAnonymous]
+    public async Task<ActionResult<AuthResponse>> AcceptStaffInvite(
+        [FromBody] AcceptStaffInviteRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await auth.AcceptStaffInviteAsync(request.Token, request.Password, request.Name, cancellationToken)
+            .ConfigureAwait(false);
+        if (result is null)
+            return Unauthorized();
+        return Ok(result);
+    }
 }

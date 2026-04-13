@@ -27,4 +27,24 @@ export const ADMIN_AREA_PERMISSIONS: readonly ApplicationPermission[] = [
   ApplicationPermissions.ConfiguracoesVisualizar,
   ApplicationPermissions.ConfiguracoesEditar,
   ApplicationPermissions.SociosGerenciar,
+  ApplicationPermissions.UsuariosVisualizar,
+  ApplicationPermissions.UsuariosEditar,
 ]
+
+/** Mirrors backend <c>SystemRoles.All</c> for matrix UI. */
+export const ALL_SYSTEM_ROLES = [
+  'Administrador Master',
+  'Administrador',
+  'Financeiro',
+  'Atendimento',
+  'Marketing',
+  'Operador',
+  'Torcedor',
+] as const
+
+/** Roles allowed for staff invites (excludes torcedor). */
+export const STAFF_ASSIGNABLE_ROLES = ALL_SYSTEM_ROLES.filter((r) => r !== 'Torcedor') as readonly string[]
+
+export const ALL_APPLICATION_PERMISSION_VALUES: readonly ApplicationPermission[] = Object.freeze(
+  Object.values(ApplicationPermissions) as ApplicationPermission[],
+)

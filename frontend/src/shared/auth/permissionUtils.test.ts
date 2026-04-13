@@ -25,4 +25,10 @@ describe('permissionUtils', () => {
     expect(canAccessAdminArea({ permissions: [] }, ADMIN_AREA_PERMISSIONS)).toBe(false)
     expect(canAccessAdminArea(null, ADMIN_AREA_PERMISSIONS)).toBe(false)
   })
+
+  it('allows admin area with Usuarios.Visualizar alone', () => {
+    expect(
+      canAccessAdminArea({ permissions: [ApplicationPermissions.UsuariosVisualizar] }, ADMIN_AREA_PERMISSIONS),
+    ).toBe(true)
+  })
 })

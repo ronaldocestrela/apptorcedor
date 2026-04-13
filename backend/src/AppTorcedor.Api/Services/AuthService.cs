@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using AppTorcedor.Api.Contracts;
 using AppTorcedor.Api.Options;
+using AppTorcedor.Application.Abstractions;
 using AppTorcedor.Identity;
 using AppTorcedor.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
@@ -12,6 +13,7 @@ public sealed class AuthService(
     UserManager<ApplicationUser> userManager,
     IRefreshTokenStore refreshTokens,
     IPermissionResolver permissionResolver,
+    IStaffAdministrationPort staffAdministration,
     IJwtTokenIssuer jwt,
     IOptions<JwtOptions> jwtOptions) : IAuthService
 {
@@ -62,5 +64,27 @@ public sealed class AuthService(
         var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
         var permissions = await permissionResolver.GetPermissionsForRolesAsync(roles, cancellationToken).ConfigureAwait(false);
         return new MeResponse(user.Id, user.Email ?? string.Empty, user.Name, roles.ToList(), permissions);
+    }
+
+    public async Task<AuthResponse?> AcceptStaffInviteAsync(
+        string token,
+        string password,
+        string? name,
+        CancellationToken cancellationToken = default)
+    {
+        var accepted = await staffAdministration.AcceptInviteAsync(token, password, name, cancellationToken).ConfigureAwait(false);
+        if (accepted is null)
+            return null;
+
+        var user = await userManager.FindByIdAsync(accepted.UserId.ToString()).ConfigureAwait(false);
+        if (user is null || !user.IsActive)
+            return null;
+
+        var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
+        var permissions = await permissionResolver.GetPermissionsForRolesAsync(roles, cancellationToken).ConfigureAwait(false);
+        var (access, expiresIn) = jwt.IssueAccessToken(user, roles, permissions);
+        var refreshLifetime = TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays);
+        var refresh = await refreshTokens.CreateAsync(user.Id, refreshLifetime, cancellationToken).ConfigureAwait(false);
+        return new AuthResponse(access, refresh, expiresIn, roles.ToList());
     }
 }

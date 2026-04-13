@@ -338,6 +338,58 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.ToTable("RefreshTokens", (string)null);
                 });
 
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.StaffInviteRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("RolesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.ToTable("StaffInvites", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
                 {
                     b.Property<Guid>("Id")

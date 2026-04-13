@@ -37,6 +37,35 @@ export type MembershipStatus =
   | 'Suspenso'
   | 'Cancelado'
 
+export type AdminDashboardResult = {
+  activeMembersCount: number
+  delinquentMembersCount: number
+  openSupportTickets: number | null
+}
+
+export type StaffInviteRow = {
+  id: string
+  email: string
+  name: string
+  roles: string[]
+  createdAt: string
+  expiresAt: string
+}
+
+export type StaffUserRow = {
+  id: string
+  email: string
+  name: string
+  isActive: boolean
+  roles: string[]
+}
+
+export type CreateStaffInviteResult = {
+  id: string
+  token: string
+  expiresAt: string
+}
+
 export async function getDiagnostics(): Promise<DiagnosticsResult> {
   const { data } = await api.get<DiagnosticsResult>('/api/diagnostics/admin-master-only')
   return data
@@ -69,4 +98,56 @@ export async function listRolePermissions(): Promise<RolePermissionRow[]> {
 
 export async function updateMembershipStatus(membershipId: string, status: MembershipStatus): Promise<void> {
   await api.patch(`/api/admin/memberships/${membershipId}/status`, { status })
+}
+
+export async function getAdminDashboard(): Promise<AdminDashboardResult> {
+  const { data } = await api.get<AdminDashboardResult>('/api/admin/dashboard')
+  return data
+}
+
+export async function createStaffInvite(body: {
+  email: string
+  name: string
+  roles: string[]
+}): Promise<CreateStaffInviteResult> {
+  const { data } = await api.post<CreateStaffInviteResult>('/api/admin/staff/invites', body)
+  return data
+}
+
+export async function listStaffInvites(): Promise<StaffInviteRow[]> {
+  const { data } = await api.get<StaffInviteRow[]>('/api/admin/staff/invites')
+  return data
+}
+
+export async function listStaffUsers(): Promise<StaffUserRow[]> {
+  const { data } = await api.get<StaffUserRow[]>('/api/admin/staff/users')
+  return data
+}
+
+export async function setStaffUserActive(userId: string, isActive: boolean): Promise<void> {
+  await api.patch(`/api/admin/staff/users/${encodeURIComponent(userId)}/active`, { isActive })
+}
+
+export async function replaceStaffUserRoles(userId: string, roles: string[]): Promise<void> {
+  await api.put(`/api/admin/staff/users/${encodeURIComponent(userId)}/roles`, { roles })
+}
+
+export async function replaceRolePermissions(roleName: string, permissionNames: string[]): Promise<void> {
+  await api.put('/api/admin/role-permissions', { roleName, permissionNames })
+}
+
+export type AuthTokensResponse = {
+  accessToken: string
+  refreshToken: string
+  expiresIn: number
+  roles: string[]
+}
+
+export async function acceptStaffInvite(body: {
+  token: string
+  password: string
+  name?: string | null
+}): Promise<AuthTokensResponse> {
+  const { data } = await api.post<AuthTokensResponse>('/api/auth/accept-staff-invite', body)
+  return data
 }

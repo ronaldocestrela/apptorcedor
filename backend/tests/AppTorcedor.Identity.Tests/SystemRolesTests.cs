@@ -16,4 +16,11 @@ public sealed class SystemRolesTests
         Assert.Contains(SystemRoles.Operador, SystemRoles.All);
         Assert.Contains(SystemRoles.Torcedor, SystemRoles.All);
     }
+
+    [Fact]
+    public void AllExceptTorcedor_lists_six_internal_roles()
+    {
+        Assert.Equal(6, SystemRoles.AllExceptTorcedor.Count);
+        Assert.DoesNotContain(SystemRoles.Torcedor, SystemRoles.AllExceptTorcedor);
+    }
 }

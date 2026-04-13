@@ -12,4 +12,10 @@ public interface IAuthService
     Task LogoutAsync(string refreshToken, CancellationToken cancellationToken = default);
 
     Task<MeResponse?> GetMeAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default);
+
+    Task<AuthResponse?> AcceptStaffInviteAsync(
+        string token,
+        string password,
+        string? name,
+        CancellationToken cancellationToken = default);
 }
