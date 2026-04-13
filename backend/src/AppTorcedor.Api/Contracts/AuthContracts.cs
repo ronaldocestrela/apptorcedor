@@ -16,4 +16,5 @@ public sealed record MeResponse(
     Guid Id,
     string Email,
     string Name,
-    IReadOnlyList<string> Roles);
+    IReadOnlyList<string> Roles,
+    IReadOnlyList<string> Permissions);

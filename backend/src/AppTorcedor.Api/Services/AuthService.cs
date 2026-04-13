@@ -60,6 +60,7 @@ public sealed class AuthService(
         if (user is null || !user.IsActive)
             return null;
         var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
-        return new MeResponse(user.Id, user.Email ?? string.Empty, user.Name, roles.ToList());
+        var permissions = await permissionResolver.GetPermissionsForRolesAsync(roles, cancellationToken).ConfigureAwait(false);
+        return new MeResponse(user.Id, user.Email ?? string.Empty, user.Name, roles.ToList(), permissions);
     }
 }

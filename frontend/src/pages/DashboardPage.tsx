@@ -1,9 +1,11 @@
-import { useAuth } from '../features/auth/AuthContext'
 import { Link } from 'react-router-dom'
+import { ADMIN_AREA_PERMISSIONS } from '../shared/auth/applicationPermissions'
+import { canAccessAdminArea } from '../shared/auth/permissionUtils'
+import { useAuth } from '../features/auth/AuthContext'
 
 export function DashboardPage() {
   const { user, logout } = useAuth()
-  const isMaster = user?.roles.includes('Administrador Master')
+  const showAdmin = canAccessAdminArea(user, ADMIN_AREA_PERMISSIONS)
 
   return (
     <main style={{ maxWidth: 640, margin: '2rem auto', fontFamily: 'system-ui' }}>
@@ -12,9 +14,10 @@ export function DashboardPage() {
         <strong>{user?.name}</strong> ({user?.email})
       </p>
       <p>Perfis: {user?.roles.join(', ')}</p>
-      {isMaster ? (
+      <p>Permissões: {user?.permissions.length ? user.permissions.join(', ') : '—'}</p>
+      {showAdmin ? (
         <p>
-          <Link to="/admin">Área somente Administrador Master</Link>
+          <Link to="/admin">Painel administrativo</Link>
         </p>
       ) : null}
       <p>

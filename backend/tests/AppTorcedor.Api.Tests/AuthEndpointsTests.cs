@@ -49,6 +49,8 @@ public sealed class AuthEndpointsTests(AppWebApplicationFactory factory) : IClas
         var profile = await me.Content.ReadFromJsonAsync<MeResponseDto>();
         Assert.Equal("admin@test.local", profile?.Email);
         Assert.Contains(SystemRoles.AdministradorMaster, profile?.Roles ?? []);
+        Assert.Contains(ApplicationPermissions.AdministracaoDiagnostics, profile?.Permissions ?? []);
+        Assert.Contains(ApplicationPermissions.ConfiguracoesVisualizar, profile?.Permissions ?? []);
     }
 
     [Fact]
@@ -111,5 +113,10 @@ public sealed class AuthEndpointsTests(AppWebApplicationFactory factory) : IClas
         int ExpiresIn,
         IReadOnlyList<string> Roles);
 
-    private sealed record MeResponseDto(Guid Id, string Email, string Name, IReadOnlyList<string> Roles);
+    private sealed record MeResponseDto(
+        Guid Id,
+        string Email,
+        string Name,
+        IReadOnlyList<string> Roles,
+        IReadOnlyList<string> Permissions);
 }

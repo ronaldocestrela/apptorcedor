@@ -35,7 +35,7 @@ Foco em **quem opera o clube**: administradores, financeiro, atendimento, market
 ### B.1 Módulo Administration (backoffice)
 
 - [ ] **Gestão de usuários internos:** convite/cadastro de staff, vínculo com roles e permissões, ativação/desativação.
-- [ ] **Gestão de permissões:** telas/API para consultar e editar matriz perfil × permissão (sem acoplar Membership).
+- [ ] **Gestão de permissões:** telas/API para consultar e editar matriz perfil × permissão (sem acoplar Membership). *Leitura da matriz já disponível na API e na SPA em `/admin/role-permissions`; edição ainda pendente.*
 - [ ] **Painel inicial admin:** dashboard com indicadores mínimos (sócios ativos, inadimplentes, chamados abertos — evoluir conforme dados existirem).
 
 ### B.2 LGPD (lado gestão e compliance)

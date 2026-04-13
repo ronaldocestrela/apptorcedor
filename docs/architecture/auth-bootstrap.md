@@ -29,8 +29,8 @@ Estabelecer o monólito inicial com **ASP.NET Core Identity**, **JWT (access + r
 | POST | `/api/auth/login` | Anônimo | Retorna access + refresh + roles |
 | POST | `/api/auth/refresh` | Anônimo | Rotação do refresh token |
 | POST | `/api/auth/logout` | Anônimo | Revoga refresh token informado |
-| GET | `/api/auth/me` | Bearer | Perfil + roles |
-| GET | `/api/diagnostics/admin-master-only` | Bearer + role | Valida política `Administrador Master` |
+| GET | `/api/auth/me` | Bearer | Perfil + roles + **permissions** (catálogo granular) |
+| GET | `/api/diagnostics/admin-master-only` | Bearer + permissão | Política `Administracao.Diagnostics` |
 
 ### Migrations
 
@@ -45,7 +45,7 @@ Criadas em `AppTorcedor.Infrastructure/Persistence/Migrations`. Design-time usa 
 
 - **Vite + React + TypeScript**, `axios` com interceptors para **Bearer** e **refresh em 401**.
 - Tokens em `sessionStorage` (`shared/auth/authStorage.ts`).
-- Rotas: `/login`, `/` (autenticado), `/admin` (role **Administrador Master**).
+- Rotas: `/login`, `/` (autenticado), `/admin` e sub-rotas (acesso por **permissões**; ver [docs/frontend/backoffice.md](../frontend/backoffice.md)).
 - Variável `VITE_API_URL` (padrão em `.env.development`).
 
 ### Testes (Vitest)
@@ -54,4 +54,4 @@ Criadas em `AppTorcedor.Infrastructure/Persistence/Migrations`. Design-time usa 
 
 ## Decisões- Refresh token armazenado como **hash SHA256**; rotação na troca (`refresh`).
 - OpenAPI nativo (`Microsoft.AspNetCore.OpenApi`) em vez de Swashbuckle, por compatibilidade com dependências OpenAPI 2.x no SDK atual.
-- `Membership` e permissões granulares **fora** desta fase; apenas **roles** no token.
+- Permissões granulares: claims `permission` no JWT e lista `permissions` em `/api/auth/me`; o frontend não precisa decodificar o token para montar o menu.

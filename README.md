@@ -52,7 +52,7 @@ npm run dev
 
 1. Com a API e o frontend rodando, abra a URL do Vite.
 2. Faça login com o e-mail e senha do seed (veja a seção **Credenciais iniciais** abaixo).
-3. Após autenticar, você acessa a área logada; usuários com perfil **Administrador Master** podem abrir a rota **/admin**.
+3. Após autenticar, você acessa a área logada; usuários com permissões administrativas podem abrir **/admin** e sub-rotas (ver [docs/frontend/backoffice.md](docs/frontend/backoffice.md)).
 
 ## SQL Server com Docker (opcional)
 
@@ -95,7 +95,7 @@ Fora dos ambientes Development/Testing, a senha do seed **de** estar em configur
 | POST | `/api/auth/login` | Não | Retorna `accessToken`, `refreshToken`, `expiresIn`, `roles` |
 | POST | `/api/auth/refresh` | Não | Troca o refresh por um novo par de tokens |
 | POST | `/api/auth/logout` | Não | Revoga o refresh informado |
-| GET | `/api/auth/me` | Bearer (JWT) | Dados do usuário e roles |
+| GET | `/api/auth/me` | Bearer (JWT) | Dados do usuário, roles e **permissions** |
 | GET | `/api/diagnostics/admin-master-only` | Bearer + permissão `Administracao.Diagnostics` | Diagnóstico (via MediatR); JWT inclui claims `permission` conforme role |
 | GET | `/health/live` | Não | Liveness (tag `live`) |
 | GET | `/health/ready` | Não | Readiness (inclui checagem do banco; tag `ready`) |
@@ -131,4 +131,5 @@ Não commite chaves reais; use secrets ou variáveis de ambiente no deploy.
 - [AGENTS.md](AGENTS.md) — escopo do produto, módulos e regras do projeto.
 - [docs/architecture/auth-bootstrap.md](docs/architecture/auth-bootstrap.md) — decisões da fase de autenticação, detalhes técnicos e variáveis.
 - [docs/architecture/parte-a-fundacao.md](docs/architecture/parte-a-fundacao.md) — Parte A: CQRS, permissões, auditoria, configurações e observabilidade.
+- [docs/frontend/backoffice.md](docs/frontend/backoffice.md) — painel administrativo na SPA (rotas e permissões).
 - [docs/ROADMAP-PENDENCIAS.md](docs/ROADMAP-PENDENCIAS.md) — backlog do que falta fazer, com prioridade para gestão e contratação de planos pelo torcedor ao final.

@@ -15,6 +15,7 @@ export type Me = {
   email: string
   name: string
   roles: string[]
+  permissions: string[]
 }
 
 type AuthContextValue = {
@@ -33,7 +34,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = useCallback(async () => {
     const { data } = await api.get<Me>('/api/auth/me')
-    setUser(data)
+    setUser({
+      ...data,
+      permissions: data.permissions ?? [],
+    })
   }, [])
 
   useEffect(() => {

@@ -1,8 +1,14 @@
 import { Route, Routes } from 'react-router-dom'
+import { AdminIndexRedirect } from '../features/admin/pages/AdminIndexRedirect'
+import { AuditLogsPage } from '../features/admin/pages/AuditLogsPage'
+import { ConfigurationsPage } from '../features/admin/pages/ConfigurationsPage'
+import { DiagnosticsPage } from '../features/admin/pages/DiagnosticsPage'
+import { MembershipStatusPage } from '../features/admin/pages/MembershipStatusPage'
+import { RolePermissionsPage } from '../features/admin/pages/RolePermissionsPage'
+import { AdminLayout } from '../features/admin/layout/AdminLayout'
 import { AuthProvider } from '../features/auth/AuthContext'
+import { PermissionRoute } from '../features/auth/PermissionRoute'
 import { ProtectedRoute } from '../features/auth/ProtectedRoute'
-import { RoleRoute } from '../features/auth/RoleRoute'
-import { AdminMasterPage } from '../pages/AdminMasterPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { LoginPage } from '../pages/LoginPage'
 
@@ -10,11 +16,18 @@ export function App() {
   return (
     <AuthProvider>
       <Routes>
-               <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
           <Route index element={<DashboardPage />} />
-          <Route element={<RoleRoute roles={['Administrador Master']} />}>
-            <Route path="admin" element={<AdminMasterPage />} />
+          <Route element={<PermissionRoute />}>
+            <Route path="admin" element={<AdminLayout />}>
+              <Route index element={<AdminIndexRedirect />} />
+              <Route path="diagnostics" element={<DiagnosticsPage />} />
+              <Route path="configurations" element={<ConfigurationsPage />} />
+              <Route path="audit-logs" element={<AuditLogsPage />} />
+              <Route path="role-permissions" element={<RolePermissionsPage />} />
+              <Route path="membership" element={<MembershipStatusPage />} />
+            </Route>
           </Route>
         </Route>
       </Routes>

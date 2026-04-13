@@ -17,6 +17,8 @@ Este documento descreve o que foi entregue na **Parte A** do [ROADMAP-PENDENCIAS
 
 Constantes em `AppTorcedor.Identity.ApplicationPermissions` (ex.: `Administracao.Diagnostics`, `Socios.Gerenciar`, `Configuracoes.Editar`). O JWT inclui múltiplas claims `permission` conforme o mapeamento role → permissão no banco.
 
+O endpoint `GET /api/auth/me` devolve a mesma lista em **`permissions`**, para o frontend montar menus e guards sem decodificar o JWT.
+
 **Nota:** A UI para editar a matriz role × permissão ainda não existe; a leitura atual é via `GET /api/admin/role-permissions`. Atribuições podem ser feitas via dados até evoluir o backoffice (Parte B).
 
 ## Endpoints administrativos (API)
