@@ -76,6 +76,14 @@ export function AdminLayout() {
           {hasPermission(user, ApplicationPermissions.NoticiasPublicar) ? (
             <NavLink to="news" style={linkStyle}>Notícias</NavLink>
           ) : null}
+          {(hasPermission(user, ApplicationPermissions.FidelidadeVisualizar)
+            || hasPermission(user, ApplicationPermissions.FidelidadeGerenciar)) ? (
+            <NavLink to="loyalty" style={linkStyle}>Fidelidade</NavLink>
+            ) : null}
+          {(hasPermission(user, ApplicationPermissions.BeneficiosVisualizar)
+            || hasPermission(user, ApplicationPermissions.BeneficiosGerenciar)) ? (
+            <NavLink to="benefits" style={linkStyle}>Benefícios</NavLink>
+            ) : null}
           {hasPermission(user, ApplicationPermissions.LgpdDocumentosVisualizar) ? (
             <NavLink to="lgpd/documents" style={linkStyle}>LGPD — Documentos</NavLink>
           ) : null}

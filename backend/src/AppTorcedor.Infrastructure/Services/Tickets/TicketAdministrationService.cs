@@ -6,7 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AppTorcedor.Infrastructure.Services.Tickets;
 
-public sealed class TicketAdministrationService(AppDbContext db, ITicketProvider ticketProvider) : ITicketAdministrationPort
+public sealed class TicketAdministrationService(
+    AppDbContext db,
+    ITicketProvider ticketProvider,
+    ILoyaltyPointsTriggerPort loyaltyPoints) : ITicketAdministrationPort
 {
     public async Task<AdminTicketListPageDto> ListTicketsAsync(
         Guid? userId,
@@ -164,6 +167,7 @@ public sealed class TicketAdministrationService(AppDbContext db, ITicketProvider
             return TicketMutationResult.Fail(TicketMutationError.ProviderError);
         }
 
+        await loyaltyPoints.AwardPointsForTicketPurchasedAsync(ticketId, cancellationToken).ConfigureAwait(false);
         return TicketMutationResult.Success();
     }
 
@@ -179,6 +183,7 @@ public sealed class TicketAdministrationService(AppDbContext db, ITicketProvider
 
         try
         {
+            var previousStatus = row.Status;
             var snap = await ticketProvider.GetAsync(row.ExternalTicketId, cancellationToken).ConfigureAwait(false);
             row.QrCode = snap.QrCodePayload;
             if (row.Status == TicketStatus.Reserved
@@ -187,6 +192,8 @@ public sealed class TicketAdministrationService(AppDbContext db, ITicketProvider
 
             row.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            if (previousStatus == TicketStatus.Reserved && row.Status == TicketStatus.Purchased)
+                await loyaltyPoints.AwardPointsForTicketPurchasedAsync(ticketId, cancellationToken).ConfigureAwait(false);
         }
         catch
         {
@@ -209,6 +216,7 @@ public sealed class TicketAdministrationService(AppDbContext db, ITicketProvider
         row.RedeemedAt = now;
         row.UpdatedAt = now;
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await loyaltyPoints.AwardPointsForTicketRedeemedAsync(ticketId, cancellationToken).ConfigureAwait(false);
         return TicketMutationResult.Success();
     }
 }

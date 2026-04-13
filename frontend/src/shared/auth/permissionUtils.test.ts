@@ -55,4 +55,10 @@ describe('permissionUtils', () => {
       canAccessAdminArea({ permissions: [ApplicationPermissions.NoticiasPublicar] }, ADMIN_AREA_PERMISSIONS),
     ).toBe(true)
   })
+
+  it('allows admin area with Fidelidade.Visualizar alone', () => {
+    expect(
+      canAccessAdminArea({ permissions: [ApplicationPermissions.FidelidadeVisualizar] }, ADMIN_AREA_PERMISSIONS),
+    ).toBe(true)
+  })
 })

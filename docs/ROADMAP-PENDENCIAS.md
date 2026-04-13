@@ -103,9 +103,11 @@ Detalhes: [docs/architecture/parte-b9-news-admin.md](architecture/parte-b9-news-
 
 ### B.10 Loyalty e Benefits (gestão)
 
-- [ ] **Regras de pontuação** e campanhas de fidelidade.
-- [ ] **Ranking:** critérios e publicação.
-- [ ] **Parceiros e vantagens** (cadastro, vigência, elegibilidade por plano).
+- [x] **Regras de pontuação** e campanhas de fidelidade.
+- [x] **Ranking:** critérios e publicação (mensal e acumulado no admin).
+- [x] **Parceiros e vantagens** (cadastro, vigência, elegibilidade por plano).
+
+Detalhes: [docs/architecture/parte-b10-loyalty-benefits-admin.md](architecture/parte-b10-loyalty-benefits-admin.md).
 
 ### B.11 Support (atendimento)
 

@@ -20,6 +20,10 @@ public static class ApplicationPermissions
     public const string IngressosVisualizar = "Ingressos.Visualizar";
     public const string IngressosGerenciar = "Ingressos.Gerenciar";
     public const string NoticiasPublicar = "Noticias.Publicar";
+    public const string FidelidadeVisualizar = "Fidelidade.Visualizar";
+    public const string FidelidadeGerenciar = "Fidelidade.Gerenciar";
+    public const string BeneficiosVisualizar = "Beneficios.Visualizar";
+    public const string BeneficiosGerenciar = "Beneficios.Gerenciar";
     public const string ChamadosResponder = "Chamados.Responder";
     public const string CarteirinhaVisualizar = "Carteirinha.Visualizar";
     public const string CarteirinhaGerenciar = "Carteirinha.Gerenciar";
@@ -52,6 +56,10 @@ public static class ApplicationPermissions
         IngressosVisualizar,
         IngressosGerenciar,
         NoticiasPublicar,
+        FidelidadeVisualizar,
+        FidelidadeGerenciar,
+        BeneficiosVisualizar,
+        BeneficiosGerenciar,
         ChamadosResponder,
         CarteirinhaVisualizar,
         CarteirinhaGerenciar,

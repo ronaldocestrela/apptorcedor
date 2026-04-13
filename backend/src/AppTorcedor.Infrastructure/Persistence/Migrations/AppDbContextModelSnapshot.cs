@@ -203,6 +203,140 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.ToTable("AuditLogs", (string)null);
                 });
 
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.BenefitOfferMembershipStatusEligibilityRecord", b =>
+                {
+                    b.Property<Guid>("OfferId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("OfferId", "Status");
+
+                    b.ToTable("BenefitOfferMembershipStatusEligibilities", (string)null);
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.BenefitOfferPlanEligibilityRecord", b =>
+                {
+                    b.Property<Guid>("OfferId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("OfferId", "PlanId");
+
+                    b.HasIndex("PlanId");
+
+                    b.ToTable("BenefitOfferPlanEligibilities", (string)null);
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.BenefitOfferRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset>("EndAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("PartnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("StartAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartnerId");
+
+                    b.HasIndex("IsActive", "StartAt", "EndAt");
+
+                    b.ToTable("BenefitOffers", (string)null);
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.BenefitPartnerRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive");
+
+                    b.ToTable("BenefitPartners", (string)null);
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.BenefitRedemptionRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("OfferId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("OfferId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("BenefitRedemptions", (string)null);
+                });
+
             modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.DigitalCardRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -384,6 +518,118 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("LegalDocumentVersions", (string)null);
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.LoyaltyCampaignRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("UnpublishedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("LoyaltyCampaigns", (string)null);
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.LoyaltyPointLedgerEntryRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CampaignId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid?>("RuleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SourceKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("SourceType")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("SourceType", "SourceKey")
+                        .IsUnique();
+
+                    b.ToTable("LoyaltyPointLedgerEntries", (string)null);
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.LoyaltyPointRuleRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CampaignId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Trigger")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.ToTable("LoyaltyPointRules", (string)null);
                 });
 
             modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.MembershipHistoryRecord", b =>
@@ -1018,6 +1264,54 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.BenefitOfferMembershipStatusEligibilityRecord", b =>
+                {
+                    b.HasOne("AppTorcedor.Infrastructure.Entities.BenefitOfferRecord", null)
+                        .WithMany()
+                        .HasForeignKey("OfferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.BenefitOfferPlanEligibilityRecord", b =>
+                {
+                    b.HasOne("AppTorcedor.Infrastructure.Entities.BenefitOfferRecord", null)
+                        .WithMany()
+                        .HasForeignKey("OfferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AppTorcedor.Infrastructure.Entities.MembershipPlanRecord", null)
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.BenefitOfferRecord", b =>
+                {
+                    b.HasOne("AppTorcedor.Infrastructure.Entities.BenefitPartnerRecord", null)
+                        .WithMany()
+                        .HasForeignKey("PartnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.BenefitRedemptionRecord", b =>
+                {
+                    b.HasOne("AppTorcedor.Infrastructure.Entities.BenefitOfferRecord", null)
+                        .WithMany()
+                        .HasForeignKey("OfferId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AppTorcedor.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.DigitalCardRecord", b =>
                 {
                     b.HasOne("AppTorcedor.Infrastructure.Entities.MembershipRecord", null)
@@ -1053,6 +1347,29 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.HasOne("AppTorcedor.Infrastructure.Entities.LegalDocumentRecord", null)
                         .WithMany()
                         .HasForeignKey("LegalDocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.LoyaltyPointLedgerEntryRecord", b =>
+                {
+                    b.HasOne("AppTorcedor.Infrastructure.Entities.LoyaltyCampaignRecord", null)
+                        .WithMany()
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("AppTorcedor.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.LoyaltyPointRuleRecord", b =>
+                {
+                    b.HasOne("AppTorcedor.Infrastructure.Entities.LoyaltyCampaignRecord", null)
+                        .WithMany()
+                        .HasForeignKey("CampaignId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

@@ -2,7 +2,7 @@
 
 ## Escopo
 
-A SPA consome autenticação, permissões granulares, diagnóstico, configurações, auditoria, matriz role × permissão (leitura e edição), gestão de staff (convites e usuários internos), dashboard administrativo, **módulo Membership (B.4)** (listagem, detalhe, histórico operacional e alteração de status com motivo obrigatório), **módulo Plans (B.5)** (CRUD de planos, benefícios por plano, publicação para catálogo do torcedor), **módulo Payments (B.6)** (listagem de cobranças, detalhe, conciliação, cancelamento e estorno conforme permissões), **módulo Digital Card (B.7)** (listagem de emissões, preview do template fixo, emissão, regeneração e invalidação conforme permissões), **módulo Games & Tickets (B.8)** (CRUD de jogos, listagem de ingressos, reserva/compra/sync via provedor mock e resgate administrativo conforme permissões) e **módulo News (B.9)** (editoria de notícias, publicação/despublicação e disparo ou agendamento de notificações in-app conforme permissão).
+A SPA consome autenticação, permissões granulares, diagnóstico, configurações, auditoria, matriz role × permissão (leitura e edição), gestão de staff (convites e usuários internos), dashboard administrativo, **módulo Membership (B.4)** (listagem, detalhe, histórico operacional e alteração de status com motivo obrigatório), **módulo Plans (B.5)** (CRUD de planos, benefícios por plano, publicação para catálogo do torcedor), **módulo Payments (B.6)** (listagem de cobranças, detalhe, conciliação, cancelamento e estorno conforme permissões), **módulo Digital Card (B.7)** (listagem de emissões, preview do template fixo, emissão, regeneração e invalidação conforme permissões), **módulo Games & Tickets (B.8)** (CRUD de jogos, listagem de ingressos, reserva/compra/sync via provedor mock e resgate administrativo conforme permissões), **módulo News (B.9)** (editoria de notícias, publicação/despublicação e disparo ou agendamento de notificações in-app conforme permissão) e **módulos Loyalty & Benefits (B.10)** (campanhas/regras de pontos, extrato, ranking mensal/acumulado, parceiros, ofertas e resgates administrativos conforme permissões).
 
 ## Rotas
 
@@ -24,6 +24,8 @@ A SPA consome autenticação, permissões granulares, diagnóstico, configuraç�
 | `/admin/games` | `Jogos.Visualizar` para listar/detalhar; `Jogos.Criar` / `Jogos.Editar` para criar, editar e desativar (ver [parte-b8-games-tickets-admin.md](../architecture/parte-b8-games-tickets-admin.md)) |
 | `/admin/tickets` | `Ingressos.Visualizar` para listar/detalhar; `Ingressos.Gerenciar` para reservar, comprar, sincronizar e resgatar (ver [parte-b8-games-tickets-admin.md](../architecture/parte-b8-games-tickets-admin.md)) |
 | `/admin/news` | `Noticias.Publicar` — editoria, publicação/despublicação e notificações in-app (ver [parte-b9-news-admin.md](../architecture/parte-b9-news-admin.md)) |
+| `/admin/loyalty` | `Fidelidade.Visualizar` / `Fidelidade.Gerenciar` (ver [parte-b10-loyalty-benefits-admin.md](../architecture/parte-b10-loyalty-benefits-admin.md)) |
+| `/admin/benefits` | `Beneficios.Visualizar` / `Beneficios.Gerenciar` (ver [parte-b10-loyalty-benefits-admin.md](../architecture/parte-b10-loyalty-benefits-admin.md)) |
 | `/admin/lgpd/documents` | `Lgpd.Documentos.Visualizar` (edição: `Lgpd.Documentos.Editar`) |
 | `/admin/lgpd/consents` | `Lgpd.Consentimentos.Visualizar` (registro: `Lgpd.Consentimentos.Registrar`) |
 | `/admin/lgpd/privacy` | `Lgpd.Dados.Exportar` e/ou `Lgpd.Dados.Anonimizar` |
@@ -38,6 +40,7 @@ A SPA consome autenticação, permissões granulares, diagnóstico, configuraç�
 - Permissões **Carteirinha** (`Carteirinha.Visualizar` / `Carteirinha.Gerenciar`) entram em `ADMIN_AREA_PERMISSIONS` para operadores que só gerenciam emissões da carteirinha digital.
 - Permissões **Jogos** (`Jogos.Visualizar`, `Jogos.Criar`, `Jogos.Editar`) e **Ingressos** (`Ingressos.Visualizar`, `Ingressos.Gerenciar`) entram em `ADMIN_AREA_PERMISSIONS` para operadores dedicados a jogos/ingressos.
 - Permissão **Notícias** (`Noticias.Publicar`) entra em `ADMIN_AREA_PERMISSIONS` para perfis só de conteúdo/comunicação.
+- Permissões **Fidelidade** (`Fidelidade.Visualizar`, `Fidelidade.Gerenciar`) e **Benefícios** (`Beneficios.Visualizar`, `Beneficios.Gerenciar`) entram em `ADMIN_AREA_PERMISSIONS` para marketing/operação de campanhas e parceiros.
 
 ## Integração HTTP
 

@@ -34,6 +34,15 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<TicketRecord> Tickets => Set<TicketRecord>();
     public DbSet<NewsArticleRecord> NewsArticles => Set<NewsArticleRecord>();
     public DbSet<InAppNotificationRecord> InAppNotifications => Set<InAppNotificationRecord>();
+    public DbSet<LoyaltyCampaignRecord> LoyaltyCampaigns => Set<LoyaltyCampaignRecord>();
+    public DbSet<LoyaltyPointRuleRecord> LoyaltyPointRules => Set<LoyaltyPointRuleRecord>();
+    public DbSet<LoyaltyPointLedgerEntryRecord> LoyaltyPointLedgerEntries => Set<LoyaltyPointLedgerEntryRecord>();
+    public DbSet<BenefitPartnerRecord> BenefitPartners => Set<BenefitPartnerRecord>();
+    public DbSet<BenefitOfferRecord> BenefitOffers => Set<BenefitOfferRecord>();
+    public DbSet<BenefitOfferPlanEligibilityRecord> BenefitOfferPlanEligibilities => Set<BenefitOfferPlanEligibilityRecord>();
+    public DbSet<BenefitOfferMembershipStatusEligibilityRecord> BenefitOfferMembershipStatusEligibilities =>
+        Set<BenefitOfferMembershipStatusEligibilityRecord>();
+    public DbSet<BenefitRedemptionRecord> BenefitRedemptions => Set<BenefitRedemptionRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -354,6 +363,124 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(x => x.RequestedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<LoyaltyCampaignRecord>(entity =>
+        {
+            entity.ToTable("LoyaltyCampaigns");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.HasIndex(x => x.Status);
+        });
+
+        builder.Entity<LoyaltyPointRuleRecord>(entity =>
+        {
+            entity.ToTable("LoyaltyPointRules");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Trigger).HasConversion<int>();
+            entity.HasIndex(x => x.CampaignId);
+            entity
+                .HasOne<LoyaltyCampaignRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.CampaignId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<LoyaltyPointLedgerEntryRecord>(entity =>
+        {
+            entity.ToTable("LoyaltyPointLedgerEntries");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.SourceType).HasConversion<int>();
+            entity.Property(x => x.SourceKey).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Reason).HasMaxLength(2000);
+            entity.HasIndex(x => x.UserId);
+            entity.HasIndex(x => x.CreatedAt);
+            entity.HasIndex(x => new { x.SourceType, x.SourceKey }).IsUnique();
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity
+                .HasOne<LoyaltyCampaignRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.CampaignId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<BenefitPartnerRecord>(entity =>
+        {
+            entity.ToTable("BenefitPartners");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.HasIndex(x => x.IsActive);
+        });
+
+        builder.Entity<BenefitOfferRecord>(entity =>
+        {
+            entity.ToTable("BenefitOffers");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Title).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.HasIndex(x => x.PartnerId);
+            entity.HasIndex(x => new { x.IsActive, x.StartAt, x.EndAt });
+            entity
+                .HasOne<BenefitPartnerRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.PartnerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<BenefitOfferPlanEligibilityRecord>(entity =>
+        {
+            entity.ToTable("BenefitOfferPlanEligibilities");
+            entity.HasKey(x => new { x.OfferId, x.PlanId });
+            entity.HasIndex(x => x.PlanId);
+            entity
+                .HasOne<BenefitOfferRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.OfferId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne<MembershipPlanRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.PlanId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<BenefitOfferMembershipStatusEligibilityRecord>(entity =>
+        {
+            entity.ToTable("BenefitOfferMembershipStatusEligibilities");
+            entity.HasKey(x => new { x.OfferId, x.Status });
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity
+                .HasOne<BenefitOfferRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.OfferId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<BenefitRedemptionRecord>(entity =>
+        {
+            entity.ToTable("BenefitRedemptions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Notes).HasMaxLength(2000);
+            entity.HasIndex(x => x.OfferId);
+            entity.HasIndex(x => x.UserId);
+            entity.HasIndex(x => x.CreatedAt);
+            entity
+                .HasOne<BenefitOfferRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.OfferId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

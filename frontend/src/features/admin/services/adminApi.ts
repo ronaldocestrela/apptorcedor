@@ -767,3 +767,329 @@ export async function createNewsInAppNotifications(
 ): Promise<void> {
   await api.post(`/api/admin/news/${encodeURIComponent(newsId)}/notifications`, body)
 }
+
+/** Loyalty (B.10) */
+export type LoyaltyCampaignStatus = 'Draft' | 'Published' | 'Unpublished'
+export type LoyaltyPointRuleTrigger = 'PaymentPaid' | 'TicketPurchased' | 'TicketRedeemed'
+export type LoyaltyPointSourceType = 'Payment' | 'TicketPurchase' | 'TicketRedeem' | 'Manual'
+
+export type LoyaltyCampaignListItem = {
+  campaignId: string
+  name: string
+  status: LoyaltyCampaignStatus
+  createdAt: string
+  updatedAt: string
+  publishedAt: string | null
+  ruleCount: number
+}
+
+export type LoyaltyCampaignListPage = {
+  totalCount: number
+  items: LoyaltyCampaignListItem[]
+}
+
+export type LoyaltyPointRule = {
+  ruleId: string
+  trigger: LoyaltyPointRuleTrigger
+  points: number
+  sortOrder: number
+}
+
+export type LoyaltyCampaignDetail = {
+  campaignId: string
+  name: string
+  description: string | null
+  status: LoyaltyCampaignStatus
+  createdAt: string
+  updatedAt: string
+  publishedAt: string | null
+  unpublishedAt: string | null
+  rules: LoyaltyPointRule[]
+}
+
+export type UpsertLoyaltyCampaignBody = {
+  name: string
+  description?: string | null
+  rules: { trigger: LoyaltyPointRuleTrigger; points: number; sortOrder: number }[]
+}
+
+export async function listLoyaltyCampaigns(params: {
+  status?: LoyaltyCampaignStatus | ''
+  page?: number
+  pageSize?: number
+}): Promise<LoyaltyCampaignListPage> {
+  const { data } = await api.get<LoyaltyCampaignListPage>('/api/admin/loyalty/campaigns', {
+    params: {
+      status: params.status || undefined,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getLoyaltyCampaign(campaignId: string): Promise<LoyaltyCampaignDetail> {
+  const { data } = await api.get<LoyaltyCampaignDetail>(`/api/admin/loyalty/campaigns/${encodeURIComponent(campaignId)}`)
+  return data
+}
+
+export async function createLoyaltyCampaign(body: UpsertLoyaltyCampaignBody): Promise<{ campaignId: string }> {
+  const { data } = await api.post<{ campaignId: string }>('/api/admin/loyalty/campaigns', body)
+  return data
+}
+
+export async function updateLoyaltyCampaign(campaignId: string, body: UpsertLoyaltyCampaignBody): Promise<void> {
+  await api.put(`/api/admin/loyalty/campaigns/${encodeURIComponent(campaignId)}`, body)
+}
+
+export async function publishLoyaltyCampaign(campaignId: string): Promise<void> {
+  await api.post(`/api/admin/loyalty/campaigns/${encodeURIComponent(campaignId)}/publish`, {})
+}
+
+export async function unpublishLoyaltyCampaign(campaignId: string): Promise<void> {
+  await api.post(`/api/admin/loyalty/campaigns/${encodeURIComponent(campaignId)}/unpublish`, {})
+}
+
+export async function manualLoyaltyAdjust(
+  userId: string,
+  body: { points: number; reason: string; campaignId?: string | null },
+): Promise<void> {
+  await api.post(`/api/admin/loyalty/users/${encodeURIComponent(userId)}/manual-adjustments`, body)
+}
+
+export type LoyaltyLedgerEntry = {
+  entryId: string
+  userId: string
+  campaignId: string | null
+  ruleId: string | null
+  points: number
+  sourceType: LoyaltyPointSourceType
+  sourceKey: string
+  reason: string | null
+  actorUserId: string | null
+  createdAt: string
+}
+
+export type LoyaltyLedgerPage = {
+  totalCount: number
+  items: LoyaltyLedgerEntry[]
+}
+
+export async function listLoyaltyUserLedger(
+  userId: string,
+  params?: { page?: number; pageSize?: number },
+): Promise<LoyaltyLedgerPage> {
+  const { data } = await api.get<LoyaltyLedgerPage>(`/api/admin/loyalty/users/${encodeURIComponent(userId)}/ledger`, {
+    params: { page: params?.page ?? 1, pageSize: params?.pageSize ?? 20 },
+  })
+  return data
+}
+
+export type LoyaltyRankingRow = {
+  rank: number
+  userId: string
+  userEmail: string
+  userName: string
+  totalPoints: number
+}
+
+export type LoyaltyRankingPage = {
+  totalCount: number
+  items: LoyaltyRankingRow[]
+}
+
+export async function getLoyaltyMonthlyRanking(params: {
+  year: number
+  month: number
+  page?: number
+  pageSize?: number
+}): Promise<LoyaltyRankingPage> {
+  const { data } = await api.get<LoyaltyRankingPage>('/api/admin/loyalty/rankings/monthly', {
+    params: {
+      year: params.year,
+      month: params.month,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getLoyaltyAllTimeRanking(params?: { page?: number; pageSize?: number }): Promise<LoyaltyRankingPage> {
+  const { data } = await api.get<LoyaltyRankingPage>('/api/admin/loyalty/rankings/all-time', {
+    params: { page: params?.page ?? 1, pageSize: params?.pageSize ?? 20 },
+  })
+  return data
+}
+
+/** Benefits (B.10) */
+export type BenefitPartnerListItem = {
+  partnerId: string
+  name: string
+  isActive: boolean
+  createdAt: string
+}
+
+export type BenefitPartnerListPage = {
+  totalCount: number
+  items: BenefitPartnerListItem[]
+}
+
+export type BenefitPartnerDetail = {
+  partnerId: string
+  name: string
+  description: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type UpsertBenefitPartnerBody = {
+  name: string
+  description?: string | null
+  isActive: boolean
+}
+
+export async function listBenefitPartners(params: {
+  search?: string
+  isActive?: boolean
+  page?: number
+  pageSize?: number
+}): Promise<BenefitPartnerListPage> {
+  const { data } = await api.get<BenefitPartnerListPage>('/api/admin/benefits/partners', {
+    params: {
+      search: params.search?.trim() || undefined,
+      isActive: params.isActive,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getBenefitPartner(partnerId: string): Promise<BenefitPartnerDetail> {
+  const { data } = await api.get<BenefitPartnerDetail>(`/api/admin/benefits/partners/${encodeURIComponent(partnerId)}`)
+  return data
+}
+
+export async function createBenefitPartner(body: UpsertBenefitPartnerBody): Promise<{ partnerId: string }> {
+  const { data } = await api.post<{ partnerId: string }>('/api/admin/benefits/partners', body)
+  return data
+}
+
+export async function updateBenefitPartner(partnerId: string, body: UpsertBenefitPartnerBody): Promise<void> {
+  await api.put(`/api/admin/benefits/partners/${encodeURIComponent(partnerId)}`, body)
+}
+
+export type BenefitOfferListItem = {
+  offerId: string
+  partnerId: string
+  partnerName: string
+  title: string
+  isActive: boolean
+  startAt: string
+  endAt: string
+  createdAt: string
+}
+
+export type BenefitOfferListPage = {
+  totalCount: number
+  items: BenefitOfferListItem[]
+}
+
+export type BenefitOfferDetail = {
+  offerId: string
+  partnerId: string
+  title: string
+  description: string | null
+  isActive: boolean
+  startAt: string
+  endAt: string
+  createdAt: string
+  updatedAt: string
+  eligiblePlanIds: string[]
+  eligibleMembershipStatuses: string[]
+}
+
+export type UpsertBenefitOfferBody = {
+  partnerId: string
+  title: string
+  description?: string | null
+  isActive: boolean
+  startAt: string
+  endAt: string
+  eligiblePlanIds?: string[] | null
+  eligibleMembershipStatuses?: string[] | null
+}
+
+export async function listBenefitOffers(params: {
+  partnerId?: string
+  isActive?: boolean
+  page?: number
+  pageSize?: number
+}): Promise<BenefitOfferListPage> {
+  const { data } = await api.get<BenefitOfferListPage>('/api/admin/benefits/offers', {
+    params: {
+      partnerId: params.partnerId || undefined,
+      isActive: params.isActive,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getBenefitOffer(offerId: string): Promise<BenefitOfferDetail> {
+  const { data } = await api.get<BenefitOfferDetail>(`/api/admin/benefits/offers/${encodeURIComponent(offerId)}`)
+  return data
+}
+
+export async function createBenefitOffer(body: UpsertBenefitOfferBody): Promise<{ offerId: string }> {
+  const { data } = await api.post<{ offerId: string }>('/api/admin/benefits/offers', body)
+  return data
+}
+
+export async function updateBenefitOffer(offerId: string, body: UpsertBenefitOfferBody): Promise<void> {
+  await api.put(`/api/admin/benefits/offers/${encodeURIComponent(offerId)}`, body)
+}
+
+export async function redeemBenefitOffer(offerId: string, body: { userId: string; notes?: string | null }): Promise<{ redemptionId: string }> {
+  const { data } = await api.post<{ redemptionId: string }>(
+    `/api/admin/benefits/offers/${encodeURIComponent(offerId)}/redeem`,
+    body,
+  )
+  return data
+}
+
+export type BenefitRedemptionListItem = {
+  redemptionId: string
+  offerId: string
+  offerTitle: string
+  userId: string
+  userEmail: string
+  actorUserId: string | null
+  notes: string | null
+  createdAt: string
+}
+
+export type BenefitRedemptionListPage = {
+  totalCount: number
+  items: BenefitRedemptionListItem[]
+}
+
+export async function listBenefitRedemptions(params: {
+  offerId?: string
+  userId?: string
+  page?: number
+  pageSize?: number
+}): Promise<BenefitRedemptionListPage> {
+  const { data } = await api.get<BenefitRedemptionListPage>('/api/admin/benefits/redemptions', {
+    params: {
+      offerId: params.offerId || undefined,
+      userId: params.userId || undefined,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}

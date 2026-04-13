@@ -10,7 +10,8 @@ namespace AppTorcedor.Infrastructure.Services.Payments;
 public sealed class PaymentAdministrationService(
     AppDbContext db,
     IPaymentProvider paymentProvider,
-    IMembershipAdministrationPort membershipAdmin) : IPaymentsAdministrationPort
+    IMembershipAdministrationPort membershipAdmin,
+    ILoyaltyPointsTriggerPort loyaltyPoints) : IPaymentsAdministrationPort
 {
     public async Task<AdminPaymentListPageDto> ListPaymentsAsync(
         string? status,
@@ -128,6 +129,8 @@ public sealed class PaymentAdministrationService(
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         await TryReactivateMembershipAfterPaidAsync(payment.MembershipId, cancellationToken).ConfigureAwait(false);
+
+        await loyaltyPoints.AwardPointsForPaymentPaidAsync(payment.Id, cancellationToken).ConfigureAwait(false);
 
         return new PaymentMutationResult(true, null);
     }

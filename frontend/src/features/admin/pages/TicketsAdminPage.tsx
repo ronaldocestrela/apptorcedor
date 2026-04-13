@@ -17,7 +17,6 @@ import {
 
 export function TicketsAdminPage() {
   const { user } = useAuth()
-  const canView = hasPermission(user, ApplicationPermissions.IngressosVisualizar)
   const canManage = hasPermission(user, ApplicationPermissions.IngressosGerenciar)
 
   const [games, setGames] = useState<AdminGameListItem[]>([])
