@@ -99,7 +99,10 @@ Fora dos ambientes Development/Testing, a senha do seed **de** estar em configur
 | GET | `/api/diagnostics/admin-master-only` | Bearer + permissão `Administracao.Diagnostics` | Diagnóstico (via MediatR); JWT inclui claims `permission` conforme role |
 | GET | `/health/live` | Não | Liveness (tag `live`) |
 | GET | `/health/ready` | Não | Readiness (inclui checagem do banco; tag `ready`) |
-| PATCH | `/api/admin/memberships/{id}/status` | Bearer + `Socios.Gerenciar` | Atualiza status da associação (auditoria) |
+| GET | `/api/admin/memberships` | Bearer + `Socios.Gerenciar` | Lista associações (filtros `status`, `userId`, paginação) |
+| GET | `/api/admin/memberships/{id}` | Bearer + `Socios.Gerenciar` | Detalhe da associação (snapshot + usuário) |
+| GET | `/api/admin/memberships/{id}/history` | Bearer + `Socios.Gerenciar` | Histórico operacional (`MembershipHistories`) |
+| PATCH | `/api/admin/memberships/{id}/status` | Bearer + `Socios.Gerenciar` | Atualiza status com `reason` obrigatório (auditoria + histórico de domínio) |
 | GET | `/api/admin/config` | Bearer + `Configuracoes.Visualizar` | Lista configurações |
 | PUT | `/api/admin/config/{key}` | Bearer + `Configuracoes.Editar` | Cria/atualiza configuração (auditoria) |
 | GET | `/api/admin/role-permissions` | Bearer + `Configuracoes.Visualizar` | Matriz role × permissão |

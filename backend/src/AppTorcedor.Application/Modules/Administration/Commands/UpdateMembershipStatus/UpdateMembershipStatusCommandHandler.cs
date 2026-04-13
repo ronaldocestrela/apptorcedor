@@ -3,9 +3,14 @@ using MediatR;
 
 namespace AppTorcedor.Application.Modules.Administration.Commands.UpdateMembershipStatus;
 
-public sealed class UpdateMembershipStatusCommandHandler(IMembershipWritePort membership)
-    : IRequestHandler<UpdateMembershipStatusCommand, bool>
+public sealed class UpdateMembershipStatusCommandHandler(IMembershipAdministrationPort membership)
+    : IRequestHandler<UpdateMembershipStatusCommand, MembershipStatusUpdateResult>
 {
-    public Task<bool> Handle(UpdateMembershipStatusCommand request, CancellationToken cancellationToken) =>
-        membership.UpdateStatusAsync(request.MembershipId, request.Status, cancellationToken);
+    public Task<MembershipStatusUpdateResult> Handle(UpdateMembershipStatusCommand request, CancellationToken cancellationToken) =>
+        membership.UpdateStatusAsync(
+            request.MembershipId,
+            request.Status,
+            request.Reason,
+            request.ActorUserId,
+            cancellationToken);
 }

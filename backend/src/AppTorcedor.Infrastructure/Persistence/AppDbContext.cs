@@ -18,6 +18,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<AppRolePermission> RolePermissions => Set<AppRolePermission>();
     public DbSet<MembershipPlanRecord> MembershipPlans => Set<MembershipPlanRecord>();
     public DbSet<MembershipRecord> Memberships => Set<MembershipRecord>();
+    public DbSet<MembershipHistoryRecord> MembershipHistories => Set<MembershipHistoryRecord>();
     public DbSet<PaymentRecord> Payments => Set<PaymentRecord>();
     public DbSet<AuditLogEntry> AuditLogs => Set<AuditLogEntry>();
     public DbSet<AppConfigurationEntry> AppConfigurationEntries => Set<AppConfigurationEntry>();
@@ -74,6 +75,29 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .WithMany()
                 .HasForeignKey(x => x.PlanId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<MembershipHistoryRecord>(entity =>
+        {
+            entity.ToTable("MembershipHistories");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.EventType).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.FromStatus).HasConversion<int>();
+            entity.Property(x => x.ToStatus).HasConversion<int>();
+            entity.Property(x => x.Reason).HasMaxLength(2000).IsRequired();
+            entity.HasIndex(x => x.MembershipId);
+            entity.HasIndex(x => x.UserId);
+            entity.HasIndex(x => x.CreatedAt);
+            entity
+                .HasOne<MembershipRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.MembershipId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<PaymentRecord>(entity =>

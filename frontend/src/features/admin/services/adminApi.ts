@@ -96,8 +96,69 @@ export async function listRolePermissions(): Promise<RolePermissionRow[]> {
   return data
 }
 
-export async function updateMembershipStatus(membershipId: string, status: MembershipStatus): Promise<void> {
-  await api.patch(`/api/admin/memberships/${membershipId}/status`, { status })
+export type AdminMembershipListItem = {
+  membershipId: string
+  userId: string
+  userEmail: string
+  userName: string
+  status: string
+  planId: string | null
+  startDate: string
+  endDate: string | null
+  nextDueDate: string | null
+}
+
+export type AdminMembershipListPage = {
+  totalCount: number
+  items: AdminMembershipListItem[]
+}
+
+export type AdminMembershipDetail = AdminMembershipListItem
+
+export type MembershipHistoryEvent = {
+  id: string
+  eventType: string
+  fromStatus: string | null
+  toStatus: string
+  fromPlanId: string | null
+  toPlanId: string | null
+  reason: string
+  actorUserId: string | null
+  createdAt: string
+}
+
+export async function listAdminMemberships(params: {
+  status?: MembershipStatus | ''
+  userId?: string
+  page?: number
+  pageSize?: number
+}): Promise<AdminMembershipListPage> {
+  const { data } = await api.get<AdminMembershipListPage>('/api/admin/memberships', {
+    params: {
+      status: params.status || undefined,
+      userId: params.userId?.trim() || undefined,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getAdminMembership(membershipId: string): Promise<AdminMembershipDetail> {
+  const { data } = await api.get<AdminMembershipDetail>(`/api/admin/memberships/${encodeURIComponent(membershipId)}`)
+  return data
+}
+
+export async function listMembershipHistory(membershipId: string, take = 50): Promise<MembershipHistoryEvent[]> {
+  const { data } = await api.get<MembershipHistoryEvent[]>(
+    `/api/admin/memberships/${encodeURIComponent(membershipId)}/history`,
+    { params: { take } },
+  )
+  return data
+}
+
+export async function updateMembershipStatus(membershipId: string, status: MembershipStatus, reason: string): Promise<void> {
+  await api.patch(`/api/admin/memberships/${membershipId}/status`, { status, reason })
 }
 
 export async function getAdminDashboard(): Promise<AdminDashboardResult> {

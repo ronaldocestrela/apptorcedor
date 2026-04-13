@@ -55,10 +55,12 @@ Detalhes técnicos: [docs/architecture/parte-b3-users-admin.md](architecture/par
 
 ### B.4 Membership (visão administrativa)
 
-- [ ] **Consulta de status de associação:** Não associado, Ativo, Inadimplente, Suspenso, Cancelado.
-- [ ] **Alteração manual de status** (com permissão e motivo/auditoria).
-- [ ] **Vínculo com plano e datas:** início, fim, próximo vencimento.
-- [ ] **Histórico de associação** (mudanças de plano e status).
+Detalhes técnicos: [docs/architecture/parte-b4-membership-admin.md](architecture/parte-b4-membership-admin.md).
+
+- [x] **Consulta de status de associação:** Não associado, Ativo, Inadimplente, Suspenso, Cancelado.
+- [x] **Alteração manual de status** (com permissão e motivo/auditoria).
+- [x] **Vínculo com plano e datas:** início, fim, próximo vencimento (consulta administrativa; edição manual de plano/datas fora do escopo desta entrega).
+- [x] **Histórico de associação** (mudanças de status com motivo; histórico de domínio em `MembershipHistories`; mudanças de plano quando existirem serão refletidas nos eventos futuros).
 
 ### B.5 Plans (gestão de oferta)
 

@@ -146,6 +146,23 @@ export function UserDetailPage() {
               <li>
                 <strong>Início:</strong> {new Date(detail.membership.startDate).toLocaleString()}
               </li>
+              <li>
+                <strong>Fim:</strong>
+                {' '}
+                {detail.membership.endDate ? new Date(detail.membership.endDate).toLocaleString() : '—'}
+              </li>
+              <li>
+                <strong>Próx. venc.:</strong>
+                {' '}
+                {detail.membership.nextDueDate ? new Date(detail.membership.nextDueDate).toLocaleString() : '—'}
+              </li>
+              <li>
+                <Link
+                  to={`/admin/membership?membershipId=${encodeURIComponent(detail.membership.membershipId)}`}
+                >
+                  Abrir no módulo Membership (B.4)
+                </Link>
+              </li>
             </ul>
           ) : (
             <p>Sem registro de associação.</p>

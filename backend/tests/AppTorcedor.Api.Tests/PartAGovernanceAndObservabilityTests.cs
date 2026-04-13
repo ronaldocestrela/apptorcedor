@@ -60,7 +60,7 @@ public sealed class PartAGovernanceAndObservabilityTests(AppWebApplicationFactor
         var token = await LoginAdminAsync();
         using var patch = new HttpRequestMessage(HttpMethod.Patch, $"/api/admin/memberships/{TestingSeedConstants.SampleMembershipId}/status");
         patch.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        patch.Content = JsonContent.Create(new { status = "Ativo" });
+        patch.Content = JsonContent.Create(new { status = "Ativo", reason = "Teste de auditoria" });
         var updated = await _client.SendAsync(patch);
         Assert.Equal(HttpStatusCode.NoContent, updated.StatusCode);
 

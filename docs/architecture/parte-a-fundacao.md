@@ -32,6 +32,9 @@ O endpoint `GET /api/auth/me` devolve a mesma lista em **`permissions`**, para o
 | GET | `/api/admin/staff/users` | `Usuarios.Visualizar` |
 | PATCH | `/api/admin/staff/users/{id}/active` | `Usuarios.Editar` |
 | PUT | `/api/admin/staff/users/{id}/roles` | `Usuarios.Editar` |
+| GET | `/api/admin/memberships` | `Socios.Gerenciar` |
+| GET | `/api/admin/memberships/{id}` | `Socios.Gerenciar` |
+| GET | `/api/admin/memberships/{id}/history` | `Socios.Gerenciar` |
 | PATCH | `/api/admin/memberships/{id}/status` | `Socios.Gerenciar` |
 | GET | `/api/admin/config` | `Configuracoes.Visualizar` |
 | PUT | `/api/admin/config/{key}` | `Configuracoes.Editar` |
@@ -44,17 +47,17 @@ O endpoint `GET /api/auth/me` devolve a mesma lista em **`permissions`**, para o
 | PATCH | `/api/admin/users/{userId}/active` | `Usuarios.Editar` |
 | PUT | `/api/admin/users/{userId}/profile` | `Usuarios.Editar` |
 
-Corpo do PATCH de membership: `{ "status": "Ativo" }` (enum `MembershipStatus` como string JSON).
+Corpo do PATCH de membership: `{ "status": "Ativo", "reason": "..." }` (enum `MembershipStatus` como string JSON; motivo obrigatório). Superfície completa e histórico de domínio: [parte-b4-membership-admin.md](parte-b4-membership-admin.md).
 
 ## Migração
 
-- `PartAFoundation`, `PartB1StaffInvites` (tabela `StaffInvites`), `PartB2Lgpd` e `PartB3UserProfiles` (`UserProfiles`) em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
+- `PartAFoundation`, `PartB1StaffInvites` (tabela `StaffInvites`), `PartB2Lgpd`, `PartB3UserProfiles` (`UserProfiles`) e `PartB4MembershipHistory` (`MembershipHistories`) em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
 
 ## Testes
 
 - `AppTorcedor.Application.Tests`: handler de diagnóstico (porta de conectividade).
-- `AppTorcedor.Api.Tests`: permissão negada para torcedor sem claims; health; governança; auditoria após alteração de membership e configuração; Parte B.1 (staff, matriz editável, dashboard); Parte B.2 LGPD (`PartB2LgpdTests`); Parte B.3 usuários admin (`PartB3UsersAdminTests`).
-- `AppTorcedor.Application.Tests`: handler de publicação de versão de documento legal (delegação ao port LGPD).
+- `AppTorcedor.Api.Tests`: permissão negada para torcedor sem claims; health; governança; auditoria após alteração de membership e configuração; Parte B.1 (staff, matriz editável, dashboard); Parte B.2 LGPD (`PartB2LgpdTests`); Parte B.3 usuários admin (`PartB3UsersAdminTests`); Parte B.4 membership admin (`PartB4MembershipAdminTests`).
+- `AppTorcedor.Application.Tests`: handler de publicação de versão de documento legal (delegação ao port LGPD); handlers de membership admin (`MembershipAdminHandlersTests`).
 
 ### Testes e banco in-memory
 
