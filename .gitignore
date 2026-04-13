@@ -62,6 +62,9 @@ launchSettings.json
 ## ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+## API — conteúdo estático gerado em runtime (uploads, imagens, documentos servidos localmente)
+backend/src/AppTorcedor.Api/wwwroot/
+
 ## User-specific files
 *.dbmdl
 *.dbproj.schemaview
@@ -95,6 +98,7 @@ dist-ssr/
 .env
 .env.*
 !.env.example
+!.env.compose.example
 !.env.development
 
 ## Vite

@@ -278,8 +278,9 @@ Detalhes: [docs/architecture/parte-d6-troca-plano-torcedor.md](architecture/part
 
 ## Parte F — Infraestrutura e deploy
 
-- [ ] **Dockerfile** da API e pipeline de build.
-- [ ] **Ambiente VPS** (reverse proxy, HTTPS, variáveis de ambiente, secrets).
+- [x] **Dockerfile** da API e da SPA + `docker-compose.yml` (API + web; SQL Server em servidor externo).
+- [x] **Jenkins CD pós-CI** — [`Jenkinsfile`](../Jenkinsfile), gate do workflow GitHub `CI` ([`deploy/ci/wait_github_ci.py`](../deploy/ci/wait_github_ci.py)), deploy VPS ([`deploy/vps/deploy.sh`](../deploy/vps/deploy.sh)), segredos via Jenkins Credentials; documentação em [`docs/architecture/parte-f1-jenkins-cd-pos-ci.md`](architecture/parte-f1-jenkins-cd-pos-ci.md).
+- [ ] **Ambiente VPS** (reverse proxy, HTTPS, variáveis de ambiente, secrets) — exemplos systemd/env em [`deploy/vps/`](../deploy/vps/); operação completa ainda depende do provedor/DNS.
 - [ ] **Estratégia de migrations em produção** (job dedicado vs. startup — alinhar com política de disponibilidade).
 
 ---

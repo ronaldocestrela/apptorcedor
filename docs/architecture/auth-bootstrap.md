@@ -17,7 +17,7 @@ Estabelecer o monólito inicial com **ASP.NET Core Identity**, **JWT (access + r
 
 ### Configuração
 
-- **SQL Server**: `ConnectionStrings:DefaultConnection` (ver `docker-compose.yml` na raiz).
+- **SQL Server**: `ConnectionStrings:DefaultConnection` (appsettings, user secrets ou variáveis de ambiente; em Docker Compose use `DATABASE_CONNECTION_STRING` no `.env` apontando para o servidor SQL externo).
 - **In-memory (dev rápido)**: `UseInMemoryDatabase: true` em `appsettings.Development.json`.
 - **JWT**: seção `Jwt` (`Issuer`, `Audience`, `Key` com **≥ 32 bytes UTF-8**, `AccessTokenMinutes`, `RefreshTokenDays`).
 - **Seed admin**: `Seed:AdminMaster:Email` / `Seed:AdminMaster:Password` ou variável de ambiente `ADMIN_MASTER_INITIAL_PASSWORD` (obrigatória fora Development/Testing).

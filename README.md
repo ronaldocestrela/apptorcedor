@@ -8,15 +8,17 @@ Monólito modular para **sócio torcedor** de um único clube (single tenant). A
 |------------|-----|
 | [.NET 10 SDK](https://dotnet.microsoft.com/download) | API e testes |
 | Node.js 20+ e npm | Frontend |
-| Docker (opcional) | SQL Server local via `docker compose` |
+| Docker (opcional) | Stack **API + SPA** (`docker compose`); banco SQL em **servidor externo** |
 
 ## Estrutura do repositório
 
 ```text
 backend/          → Solução .NET (API, Identity, Infrastructure, testes)
 frontend/         → React + Vite (login, **cadastro e Minha conta (C.1)**, **notícias e benefícios (C.2)** no `/news` e `/benefits`, **catálogo de planos (D.1)** em `/plans`, **detalhe de plano (D.2)** em `/plans/:planId`, **carteirinha (C.3)** em `/digital-card`, **jogos e ingressos (C.4)** em `/games` e `/tickets`, **fidelidade (C.5)** em `/loyalty`, login Google opcional, convite staff, **usuários admin**, dashboard admin, **pagamentos admin (B.6)**, **notícias admin (B.9)**, **fidelidade/benefícios admin (B.10)**, **chamados/suporte admin (B.11)**, gestão de matriz de permissões, refresh de token)
+deploy/           → CD na VPS (`deploy/vps/build-and-deploy.sh`, `deploy/vps/deploy.sh` legado), helpers (`deploy/ci/`) — ver `docs/architecture/parte-f1-jenkins-cd-pos-ci.md`
+Jenkinsfile       → CD: após CI verde, GitHub Actions dispara o job; segredos em Jenkins Credentials; build na VPS (git pull + publish + Vite)
 docs/             → Documentação técnica por fase
-docker-compose.yml → SQL Server opcional
+docker-compose.yml → **API + frontend** (imagens locais); connection string aponta para SQL em outro servidor
 AGENTS.md         → Visão de produto, regras e arquitetura alvo
 ```
 
@@ -54,21 +56,31 @@ npm run dev
 2. Faça login com o e-mail e senha do seed (veja a seção **Credenciais iniciais** abaixo).
 3. Após autenticar, você acessa a área logada (**/**, **/account**, **/news**, **/benefits**, **/plans**, **/digital-card**, **/games**, **/tickets**, **/loyalty**); usuários com permissões administrativas podem abrir **/admin** e sub-rotas (ver [docs/frontend/backoffice.md](docs/frontend/backoffice.md)).
 
-## SQL Server com Docker (opcional)
+## Docker: API + SPA (banco à parte)
 
-Se quiser persistir dados em SQL Server em vez do banco em memória:
+O repositório define um **Dockerfile** em [`backend/Dockerfile`](backend/Dockerfile) e outro em [`frontend/Dockerfile`](frontend/Dockerfile). O [`docker-compose.yml`](docker-compose.yml) sobe **apenas** os serviços `api` e `web`. O **SQL Server fica em outro servidor**; em [`ConnectionStrings:DefaultConnection`](backend/src/AppTorcedor.Api/appsettings.json) / variável `DATABASE_CONNECTION_STRING` use o host do seu banco (acessível a partir dos containers ou da API, conforme a rede).
 
-1. Suba o container:
+1. Copie o exemplo de variáveis e ajuste (JWT, connection string, senha do seed, etc.):
 
    ```bash
-   docker compose up -d
+   cp .env.compose.example .env
    ```
 
-2. Em [`backend/src/AppTorcedor.Api/appsettings.Development.json`](backend/src/AppTorcedor.Api/appsettings.Development.json):
-   - defina **`UseInMemoryDatabase`** como **`false`**;
-   - confira se **`ConnectionStrings:DefaultConnection`** em [`appsettings.json`](backend/src/AppTorcedor.Api/appsettings.json) corresponde ao usuário/senha do `docker-compose.yml`.
+2. Suba os containers:
 
-3. Aplique as migrations na primeira vez (a partir da pasta `backend`):
+   ```bash
+   docker compose --env-file .env up --build
+   ```
+
+3. Por padrão: API em **http://localhost:5031**, SPA em **http://localhost:5173**. O build do frontend usa `VITE_API_URL` do `.env` (URL que o **navegador** usa para chamar a API).
+
+## SQL Server em servidor externo (desenvolvimento sem Docker na API)
+
+Se quiser usar SQL Server **fora** deste repositório (outro host, managed, etc.) com `dotnet run` local:
+
+1. Em [`backend/src/AppTorcedor.Api/appsettings.Development.json`](backend/src/AppTorcedor.Api/appsettings.Development.json), defina **`UseInMemoryDatabase`** como **`false`** e ajuste **`ConnectionStrings:DefaultConnection`** (ou use variáveis de ambiente / user secrets).
+
+2. Aplique as migrations na primeira vez (a partir da pasta `backend`):
 
    ```bash
    dotnet ef database update --project src/AppTorcedor.Infrastructure/AppTorcedor.Infrastructure.csproj --startup-project src/AppTorcedor.Api/AppTorcedor.Api.csproj
@@ -83,10 +95,19 @@ Na primeira execução, o sistema cria as **roles** (Administrador Master, Admin
 | Configuração | Descrição |
 |--------------|-----------|
 | `Seed:AdminMaster:Email` | E-mail do administrador (padrão em dev: `admin@torcedor.local`) |
-| `Seed:AdminMaster:Password` | Senha em desenvolvimento ([`appsettings.Development.json`](backend/src/AppTorcedor.Api/appsettings.Development.json)) |
+| `Seed:AdminMaster:Password` | Opcional em Development; se vazio, o seed usa senha de integração definida em código ([`IdentityDataSeeder`](backend/src/AppTorcedor.Infrastructure/Identity/IdentityDataSeeder.cs)) |
 | `ADMIN_MASTER_INITIAL_PASSWORD` | Variável de ambiente; **use em produção** em vez de senha em arquivo |
 
 Fora dos ambientes Development/Testing, a senha do seed **de** estar em configuração ou em `ADMIN_MASTER_INITIAL_PASSWORD`, caso contrário a aplicação falha na inicialização (comportamento intencional).
+
+**Segurança:** credenciais reais de banco ou de produção não devem ser versionadas. Se algum host/senha chegou a existir em histórico do Git, **rotacione** no provedor (SQL, JWT, webhooks, etc.).
+
+## CD com Jenkins (após CI no GitHub)
+
+O repositório inclui [`Jenkinsfile`](Jenkinsfile) para **deploy contínuo na VPS**: o workflow **CI** (GitHub Actions) valida o código e, em **push** para `single-tenant`, o job **`trigger-jenkins`** chama o Jenkins. O pipeline grava **`/etc/apptorcedor/api.env`** a partir do **Jenkins Credentials** e executa [`deploy/vps/build-and-deploy.sh`](deploy/vps/build-and-deploy.sh) na VPS (**git pull**, **dotnet publish**, **npm build**). Segredos não ficam em `.env` manual no servidor.
+
+- Fluxo, secrets do GitHub (`JENKINS_*`) e credenciais Jenkins: [`docs/architecture/parte-f1-jenkins-cd-pos-ci.md`](docs/architecture/parte-f1-jenkins-cd-pos-ci.md) e [`docs/deploy/guia-deploy.md`](docs/deploy/guia-deploy.md).
+- Chaves de referência para `api.env`: [`deploy/vps/api.env.example`](deploy/vps/api.env.example); systemd: [`deploy/vps/apptorcedor-api.service.example`](deploy/vps/apptorcedor-api.service.example).
 
 ## Endpoints principais da API
 
@@ -151,11 +172,13 @@ Não commite chaves reais; use secrets ou variáveis de ambiente no deploy.
 
 ## Documentação adicional
 
+- [docs/deploy/guia-deploy.md](docs/deploy/guia-deploy.md) — **guia passo a passo de deploy** (Jenkins + VPS, Docker Compose, variáveis, checklist).
 - [AGENTS.md](AGENTS.md) — escopo do produto, módulos e regras do projeto.
 - [docs/architecture/auth-bootstrap.md](docs/architecture/auth-bootstrap.md) — decisões da fase de autenticação, detalhes técnicos e variáveis.
 - [docs/architecture/parte-a-fundacao.md](docs/architecture/parte-a-fundacao.md) — Parte A: CQRS, permissões, auditoria, configurações e observabilidade.
 - [docs/frontend/backoffice.md](docs/frontend/backoffice.md) — painel administrativo na SPA (rotas e permissões).
 - [docs/ROADMAP-PENDENCIAS.md](docs/ROADMAP-PENDENCIAS.md) — backlog do que falta fazer, com prioridade para gestão e contratação de planos pelo torcedor ao final.
+- [docs/architecture/parte-f1-jenkins-cd-pos-ci.md](docs/architecture/parte-f1-jenkins-cd-pos-ci.md) — Jenkins CD pós-CI (disparo via GitHub Actions, build na VPS, credenciais).
 - [docs/architecture/parte-b2-lgpd.md](docs/architecture/parte-b2-lgpd.md) — Parte B.2: documentos legais, consentimentos, exportação e anonimização.
 - [docs/architecture/parte-b7-digital-card-admin.md](docs/architecture/parte-b7-digital-card-admin.md) — Parte B.7: carteirinha digital (admin), versionamento e token.
 - [docs/architecture/parte-b8-games-tickets-admin.md](docs/architecture/parte-b8-games-tickets-admin.md) — Parte B.8: jogos e ingressos (admin), `ITicketProvider` mock e fluxos de reserva/compra/sync/redeem.

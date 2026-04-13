@@ -82,3 +82,45 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  deploy-cd-tooling:
+    name: Deploy/CD tooling
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bash syntax (deploy scripts)
+        run: |
+          bash -n deploy/vps/deploy.sh
+          bash -n deploy/vps/build-and-deploy.sh
+          bash -n deploy/ci/wait-github-ci.sh
+
+      - name: Python (gate CI / Jenkins helper)
+        run: python3 -m unittest discover -s deploy/ci -p 'test_*.py' -v
+
+  docker-compose:
+    name: Docker Compose (config)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate compose (API + web)
+        run: docker compose --env-file .env.compose.example config --quiet
+
+  trigger-jenkins:
+    name: Trigger Jenkins deploy
+    needs: [backend, frontend, deploy-cd-tooling, docker-compose]
+    if: github.ref == 'refs/heads/single-tenant' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Jenkins build
+        run: |
+          curl -fsS -X POST \
+            "${JENKINS_URL}/job/${JENKINS_JOB_NAME}/build?token=${JENKINS_BUILD_TOKEN}" \
+            -u "${JENKINS_USER}:${JENKINS_API_TOKEN}"
+        env:
+          JENKINS_URL: ${{ secrets.JENKINS_URL }}
+          JENKINS_JOB_NAME: ${{ secrets.JENKINS_JOB_NAME }}
+          JENKINS_BUILD_TOKEN: ${{ secrets.JENKINS_BUILD_TOKEN }}
+          JENKINS_USER: ${{ secrets.JENKINS_USER }}
+          JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
