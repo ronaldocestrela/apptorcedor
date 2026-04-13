@@ -8,7 +8,7 @@ Este documento descreve o que foi entregue na **Parte A** do [ROADMAP-PENDENCIAS
 |------|---------|
 | CQRS | Projeto `backend/src/AppTorcedor.Application` com **MediatR**; handlers por feature em `Modules/Administration/...` |
 | Permissões | Tabelas `AppPermissions` e `AppRolePermissions`; claims JWT `permission`; políticas `Permission:{nome}`; seed de todas as permissões para a role **Administrador Master** |
-| Auditoria | Tabela `AuditLogs`; `AuditSaveChangesInterceptor` para `MembershipRecord`, `MembershipPlanRecord`, `PaymentRecord`, `AppConfigurationEntry`, `StaffInviteRecord`, `AppRolePermission` |
+| Auditoria | Tabela `AuditLogs`; `AuditSaveChangesInterceptor` para `MembershipRecord`, `MembershipPlanRecord`, `PaymentRecord`, `AppConfigurationEntry`, `StaffInviteRecord`, `AppRolePermission`, entidades LGPD, `UserProfileRecord` e atualizações seguras de `ApplicationUser` (ver [parte-b3-users-admin.md](parte-b3-users-admin.md)) |
 | Configurações | Tabela `AppConfigurationEntries` (chave, valor, versão, auditoria); API admin |
 | Domínio inicial | Tabelas `Memberships`, `MembershipPlans`, `Payments` (modelo mínimo) |
 | Observabilidade | `GET /health/live`, `GET /health/ready` (inclui DB); logs JSON com escopo; header `X-Correlation-Id` e propagação em contexto de auditoria |
@@ -38,17 +38,22 @@ O endpoint `GET /api/auth/me` devolve a mesma lista em **`permissions`**, para o
 | GET | `/api/admin/role-permissions` | `Configuracoes.Visualizar` |
 | PUT | `/api/admin/role-permissions` | `Configuracoes.Editar` |
 | GET | `/api/admin/audit-logs` | `Configuracoes.Visualizar` |
+| GET | `/api/admin/users` | `Usuarios.Visualizar` |
+| GET | `/api/admin/users/{userId}` | `Usuarios.Visualizar` |
+| GET | `/api/admin/users/{userId}/audit-logs` | `Usuarios.Visualizar` |
+| PATCH | `/api/admin/users/{userId}/active` | `Usuarios.Editar` |
+| PUT | `/api/admin/users/{userId}/profile` | `Usuarios.Editar` |
 
 Corpo do PATCH de membership: `{ "status": "Ativo" }` (enum `MembershipStatus` como string JSON).
 
 ## Migração
 
-- `PartAFoundation` e `PartB1StaffInvites` (tabela `StaffInvites`) em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
+- `PartAFoundation`, `PartB1StaffInvites` (tabela `StaffInvites`), `PartB2Lgpd` e `PartB3UserProfiles` (`UserProfiles`) em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
 
 ## Testes
 
 - `AppTorcedor.Application.Tests`: handler de diagnóstico (porta de conectividade).
-- `AppTorcedor.Api.Tests`: permissão negada para torcedor sem claims; health; governança; auditoria após alteração de membership e configuração; Parte B.1 (staff, matriz editável, dashboard); Parte B.2 LGPD (`PartB2LgpdTests`).
+- `AppTorcedor.Api.Tests`: permissão negada para torcedor sem claims; health; governança; auditoria após alteração de membership e configuração; Parte B.1 (staff, matriz editável, dashboard); Parte B.2 LGPD (`PartB2LgpdTests`); Parte B.3 usuários admin (`PartB3UsersAdminTests`).
 - `AppTorcedor.Application.Tests`: handler de publicação de versão de documento legal (delegação ao port LGPD).
 
 ### Testes e banco in-memory

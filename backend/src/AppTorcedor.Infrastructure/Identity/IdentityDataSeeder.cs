@@ -183,5 +183,20 @@ public static class IdentityDataSeeder
                 });
             await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
+
+        if (!await db.UserProfiles.AnyAsync(p => p.UserId == TestingSeedConstants.SampleMemberUserId, cancellationToken).ConfigureAwait(false))
+        {
+            db.UserProfiles.Add(
+                new UserProfileRecord
+                {
+                    UserId = TestingSeedConstants.SampleMemberUserId,
+                    Document = "12345678901",
+                    BirthDate = new DateOnly(1995, 5, 15),
+                    PhotoUrl = null,
+                    Address = "Rua do Estádio, 100",
+                    AdministrativeNote = null,
+                });
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 }

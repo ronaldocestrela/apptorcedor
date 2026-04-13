@@ -206,6 +206,7 @@ public sealed class LgpdAdministrationService(
             var consents = await ListConsentsForUserAsync(subjectUserId, cancellationToken).ConfigureAwait(false);
             var membership = await db.Memberships.AsNoTracking().FirstOrDefaultAsync(m => m.UserId == subjectUserId, cancellationToken).ConfigureAwait(false);
             var paymentsCount = await db.Payments.CountAsync(p => p.UserId == subjectUserId, cancellationToken).ConfigureAwait(false);
+            var profile = await db.UserProfiles.AsNoTracking().FirstOrDefaultAsync(p => p.UserId == subjectUserId, cancellationToken).ConfigureAwait(false);
 
             var payload = new
             {
@@ -216,6 +217,16 @@ public sealed class LgpdAdministrationService(
                 user.PhoneNumber,
                 user.IsActive,
                 user.CreatedAt,
+                profile = profile is null
+                    ? null
+                    : new
+                    {
+                        profile.Document,
+                        profile.BirthDate,
+                        profile.PhotoUrl,
+                        profile.Address,
+                        profile.AdministrativeNote,
+                    },
                 consents,
                 membership = membership is null
                     ? null
@@ -288,7 +299,13 @@ public sealed class LgpdAdministrationService(
 
             await refreshTokens.RevokeAllForUserAsync(subjectUserId, cancellationToken).ConfigureAwait(false);
 
-            var summary = JsonSerializer.Serialize(new { subjectUserId, anonymizedEmail = newEmail, refreshTokensRevoked = true });
+            var profileRow = await db.UserProfiles.FirstOrDefaultAsync(p => p.UserId == subjectUserId, cancellationToken).ConfigureAwait(false);
+            if (profileRow is not null)
+                db.UserProfiles.Remove(profileRow);
+
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            var summary = JsonSerializer.Serialize(new { subjectUserId, anonymizedEmail = newEmail, refreshTokensRevoked = true, profileRemoved = profileRow is not null });
             var tracked = await db.PrivacyRequests.FirstAsync(r => r.Id == requestId, cancellationToken).ConfigureAwait(false);
             tracked.Status = PrivacyRequestStatus.Completed;
             tracked.CompletedAt = DateTimeOffset.UtcNow;

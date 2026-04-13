@@ -26,6 +26,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<LegalDocumentVersionRecord> LegalDocumentVersions => Set<LegalDocumentVersionRecord>();
     public DbSet<UserConsentRecord> UserConsents => Set<UserConsentRecord>();
     public DbSet<PrivacyRequestRecord> PrivacyRequests => Set<PrivacyRequestRecord>();
+    public DbSet<UserProfileRecord> UserProfiles => Set<UserProfileRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -175,6 +176,21 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .WithMany()
                 .HasForeignKey(x => x.LegalDocumentVersionId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<UserProfileRecord>(entity =>
+        {
+            entity.ToTable("UserProfiles");
+            entity.HasKey(x => x.UserId);
+            entity.Property(x => x.Document).HasMaxLength(32);
+            entity.Property(x => x.PhotoUrl).HasMaxLength(2048);
+            entity.Property(x => x.Address).HasMaxLength(2048);
+            entity.Property(x => x.AdministrativeNote).HasMaxLength(2000);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithOne()
+                .HasForeignKey<UserProfileRecord>(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<PrivacyRequestRecord>(entity =>

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AppTorcedor.Identity;
 using AppTorcedor.Infrastructure.Entities;
 using AppTorcedor.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -28,24 +29,39 @@ public sealed class AuditSaveChangesInterceptor(ICurrentAuditContext auditContex
 
             var entityTypeName = entry.Entity.GetType().Name;
             var entityId = GetEntityId(entry);
-            var action = entry.State switch
-            {
-                EntityState.Added => $"{entityTypeName}.Create",
-                EntityState.Deleted => $"{entityTypeName}.Delete",
-                EntityState.Modified => $"{entityTypeName}.Update",
-                _ => $"{entityTypeName}.Change",
-            };
-
+            string action;
             string? oldValues = null;
             string? newValues = null;
-            if (entry.State == EntityState.Added)
-                newValues = Serialize(entry.CurrentValues);
-            else if (entry.State == EntityState.Deleted)
-                oldValues = Serialize(entry.OriginalValues);
-            else if (entry.State == EntityState.Modified)
+
+            if (entry.Entity is ApplicationUser)
             {
-                oldValues = Serialize(entry.OriginalValues);
-                newValues = Serialize(entry.CurrentValues);
+                if (entry.State != EntityState.Modified)
+                    continue;
+                if (!TryBuildApplicationUserAuditValues(entry, out var oldDict, out var newDict))
+                    continue;
+                action = $"{entityTypeName}.Update";
+                oldValues = JsonSerializer.Serialize(oldDict);
+                newValues = JsonSerializer.Serialize(newDict);
+            }
+            else
+            {
+                action = entry.State switch
+                {
+                    EntityState.Added => $"{entityTypeName}.Create",
+                    EntityState.Deleted => $"{entityTypeName}.Delete",
+                    EntityState.Modified => $"{entityTypeName}.Update",
+                    _ => $"{entityTypeName}.Change",
+                };
+
+                if (entry.State == EntityState.Added)
+                    newValues = Serialize(entry.CurrentValues);
+                else if (entry.State == EntityState.Deleted)
+                    oldValues = Serialize(entry.OriginalValues);
+                else if (entry.State == EntityState.Modified)
+                {
+                    oldValues = Serialize(entry.OriginalValues);
+                    newValues = Serialize(entry.CurrentValues);
+                }
             }
 
             appDb.AuditLogs.Add(
@@ -76,7 +92,41 @@ public sealed class AuditSaveChangesInterceptor(ICurrentAuditContext auditContex
             or LegalDocumentRecord
             or LegalDocumentVersionRecord
             or UserConsentRecord
-            or PrivacyRequestRecord;
+            or PrivacyRequestRecord
+            or UserProfileRecord
+            or ApplicationUser;
+
+    private static readonly string[] ApplicationUserAuditPropertyNames =
+    [
+        nameof(ApplicationUser.UserName),
+        nameof(ApplicationUser.Email),
+        nameof(ApplicationUser.Name),
+        nameof(ApplicationUser.PhoneNumber),
+        nameof(ApplicationUser.IsActive),
+        nameof(ApplicationUser.EmailConfirmed),
+    ];
+
+    private static bool TryBuildApplicationUserAuditValues(
+        EntityEntry entry,
+        out Dictionary<string, object?> oldDict,
+        out Dictionary<string, object?> newDict)
+    {
+        oldDict = [];
+        newDict = [];
+        foreach (var name in ApplicationUserAuditPropertyNames)
+        {
+            var prop = entry.Property(name);
+            var orig = prop.OriginalValue;
+            var cur = prop.CurrentValue;
+            if (!Equals(orig, cur))
+            {
+                oldDict[name] = orig;
+                newDict[name] = cur;
+            }
+        }
+
+        return oldDict.Count > 0;
+    }
 
     private static string GetEntityId(EntityEntry entry)
     {

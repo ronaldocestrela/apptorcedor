@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<IRolePermissionReadPort, RolePermissionReadPort>();
         services.AddScoped<IRolePermissionWritePort, RolePermissionWritePort>();
         services.AddScoped<IStaffAdministrationPort, StaffAdministrationService>();
+        services.AddScoped<IUserAdministrationPort, UserAdministrationService>();
         services.AddScoped<IAdminDashboardReadPort, AdminDashboardReadPort>();
         services.AddScoped<IAuditLogReadPort, AuditLogReadPort>();
         services.AddScoped<ILgpdAdministrationPort, LgpdAdministrationService>();

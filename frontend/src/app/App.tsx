@@ -10,6 +10,8 @@ import { UserConsentsPage } from '../features/admin/pages/UserConsentsPage'
 import { PrivacyOpsPage } from '../features/admin/pages/PrivacyOpsPage'
 import { RolePermissionsPage } from '../features/admin/pages/RolePermissionsPage'
 import { StaffManagementPage } from '../features/admin/pages/StaffManagementPage'
+import { UserDetailPage } from '../features/admin/pages/UserDetailPage'
+import { UsersListPage } from '../features/admin/pages/UsersListPage'
 import { AdminLayout } from '../features/admin/layout/AdminLayout'
 import { AuthProvider } from '../features/auth/AuthContext'
 import { PermissionRoute } from '../features/auth/PermissionRoute'
@@ -31,6 +33,8 @@ export function App() {
               <Route index element={<AdminIndexRedirect />} />
               <Route path="dashboard" element={<AdminDashboardPage />} />
               <Route path="staff" element={<StaffManagementPage />} />
+              <Route path="users" element={<UsersListPage />} />
+              <Route path="users/:userId" element={<UserDetailPage />} />
               <Route path="diagnostics" element={<DiagnosticsPage />} />
               <Route path="configurations" element={<ConfigurationsPage />} />
               <Route path="audit-logs" element={<AuditLogsPage />} />

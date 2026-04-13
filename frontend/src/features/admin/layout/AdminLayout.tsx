@@ -32,6 +32,9 @@ export function AdminLayout() {
           {hasPermission(user, ApplicationPermissions.UsuariosVisualizar) ? (
             <NavLink to="staff" style={linkStyle}>Staff</NavLink>
           ) : null}
+          {hasPermission(user, ApplicationPermissions.UsuariosVisualizar) ? (
+            <NavLink to="users" style={linkStyle}>Usuários</NavLink>
+          ) : null}
           {hasPermission(user, ApplicationPermissions.AdministracaoDiagnostics) ? (
             <NavLink to="diagnostics" style={linkStyle}>Diagnóstico</NavLink>
           ) : null}

@@ -46,10 +46,12 @@ Foco em **quem opera o clube**: administradores, financeiro, atendimento, market
 
 ### B.3 Users (visão administrativa)
 
-- [ ] **Listagem e busca de usuários** (torcedores e não associados).
-- [ ] **Visualização de perfil** (`UserProfile`: documento, data nascimento, foto, endereço).
-- [ ] **Ativação / inativação de conta** e flags administrativas alinhadas a regras de negócio.
-- [ ] **Histórico de alterações** relevantes do perfil (se aplicável à LGPD/auditoria).
+Detalhes técnicos: [docs/architecture/parte-b3-users-admin.md](architecture/parte-b3-users-admin.md).
+
+- [x] **Listagem e busca de usuários** (torcedores e não associados).
+- [x] **Visualização de perfil** (`UserProfile`: documento, data nascimento, foto, endereço).
+- [x] **Ativação / inativação de conta** e flags administrativas alinhadas a regras de negócio.
+- [x] **Histórico de alterações** relevantes do perfil (se aplicável à LGPD/auditoria).
 
 ### B.4 Membership (visão administrativa)
 

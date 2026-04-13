@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ApplicationPermissions } from '../../../shared/auth/applicationPermissions'
 import { hasPermission } from '../../../shared/auth/permissionUtils'
 import { useAuth } from '../../auth/AuthContext'
@@ -8,12 +9,19 @@ import { listUserConsents, recordUserConsent, type UserConsentRow } from '../ser
 export function UserConsentsPage() {
   const { user } = useAuth()
   const canRegister = hasPermission(user, ApplicationPermissions.LgpdConsentimentosRegistrar)
+  const [searchParams] = useSearchParams()
   const [userId, setUserId] = useState('')
   const [rows, setRows] = useState<UserConsentRow[]>([])
   const [versionId, setVersionId] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    const q = searchParams.get('userId')
+    if (q)
+      setUserId(q)
+  }, [searchParams])
 
   async function onLoad(e: FormEvent) {
     e.preventDefault()

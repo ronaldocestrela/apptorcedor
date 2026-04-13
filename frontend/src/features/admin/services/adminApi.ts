@@ -151,3 +151,96 @@ export async function acceptStaffInvite(body: {
   const { data } = await api.post<AuthTokensResponse>('/api/auth/accept-staff-invite', body)
   return data
 }
+
+/** All accounts (torcedores, não associados, staff). Distinct from listStaffUsers (B.1). */
+export type AdminUserListItem = {
+  id: string
+  email: string
+  name: string
+  isActive: boolean
+  createdAt: string
+  isStaff: boolean
+  membershipStatus: string | null
+  document: string | null
+}
+
+export type AdminUserListPage = {
+  totalCount: number
+  items: AdminUserListItem[]
+}
+
+export type AdminUserProfile = {
+  document: string | null
+  birthDate: string | null
+  photoUrl: string | null
+  address: string | null
+  administrativeNote: string | null
+}
+
+export type AdminUserMembershipSummary = {
+  membershipId: string
+  status: string
+  planId: string | null
+  startDate: string
+  endDate: string | null
+  nextDueDate: string | null
+}
+
+export type AdminUserDetail = {
+  id: string
+  email: string
+  name: string
+  phoneNumber: string | null
+  isActive: boolean
+  createdAt: string
+  isStaff: boolean
+  roles: string[]
+  profile: AdminUserProfile | null
+  membership: AdminUserMembershipSummary | null
+}
+
+export async function listAdminUsers(params: {
+  search?: string
+  isActive?: boolean
+  page?: number
+  pageSize?: number
+}): Promise<AdminUserListPage> {
+  const { data } = await api.get<AdminUserListPage>('/api/admin/users', {
+    params: {
+      search: params.search || undefined,
+      isActive: params.isActive,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return data
+}
+
+export async function getAdminUser(userId: string): Promise<AdminUserDetail> {
+  const { data } = await api.get<AdminUserDetail>(`/api/admin/users/${encodeURIComponent(userId)}`)
+  return data
+}
+
+export async function setUserAccountActive(userId: string, isActive: boolean): Promise<void> {
+  await api.patch(`/api/admin/users/${encodeURIComponent(userId)}/active`, { isActive })
+}
+
+export async function upsertAdminUserProfile(
+  userId: string,
+  body: {
+    document?: string | null
+    birthDate?: string | null
+    photoUrl?: string | null
+    address?: string | null
+    administrativeNote?: string | null
+  },
+): Promise<void> {
+  await api.put(`/api/admin/users/${encodeURIComponent(userId)}/profile`, body)
+}
+
+export async function listUserAuditLogsForUser(userId: string, take?: number): Promise<AuditLogRow[]> {
+  const { data } = await api.get<AuditLogRow[]>(`/api/admin/users/${encodeURIComponent(userId)}/audit-logs`, {
+    params: { take: take ?? 50 },
+  })
+  return data
+}

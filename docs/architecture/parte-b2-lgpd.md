@@ -45,8 +45,8 @@ Corpos JSON principais: criação de documento `{ "type": "TermsOfUse" \| "Priva
 
 - **Publicação:** ao publicar uma versão, as demais do mesmo documento voltam para rascunho.
 - **Consentimento:** só em versão **publicada**; um registro por par usuário × versão.
-- **Exportação:** JSON com dados da conta (`ApplicationUser`), consentimentos, membership (se houver) e contagem de pagamentos.
-- **Anonimização:** atualiza e-mail/username para `anon-{userId:N}@removed.local`, remove telefone, nome genérico, `IsActive = false`, revoga **todos** os refresh tokens do usuário.
+- **Exportação:** JSON com dados da conta (`ApplicationUser`), **perfil estendido** (`UserProfiles`: documento, datas, endereço, nota administrativa), consentimentos, membership (se houver) e contagem de pagamentos.
+- **Anonimização:** atualiza e-mail/username para `anon-{userId:N}@removed.local`, remove telefone, nome genérico, `IsActive = false`, revoga **todos** os refresh tokens do usuário e **remove o registro em `UserProfiles`** (se existir).
 
 ## Auditoria
 
