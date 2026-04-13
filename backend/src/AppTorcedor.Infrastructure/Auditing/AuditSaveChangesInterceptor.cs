@@ -72,7 +72,11 @@ public sealed class AuditSaveChangesInterceptor(ICurrentAuditContext auditContex
             or PaymentRecord
             or AppConfigurationEntry
             or StaffInviteRecord
-            or AppRolePermission;
+            or AppRolePermission
+            or LegalDocumentRecord
+            or LegalDocumentVersionRecord
+            or UserConsentRecord
+            or PrivacyRequestRecord;
 
     private static string GetEntityId(EntityEntry entry)
     {

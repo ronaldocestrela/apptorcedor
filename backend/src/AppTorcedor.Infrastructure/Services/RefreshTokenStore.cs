@@ -83,6 +83,19 @@ public sealed class RefreshTokenStore(AppDbContext db) : IRefreshTokenStore
             .ConfigureAwait(false);
     }
 
+    public async Task RevokeAllForUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var tokens = await db.RefreshTokens
+            .Where(x => x.UserId == userId && x.RevokedAt == null)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        foreach (var t in tokens)
+            t.RevokedAt = now;
+        if (tokens.Count > 0)
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     private static string GenerateSecureToken()
     {
         var bytes = RandomNumberGenerator.GetBytes(64);

@@ -18,4 +18,7 @@ public interface IRefreshTokenStore
     Task<ApplicationUser?> FindUserByRefreshTokenAsync(
         string plainRefreshToken,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Revokes all refresh tokens for the user (e.g. after anonymization).</summary>
+    Task RevokeAllForUserAsync(Guid userId, CancellationToken cancellationToken = default);
 }

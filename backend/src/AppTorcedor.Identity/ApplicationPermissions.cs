@@ -18,6 +18,13 @@ public static class ApplicationPermissions
     public const string ConfiguracoesVisualizar = "Configuracoes.Visualizar";
     public const string ConfiguracoesEditar = "Configuracoes.Editar";
 
+    public const string LgpdDocumentosVisualizar = "Lgpd.Documentos.Visualizar";
+    public const string LgpdDocumentosEditar = "Lgpd.Documentos.Editar";
+    public const string LgpdConsentimentosVisualizar = "Lgpd.Consentimentos.Visualizar";
+    public const string LgpdConsentimentosRegistrar = "Lgpd.Consentimentos.Registrar";
+    public const string LgpdDadosExportar = "Lgpd.Dados.Exportar";
+    public const string LgpdDadosAnonimizar = "Lgpd.Dados.Anonimizar";
+
     /// <summary>All permissions seeded in the database; assign to roles via <c>RolePermissions</c>.</summary>
     public static IReadOnlyList<string> All { get; } =
     [
@@ -34,5 +41,11 @@ public static class ApplicationPermissions
         ChamadosResponder,
         ConfiguracoesVisualizar,
         ConfiguracoesEditar,
+        LgpdDocumentosVisualizar,
+        LgpdDocumentosEditar,
+        LgpdConsentimentosVisualizar,
+        LgpdConsentimentosRegistrar,
+        LgpdDadosExportar,
+        LgpdDadosAnonimizar,
     ];
 }

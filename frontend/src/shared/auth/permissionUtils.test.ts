@@ -31,4 +31,10 @@ describe('permissionUtils', () => {
       canAccessAdminArea({ permissions: [ApplicationPermissions.UsuariosVisualizar] }, ADMIN_AREA_PERMISSIONS),
     ).toBe(true)
   })
+
+  it('allows admin area with LGPD document view alone', () => {
+    expect(
+      canAccessAdminArea({ permissions: [ApplicationPermissions.LgpdDocumentosVisualizar] }, ADMIN_AREA_PERMISSIONS),
+    ).toBe(true)
+  })
 })

@@ -16,6 +16,12 @@ export const ApplicationPermissions = {
   ChamadosResponder: 'Chamados.Responder',
   ConfiguracoesVisualizar: 'Configuracoes.Visualizar',
   ConfiguracoesEditar: 'Configuracoes.Editar',
+  LgpdDocumentosVisualizar: 'Lgpd.Documentos.Visualizar',
+  LgpdDocumentosEditar: 'Lgpd.Documentos.Editar',
+  LgpdConsentimentosVisualizar: 'Lgpd.Consentimentos.Visualizar',
+  LgpdConsentimentosRegistrar: 'Lgpd.Consentimentos.Registrar',
+  LgpdDadosExportar: 'Lgpd.Dados.Exportar',
+  LgpdDadosAnonimizar: 'Lgpd.Dados.Anonimizar',
 } as const
 
 export type ApplicationPermission =
@@ -29,6 +35,12 @@ export const ADMIN_AREA_PERMISSIONS: readonly ApplicationPermission[] = [
   ApplicationPermissions.SociosGerenciar,
   ApplicationPermissions.UsuariosVisualizar,
   ApplicationPermissions.UsuariosEditar,
+  ApplicationPermissions.LgpdDocumentosVisualizar,
+  ApplicationPermissions.LgpdDocumentosEditar,
+  ApplicationPermissions.LgpdConsentimentosVisualizar,
+  ApplicationPermissions.LgpdConsentimentosRegistrar,
+  ApplicationPermissions.LgpdDadosExportar,
+  ApplicationPermissions.LgpdDadosAnonimizar,
 ]
 
 /** Mirrors backend <c>SystemRoles.All</c> for matrix UI. */

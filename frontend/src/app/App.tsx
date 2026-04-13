@@ -5,6 +5,9 @@ import { AuditLogsPage } from '../features/admin/pages/AuditLogsPage'
 import { ConfigurationsPage } from '../features/admin/pages/ConfigurationsPage'
 import { DiagnosticsPage } from '../features/admin/pages/DiagnosticsPage'
 import { MembershipStatusPage } from '../features/admin/pages/MembershipStatusPage'
+import { LegalDocumentsPage } from '../features/admin/pages/LegalDocumentsPage'
+import { UserConsentsPage } from '../features/admin/pages/UserConsentsPage'
+import { PrivacyOpsPage } from '../features/admin/pages/PrivacyOpsPage'
 import { RolePermissionsPage } from '../features/admin/pages/RolePermissionsPage'
 import { StaffManagementPage } from '../features/admin/pages/StaffManagementPage'
 import { AdminLayout } from '../features/admin/layout/AdminLayout'
@@ -33,6 +36,9 @@ export function App() {
               <Route path="audit-logs" element={<AuditLogsPage />} />
               <Route path="role-permissions" element={<RolePermissionsPage />} />
               <Route path="membership" element={<MembershipStatusPage />} />
+              <Route path="lgpd/documents" element={<LegalDocumentsPage />} />
+              <Route path="lgpd/consents" element={<UserConsentsPage />} />
+              <Route path="lgpd/privacy" element={<PrivacyOpsPage />} />
             </Route>
           </Route>
         </Route>

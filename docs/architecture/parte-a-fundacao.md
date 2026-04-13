@@ -48,7 +48,8 @@ Corpo do PATCH de membership: `{ "status": "Ativo" }` (enum `MembershipStatus` c
 ## Testes
 
 - `AppTorcedor.Application.Tests`: handler de diagnóstico (porta de conectividade).
-- `AppTorcedor.Api.Tests`: permissão negada para torcedor sem claims; health; governança; auditoria após alteração de membership e configuração; Parte B.1 (staff, matriz editável, dashboard).
+- `AppTorcedor.Api.Tests`: permissão negada para torcedor sem claims; health; governança; auditoria após alteração de membership e configuração; Parte B.1 (staff, matriz editável, dashboard); Parte B.2 LGPD (`PartB2LgpdTests`).
+- `AppTorcedor.Application.Tests`: handler de publicação de versão de documento legal (delegação ao port LGPD).
 
 ### Testes e banco in-memory
 

@@ -40,9 +40,9 @@ Foco em **quem opera o clube**: administradores, financeiro, atendimento, market
 
 ### B.2 LGPD (lado gestão e compliance)
 
-- [ ] **Cadastro e versionamento de documentos:** termos, política de privacidade, registros de versão.
-- [ ] **Consentimentos:** modelo de aceite com data/hora e versão do documento; consulta por usuário (atendimento/admin).
-- [ ] **Exportação / anonimização:** fluxos mínimos exigidos pela operação (definir com jurídico).
+- [x] **Cadastro e versionamento de documentos:** termos, política de privacidade, registros de versão.
+- [x] **Consentimentos:** modelo de aceite com data/hora e versão do documento; consulta por usuário (atendimento/admin).
+- [x] **Exportação / anonimização:** fluxos mínimos exigidos pela operação (definir com jurídico).
 
 ### B.3 Users (visão administrativa)
 

@@ -47,6 +47,16 @@ export function AdminLayout() {
           {hasPermission(user, ApplicationPermissions.SociosGerenciar) ? (
             <NavLink to="membership" style={linkStyle}>Membership</NavLink>
           ) : null}
+          {hasPermission(user, ApplicationPermissions.LgpdDocumentosVisualizar) ? (
+            <NavLink to="lgpd/documents" style={linkStyle}>LGPD — Documentos</NavLink>
+          ) : null}
+          {hasPermission(user, ApplicationPermissions.LgpdConsentimentosVisualizar) ? (
+            <NavLink to="lgpd/consents" style={linkStyle}>LGPD — Consentimentos</NavLink>
+          ) : null}
+          {(hasPermission(user, ApplicationPermissions.LgpdDadosExportar)
+            || hasPermission(user, ApplicationPermissions.LgpdDadosAnonimizar)) ? (
+            <NavLink to="lgpd/privacy" style={linkStyle}>LGPD — Dados</NavLink>
+          ) : null}
         </nav>
         <p style={{ marginTop: '2rem', fontSize: 12 }}>
           <NavLink to="/" style={{ color: '#444' }}>← Início</NavLink>

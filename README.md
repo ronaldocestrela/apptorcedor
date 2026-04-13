@@ -104,6 +104,15 @@ Fora dos ambientes Development/Testing, a senha do seed **de** estar em configur
 | PUT | `/api/admin/config/{key}` | Bearer + `Configuracoes.Editar` | Cria/atualiza configuração (auditoria) |
 | GET | `/api/admin/role-permissions` | Bearer + `Configuracoes.Visualizar` | Matriz role × permissão |
 | GET | `/api/admin/audit-logs` | Bearer + `Configuracoes.Visualizar` | Consulta recente de auditoria (query `entityType`, `take`) |
+| GET | `/api/admin/lgpd/documents` | Bearer + `Lgpd.Documentos.Visualizar` | Lista documentos legais e versão publicada |
+| GET | `/api/admin/lgpd/documents/{id}` | Bearer + `Lgpd.Documentos.Visualizar` | Detalhe com todas as versões |
+| POST | `/api/admin/lgpd/documents` | Bearer + `Lgpd.Documentos.Editar` | Cria documento (tipo único: termos / política) |
+| POST | `/api/admin/lgpd/documents/{id}/versions` | Bearer + `Lgpd.Documentos.Editar` | Nova versão (rascunho) |
+| POST | `/api/admin/lgpd/legal-document-versions/{versionId}/publish` | Bearer + `Lgpd.Documentos.Editar` | Publica versão |
+| GET | `/api/admin/lgpd/users/{userId}/consents` | Bearer + `Lgpd.Consentimentos.Visualizar` | Lista consentimentos do usuário |
+| POST | `/api/admin/lgpd/users/{userId}/consents` | Bearer + `Lgpd.Consentimentos.Registrar` | Registra aceite (versão publicada) |
+| POST | `/api/admin/lgpd/users/{userId}/export` | Bearer + `Lgpd.Dados.Exportar` | Exporta JSON de dados da conta |
+| POST | `/api/admin/lgpd/users/{userId}/anonymize` | Bearer + `Lgpd.Dados.Anonimizar` | Anonimiza PII e revoga refresh tokens |
 
 ## Testes automatizados
 
@@ -133,3 +142,4 @@ Não commite chaves reais; use secrets ou variáveis de ambiente no deploy.
 - [docs/architecture/parte-a-fundacao.md](docs/architecture/parte-a-fundacao.md) — Parte A: CQRS, permissões, auditoria, configurações e observabilidade.
 - [docs/frontend/backoffice.md](docs/frontend/backoffice.md) — painel administrativo na SPA (rotas e permissões).
 - [docs/ROADMAP-PENDENCIAS.md](docs/ROADMAP-PENDENCIAS.md) — backlog do que falta fazer, com prioridade para gestão e contratação de planos pelo torcedor ao final.
+- [docs/architecture/parte-b2-lgpd.md](docs/architecture/parte-b2-lgpd.md) — Parte B.2: documentos legais, consentimentos, exportação e anonimização.

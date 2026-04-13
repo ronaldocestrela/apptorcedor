@@ -22,6 +22,10 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<AuditLogEntry> AuditLogs => Set<AuditLogEntry>();
     public DbSet<AppConfigurationEntry> AppConfigurationEntries => Set<AppConfigurationEntry>();
     public DbSet<StaffInviteRecord> StaffInvites => Set<StaffInviteRecord>();
+    public DbSet<LegalDocumentRecord> LegalDocuments => Set<LegalDocumentRecord>();
+    public DbSet<LegalDocumentVersionRecord> LegalDocumentVersions => Set<LegalDocumentVersionRecord>();
+    public DbSet<UserConsentRecord> UserConsents => Set<UserConsentRecord>();
+    public DbSet<PrivacyRequestRecord> PrivacyRequests => Set<PrivacyRequestRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -129,6 +133,69 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             entity.Property(x => x.TokenHash).HasMaxLength(128).IsRequired();
             entity.HasIndex(x => x.TokenHash).IsUnique();
             entity.HasIndex(x => x.NormalizedEmail);
+        });
+
+        builder.Entity<LegalDocumentRecord>(entity =>
+        {
+            entity.ToTable("LegalDocuments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Type).HasConversion<int>();
+            entity.Property(x => x.Title).HasMaxLength(256).IsRequired();
+            entity.HasIndex(x => x.Type).IsUnique();
+        });
+
+        builder.Entity<LegalDocumentVersionRecord>(entity =>
+        {
+            entity.ToTable("LegalDocumentVersions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.Property(x => x.Content).IsRequired();
+            entity.HasIndex(x => new { x.LegalDocumentId, x.VersionNumber }).IsUnique();
+            entity
+                .HasOne<LegalDocumentRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.LegalDocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<UserConsentRecord>(entity =>
+        {
+            entity.ToTable("UserConsents");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ClientIp).HasMaxLength(45);
+            entity.HasIndex(x => new { x.UserId, x.LegalDocumentVersionId }).IsUnique();
+            entity.HasIndex(x => x.UserId);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne<LegalDocumentVersionRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.LegalDocumentVersionId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<PrivacyRequestRecord>(entity =>
+        {
+            entity.ToTable("PrivacyRequests");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Kind).HasConversion<int>();
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.Property(x => x.ErrorMessage).HasMaxLength(2048);
+            entity.HasIndex(x => x.SubjectUserId);
+            entity.HasIndex(x => x.CreatedAt);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.SubjectUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.RequestedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
