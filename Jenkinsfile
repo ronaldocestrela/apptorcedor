@@ -83,7 +83,7 @@ pipeline {
               script: 'echo "$(date -u +%Y%m%d%H%M%S)-$(git rev-parse --short HEAD)"'
             ).trim()
           }
-          sh '''
+          sh '''#!/bin/bash
             set -euo pipefail
             chmod 600 "${SSH_KEY}"
             API_ENV_LOCAL="$(pwd)/api.env.jenkins.${BUILD_NUMBER}"
@@ -113,7 +113,7 @@ pipeline {
             rm -f "${API_ENV_LOCAL}" "${VITE_LOCAL}"
             ssh -i "${SSH_KEY}" -p "${VPS_PORT}" -o StrictHostKeyChecking=accept-new \
               "${SSH_USER}@${VPS_HOST}" \
-              "set -euo pipefail; sudo mkdir -p /etc/apptorcedor; sudo install -m 600 -o root -g root \"${REMOTE_ENV}\" /etc/apptorcedor/api.env; sudo bash \"${REMOTE_SH}\" \"${DEPLOY_BRANCH}\" \"${REMOTE_VITE}\" \"${DEPLOY_ROOT}\" \"${APP_SERVICE_NAME}\" \"${APP_HEALTHCHECK_URL}\" \"${RELEASE_ID}\" \"${VPS_REPO_DIR}\""
+              "set -eu; sudo mkdir -p /etc/apptorcedor; sudo install -m 600 -o root -g root \"${REMOTE_ENV}\" /etc/apptorcedor/api.env; sudo bash \"${REMOTE_SH}\" \"${DEPLOY_BRANCH}\" \"${REMOTE_VITE}\" \"${DEPLOY_ROOT}\" \"${APP_SERVICE_NAME}\" \"${APP_HEALTHCHECK_URL}\" \"${RELEASE_ID}\" \"${VPS_REPO_DIR}\""
           '''
         }
       }
@@ -129,7 +129,7 @@ pipeline {
           echo "Branch não elegível para deploy (${b}); não envia status ao GitHub."
         } else {
           withCredentials([string(credentialsId: 'github-token-deploy-status', variable: 'GH_STATUS_TOKEN')]) {
-            sh '''
+            sh '''#!/bin/bash
               set -euo pipefail
               if [ -z "${GIT_COMMIT:-}" ] || [ -z "${GITHUB_REPOSITORY:-}" ]; then
                 echo "GIT_COMMIT ou GITHUB_REPOSITORY ausente; pulando status no GitHub." >&2
@@ -155,7 +155,7 @@ pipeline {
           echo "Branch não elegível para deploy (${b}); não envia status de falha ao GitHub."
         } else {
           withCredentials([string(credentialsId: 'github-token-deploy-status', variable: 'GH_STATUS_TOKEN')]) {
-            sh '''
+            sh '''#!/bin/bash
               set +e
               if [ -z "${GIT_COMMIT:-}" ] || [ -z "${GITHUB_REPOSITORY:-}" ]; then
                 echo "GIT_COMMIT ou GITHUB_REPOSITORY ausente; pulando status no GitHub." >&2
