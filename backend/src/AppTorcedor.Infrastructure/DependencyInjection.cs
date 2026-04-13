@@ -13,6 +13,8 @@ using AppTorcedor.Infrastructure.Services.Loyalty;
 using AppTorcedor.Infrastructure.Services.Benefits;
 using AppTorcedor.Infrastructure.Services.News;
 using AppTorcedor.Infrastructure.Services.Support;
+using AppTorcedor.Infrastructure.Options;
+using AppTorcedor.Infrastructure.Services.Account;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -24,6 +26,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<ProfilePhotoStorageOptions>(configuration.GetSection(ProfilePhotoStorageOptions.SectionName));
         services.AddScoped<CurrentAuditContext>();
         services.AddScoped<ICurrentAuditContext>(sp => sp.GetRequiredService<CurrentAuditContext>());
         services.AddScoped<AuditSaveChangesInterceptor>();
@@ -70,6 +73,9 @@ public static class DependencyInjection
         services.AddScoped<IRolePermissionWritePort, RolePermissionWritePort>();
         services.AddScoped<IStaffAdministrationPort, StaffAdministrationService>();
         services.AddScoped<IUserAdministrationPort, UserAdministrationService>();
+        services.AddScoped<IRegistrationLegalReadPort, RegistrationLegalReadService>();
+        services.AddScoped<ITorcedorAccountPort, TorcedorAccountService>();
+        services.AddScoped<IProfilePhotoStorage, LocalProfilePhotoStorage>();
         services.AddScoped<IAdminDashboardReadPort, AdminDashboardReadPort>();
         services.AddScoped<IAuditLogReadPort, AuditLogReadPort>();
         services.AddScoped<ILgpdAdministrationPort, LgpdAdministrationService>();

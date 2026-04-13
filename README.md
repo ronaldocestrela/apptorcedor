@@ -14,7 +14,7 @@ Monólito modular para **sócio torcedor** de um único clube (single tenant). A
 
 ```text
 backend/          → Solução .NET (API, Identity, Infrastructure, testes)
-frontend/         → React + Vite (login, convite staff, **usuários admin**, dashboard admin, **pagamentos admin (B.6)**, **notícias admin (B.9)**, **fidelidade/benefícios admin (B.10)**, **chamados/suporte admin (B.11)**, gestão de matriz de permissões, refresh de token)
+frontend/         → React + Vite (login, **cadastro e Minha conta (C.1)**, login Google opcional, convite staff, **usuários admin**, dashboard admin, **pagamentos admin (B.6)**, **notícias admin (B.9)**, **fidelidade/benefícios admin (B.10)**, **chamados/suporte admin (B.11)**, gestão de matriz de permissões, refresh de token)
 docs/             → Documentação técnica por fase
 docker-compose.yml → SQL Server opcional
 AGENTS.md         → Visão de produto, regras e arquitetura alvo
@@ -95,7 +95,13 @@ Fora dos ambientes Development/Testing, a senha do seed **de** estar em configur
 | POST | `/api/auth/login` | Não | Retorna `accessToken`, `refreshToken`, `expiresIn`, `roles` |
 | POST | `/api/auth/refresh` | Não | Troca o refresh por um novo par de tokens |
 | POST | `/api/auth/logout` | Não | Revoga o refresh informado |
-| GET | `/api/auth/me` | Bearer (JWT) | Dados do usuário, roles e **permissions** |
+| GET | `/api/auth/me` | Bearer (JWT) | Dados do usuário, roles, **permissions** e `requiresProfileCompletion` |
+| POST | `/api/auth/google` | Não | Login Google (`idToken` + consentimentos para novos usuários); retorno igual ao login |
+| GET | `/api/account/register/requirements` | Não | IDs das versões publicadas de termos e privacidade (cadastro) |
+| POST | `/api/account/register` | Não | Cadastro público (LGPD); retorno igual ao login |
+| GET | `/api/account/profile` | Bearer | Perfil do torcedor (`UserProfile` sem nota admin) |
+| PUT | `/api/account/profile` | Bearer | Atualiza perfil |
+| POST | `/api/account/profile/photo` | Bearer | Upload multipart `file` (foto) |
 | GET | `/api/diagnostics/admin-master-only` | Bearer + permissão `Administracao.Diagnostics` | Diagnóstico (via MediatR); JWT inclui claims `permission` conforme role |
 | GET | `/health/live` | Não | Liveness (tag `live`) |
 | GET | `/health/ready` | Não | Readiness (inclui checagem do banco; tag `ready`) |

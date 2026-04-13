@@ -4,6 +4,8 @@
 
 A SPA consome autenticação, permissões granulares, diagnóstico, configurações, auditoria, matriz role × permissão (leitura e edição), gestão de staff (convites e usuários internos), dashboard administrativo, **módulo Membership (B.4)** (listagem, detalhe, histórico operacional e alteração de status com motivo obrigatório), **módulo Plans (B.5)** (CRUD de planos, benefícios por plano, publicação para catálogo do torcedor), **módulo Payments (B.6)** (listagem de cobranças, detalhe, conciliação, cancelamento e estorno conforme permissões), **módulo Digital Card (B.7)** (listagem de emissões, preview do template fixo, emissão, regeneração e invalidação conforme permissões), **módulo Games & Tickets (B.8)** (CRUD de jogos, listagem de ingressos, reserva/compra/sync via provedor mock e resgate administrativo conforme permissões), **módulo News (B.9)** (editoria de notícias, publicação/despublicação e disparo ou agendamento de notificações in-app conforme permissão), **módulos Loyalty & Benefits (B.10)** (campanhas/regras de pontos, extrato, ranking mensal/acumulado, parceiros, ofertas e resgates administrativos conforme permissões) e **módulo Support / chamados (B.11)** (filas, SLA, histórico, respostas e gestão de status com `Chamados.Responder`; ver [parte-b11-support-admin.md](../architecture/parte-b11-support-admin.md)).
 
+Rotas do **torcedor (C.1)** fora do `/admin`: `/register` (cadastro público + LGPD), `/account` (Minha conta: perfil e foto), login com Google opcional (`VITE_GOOGLE_CLIENT_ID`); ver [parte-c1-cadastro-perfil-torcedor.md](../architecture/parte-c1-cadastro-perfil-torcedor.md).
+
 ## Rotas
 
 | Rota | Permissão mínima (conceito) |

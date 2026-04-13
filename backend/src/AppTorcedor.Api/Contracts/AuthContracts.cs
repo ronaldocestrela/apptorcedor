@@ -19,4 +19,7 @@ public sealed record MeResponse(
     string Email,
     string Name,
     IReadOnlyList<string> Roles,
-    IReadOnlyList<string> Permissions);
+    IReadOnlyList<string> Permissions,
+    bool RequiresProfileCompletion);
+
+public sealed record GoogleSignInRequest(string IdToken, IReadOnlyList<Guid>? AcceptedLegalDocumentVersionIds);

@@ -33,8 +33,10 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddApplication();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<GoogleAuthOptions>(builder.Configuration.GetSection(GoogleAuthOptions.SectionName));
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddSingleton<IJwtTokenIssuer, JwtTokenIssuer>();
+builder.Services.AddSingleton<IGoogleIdTokenValidator, GoogleIdTokenValidator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
@@ -102,6 +104,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("Spa");
+var webRoot = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+if (!Directory.Exists(webRoot))
+    Directory.CreateDirectory(webRoot);
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseMiddleware<RequestContextMiddleware>();
 app.UseAuthorization();

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace AppTorcedor.Api.Tests;
 
-public sealed class AppWebApplicationFactory : WebApplicationFactory<Program>
+public class AppWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -18,5 +18,6 @@ public sealed class AppWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("Seed:AdminMaster:Email", "admin@test.local");
         builder.UseSetting("Seed:AdminMaster:Password", "TestPassword123!");
         builder.UseSetting("Testing:SeedSampleUsers", "true");
+        builder.UseSetting("Testing:SeedMinimalLegalDocuments", "false");
     }
 }

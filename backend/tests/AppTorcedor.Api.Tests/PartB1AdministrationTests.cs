@@ -199,7 +199,13 @@ public sealed class PartB1AdministrationTests(AppWebApplicationFactory factory) 
         int ExpiresIn,
         IReadOnlyList<string> Roles);
 
-    private sealed record MeResponseDto(Guid Id, string Email, string Name, IReadOnlyList<string> Roles, IReadOnlyList<string> Permissions);
+    private sealed record MeResponseDto(
+        Guid Id,
+        string Email,
+        string Name,
+        IReadOnlyList<string> Roles,
+        IReadOnlyList<string> Permissions,
+        bool RequiresProfileCompletion);
 
     private sealed record CreateInviteResponseDto(Guid Id, string Token, DateTimeOffset ExpiresAt);
 

@@ -125,10 +125,10 @@ Funcionalidades voltadas ao **usuário final**, mantendo a regra: administrador 
 
 ### C.1 Cadastro e perfil (torcedor)
 
-- [ ] **Cadastro público** (`RegisterUser` / fluxo equivalente) com validações.
-- [ ] **Completar perfil** (`UserProfile`) e upload de foto.
-- [ ] **Login social** (se mantido no escopo).
-- [ ] **Área “Minha conta”** no web (e depois paridade no mobile).
+- [x] **Cadastro público** (`RegisterUser` / fluxo equivalente) com validações.
+- [x] **Completar perfil** (`UserProfile`) e upload de foto.
+- [x] **Login social** (Google ID token + JWT/refresh alinhados ao login local).
+- [x] **Área “Minha conta”** no web (paridade Flutter: Parte E).
 
 ### C.2 Notícias e benefícios (consumo)
 

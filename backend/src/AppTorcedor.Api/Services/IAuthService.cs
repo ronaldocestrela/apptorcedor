@@ -18,4 +18,8 @@ public interface IAuthService
         string password,
         string? name,
         CancellationToken cancellationToken = default);
+
+    Task<AuthResponse?> IssueSessionForUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task<AuthResponse?> SignInWithGoogleAsync(GoogleSignInRequest request, CancellationToken cancellationToken = default);
 }

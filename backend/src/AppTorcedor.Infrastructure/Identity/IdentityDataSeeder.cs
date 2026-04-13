@@ -32,6 +32,16 @@ public static class IdentityDataSeeder
 
         await SeedPermissionsAsync(db, roleManager, cancellationToken).ConfigureAwait(false);
 
+        if (!await db.LegalDocuments.AnyAsync(cancellationToken).ConfigureAwait(false)
+            && env.IsEnvironment("Testing")
+            && configuration.GetValue("Testing:SeedMinimalLegalDocuments", false))
+            await SeedMinimalPublicLegalDocumentsAsync(db, cancellationToken).ConfigureAwait(false);
+
+        // Development: garante termos + privacidade com versão publicada (cadastro público /register).
+        // Corrige bancos já existentes com documentos só em rascunho ou com um único tipo cadastrado.
+        if (env.IsDevelopment())
+            await EnsureDevelopmentRegistrationLegalDocumentsAsync(db, cancellationToken).ConfigureAwait(false);
+
         var email = configuration["Seed:AdminMaster:Email"] ?? "admin@torcedor.local";
         var password =
             configuration["Seed:AdminMaster:Password"]
@@ -73,6 +83,139 @@ public static class IdentityDataSeeder
 
         if (configuration.GetValue("Testing:SeedSampleUsers", false))
             await SeedSampleUsersAsync(db, userManager, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task SeedMinimalPublicLegalDocumentsAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        var termsId = Guid.NewGuid();
+        var privacyId = Guid.NewGuid();
+        var termsVersionId = Guid.NewGuid();
+        var privacyVersionId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        db.LegalDocuments.AddRange(
+            new LegalDocumentRecord
+            {
+                Id = termsId,
+                Type = LegalDocumentType.TermsOfUse,
+                Title = "Termos de uso (teste)",
+                CreatedAt = now,
+            },
+            new LegalDocumentRecord
+            {
+                Id = privacyId,
+                Type = LegalDocumentType.PrivacyPolicy,
+                Title = "Política de privacidade (teste)",
+                CreatedAt = now,
+            });
+
+        db.LegalDocumentVersions.AddRange(
+            new LegalDocumentVersionRecord
+            {
+                Id = termsVersionId,
+                LegalDocumentId = termsId,
+                VersionNumber = 1,
+                Content = "Conteúdo dos termos (ambiente de teste).",
+                Status = LegalDocumentVersionStatus.Published,
+                PublishedAt = now,
+                CreatedAt = now,
+            },
+            new LegalDocumentVersionRecord
+            {
+                Id = privacyVersionId,
+                LegalDocumentId = privacyId,
+                VersionNumber = 1,
+                Content = "Conteúdo da política (ambiente de teste).",
+                Status = LegalDocumentVersionStatus.Published,
+                PublishedAt = now,
+                CreatedAt = now,
+            });
+
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task EnsureDevelopmentRegistrationLegalDocumentsAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        await EnsureLegalDocumentWithPublishedVersionAsync(
+                db,
+                LegalDocumentType.TermsOfUse,
+                "Termos de uso (desenvolvimento)",
+                "Texto mínimo para permitir cadastro público em desenvolvimento. Substitua pelo conteúdo oficial no backoffice LGPD.",
+                cancellationToken)
+            .ConfigureAwait(false);
+        await EnsureLegalDocumentWithPublishedVersionAsync(
+                db,
+                LegalDocumentType.PrivacyPolicy,
+                "Política de privacidade (desenvolvimento)",
+                "Texto mínimo para permitir cadastro público em desenvolvimento. Substitua pelo conteúdo oficial no backoffice LGPD.",
+                cancellationToken)
+            .ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task EnsureLegalDocumentWithPublishedVersionAsync(
+        AppDbContext db,
+        LegalDocumentType type,
+        string defaultTitle,
+        string defaultContent,
+        CancellationToken cancellationToken)
+    {
+        var doc = await db.LegalDocuments.FirstOrDefaultAsync(d => d.Type == type, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
+        {
+            doc = new LegalDocumentRecord
+            {
+                Id = Guid.NewGuid(),
+                Type = type,
+                Title = defaultTitle,
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+            db.LegalDocuments.Add(doc);
+        }
+
+        var hasPublished = await db.LegalDocumentVersions
+            .AnyAsync(v => v.LegalDocumentId == doc.Id && v.Status == LegalDocumentVersionStatus.Published, cancellationToken)
+            .ConfigureAwait(false);
+        if (hasPublished)
+            return;
+
+        var latest = await db.LegalDocumentVersions
+            .Where(v => v.LegalDocumentId == doc.Id)
+            .OrderByDescending(v => v.VersionNumber)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (latest is not null)
+        {
+            var siblings = await db.LegalDocumentVersions
+                .Where(v => v.LegalDocumentId == doc.Id)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+            var now = DateTimeOffset.UtcNow;
+            foreach (var s in siblings)
+            {
+                s.Status = LegalDocumentVersionStatus.Draft;
+                s.PublishedAt = null;
+            }
+
+            var target = siblings.First(x => x.Id == latest.Id);
+            target.Status = LegalDocumentVersionStatus.Published;
+            target.PublishedAt = now;
+        }
+        else
+        {
+            db.LegalDocumentVersions.Add(
+                new LegalDocumentVersionRecord
+                {
+                    Id = Guid.NewGuid(),
+                    LegalDocumentId = doc.Id,
+                    VersionNumber = 1,
+                    Content = defaultContent,
+                    Status = LegalDocumentVersionStatus.Published,
+                    PublishedAt = DateTimeOffset.UtcNow,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                });
+        }
     }
 
     private static async Task SeedPermissionsAsync(

@@ -21,6 +21,12 @@ export function DashboardPage() {
         </p>
       ) : null}
       <p>
+        <Link to="/account">Minha conta</Link>
+        {user?.requiresProfileCompletion ? (
+          <span style={{ marginLeft: 8, color: '#856404' }}>(perfil incompleto)</span>
+        ) : null}
+      </p>
+      <p>
         <button type="button" onClick={() => void logout()}>
           Sair
         </button>

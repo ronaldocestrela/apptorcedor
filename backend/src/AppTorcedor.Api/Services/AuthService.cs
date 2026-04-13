@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using AppTorcedor.Api.Contracts;
 using AppTorcedor.Api.Options;
 using AppTorcedor.Application.Abstractions;
@@ -14,6 +15,8 @@ public sealed class AuthService(
     IRefreshTokenStore refreshTokens,
     IPermissionResolver permissionResolver,
     IStaffAdministrationPort staffAdministration,
+    ITorcedorAccountPort torcedorAccount,
+    IGoogleIdTokenValidator googleTokens,
     IJwtTokenIssuer jwt,
     IOptions<JwtOptions> jwtOptions) : IAuthService
 {
@@ -25,12 +28,7 @@ public sealed class AuthService(
         if (!await userManager.CheckPasswordAsync(user, password).ConfigureAwait(false))
             return null;
 
-        var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
-        var permissions = await permissionResolver.GetPermissionsForRolesAsync(roles, cancellationToken).ConfigureAwait(false);
-        var (access, expiresIn) = jwt.IssueAccessToken(user, roles, permissions);
-        var refreshLifetime = TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays);
-        var refresh = await refreshTokens.CreateAsync(user.Id, refreshLifetime, cancellationToken).ConfigureAwait(false);
-        return new AuthResponse(access, refresh, expiresIn, roles.ToList());
+        return await IssueSessionAsync(user, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<AuthResponse?> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default)
@@ -44,10 +42,7 @@ public sealed class AuthService(
         if (user is null || !user.IsActive)
             return null;
 
-        var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
-        var permissions = await permissionResolver.GetPermissionsForRolesAsync(roles, cancellationToken).ConfigureAwait(false);
-        var (access, expiresIn) = jwt.IssueAccessToken(user, roles, permissions);
-        return new AuthResponse(access, rotated.Value.NewPlainRefreshToken, expiresIn, roles.ToList());
+        return await IssueSessionAsync(user, cancellationToken, rotated.Value.NewPlainRefreshToken).ConfigureAwait(false);
     }
 
     public Task LogoutAsync(string refreshToken, CancellationToken cancellationToken = default) =>
@@ -63,7 +58,8 @@ public sealed class AuthService(
             return null;
         var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
         var permissions = await permissionResolver.GetPermissionsForRolesAsync(roles, cancellationToken).ConfigureAwait(false);
-        return new MeResponse(user.Id, user.Email ?? string.Empty, user.Name, roles.ToList(), permissions);
+        var requiresProfile = await torcedorAccount.RequiresProfileCompletionAsync(user.Id, cancellationToken).ConfigureAwait(false);
+        return new MeResponse(user.Id, user.Email ?? string.Empty, user.Name, roles.ToList(), permissions, requiresProfile);
     }
 
     public async Task<AuthResponse?> AcceptStaffInviteAsync(
@@ -80,11 +76,109 @@ public sealed class AuthService(
         if (user is null || !user.IsActive)
             return null;
 
+        return await IssueSessionAsync(user, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<AuthResponse?> IssueSessionForUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString()).ConfigureAwait(false);
+        if (user is null || !user.IsActive)
+            return null;
+        return await IssueSessionAsync(user, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<AuthResponse?> SignInWithGoogleAsync(
+        GoogleSignInRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var validated = await googleTokens.ValidateAsync(request.IdToken, cancellationToken).ConfigureAwait(false);
+        if (validated is null)
+            return null;
+
+        var user = await userManager.FindByLoginAsync("Google", validated.Subject).ConfigureAwait(false);
+        if (user is null)
+            user = await userManager.FindByEmailAsync(validated.Email).ConfigureAwait(false);
+
+        if (user is not null)
+        {
+            if (!user.IsActive)
+                return null;
+            var logins = await userManager.GetLoginsAsync(user).ConfigureAwait(false);
+            if (!logins.Any(l => l.LoginProvider == "Google" && l.ProviderKey == validated.Subject))
+            {
+                var addLogin = await userManager.AddLoginAsync(user, new UserLoginInfo("Google", validated.Subject, "Google"))
+                    .ConfigureAwait(false);
+                if (!addLogin.Succeeded)
+                    return null;
+            }
+
+            return await IssueSessionAsync(user, cancellationToken).ConfigureAwait(false);
+        }
+
+        // New user: LGPD consents required (same as public register).
+        var consents = request.AcceptedLegalDocumentVersionIds ?? [];
+        if (consents.Count == 0)
+            return null;
+
+        user = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = validated.Email,
+            Email = validated.Email,
+            EmailConfirmed = validated.EmailVerified,
+            Name = string.IsNullOrWhiteSpace(validated.Name) ? validated.Email.Split('@')[0] : validated.Name.Trim(),
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+
+        var randomPassword = GenerateInternalPassword();
+        var create = await userManager.CreateAsync(user, randomPassword).ConfigureAwait(false);
+        if (!create.Succeeded)
+            return null;
+
+        var addRole = await userManager.AddToRoleAsync(user, SystemRoles.Torcedor).ConfigureAwait(false);
+        if (!addRole.Succeeded)
+        {
+            await userManager.DeleteAsync(user).ConfigureAwait(false);
+            return null;
+        }
+
+        if (!await torcedorAccount.RecordInitialConsentsAsync(user.Id, consents, cancellationToken).ConfigureAwait(false))
+        {
+            await userManager.DeleteAsync(user).ConfigureAwait(false);
+            return null;
+        }
+
+        var loginResult = await userManager.AddLoginAsync(user, new UserLoginInfo("Google", validated.Subject, "Google"))
+            .ConfigureAwait(false);
+        if (!loginResult.Succeeded)
+        {
+            await userManager.DeleteAsync(user).ConfigureAwait(false);
+            return null;
+        }
+
+        return await IssueSessionAsync(user, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<AuthResponse?> IssueSessionAsync(
+        ApplicationUser user,
+        CancellationToken cancellationToken,
+        string? existingRefreshPlain = null)
+    {
         var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
         var permissions = await permissionResolver.GetPermissionsForRolesAsync(roles, cancellationToken).ConfigureAwait(false);
         var (access, expiresIn) = jwt.IssueAccessToken(user, roles, permissions);
         var refreshLifetime = TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays);
-        var refresh = await refreshTokens.CreateAsync(user.Id, refreshLifetime, cancellationToken).ConfigureAwait(false);
+        var refresh = existingRefreshPlain is not null
+            ? existingRefreshPlain
+            : (await refreshTokens.CreateAsync(user.Id, refreshLifetime, cancellationToken).ConfigureAwait(false));
         return new AuthResponse(access, refresh, expiresIn, roles.ToList());
+    }
+
+    private static string GenerateInternalPassword()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(32);
+        var b64 = Convert.ToBase64String(bytes);
+        return $"{b64}Aa1!";
     }
 }

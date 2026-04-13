@@ -127,5 +127,6 @@ public sealed class AuthEndpointsTests(AppWebApplicationFactory factory) : IClas
         string Email,
         string Name,
         IReadOnlyList<string> Roles,
-        IReadOnlyList<string> Permissions);
+        IReadOnlyList<string> Permissions,
+        bool RequiresProfileCompletion);
 }

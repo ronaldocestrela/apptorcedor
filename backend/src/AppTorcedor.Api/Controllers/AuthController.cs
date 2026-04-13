@@ -59,4 +59,14 @@ public sealed class AuthController(IAuthService auth) : ControllerBase
             return Unauthorized();
         return Ok(result);
     }
+
+    [HttpPost("google")]
+    [AllowAnonymous]
+    public async Task<ActionResult<AuthResponse>> Google([FromBody] GoogleSignInRequest request, CancellationToken cancellationToken)
+    {
+        var result = await auth.SignInWithGoogleAsync(request, cancellationToken).ConfigureAwait(false);
+        if (result is null)
+            return Unauthorized();
+        return Ok(result);
+    }
 }

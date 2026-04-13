@@ -26,17 +26,21 @@ import { AuthProvider } from '../features/auth/AuthContext'
 import { PermissionRoute } from '../features/auth/PermissionRoute'
 import { ProtectedRoute } from '../features/auth/ProtectedRoute'
 import { AcceptStaffInvitePage } from '../pages/AcceptStaffInvitePage'
+import { AccountPage } from '../pages/AccountPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { LoginPage } from '../pages/LoginPage'
+import { RegisterPage } from '../pages/RegisterPage'
 
 export function App() {
   return (
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/accept-staff-invite" element={<AcceptStaffInvitePage />} />
         <Route element={<ProtectedRoute />}>
           <Route index element={<DashboardPage />} />
+          <Route path="account" element={<AccountPage />} />
           <Route element={<PermissionRoute />}>
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminIndexRedirect />} />

@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { registerPublic, type RegisterPayload } from '../account/accountApi'
 import { api } from '../../shared/api/http'
 import { authStorage } from '../../shared/auth/authStorage'
 
@@ -16,12 +17,15 @@ export type Me = {
   name: string
   roles: string[]
   permissions: string[]
+  requiresProfileCompletion: boolean
 }
 
 type AuthContextValue = {
   user: Me | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
+  register: (payload: RegisterPayload) => Promise<void>
+  googleSignIn: (idToken: string, acceptedLegalDocumentVersionIds: string[]) => Promise<void>
   logout: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -37,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser({
       ...data,
       permissions: data.permissions ?? [],
+      requiresProfileCompletion: data.requiresProfileCompletion ?? false,
     })
   }, [])
 
@@ -66,6 +71,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await refreshProfile()
   }, [refreshProfile])
 
+  const register = useCallback(async (payload: RegisterPayload) => {
+    const data = await registerPublic(payload)
+    authStorage.setTokens(data.accessToken, data.refreshToken)
+    await refreshProfile()
+  }, [refreshProfile])
+
+  const googleSignIn = useCallback(
+    async (idToken: string, acceptedLegalDocumentVersionIds: string[]) => {
+      const { data } = await api.post<{ accessToken: string; refreshToken: string }>('/api/auth/google', {
+        idToken,
+        acceptedLegalDocumentVersionIds,
+      })
+      authStorage.setTokens(data.accessToken, data.refreshToken)
+      await refreshProfile()
+    },
+    [refreshProfile],
+  )
+
   const logout = useCallback(async () => {
     const rt = authStorage.getRefresh()
     if (rt) {
@@ -80,8 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, login, logout, refreshProfile }),
-    [user, loading, login, logout, refreshProfile],
+    () => ({ user, loading, login, register, googleSignIn, logout, refreshProfile }),
+    [user, loading, login, register, googleSignIn, logout, refreshProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
