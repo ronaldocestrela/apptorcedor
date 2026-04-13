@@ -65,14 +65,72 @@ Não há variável de ambiente global única para essa rota: cada tenant pode te
 
 ## Chaves da API e uso geral
 
+### Como gerar as chaves no Stripe Dashboard
+
+Use sempre a **conta Stripe correta** (plataforma para SaaS; conta do **clube** para cobrança de sócios com Stripe direto).
+
+1. Acesse o [Dashboard da Stripe](https://dashboard.stripe.com) e faça login.
+2. Vá em **Developers** → **API keys**.
+3. **Chaves padrão (recomendado para desenvolvimento / MVP)**  
+   - Em **Standard keys**, use **Reveal test key** ou **Reveal live key** para copiar a **Secret key** (`sk_test_...` / `sk_live_...`).  
+   - Na mesma página, copie a **Publishable key** (`pk_test_...` / `pk_live_...`) quando o front ou o host precisarem dela.
+4. **Chave restrita (recomendado em produção)**  
+   - Clique em **Create restricted key** (ou **Create key** com tipo restrito, conforme o layout do painel).  
+   - Dê um nome claro (ex.: `SocioTorcedor API host` ou `Clube X backend sócios`).  
+   - Defina as **permissões** conforme a tabela abaixo (conta plataforma vs conta do clube).  
+   - Após criar, copie a chave — o prefixo costuma ser `rk_test_...` ou `rk_live_...`. Ela substitui a secret `sk_...` nas variáveis onde hoje você coloca a chave secreta (a API Stripe aceita chave restrita no mesmo cabeçalho de autenticação).
+
+Documentação oficial: [API keys](https://docs.stripe.com/keys) e [restricted keys](https://docs.stripe.com/keys#create-api-restricted-key).
+
+### Permissões recomendadas para chaves restritas
+
+Os nomes exatos no painel da Stripe podem mudar (e alguns recursos aparecem como *preview*). Se algo falhar com `403` ou *permission denied*, amplie a permissão correspondente ou use temporariamente uma **secret key padrão** (`sk_...`) para validar o fluxo.
+
+**Se você usar apenas a secret key padrão (`sk_...`), não precisa configurar permissões:** ela já tem escopo completo na conta.
+
+#### Conta da **plataforma** (valor de `Payments:StripeSecretKey` no host)
+
+Esta chave atende Billing SaaS (assinatura do clube na plataforma), portal de cobrança, cartões do tenant na plataforma, PIX quando aplicável, e o processamento de **webhooks thin** que buscam o objeto relacionado (`Invoice`, `Subscription`, `Checkout.Session`, etc.) e o evento em **API v2**.
+
+| Área no Dashboard (referência) | Acesso sugerido | Uso no projeto |
+|--------------------------------|-----------------|----------------|
+| **Customers** | Read + Write | Cliente Stripe do tenant (SaaS), portal, métodos de pagamento |
+| **Subscriptions** | Read + Write | Assinatura SaaS, cancelamento, status |
+| **Products** e **Prices** | Read + Write | Criação de produto/preço quando não há `price_id` fixo |
+| **Invoices** | Read | Resolução de webhook thin (`GET` de fatura) |
+| **Checkout Sessions** | Read + Write | Fluxos que criam sessão na conta plataforma (se houver) |
+| **Billing Portal** (sessões do portal) | Write | `CreateBillingPortalSession` |
+| **Payment Intents** | Write | Checkout PIX (`CreatePixAsync`) |
+| **Setup Intents** | Write | Adicionar cartão (SaaS) |
+| **Payment Methods** | Read + Write | Listar / anexar / destacar cartões do customer SaaS |
+| **Events / API v2 / Core** | Read | Buscar notificação thin (`V2.Core.Events.Get`) e processar o payload |
+
+Se o painel oferecer permissão explícita para **V2 Core Events** ou **Event notifications**, inclua **leitura** para o pipeline de webhooks thin.
+
+#### Conta do **clube** (secret `sk_` ou restrita `rk_` guardada em `PUT /api/payments/admin/member-gateway/stripe-direct`)
+
+Mesma conta em que o admin do clube cria o Event Destination `.../api/webhooks/stripe/member/<tenantId>`.
+
+| Área no Dashboard (referência) | Acesso sugerido | Uso no projeto |
+|--------------------------------|-----------------|----------------|
+| **Customers** | Write | Criação de customer antes do Checkout (modo assinatura / Accounts V2) |
+| **Checkout Sessions** | Read + Write | Contratação de plano do sócio |
+| **Subscriptions** | Read + Write | Assinatura direta (`CreateSubscriptionAsync`), cancelamento, status |
+| **Products** e **Prices** | Read + Write | Plano sem `price_id` Stripe fixo |
+| **Invoices** | Read | Resolução de webhook thin ligada a faturas |
+| **Payment Intents** | Write | PIX para sócios (`CreatePixAsync`) |
+| **Events / API v2 / Core** | Read | Igual à plataforma, para thin webhooks na conta do clube |
+
+**Publishable key (`pk_...`):** obtida na mesma página **API keys**; não exige lista de permissões como a secret — use a `pk_` da **mesma conta** (test/live) que a `sk_`/`rk_` correspondente.
+
 ### `Payments__StripeSecretKey`
 
 | | |
 |---|---|
 | **Nome em appsettings** | `Payments:StripeSecretKey` |
-| **Formato** | `sk_test_...` ou `sk_live_...` |
+| **Formato** | `sk_test_...` ou `sk_live_...` (padrão); ou chave restrita `rk_test_...` / `rk_live_...` |
 | **Para que serve** | Chave secreta da API Stripe da **plataforma** (SaaS billing, operações que ainda usam a conta global configurada no host). |
-| **Onde obter** | Dashboard Stripe (conta da plataforma) → Developers → API keys. |
+| **Onde obter** | Dashboard Stripe (conta da plataforma) → **Developers** → **API keys** (ver secção *Como gerar as chaves* acima). |
 
 ### `Payments__StripePublishableKey`
 
@@ -80,7 +138,7 @@ Não há variável de ambiente global única para essa rota: cada tenant pode te
 |---|---|
 | **Nome em appsettings** | `Payments:StripePublishableKey` |
 | **Para que serve** | Chave publicável para o frontend (Stripe.js / Elements) quando o SaaS ou fluxos globais precisam. |
-| **Onde obter** | Conta da plataforma na Stripe. |
+| **Onde obter** | Conta da plataforma na Stripe → **Developers** → **API keys** → **Publishable key**. |
 
 ### `Payments__StripeEnvironment`
 

@@ -33,7 +33,7 @@ Fluxo resumido:
 1. **Plano ativo do tenant**: o clube deve ter vínculo ativo com um plano SaaS (atribuição de plano no módulo Backoffice).
 2. **Valores válidos**: preço do plano maior que zero no ciclo escolhido.
 3. **Sem assinatura ativa duplicada**: não pode já existir assinatura de billing ativa para o mesmo tenant.
-4. **Stripe**: com `Payments:StripeSecretKey` configurado, o fluxo de billing SaaS usa **Price IDs** do `SaaSPlan` (`StripePriceMonthlyId` / `StripePriceYearlyId`) ao criar a assinatura na conta da plataforma.
+4. **Stripe**: com `Payments:StripeSecretKey` configurado, o fluxo de billing SaaS usa **Price IDs** do `SaaSPlan` (`StripePriceMonthlyId` / `StripePriceYearlyId`) ao criar a assinatura na conta da plataforma. Geração de chaves e permissões (incl. chave restrita): [`docs/Stripe/configuracao-chaves-e-webhooks.md`](../Stripe/configuracao-chaves-e-webhooks.md).
 
 ---
 

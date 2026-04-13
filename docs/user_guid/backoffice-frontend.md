@@ -61,6 +61,7 @@ Há testes de unidade para os módulos `shared/backoffice/*`, componentes princi
 
 ## Referências no repositório
 
+- Gateway de sócios (Stripe direto), visão de produto: `docs/user_guid/gateway-stripe-socios.md`
 - Cliente HTTP: `web/src/shared/http/backofficeClient.ts`
 - APIs: `web/src/shared/backoffice/*.ts`
 - Rotas: `web/src/app/backoffice/BackofficeRouter.tsx`
