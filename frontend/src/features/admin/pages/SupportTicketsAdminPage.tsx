@@ -5,6 +5,7 @@ import {
   assignAdminSupportTicket,
   changeAdminSupportTicketStatus,
   createAdminSupportTicket,
+  downloadAdminSupportAttachment,
   getAdminSupportTicket,
   listAdminSupportTickets,
   replyAdminSupportTicket,
@@ -352,6 +353,30 @@ export function SupportTicketsAdminPage() {
                     {' — '}
                     {m.isInternal ? '[interno] ' : ''}
                     {m.body}
+                    {m.attachments?.length ? (
+                      <ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>
+                        {m.attachments.map((a) => (
+                          <li key={a.attachmentId}>
+                            <button
+                              type="button"
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#0645ad',
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                                padding: 0,
+                                font: 'inherit',
+                              }}
+                              onClick={() =>
+                                void downloadAdminSupportAttachment(a.downloadPath, a.fileName).catch(() => {})}
+                            >
+                              {a.fileName}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </li>
                 ))}
               </ul>

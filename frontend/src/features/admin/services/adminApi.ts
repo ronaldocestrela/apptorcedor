@@ -1124,12 +1124,20 @@ export type AdminSupportTicketListPage = {
   items: AdminSupportTicketListItem[]
 }
 
+export type SupportTicketMessageAttachment = {
+  attachmentId: string
+  fileName: string
+  contentType: string
+  downloadPath: string
+}
+
 export type SupportTicketMessage = {
   messageId: string
   authorUserId: string
   body: string
   isInternal: boolean
   createdAtUtc: string
+  attachments: SupportTicketMessageAttachment[]
 }
 
 export type SupportTicketHistoryEntry = {
@@ -1211,4 +1219,21 @@ export async function changeAdminSupportTicketStatus(
   body: { status: SupportTicketStatus; reason?: string | null },
 ): Promise<void> {
   await api.post(`/api/admin/support/tickets/${encodeURIComponent(ticketId)}/status`, body)
+}
+
+export async function downloadAdminSupportAttachment(downloadPath: string, fileName: string): Promise<void> {
+  const res = await api.get(downloadPath, { responseType: 'blob' })
+  const blobUrl = URL.createObjectURL(res.data)
+  try {
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = fileName
+    a.rel = 'noopener'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+  finally {
+    URL.revokeObjectURL(blobUrl)
+  }
 }

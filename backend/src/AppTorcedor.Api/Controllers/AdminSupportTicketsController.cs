@@ -6,6 +6,7 @@ using AppTorcedor.Application.Modules.Administration.Commands.AssignAdminSupport
 using AppTorcedor.Application.Modules.Administration.Commands.ChangeAdminSupportTicketStatus;
 using AppTorcedor.Application.Modules.Administration.Commands.CreateAdminSupportTicket;
 using AppTorcedor.Application.Modules.Administration.Commands.ReplyAdminSupportTicket;
+using AppTorcedor.Application.Modules.Administration.Queries.GetAdminSupportAttachmentDownload;
 using AppTorcedor.Application.Modules.Administration.Queries.GetAdminSupportTicket;
 using AppTorcedor.Application.Modules.Administration.Queries.ListAdminSupportTickets;
 using AppTorcedor.Identity;
@@ -18,7 +19,8 @@ namespace AppTorcedor.Api.Controllers;
 [ApiController]
 [Route("api/admin/support/tickets")]
 [Authorize]
-public sealed class AdminSupportTicketsController(IMediator mediator) : ControllerBase
+public sealed class AdminSupportTicketsController(IMediator mediator, ISupportTicketAttachmentStorage attachmentStorage)
+    : ControllerBase
 {
     [HttpGet]
     [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.ChamadosResponder)]
@@ -100,6 +102,26 @@ public sealed class AdminSupportTicketsController(IMediator mediator) : Controll
             .Send(new AssignAdminSupportTicketCommand(ticketId, body.AgentUserId, actor), cancellationToken)
             .ConfigureAwait(false);
         return MapMutation(result);
+    }
+
+    [HttpGet("{ticketId:guid}/attachments/{attachmentId:guid}")]
+    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.ChamadosResponder)]
+    public async Task<IActionResult> DownloadAttachment(
+        Guid ticketId,
+        Guid attachmentId,
+        CancellationToken cancellationToken)
+    {
+        var dto = await mediator
+            .Send(new GetAdminSupportAttachmentDownloadQuery(ticketId, attachmentId), cancellationToken)
+            .ConfigureAwait(false);
+        if (dto is null)
+            return NotFound();
+
+        var stream = attachmentStorage.OpenRead(dto.StorageKey);
+        if (stream is null)
+            return NotFound();
+
+        return File(stream, dto.ContentType, dto.FileName);
     }
 
     [HttpPost("{ticketId:guid}/status")]

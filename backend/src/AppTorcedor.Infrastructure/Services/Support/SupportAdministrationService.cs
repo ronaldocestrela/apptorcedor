@@ -70,13 +70,22 @@ public sealed class SupportAdministrationService(AppDbContext db) : ISupportAdmi
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        var messageIds = messages.Select(m => m.Id).ToList();
+        var attachments = messageIds.Count == 0
+            ? []
+            : await db.SupportTicketMessageAttachments.AsNoTracking()
+                .Where(a => messageIds.Contains(a.MessageId))
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+        var attachmentsByMessage = attachments.GroupBy(a => a.MessageId).ToDictionary(g => g.Key, g => g.ToList());
+
         var history = await db.SupportTicketHistories.AsNoTracking()
             .Where(h => h.TicketId == ticketId)
             .OrderBy(h => h.CreatedAtUtc)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return MapDetail(t, messages, history);
+        return MapDetail(t, messages, attachmentsByMessage, history);
     }
 
     public async Task<SupportTicketCreateResult> CreateTicketAsync(
@@ -96,7 +105,7 @@ public sealed class SupportAdministrationService(AppDbContext db) : ISupportAdmi
 
         var now = DateTimeOffset.UtcNow;
         var id = Guid.NewGuid();
-        var sla = ComputeSlaDeadline(dto.Priority, now);
+        var sla = SupportTicketStateMachine.ComputeSlaDeadline(dto.Priority, now);
 
         var row = new SupportTicketRecord
         {
@@ -265,7 +274,7 @@ public sealed class SupportAdministrationService(AppDbContext db) : ISupportAdmi
         if (!await UserExistsAsync(actorUserId, cancellationToken).ConfigureAwait(false))
             return new SupportTicketMutationResult(false, SupportTicketMutationError.Validation);
 
-        if (!IsValidTransition(ticket.Status, newStatus))
+        if (!SupportTicketStateMachine.IsValidTransition(ticket.Status, newStatus))
             return new SupportTicketMutationResult(false, SupportTicketMutationError.InvalidStatusTransition);
 
         var now = DateTimeOffset.UtcNow;
@@ -311,9 +320,42 @@ public sealed class SupportAdministrationService(AppDbContext db) : ISupportAdmi
             t.UpdatedAtUtc);
     }
 
+    public async Task<SupportAttachmentDownloadDto?> GetSupportAttachmentDownloadAsync(
+        Guid ticketId,
+        Guid attachmentId,
+        CancellationToken cancellationToken = default)
+    {
+        var a = await db.SupportTicketMessageAttachments.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == attachmentId, cancellationToken)
+            .ConfigureAwait(false);
+        if (a is null)
+            return null;
+
+        var message = await db.SupportTicketMessages.AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == a.MessageId, cancellationToken)
+            .ConfigureAwait(false);
+        if (message is null || message.TicketId != ticketId)
+            return null;
+
+        var ticket = await db.SupportTickets.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == ticketId, cancellationToken)
+            .ConfigureAwait(false);
+        if (ticket is null)
+            return null;
+
+        return new SupportAttachmentDownloadDto(
+            a.Id,
+            ticket.Id,
+            ticket.RequesterUserId,
+            a.OriginalFileName,
+            a.ContentType,
+            a.StorageKey);
+    }
+
     private static AdminSupportTicketDetailDto MapDetail(
         SupportTicketRecord t,
         IReadOnlyList<SupportTicketMessageRecord> messages,
+        IReadOnlyDictionary<Guid, List<SupportTicketMessageAttachmentRecord>> attachmentsByMessage,
         IReadOnlyList<SupportTicketHistoryRecord> history)
     {
         var now = DateTimeOffset.UtcNow;
@@ -322,7 +364,18 @@ public sealed class SupportAdministrationService(AppDbContext db) : ISupportAdmi
             && t.Status != SupportTicketStatus.Closed;
 
         var msgDtos = messages
-            .Select(m => new SupportTicketMessageDto(m.Id, m.AuthorUserId, m.Body, m.IsInternal, m.CreatedAtUtc))
+            .Select(m =>
+            {
+                var atts = (attachmentsByMessage.TryGetValue(m.Id, out var list) ? list : [])
+                    .Select(
+                        att => new SupportTicketMessageAttachmentDto(
+                            att.Id,
+                            att.OriginalFileName,
+                            att.ContentType,
+                            $"/api/admin/support/tickets/{t.Id}/attachments/{att.Id}"))
+                    .ToList();
+                return new SupportTicketMessageDto(m.Id, m.AuthorUserId, m.Body, m.IsInternal, m.CreatedAtUtc, atts);
+            })
             .ToList();
 
         var histDtos = history
@@ -367,39 +420,4 @@ public sealed class SupportAdministrationService(AppDbContext db) : ISupportAdmi
         return null;
     }
 
-    private static DateTimeOffset ComputeSlaDeadline(SupportTicketPriority priority, DateTimeOffset now) =>
-        priority switch
-        {
-            SupportTicketPriority.Urgent => now.AddHours(4),
-            SupportTicketPriority.High => now.AddHours(24),
-            _ => now.AddHours(48),
-        };
-
-    private static bool IsValidTransition(SupportTicketStatus from, SupportTicketStatus to)
-    {
-        if (from == to)
-            return false;
-
-        if (from == SupportTicketStatus.Closed)
-            return to == SupportTicketStatus.Open;
-
-        return (from, to) switch
-        {
-            (SupportTicketStatus.Open, SupportTicketStatus.InProgress) => true,
-            (SupportTicketStatus.Open, SupportTicketStatus.WaitingUser) => true,
-            (SupportTicketStatus.Open, SupportTicketStatus.Resolved) => true,
-            (SupportTicketStatus.Open, SupportTicketStatus.Closed) => true,
-            (SupportTicketStatus.InProgress, SupportTicketStatus.WaitingUser) => true,
-            (SupportTicketStatus.InProgress, SupportTicketStatus.Resolved) => true,
-            (SupportTicketStatus.InProgress, SupportTicketStatus.Open) => true,
-            (SupportTicketStatus.InProgress, SupportTicketStatus.Closed) => true,
-            (SupportTicketStatus.WaitingUser, SupportTicketStatus.InProgress) => true,
-            (SupportTicketStatus.WaitingUser, SupportTicketStatus.Resolved) => true,
-            (SupportTicketStatus.WaitingUser, SupportTicketStatus.Closed) => true,
-            (SupportTicketStatus.Resolved, SupportTicketStatus.Closed) => true,
-            (SupportTicketStatus.Resolved, SupportTicketStatus.InProgress) => true,
-            (SupportTicketStatus.Resolved, SupportTicketStatus.Open) => true,
-            _ => false,
-        };
-    }
 }

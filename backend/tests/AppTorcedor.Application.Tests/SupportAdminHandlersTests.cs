@@ -160,5 +160,11 @@ public sealed class SupportAdminHandlersTests
             StatusCalls.Add((ticketId, newStatus, reason, actorUserId));
             return Task.FromResult(Mutation);
         }
+
+        public Task<SupportAttachmentDownloadDto?> GetSupportAttachmentDownloadAsync(
+            Guid ticketId,
+            Guid attachmentId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<SupportAttachmentDownloadDto?>(null);
     }
 }

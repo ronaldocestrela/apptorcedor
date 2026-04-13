@@ -37,6 +37,8 @@ import { NewsDetailPage } from '../pages/NewsDetailPage'
 import { NewsFeedPage } from '../pages/NewsFeedPage'
 import { LoginPage } from '../pages/LoginPage'
 import { RegisterPage } from '../pages/RegisterPage'
+import { SupportTicketDetailPage } from '../pages/SupportTicketDetailPage'
+import { SupportTicketsPage } from '../pages/SupportTicketsPage'
 
 export function App() {
   return (
@@ -55,6 +57,8 @@ export function App() {
           <Route path="games" element={<GamesPage />} />
           <Route path="tickets" element={<MyTicketsPage />} />
           <Route path="loyalty" element={<LoyaltyPage />} />
+          <Route path="support" element={<SupportTicketsPage />} />
+          <Route path="support/:ticketId" element={<SupportTicketDetailPage />} />
           <Route element={<PermissionRoute />}>
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminIndexRedirect />} />

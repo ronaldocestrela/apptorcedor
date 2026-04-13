@@ -27,6 +27,8 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ProfilePhotoStorageOptions>(configuration.GetSection(ProfilePhotoStorageOptions.SectionName));
+        services.Configure<SupportTicketAttachmentStorageOptions>(
+            configuration.GetSection(SupportTicketAttachmentStorageOptions.SectionName));
         services.AddScoped<CurrentAuditContext>();
         services.AddScoped<ICurrentAuditContext>(sp => sp.GetRequiredService<CurrentAuditContext>());
         services.AddScoped<AuditSaveChangesInterceptor>();
@@ -76,6 +78,7 @@ public static class DependencyInjection
         services.AddScoped<IRegistrationLegalReadPort, RegistrationLegalReadService>();
         services.AddScoped<ITorcedorAccountPort, TorcedorAccountService>();
         services.AddScoped<IProfilePhotoStorage, LocalProfilePhotoStorage>();
+        services.AddScoped<ISupportTicketAttachmentStorage, LocalSupportTicketAttachmentStorage>();
         services.AddScoped<IAdminDashboardReadPort, AdminDashboardReadPort>();
         services.AddScoped<IAuditLogReadPort, AuditLogReadPort>();
         services.AddScoped<ILgpdAdministrationPort, LgpdAdministrationService>();
@@ -92,6 +95,7 @@ public static class DependencyInjection
         services.AddScoped<ITorcedorNewsReadPort, TorcedorNewsReadService>();
         services.AddScoped<ITorcedorBenefitsReadPort, TorcedorBenefitsReadService>();
         services.AddScoped<ISupportAdministrationPort, SupportAdministrationService>();
+        services.AddScoped<ISupportTorcedorPort, SupportTorcedorService>();
         services.AddScoped<LoyaltyAdministrationService>();
         services.AddScoped<ILoyaltyAdministrationPort>(sp => sp.GetRequiredService<LoyaltyAdministrationService>());
         services.AddScoped<ILoyaltyPointsTriggerPort>(sp => sp.GetRequiredService<LoyaltyAdministrationService>());

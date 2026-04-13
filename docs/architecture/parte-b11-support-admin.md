@@ -9,7 +9,8 @@ Backoffice para **filas de chamados**, **SLA**, **estados**, **respostas** e **h
 | Tabela | Função |
 |--------|--------|
 | `SupportTickets` | Chamado: solicitante, fila, assunto, prioridade, status, SLA (`SlaDeadlineUtc`), primeira resposta (`FirstResponseAtUtc`), responsável opcional |
-| `SupportTicketMessages` | Mensagens (autor staff, corpo, interna ou não) |
+| `SupportTicketMessages` | Mensagens (autor staff ou torcedor, corpo, interna ou não) |
+| `SupportTicketMessageAttachments` | Anexos por mensagem (armazenamento em disco; metadados + `StorageKey`) |
 | `SupportTicketHistories` | Linha do tempo: `Created`, `StatusChanged`, `Assigned`, `Reply` |
 
 **SLA:** prazo calculado na criação — Normal 48h, High 24h, Urgent 4h (UTC). **SLA estourado** em listagem/detalhe: `UtcNow > SlaDeadlineUtc` e status não é `Resolved` nem `Closed`.
@@ -28,8 +29,11 @@ Todas as ações exigem política `Permission:Chamados.Responder`.
 | `POST` | `/api/admin/support/tickets/{id}/reply` | Resposta; corpo: `body`, `isInternal` |
 | `POST` | `/api/admin/support/tickets/{id}/assign` | Atribuição; corpo: `agentUserId` (null remove) |
 | `POST` | `/api/admin/support/tickets/{id}/status` | Mudança de estado; corpo: `status`, `reason?` |
+| `GET` | `/api/admin/support/tickets/{ticketId}/attachments/{attachmentId}` | Download de anexo (com JWT e `Chamados.Responder`) |
 
 Enums JSON em string (configuração global da API com `JsonStringEnumConverter`).
+
+**Mensagens:** cada item em `messages` inclui `attachments[]` com `downloadPath` (URL relativa à API) para uso no SPA com autenticação.
 
 ## Dashboard
 

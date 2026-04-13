@@ -45,6 +45,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<BenefitRedemptionRecord> BenefitRedemptions => Set<BenefitRedemptionRecord>();
     public DbSet<SupportTicketRecord> SupportTickets => Set<SupportTicketRecord>();
     public DbSet<SupportTicketMessageRecord> SupportTicketMessages => Set<SupportTicketMessageRecord>();
+    public DbSet<SupportTicketMessageAttachmentRecord> SupportTicketMessageAttachments => Set<SupportTicketMessageAttachmentRecord>();
     public DbSet<SupportTicketHistoryRecord> SupportTicketHistories => Set<SupportTicketHistoryRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -528,6 +529,21 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .WithMany()
                 .HasForeignKey(x => x.AuthorUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<SupportTicketMessageAttachmentRecord>(entity =>
+        {
+            entity.ToTable("SupportTicketMessageAttachments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.OriginalFileName).HasMaxLength(255).IsRequired();
+            entity.Property(x => x.ContentType).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.StorageKey).HasMaxLength(512).IsRequired();
+            entity.HasIndex(x => x.MessageId);
+            entity
+                .HasOne<SupportTicketMessageRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<SupportTicketHistoryRecord>(entity =>

@@ -40,12 +40,19 @@ public sealed record AdminSupportTicketListItemDto(
 
 public sealed record AdminSupportTicketListPageDto(int TotalCount, IReadOnlyList<AdminSupportTicketListItemDto> Items);
 
+public sealed record SupportTicketMessageAttachmentDto(
+    Guid AttachmentId,
+    string FileName,
+    string ContentType,
+    string DownloadPath);
+
 public sealed record SupportTicketMessageDto(
     Guid MessageId,
     Guid AuthorUserId,
     string Body,
     bool IsInternal,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    IReadOnlyList<SupportTicketMessageAttachmentDto> Attachments);
 
 public sealed record SupportTicketHistoryEntryDto(
     Guid EntryId,
@@ -120,5 +127,11 @@ public interface ISupportAdministrationPort
         SupportTicketStatus newStatus,
         string? reason,
         Guid actorUserId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Lookup attachment metadata for authorized download (caller enforces staff or requester).</summary>
+    Task<SupportAttachmentDownloadDto?> GetSupportAttachmentDownloadAsync(
+        Guid ticketId,
+        Guid attachmentId,
         CancellationToken cancellationToken = default);
 }

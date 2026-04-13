@@ -157,7 +157,9 @@ Detalhes: [docs/architecture/parte-c4-jogos-ingressos-torcedor.md](architecture/
 
 ### C.6 Suporte (torcedor)
 
-- [ ] **Abertura e acompanhamento de chamados** pelo usuário.
+- [x] **Abertura e acompanhamento de chamados** pelo usuário.
+
+Detalhes: [docs/architecture/parte-c6-suporte-torcedor.md](architecture/parte-c6-suporte-torcedor.md).
 
 ---
 
