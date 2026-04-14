@@ -92,6 +92,15 @@
   padding: 0;
 }
 
+/* Torcedor home page also covers the full viewport */
+#root:has(.dash-root) {
+  width: 100vw;
+  max-width: 100vw;
+  margin: 0;
+  border-inline: none;
+  padding: 0;
+}
+
 body {
   margin: 0;
 }

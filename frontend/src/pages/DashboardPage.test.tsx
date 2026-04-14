@@ -6,7 +6,7 @@ import { ApplicationPermissions } from '../shared/auth/applicationPermissions'
 
 const authMock = {
   user: {
-    name: 'Ronaldo',
+    name: 'Ronaldo Silva',
     email: 'ronaldo@test.local',
     roles: ['Administrador'],
     permissions: [ApplicationPermissions.UsuariosVisualizar],
@@ -22,23 +22,37 @@ vi.mock('../features/auth/AuthContext', () => ({
 describe('DashboardPage', () => {
   beforeEach(() => {
     authMock.logout.mockReset()
+    authMock.user.requiresProfileCompletion = false
+    authMock.user.permissions = [ApplicationPermissions.UsuariosVisualizar]
   })
 
-  it('renders modern responsive shell with quick links and admin access', () => {
+  it('renders mobile-first shell with greeting, quick grid and bottom nav', () => {
     const { container } = render(
       <MemoryRouter>
         <DashboardPage />
       </MemoryRouter>,
     )
 
-    expect(container.querySelector('.dashboard-page')).toBeInTheDocument()
-    expect(container.querySelector('.dashboard-page__hero')).toBeInTheDocument()
-    expect(container.querySelector('.dashboard-page__links-grid')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Painel administrativo/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Sair/i })).toBeInTheDocument()
+    expect(container.querySelector('.dash-root')).toBeInTheDocument()
+    expect(container.querySelector('.dash-hero')).toBeInTheDocument()
+    expect(container.querySelector('.dash-quick-grid')).toBeInTheDocument()
+    expect(screen.getByText('Ronaldo')).toBeInTheDocument()
+    const bottomNav = container.querySelector('.dash-bottom-nav')
+    expect(bottomNav).toBeInTheDocument()
+    expect(bottomNav!.querySelectorAll('.dash-bottom-nav__item')).toHaveLength(5)
   })
 
-  it('hides admin link when user has no admin permissions', () => {
+  it('shows admin badge when user has admin permissions', () => {
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('link', { name: /Painel administrativo/i })).toBeInTheDocument()
+  })
+
+  it('hides admin badge when user has no admin permissions', () => {
     authMock.user.permissions = []
 
     render(
@@ -48,7 +62,18 @@ describe('DashboardPage', () => {
     )
 
     expect(screen.queryByRole('link', { name: /Painel administrativo/i })).not.toBeInTheDocument()
+  })
 
-    authMock.user.permissions = [ApplicationPermissions.UsuariosVisualizar]
+  it('shows profile completion alert when requiresProfileCompletion is true', () => {
+    authMock.user.requiresProfileCompletion = true
+
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>,
+    )
+
+    expect(container => container.querySelector('.dash-alert')).toBeDefined()
+    expect(screen.getByText(/Complete seu perfil/i)).toBeInTheDocument()
   })
 })
