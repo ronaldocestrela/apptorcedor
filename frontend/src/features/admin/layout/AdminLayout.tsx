@@ -11,7 +11,11 @@ export function AdminLayout() {
     <div className="admin-shell">
       <aside className="admin-shell__sidebar">
         <div className="admin-shell__brand">
-          <div className="admin-shell__brand-logo" aria-hidden="true">FFC</div>
+          <img
+            className="admin-shell__brand-logo"
+            src="/logos/ESCUDO_FFC_PNG.png"
+            alt="AFC"
+          />
         </div>
         <nav className="admin-shell__nav" aria-label="Menu administrativo">
           {(hasPermission(user, ApplicationPermissions.UsuariosVisualizar)

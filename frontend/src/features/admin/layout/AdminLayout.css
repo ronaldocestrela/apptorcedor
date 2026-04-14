@@ -29,10 +29,10 @@
 }
 
 .admin-shell__brand-logo {
-  color: #e6fce8;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  font-size: 0.96rem;
+  width: 78px;
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 
 .admin-shell__nav {
@@ -132,8 +132,7 @@
   }
 
   .admin-shell__brand-logo {
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
+    width: 52px;
   }
 
   .admin-shell__link {
