@@ -161,6 +161,8 @@ cd frontend
 npm test
 ```
 
+Nos testes de API (`AppTorcedor.Api.Tests`), o host de teste força `Payments:Provider=Mock` e storage local para `ProfilePhotos` e `SupportTicketAttachments`, evitando dependência de credenciais externas como Stripe e Cloudinary.
+
 ## Esteira CI local
 
 Para rodar localmente uma esteira enxuta focada apenas em testes de backend e frontend, use o script abaixo a partir da raiz do repositório:
