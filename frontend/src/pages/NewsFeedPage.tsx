@@ -25,7 +25,7 @@ function formatDate(iso: string) {
 }
 
 const BOTTOM_NAV = [
-  { to: '/dashboard', label: 'Início', icon: <Home size={22} /> },
+  { to: '/', label: 'Início', icon: <Home size={22} /> },
   { to: '/news', label: 'Notícias', icon: <Newspaper size={22} /> },
   { to: '/games', label: 'Jogos', icon: <Calendar size={22} /> },
   { to: '/digital-card', label: 'Carteirinha', icon: <CreditCard size={22} /> },
@@ -121,7 +121,7 @@ export function NewsFeedPage() {
   return (
     <div className="news-root">
       <header className="news-header">
-        <Link to="/dashboard" className="news-header__back" aria-label="Voltar ao início">
+        <Link to="/" className="news-header__back" aria-label="Voltar ao início">
           <ArrowLeft size={18} />
         </Link>
         <h1 className="news-header__title">Notícias</h1>

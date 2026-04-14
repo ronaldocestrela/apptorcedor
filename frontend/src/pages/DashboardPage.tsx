@@ -30,7 +30,7 @@ const QUICK_LINKS = [
 ]
 
 const BOTTOM_NAV = [
-  { to: '/dashboard', label: 'Início', icon: <Home size={22} /> },
+  { to: '/', label: 'Início', icon: <Home size={22} /> },
   { to: '/news', label: 'Notícias', icon: <Newspaper size={22} /> },
   { to: '/games', label: 'Jogos', icon: <Calendar size={22} /> },
   { to: '/digital-card', label: 'Carteirinha', icon: <CreditCard size={22} /> },
