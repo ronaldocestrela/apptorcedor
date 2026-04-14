@@ -13,6 +13,10 @@
 // - payments-provider         (Secret text) PAYMENTS_PROVIDER — Mock ou Stripe
 // - stripe-success-url        (Secret text) STRIPE_SUCCESS_URL (HTTPS da SPA após Checkout; vazio se não usar)
 // - stripe-cancel-url         (Secret text) STRIPE_CANCEL_URL (HTTPS ao cancelar Checkout; vazio se não usar)
+// - support-ticket-attachments-provider (Secret text) SupportTicketAttachments__Provider (Local ou Cloudinary)
+// - cloudinary-cloud-name     (Secret text) Cloudinary__CloudName
+// - cloudinary-api-key        (Secret text) Cloudinary__ApiKey
+// - cloudinary-api-secret     (Secret text) Cloudinary__ApiSecret
 // - api-cors-origin           (Secret text) Cors__AllowedOrigins__0
 // - api-aspnetcore-urls       (Secret text) ASPNETCORE_URLS (ex.: http://127.0.0.1:5031)
 // - vite-public-api-url       (Secret text) URL pública da API para build do Vite (gravada também no arquivo vite na VPS)
@@ -99,7 +103,11 @@ pipeline {
             string(credentialsId: 'stripe-webhook-secret', variable: 'STRIPE_WEBHOOK_SECRET'),
             string(credentialsId: 'payments-provider', variable: 'PAYMENTS_PROVIDER'),
             string(credentialsId: 'stripe-success-url', variable: 'STRIPE_SUCCESS_URL'),
-            string(credentialsId: 'stripe-cancel-url', variable: 'STRIPE_CANCEL_URL')
+            string(credentialsId: 'stripe-cancel-url', variable: 'STRIPE_CANCEL_URL'),
+            string(credentialsId: 'support-ticket-attachments-provider', variable: 'SUPPORT_ATTACHMENTS_PROVIDER'),
+            string(credentialsId: 'cloudinary-cloud-name', variable: 'CLOUDINARY_CLOUD_NAME'),
+            string(credentialsId: 'cloudinary-api-key', variable: 'CLOUDINARY_API_KEY'),
+            string(credentialsId: 'cloudinary-api-secret', variable: 'CLOUDINARY_API_SECRET')
           ]
 
           def useCompose = (env.DEPLOY_USE_COMPOSE ?: 'true').trim().equalsIgnoreCase('true')
@@ -128,6 +136,10 @@ pipeline {
                     printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SupportTicketAttachments__Provider=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   cp "${API_ENV_LOCAL}" "${REMOTE_ENV}"
@@ -143,6 +155,10 @@ pipeline {
                     printf 'STRIPE_WEBHOOK_SECRET=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'STRIPE_SUCCESS_URL=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'STRIPE_CANCEL_URL=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SUPPORT_TICKET_ATTACHMENTS_PROVIDER=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'CLOUDINARY_CLOUD_NAME=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'CLOUDINARY_API_KEY=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'CLOUDINARY_API_SECRET=%s\n' "${CLOUDINARY_API_SECRET}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -179,6 +195,10 @@ pipeline {
                     printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SupportTicketAttachments__Provider=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"
@@ -242,6 +262,10 @@ pipeline {
                     printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SupportTicketAttachments__Provider=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   {
@@ -256,6 +280,10 @@ pipeline {
                     printf 'STRIPE_WEBHOOK_SECRET=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'STRIPE_SUCCESS_URL=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'STRIPE_CANCEL_URL=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SUPPORT_TICKET_ATTACHMENTS_PROVIDER=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'CLOUDINARY_CLOUD_NAME=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'CLOUDINARY_API_KEY=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'CLOUDINARY_API_SECRET=%s\n' "${CLOUDINARY_API_SECRET}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -297,6 +325,10 @@ pipeline {
                     printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SupportTicketAttachments__Provider=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"

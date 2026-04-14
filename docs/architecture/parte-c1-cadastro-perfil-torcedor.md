@@ -14,7 +14,7 @@ Expor fluxos **self-service** para o torcedor: cadastro público com LGPD, perfi
 | POST | `/api/account/register` | Anônimo | Cadastro público; retorna o mesmo contrato de sessão que o login (`AuthResponse`). |
 | GET | `/api/account/profile` | JWT | Lê o próprio `UserProfile` (sem `AdministrativeNote`). |
 | PUT | `/api/account/profile` | JWT | Atualiza perfil (merge de campos não nulos). |
-| POST | `/api/account/profile/photo` | JWT | `multipart/form-data` campo `file` (jpeg/png/webp); persiste arquivo e atualiza `PhotoUrl`. |
+| POST | `/api/account/profile/photo` | JWT | `multipart/form-data` campo `file` (jpeg/png/webp); persiste foto no provider configurado, atualiza `PhotoUrl` e tenta remover a foto anterior (best effort). |
 | POST | `/api/auth/google` | Anônimo | Corpo `{ idToken, acceptedLegalDocumentVersionIds? }`. Novos usuários **devem** enviar os IDs das versões publicadas (mesmo conjunto do cadastro). |
 | GET | `/api/auth/me` | JWT | Inclui `requiresProfileCompletion` (perfil ausente ou documento vazio). |
 
@@ -22,7 +22,11 @@ Expor fluxos **self-service** para o torcedor: cadastro público com LGPD, perfi
 
 - **CQRS (Application):** `RegisterTorcedorCommand`, `GetRegistrationLegalRequirementsQuery`, `GetMyProfileQuery`, `UpsertMyProfileCommand`.
 - **Portas:** `ITorcedorAccountPort`, `IRegistrationLegalReadPort`, `IProfilePhotoStorage`.
-- **Armazenamento de fotos:** `LocalProfilePhotoStorage` grava em `wwwroot/uploads/profile-photos/{userId}/` e expõe URL pública `/uploads/...` via `UseStaticFiles`.
+- **Armazenamento de fotos (provider):**
+	- `ProfilePhotos:Provider=Local` usa `LocalProfilePhotoStorage` (disco em `wwwroot/uploads/profile-photos/{userId}/` e URL relativa `/uploads/...` via `UseStaticFiles`).
+	- `ProfilePhotos:Provider=Cloudinary` usa `CloudinaryProfilePhotoStorage` (URL absoluta `https://res.cloudinary.com/...`).
+	- O frontend mantém compatibilidade entre URL relativa e absoluta via `resolvePublicAssetUrl`.
+- **Configuração Cloudinary:** `Cloudinary:CloudName`, `Cloudinary:ApiKey`, `Cloudinary:ApiSecret`, `ProfilePhotos:Cloudinary:Folder`.
 - **LGPD:** cadastro e primeiro login Google gravam consentimentos via `ILgpdAdministrationPort.RecordConsentAsync` para as versões publicadas atuais.
 - **Seed (dev):** em **Development**, a cada subida da API o `IdentityDataSeeder` garante que existam **dois** documentos (termos + privacidade), cada um com **pelo menos uma versão publicada** — inclusive em bancos já existentes que tinham só rascunhos ou um único tipo. Assim `/api/account/register/requirements` deixa de responder **503** após reiniciar a API. Em **Testing**, o bloco mínimo só é inserido com `Testing:SeedMinimalLegalDocuments=true` e catálogo vazio (testes C.1 sem afetar Part B.2).
 

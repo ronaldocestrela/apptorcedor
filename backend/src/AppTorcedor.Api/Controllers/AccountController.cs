@@ -22,7 +22,8 @@ namespace AppTorcedor.Api.Controllers;
 public sealed class AccountController(
     IMediator mediator,
     IAuthService auth,
-    IProfilePhotoStorage photoStorage) : ControllerBase
+    IProfilePhotoStorage photoStorage,
+    ILogger<AccountController> logger) : ControllerBase
 {
     [HttpGet("register/requirements")]
     [AllowAnonymous]
@@ -220,6 +221,9 @@ public sealed class AccountController(
         if (userId is null)
             return Unauthorized();
 
+        var currentProfile = await mediator.Send(new GetMyProfileQuery(userId.Value), cancellationToken).ConfigureAwait(false);
+        var previousPhotoUrl = currentProfile?.PhotoUrl;
+
         await using var stream = file.OpenReadStream();
         var url = await photoStorage
             .SaveProfilePhotoAsync(userId.Value, stream, file.FileName, file.ContentType, cancellationToken)
@@ -234,6 +238,19 @@ public sealed class AccountController(
             .ConfigureAwait(false);
         if (!ok)
             return NotFound();
+
+        if (!string.IsNullOrWhiteSpace(previousPhotoUrl)
+            && !string.Equals(previousPhotoUrl, url, StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                await photoStorage.DeleteProfilePhotoAsync(previousPhotoUrl!, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to cleanup previous profile photo for user {UserId}", userId.Value);
+            }
+        }
 
         return Ok(new ProfilePhotoUploadResponse(url));
     }

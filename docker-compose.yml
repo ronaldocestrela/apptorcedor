@@ -22,6 +22,10 @@ services:
       Payments__Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
       Payments__Stripe__SuccessUrl: ${STRIPE_SUCCESS_URL:-}
       Payments__Stripe__CancelUrl: ${STRIPE_CANCEL_URL:-}
+      SupportTicketAttachments__Provider: ${SUPPORT_TICKET_ATTACHMENTS_PROVIDER:-Local}
+      Cloudinary__CloudName: ${CLOUDINARY_CLOUD_NAME:-}
+      Cloudinary__ApiKey: ${CLOUDINARY_API_KEY:-}
+      Cloudinary__ApiSecret: ${CLOUDINARY_API_SECRET:-}
       ADMIN_MASTER_INITIAL_PASSWORD: ${ADMIN_MASTER_INITIAL_PASSWORD:?Defina ADMIN_MASTER_INITIAL_PASSWORD no arquivo .env}
       Cors__AllowedOrigins__0: ${CORS_ORIGIN:-http://localhost:5173}
 

@@ -11,5 +11,7 @@ public interface ISupportTicketAttachmentStorage
         string contentType,
         CancellationToken cancellationToken = default);
 
-    Stream? OpenRead(string storageKey);
+    Task<Stream?> OpenReadAsync(string storageKey, CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default);
 }

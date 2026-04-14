@@ -7,7 +7,7 @@ Permitir que o **usuário autenticado** abra chamados de suporte, acompanhe stat
 ## Relação com B.11
 
 - Mesmas tabelas: `SupportTickets`, `SupportTicketMessages`, `SupportTicketHistories`.
-- Nova tabela: `SupportTicketMessageAttachments` (anexos por mensagem; arquivos em `Data/support-attachments` por padrão, fora de `wwwroot`).
+- Nova tabela: `SupportTicketMessageAttachments` (anexos por mensagem; `StorageKey` pode apontar para provider local ou Cloudinary).
 - O torcedor **não vê** mensagens internas nem entradas de histórico de respostas internas.
 
 ## API (`/api/support/tickets`)
@@ -43,7 +43,11 @@ Limite de corpo da requisição: 32 MB no controller. Tipos de anexo aceitos: `i
 ## Infrastructure
 
 - `SupportTorcedorService` — regras de isolamento por `RequesterUserId`, SLA igual a B.11, transações apenas quando `Database.IsRelational()` (in-memory sem transação; compensação parcial em falhas de anexo na criação).
-- `LocalSupportTicketAttachmentStorage` — `ISupportTicketAttachmentStorage`.
+- `ISupportTicketAttachmentStorage` com seleção por provider (`SupportTicketAttachments:Provider`):
+	- `LocalSupportTicketAttachmentStorage` grava em `Data/support-attachments` (padrão).
+	- `CloudinarySupportTicketAttachmentStorage` grava em Cloudinary com chave de storage interna (`cloudinary|...`) e mantém o download autenticado via API (sem expor rota pública no contrato).
+- Tipos no Cloudinary: imagens como `image` e PDF como `raw`.
+- Em falha parcial de upload de múltiplos anexos, o serviço faz cleanup best effort dos arquivos já gravados antes de retornar erro de validação.
 - `SupportTicketStateMachine` — SLA e transições compartilhadas com o serviço admin.
 
 ## Frontend (SPA)

@@ -17,6 +17,7 @@ using AppTorcedor.Infrastructure.Services.Plans;
 using AppTorcedor.Infrastructure.Services.Support;
 using AppTorcedor.Infrastructure.Options;
 using AppTorcedor.Infrastructure.Services.Account;
+using AppTorcedor.Infrastructure.Services.Cloudinary;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +30,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ProfilePhotoStorageOptions>(configuration.GetSection(ProfilePhotoStorageOptions.SectionName));
+        services.Configure<CloudinaryOptions>(configuration.GetSection(CloudinaryOptions.SectionName));
         services.Configure<PaymentsOptions>(configuration.GetSection(PaymentsOptions.SectionName));
 
         var paymentsProvider = configuration.GetValue<string>("Payments:Provider") ?? "Mock";
@@ -40,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IStripeWebhookProcessor, StripeWebhookProcessor>();
         services.Configure<SupportTicketAttachmentStorageOptions>(
             configuration.GetSection(SupportTicketAttachmentStorageOptions.SectionName));
+        services.AddHttpClient<ICloudinaryAssetGateway, CloudinaryAssetGateway>();
         services.AddScoped<CurrentAuditContext>();
         services.AddScoped<ICurrentAuditContext>(sp => sp.GetRequiredService<CurrentAuditContext>());
         services.AddScoped<AuditSaveChangesInterceptor>();
@@ -88,8 +91,26 @@ public static class DependencyInjection
         services.AddScoped<IUserAdministrationPort, UserAdministrationService>();
         services.AddScoped<IRegistrationLegalReadPort, RegistrationLegalReadService>();
         services.AddScoped<ITorcedorAccountPort, TorcedorAccountService>();
-        services.AddScoped<IProfilePhotoStorage, LocalProfilePhotoStorage>();
-        services.AddScoped<ISupportTicketAttachmentStorage, LocalSupportTicketAttachmentStorage>();
+        services.AddScoped<IProfilePhotoStorage>(
+            sp =>
+            {
+                var profileOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<ProfilePhotoStorageOptions>>().Value;
+                if (profileOptions.Provider.Equals("Cloudinary", StringComparison.OrdinalIgnoreCase))
+                    return sp.GetRequiredService<CloudinaryProfilePhotoStorage>();
+                return sp.GetRequiredService<LocalProfilePhotoStorage>();
+            });
+        services.AddScoped<LocalProfilePhotoStorage>();
+        services.AddScoped<CloudinaryProfilePhotoStorage>();
+        services.AddScoped<ISupportTicketAttachmentStorage>(
+            sp =>
+            {
+                var attachmentOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SupportTicketAttachmentStorageOptions>>().Value;
+                if (attachmentOptions.Provider.Equals("Cloudinary", StringComparison.OrdinalIgnoreCase))
+                    return sp.GetRequiredService<CloudinarySupportTicketAttachmentStorage>();
+                return sp.GetRequiredService<LocalSupportTicketAttachmentStorage>();
+            });
+        services.AddScoped<LocalSupportTicketAttachmentStorage>();
+        services.AddScoped<CloudinarySupportTicketAttachmentStorage>();
         services.AddScoped<IAdminDashboardReadPort, AdminDashboardReadPort>();
         services.AddScoped<IAuditLogReadPort, AuditLogReadPort>();
         services.AddScoped<ILgpdAdministrationPort, LgpdAdministrationService>();

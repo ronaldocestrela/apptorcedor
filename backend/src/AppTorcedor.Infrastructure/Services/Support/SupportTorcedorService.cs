@@ -168,6 +168,7 @@ public sealed class SupportTorcedorService(
 
             if (hasAtt)
             {
+                var storedKeys = new List<string>();
                 foreach (var a in attachments)
                 {
                     var key = await attachmentStorage
@@ -175,6 +176,11 @@ public sealed class SupportTorcedorService(
                         .ConfigureAwait(false);
                     if (key is null)
                     {
+                        foreach (var storedKey in storedKeys)
+                        {
+                            await attachmentStorage.DeleteAsync(storedKey, cancellationToken).ConfigureAwait(false);
+                        }
+
                         if (tx is not null)
                             await tx.RollbackAsync(cancellationToken).ConfigureAwait(false);
                         else
@@ -197,6 +203,7 @@ public sealed class SupportTorcedorService(
                             SizeBytes = a.Content.Length,
                             CreatedAtUtc = DateTimeOffset.UtcNow,
                         });
+                    storedKeys.Add(key);
                 }
 
                 await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -286,6 +293,7 @@ public sealed class SupportTorcedorService(
 
             if (hasAtt)
             {
+                var storedKeys = new List<string>();
                 foreach (var a in attachments)
                 {
                     var key = await attachmentStorage
@@ -293,6 +301,11 @@ public sealed class SupportTorcedorService(
                         .ConfigureAwait(false);
                     if (key is null)
                     {
+                        foreach (var storedKey in storedKeys)
+                        {
+                            await attachmentStorage.DeleteAsync(storedKey, cancellationToken).ConfigureAwait(false);
+                        }
+
                         if (tx is not null)
                             await tx.RollbackAsync(cancellationToken).ConfigureAwait(false);
                         else
@@ -316,6 +329,7 @@ public sealed class SupportTorcedorService(
                             SizeBytes = a.Content.Length,
                             CreatedAtUtc = DateTimeOffset.UtcNow,
                         });
+                    storedKeys.Add(key);
                 }
 
                 await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

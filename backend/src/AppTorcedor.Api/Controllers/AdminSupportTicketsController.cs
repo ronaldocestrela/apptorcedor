@@ -117,7 +117,7 @@ public sealed class AdminSupportTicketsController(IMediator mediator, ISupportTi
         if (dto is null)
             return NotFound();
 
-        var stream = attachmentStorage.OpenRead(dto.StorageKey);
+        var stream = await attachmentStorage.OpenReadAsync(dto.StorageKey, cancellationToken).ConfigureAwait(false);
         if (stream is null)
             return NotFound();
 
