@@ -145,4 +145,4 @@ Evolução visual aplicada às telas do torcedor com foco em responsividade, sem
 
 - nenhum endpoint novo foi criado;
 - nenhuma permissão/rota foi alterada;
-- resultado de lint manteve warning pré-existente de `react-hooks/exhaustive-deps` em `AccountPage.tsx` (sem erro de compilação).
+- lint do frontend foi saneado após remover atualização síncrona de estado em efeito no shell admin e estabilizar dependências do efeito de assinatura em `AccountPage.tsx`.

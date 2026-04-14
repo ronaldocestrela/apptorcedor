@@ -98,8 +98,11 @@ export function AccountPage() {
     }
   }, [])
 
+  const currentMembershipStatus = subscription?.membershipStatus ?? null
+  const currentPlanId = subscription?.plan?.planId ?? null
+
   useEffect(() => {
-    if (subscription?.membershipStatus !== 'Ativo' || !subscription.plan) {
+    if (currentMembershipStatus !== 'Ativo' || currentPlanId === null) {
       setPublishedPlans(null)
       setPlansLoadError(null)
       setSelectedPlanId('')
@@ -123,7 +126,7 @@ export function AccountPage() {
     return () => {
       cancelled = true
     }
-  }, [subscription?.membershipStatus, subscription?.plan?.planId])
+  }, [currentMembershipStatus, currentPlanId])
 
   async function refreshSubscription() {
     try {

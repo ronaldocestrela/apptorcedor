@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -56,10 +56,7 @@ function SidebarSection({
   const { pathname } = useLocation()
   const isActive = routes.some((r) => pathname.includes('/' + r))
   const [isOpen, setIsOpen] = useState(isActive)
-
-  useEffect(() => {
-    if (isActive) setIsOpen(true)
-  }, [isActive])
+  const isExpanded = isActive || isOpen
 
   return (
     <div className="admin-shell__nav-section">
@@ -67,15 +64,15 @@ function SidebarSection({
         type="button"
         className={`admin-shell__nav-section-btn${isActive ? ' has-active' : ''}`}
         onClick={() => setIsOpen((o) => !o)}
-        aria-expanded={isOpen}
+        aria-expanded={isExpanded}
       >
         <span className="admin-shell__nav-section-label">{label}</span>
         <ChevronDown
           size={14}
-          className={`admin-shell__nav-chevron${isOpen ? ' is-open' : ''}`}
+          className={`admin-shell__nav-chevron${isExpanded ? ' is-open' : ''}`}
         />
       </button>
-      <div className={`admin-shell__nav-section-body${isOpen ? ' is-open' : ''}`}>
+      <div className={`admin-shell__nav-section-body${isExpanded ? ' is-open' : ''}`}>
         <div className="admin-shell__nav-section-inner">{children}</div>
       </div>
     </div>
