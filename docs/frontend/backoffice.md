@@ -60,3 +60,52 @@ LGPD: [`frontend/src/features/admin/services/lgpdApi.ts`](../../frontend/src/fea
 ## Testes
 
 - `npm test` — helpers de permissão (`permissionUtils.test.ts`), `authStorage`, `adminApi.support.test.ts`, etc.
+
+## Sistema Visual Admin (Fase 1)
+
+Implementado um baseline de visual contínuo para o painel administrativo, inspirado no mock escuro-esverdeado.
+
+### Objetivo desta fase
+
+- alinhar a experiência visual do shell administrativo (`/admin/*`) sem alterar regras de negócio;
+- manter intactas permissões granulares, rotas e integrações HTTP existentes;
+- criar base reutilizável para estender o mesmo padrão visual às demais páginas.
+
+### Mudanças entregues
+
+- `frontend/src/features/admin/layout/AdminLayout.tsx`
+	- migração de estilos inline para classes CSS;
+	- preservação da lógica de visibilidade por permissão (`hasPermission(...)` por item de menu);
+	- preservação do `Outlet` e da navegação das rotas administrativas existentes.
+
+- `frontend/src/features/admin/layout/AdminLayout.css` (novo)
+	- shell admin com sidebar escura, gradientes e estados ativos/hover para links;
+	- área de conteúdo com cabeçalho visual e ajustes responsivos básicos.
+
+- `frontend/src/features/admin/pages/AdminDashboardPage.tsx`
+	- adoção de classes sem alterar fluxo de dados (`getAdminDashboard`), loading/error e `PermissionGate`.
+
+- `frontend/src/features/admin/pages/AdminDashboardPage.css` (novo)
+	- tipografia, espaçamentos e grid de KPIs alinhados ao novo tema.
+
+- `frontend/src/features/admin/components/KpiCard.tsx` + `KpiCard.css` (novos)
+	- componente reutilizável para cards de indicadores.
+
+- `frontend/src/index.css`
+	- novos design tokens `--admin-*` para tema escuro verde (superfície, texto, destaque e bordas).
+
+### Testes adicionados (TDD)
+
+- `frontend/src/features/admin/layout/AdminLayout.test.tsx`
+	- valida estrutura visual base do shell por classes (`.admin-shell`, `.admin-shell__sidebar`, `.admin-shell__content`);
+	- valida manutenção da visibilidade de menu orientada por permissões.
+
+- `frontend/src/features/admin/pages/AdminDashboardPage.test.tsx`
+	- valida renderização do dashboard com classes novas e 3 cards KPI após carregamento;
+	- valida mensagem de erro em falha de API.
+
+### Decisões técnicas
+
+- não houve alteração de contratos de API (`adminApi.ts`) nem de políticas de autorização;
+- foco em refatoração visual incremental para reduzir risco de regressão funcional;
+- tokens globais `--admin-*` foram preferidos para facilitar reaproveitamento futuro no restante do frontend.

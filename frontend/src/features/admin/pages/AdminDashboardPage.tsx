@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { ApplicationPermissions } from '../../../shared/auth/applicationPermissions'
 import { PermissionGate } from '../../auth/PermissionGate'
 import { getAdminDashboard, type AdminDashboardResult } from '../services/adminApi'
+import { KpiCard } from '../components/KpiCard'
+import './AdminDashboardPage.css'
 
 export function AdminDashboardPage() {
   const [data, setData] = useState<AdminDashboardResult | null>(null)
@@ -30,37 +32,21 @@ export function AdminDashboardPage() {
         ApplicationPermissions.ConfiguracoesVisualizar,
       ]}
     >
-      <h1>Painel administrativo</h1>
-      <p style={{ color: '#555', maxWidth: 640 }}>
-        Indicadores mínimos de associação e chamados em aberto (Open, InProgress, WaitingUser).
-      </p>
-      {error ? <p role="alert" style={{ color: 'crimson' }}>{error}</p> : null}
-      {loading ? <p>Carregando...</p> : null}
-      {!loading && data ? (
-        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginTop: '1rem' }}>
-          <KpiCard label="Sócios ativos" value={data.activeMembersCount} />
-          <KpiCard label="Inadimplentes" value={data.delinquentMembersCount} />
-          <KpiCard label="Chamados abertos" value={data.openSupportTickets} />
-        </div>
-      ) : null}
+      <section className="admin-dashboard">
+        <h1 className="admin-dashboard__title">Painel administrativo</h1>
+        <p className="admin-dashboard__subtitle">
+          Indicadores mínimos de associação e chamados em aberto.
+        </p>
+        {error ? <p role="alert" className="admin-dashboard__error">{error}</p> : null}
+        {loading ? <p className="admin-dashboard__loading">Carregando...</p> : null}
+        {!loading && data ? (
+          <div className="admin-dashboard__kpi-grid">
+            <KpiCard label="Sócios ativos" value={data.activeMembersCount} />
+            <KpiCard label="Inadimplentes" value={data.delinquentMembersCount} />
+            <KpiCard label="Chamados abertos" value={data.openSupportTickets} />
+          </div>
+        ) : null}
+      </section>
     </PermissionGate>
-  )
-}
-
-function KpiCard({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
-  return (
-    <div
-      style={{
-        border: '1px solid #ddd',
-        borderRadius: 8,
-        padding: '1rem 1.25rem',
-        minWidth: 160,
-        background: '#fff',
-      }}
-    >
-      <div style={{ fontSize: 13, color: '#666' }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 600, marginTop: 4 }}>{value}</div>
-      {hint ? <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>{hint}</div> : null}
-    </div>
   )
 }

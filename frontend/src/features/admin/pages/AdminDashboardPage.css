@@ -1,0 +1,35 @@
+.admin-dashboard {
+  text-align: left;
+}
+
+.admin-dashboard__title {
+  margin: 0;
+  color: var(--admin-text-primary);
+  font-size: clamp(2rem, 3.2vw, 3.25rem);
+  letter-spacing: -0.02em;
+  line-height: 1.06;
+}
+
+.admin-dashboard__subtitle {
+  margin-top: 0.45rem;
+  color: var(--admin-text-muted);
+  max-width: 52ch;
+}
+
+.admin-dashboard__error {
+  margin-top: 1rem;
+  color: #ffc6c6;
+}
+
+.admin-dashboard__loading {
+  margin-top: 1rem;
+  color: var(--admin-text-muted);
+}
+
+.admin-dashboard__kpi-grid {
+  margin-top: 1.4rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  max-width: 860px;
+}
