@@ -11,75 +11,178 @@
   font-family: var(--admin-font-family);
 }
 
+/* ── Sidebar ── */
 .admin-shell__sidebar {
-  width: 240px;
+  width: 248px;
+  min-width: 248px;
   border-right: 1px solid var(--admin-border-strong);
   background: linear-gradient(180deg, var(--admin-bg-sidebar), #133626);
-  padding: 1.25rem 1rem;
+  padding: 1.25rem 0.85rem;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
+.admin-shell__sidebar::-webkit-scrollbar { display: none; }
 
 .admin-shell__brand {
   min-height: 48px;
   display: flex;
   align-items: center;
-  margin-bottom: 1.25rem;
+  padding: 0 0.25rem;
+  margin-bottom: 1.5rem;
 }
-
 .admin-shell__brand-logo {
-  width: 78px;
+  width: 72px;
   max-width: 100%;
   height: auto;
   display: block;
 }
 
+/* ── Nav sections ── */
 .admin-shell__nav {
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
+  gap: 0.1rem;
 }
 
+.admin-shell__nav-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Accordion trigger button */
+.admin-shell__nav-section-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.42rem 0.6rem;
+  border-radius: 8px;
+  color: var(--admin-text-muted);
+  transition: color 140ms ease, background 140ms ease;
+}
+.admin-shell__nav-section-btn:hover {
+  background: rgba(108, 204, 133, 0.06);
+  color: var(--admin-text-primary);
+}
+.admin-shell__nav-section-btn.has-active {
+  color: var(--admin-accent);
+}
+.admin-shell__nav-section-btn:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 1px;
+}
+
+.admin-shell__nav-section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Chevron rotates when open */
+.admin-shell__nav-chevron {
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: transform 220ms ease;
+}
+.admin-shell__nav-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+/* Accordion body — grid trick for smooth height animation */
+.admin-shell__nav-section-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+.admin-shell__nav-section-body.is-open {
+  grid-template-rows: 1fr;
+}
+
+.admin-shell__nav-section-inner {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-bottom: 0.25rem;
+}
+
+/* ── Nav links ── */
 .admin-shell__link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   color: var(--admin-text-muted);
   text-decoration: none;
-  font-size: 0.94rem;
+  font-size: 0.88rem;
   font-weight: 500;
   border: 1px solid transparent;
-  border-radius: 10px;
-  padding: 0.62rem 0.72rem;
-  transition: all 140ms ease;
+  border-radius: 9px;
+  padding: 0.55rem 0.65rem;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
 }
-
 .admin-shell__link:hover {
   color: var(--admin-text-primary);
-  background: rgba(108, 204, 133, 0.12);
-  border-color: rgba(108, 204, 133, 0.32);
+  background: rgba(108, 204, 133, 0.1);
+  border-color: rgba(108, 204, 133, 0.25);
 }
-
 .admin-shell__link.is-active {
   color: var(--admin-accent);
-  background: rgba(64, 179, 97, 0.2);
-  border-color: rgba(93, 212, 126, 0.54);
+  background: rgba(64, 179, 97, 0.18);
+  border-color: rgba(93, 212, 126, 0.48);
+  border-left-color: var(--admin-accent);
+  border-left-width: 2px;
+}
+.admin-shell__link:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 1px;
 }
 
+.admin-shell__link-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+.admin-shell__link-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Sidebar footer ── */
 .admin-shell__sidebar-footer {
   margin-top: auto;
-  border-top: 1px solid rgba(156, 214, 174, 0.2);
   padding-top: 1rem;
+  border-top: 1px solid rgba(156, 214, 174, 0.18);
 }
-
 .admin-shell__back-link {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   color: var(--admin-text-muted);
   text-decoration: none;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  transition: color 140ms ease, background 140ms ease;
 }
-
 .admin-shell__back-link:hover {
   color: var(--admin-text-primary);
+  background: rgba(108, 204, 133, 0.08);
 }
 
+/* ── Workspace ── */
 .admin-shell__workspace {
   flex: 1;
   min-width: 0;
@@ -87,39 +190,98 @@
   flex-direction: column;
 }
 
+/* ── Header ── */
 .admin-shell__header {
-  height: 64px;
+  height: 68px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1.4rem;
+  padding: 0 1.5rem;
   border-bottom: 1px solid var(--admin-border-soft);
+  background: rgba(21, 45, 36, 0.6);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.admin-shell__header-left {
+  flex: 1;
+}
+.admin-shell__header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
 }
 
-.admin-shell__header-badge {
-  color: var(--admin-text-muted);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+/* User info block */
+.admin-shell__user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
-
-.admin-shell__settings-button {
-  border: 1px solid var(--admin-border-strong);
-  border-radius: 999px;
-  background: rgba(37, 88, 58, 0.8);
+.admin-shell__user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--admin-accent-soft), var(--admin-accent));
+  color: #0d2118;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+}
+.admin-shell__user-details {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.admin-shell__user-name {
   color: var(--admin-text-primary);
-  font-size: 0.76rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 0.42rem 0.76rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.admin-shell__user-role {
+  color: var(--admin-text-muted);
+  font-size: 0.72rem;
+  text-transform: capitalize;
 }
 
+/* Settings gear button */
+.admin-shell__settings-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: 9px;
+  background: rgba(37, 88, 58, 0.5);
+  color: var(--admin-text-muted);
+  text-decoration: none;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+  flex-shrink: 0;
+}
+.admin-shell__settings-button:hover {
+  color: var(--admin-text-primary);
+  background: rgba(64, 140, 100, 0.5);
+  border-color: var(--admin-border-strong);
+}
+.admin-shell__settings-button:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+/* ── Content ── */
 .admin-shell__content {
   flex: 1;
-  padding: 1.65rem;
+  padding: 1.75rem;
   box-sizing: border-box;
 }
 
+/* ── Responsive ── */
 @media (max-width: 900px) {
   .admin-shell {
     margin-inline: 0;
@@ -127,21 +289,64 @@
   }
 
   .admin-shell__sidebar {
-    width: 84px;
-    padding: 1.25rem 0.5rem;
+    width: 68px;
+    min-width: 68px;
+    padding: 1rem 0.5rem;
+    align-items: center;
   }
 
+  .admin-shell__brand {
+    justify-content: center;
+    padding: 0;
+    margin-bottom: 1rem;
+  }
   .admin-shell__brand-logo {
-    width: 52px;
+    width: 42px;
+  }
+
+  .admin-shell__nav-section-label,
+  .admin-shell__link-label,
+  .admin-shell__nav-chevron {
+    display: none;
+  }
+
+  .admin-shell__nav-section-btn {
+    justify-content: center;
+    padding: 0.35rem;
+  }
+
+  /* In collapsed mode all sections are always "open" via override */
+  .admin-shell__nav-section-body {
+    grid-template-rows: 1fr !important;
+  }
+
+  .admin-shell__nav-section {
+    align-items: center;
+    gap: 0.1rem;
+    margin-bottom: 0.35rem;
   }
 
   .admin-shell__link {
-    font-size: 0;
-    height: 2.35rem;
+    justify-content: center;
+    width: 42px;
+    height: 38px;
     padding: 0;
+    border-radius: 10px;
+  }
+
+  .admin-shell__user-details {
+    display: none;
+  }
+
+  .admin-shell__back-link span {
+    display: none;
+  }
+  .admin-shell__back-link {
+    justify-content: center;
   }
 
   .admin-shell__content {
-    padding: 1.1rem;
+    padding: 1rem;
   }
 }
+

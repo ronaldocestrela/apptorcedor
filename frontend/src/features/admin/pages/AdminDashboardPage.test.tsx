@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { AdminDashboardPage } from './AdminDashboardPage'
 
@@ -13,6 +14,14 @@ vi.mock('../services/adminApi', () => ({
   getAdminDashboard: () => getAdminDashboardMock(),
 }))
 
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <AdminDashboardPage />
+    </MemoryRouter>,
+  )
+}
+
 describe('AdminDashboardPage', () => {
   it('renders dashboard hero and themed KPI cards after loading', async () => {
     getAdminDashboardMock.mockResolvedValue({
@@ -21,9 +30,9 @@ describe('AdminDashboardPage', () => {
       openSupportTickets: 6,
     })
 
-    const { container } = render(<AdminDashboardPage />)
+    const { container } = renderPage()
 
-    expect(screen.getByText('Carregando...')).toBeInTheDocument()
+    expect(container.querySelector('.admin-kpi-skeleton')).toBeInTheDocument()
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Painel administrativo' })).toBeInTheDocument()
@@ -40,7 +49,7 @@ describe('AdminDashboardPage', () => {
   it('shows error feedback when API fails', async () => {
     getAdminDashboardMock.mockRejectedValue(new Error('network'))
 
-    render(<AdminDashboardPage />)
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Falha ao carregar o painel.')
