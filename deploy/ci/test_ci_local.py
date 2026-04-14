@@ -12,7 +12,7 @@ SCRIPT_PATH = REPO_ROOT / "scripts" / "ci-local.sh"
 
 
 class TestLocalCiScript(unittest.TestCase):
-    def test_dry_run_lists_all_github_ci_gates(self) -> None:
+    def test_dry_run_lists_only_backend_and_frontend_tests(self) -> None:
         result = subprocess.run(
             [str(SCRIPT_PATH), "--dry-run"],
             check=False,
@@ -26,27 +26,30 @@ class TestLocalCiScript(unittest.TestCase):
 
         self.assertIn("Backend (.NET)", stdout)
         self.assertIn(
-            "dotnet restore tests/AppTorcedor.Api.Tests/AppTorcedor.Api.Tests.csproj",
+            "dotnet test tests/AppTorcedor.Api.Tests/AppTorcedor.Api.Tests.csproj -c Release --verbosity normal",
             stdout,
         )
         self.assertIn(
-            "dotnet test tests/AppTorcedor.Application.Tests/AppTorcedor.Application.Tests.csproj -c Release --no-build --verbosity normal",
+            "dotnet test tests/AppTorcedor.Identity.Tests/AppTorcedor.Identity.Tests.csproj -c Release --verbosity normal",
+            stdout,
+        )
+        self.assertIn(
+            "dotnet test tests/AppTorcedor.Application.Tests/AppTorcedor.Application.Tests.csproj -c Release --verbosity normal",
             stdout,
         )
         self.assertIn("Frontend (Node)", stdout)
-        self.assertIn("npm ci", stdout)
-        self.assertIn("npm run build", stdout)
-        self.assertIn("Deploy/CD tooling", stdout)
-        self.assertIn("bash -n deploy/vps/deploy.sh", stdout)
-        self.assertIn(
-            "python3 -m unittest discover -s deploy/ci -p 'test_*.py' -v",
-            stdout,
-        )
-        self.assertIn("Docker Compose (config)", stdout)
-        self.assertIn(
-            "docker compose --env-file .env.compose.example config --quiet",
-            stdout,
-        )
+        self.assertIn("cd frontend && npm test", stdout)
+
+        self.assertNotIn("dotnet restore", stdout)
+        self.assertNotIn("dotnet build", stdout)
+        self.assertNotIn("npm ci", stdout)
+        self.assertNotIn("npm run lint", stdout)
+        self.assertNotIn("npm run build", stdout)
+        self.assertNotIn("Deploy/CD tooling", stdout)
+        self.assertNotIn("bash -n", stdout)
+        self.assertNotIn("python3 -m unittest", stdout)
+        self.assertNotIn("Docker Compose (config)", stdout)
+        self.assertNotIn("docker compose", stdout)
 
 
 if __name__ == "__main__":

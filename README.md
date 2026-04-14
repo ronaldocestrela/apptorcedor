@@ -163,25 +163,21 @@ npm test
 
 ## Esteira CI local
 
-Para rodar localmente os mesmos gates do GitHub Actions, use o script abaixo a partir da raiz do repositório:
+Para rodar localmente uma esteira enxuta focada apenas em testes de backend e frontend, use o script abaixo a partir da raiz do repositório:
 
 ```bash
 ./scripts/ci-local.sh
 ```
 
-Ele replica os jobs de [/.github/workflows/ci.yml](.github/workflows/ci.yml):
+Ele executa apenas:
 
-- backend: restore, build e testes dos projetos usados na Action;
-- frontend: `npm ci`, `npm run lint`, `npm run test` e `npm run build`;
-- tooling: `bash -n` dos scripts de deploy e testes Python em `deploy/ci`;
-- compose: `docker compose --env-file .env.compose.example config --quiet`.
+- backend: `dotnet test` dos três projetos usados na CI;
+- frontend: `npm test`.
 
-Pré-requisitos para equivalência com a pipeline do GitHub:
+Pré-requisitos:
 
 - .NET 10 SDK
-- Node.js 22+ e npm
-- Python 3
-- Docker com plugin `docker compose`
+- Node.js e npm
 
 Para inspecionar a esteira sem executá-la, use:
 

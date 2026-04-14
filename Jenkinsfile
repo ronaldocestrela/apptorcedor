@@ -42,7 +42,8 @@ pipeline {
     APP_HEALTHCHECK_URL = "${env.APP_HEALTHCHECK_URL ?: 'http://127.0.0.1:5031/health/live'}"
     VPS_PORT = "${env.VPS_PORT ?: '22'}"
     VPS_REPO_DIR = "${env.VPS_REPO_DIR ?: '/opt/apptorcedor/repo'}"
-    // true = sem scp/ssh; usa WORKSPACE como repositório git no deploy local (Jenkins na mesma VPS).
+    // true = sem scp/ssh; usa VPS_REPO_DIR como clone dedicado de deploy na mesma VPS,
+    // evitando alterar permissões do WORKSPACE do Jenkins com comandos via sudo.
     JENKINS_LOCAL_DEPLOY = "${env.JENKINS_LOCAL_DEPLOY ?: 'true'}"
     // Opcional: ex. saída de `dirname $(nvm which node)` ou /usr (Node de sistema). Só fluxo systemd (DEPLOY_USE_COMPOSE=false).
     NODEJS_HOME = "${env.NODEJS_HOME ?: ''}"
@@ -153,7 +154,7 @@ pipeline {
                   rm -f "${API_ENV_LOCAL}"
                   sudo mkdir -p /etc/apptorcedor
                   sudo install -m 600 -o root -g root "${REMOTE_ENV}" /etc/apptorcedor/api.env
-                  sudo bash "${REMOTE_SH}" "${DEPLOY_BRANCH}" "${REMOTE_COMPOSE_ENV}" "${APP_HEALTHCHECK_URL}" "${RELEASE_ID}" "${WORKSPACE}" "${COMPOSE_FILE}"
+                  sudo bash "${REMOTE_SH}" "${DEPLOY_BRANCH}" "${REMOTE_COMPOSE_ENV}" "${APP_HEALTHCHECK_URL}" "${RELEASE_ID}" "${VPS_REPO_DIR}" "${COMPOSE_FILE}"
                 '''
               } else {
                 sh '''#!/bin/bash
@@ -205,7 +206,7 @@ pipeline {
                   sudo mkdir -p /etc/apptorcedor
                   sudo install -m 600 -o root -g root "${REMOTE_ENV}" /etc/apptorcedor/api.env
                   sudo env PATH="${DEPLOY_PATH}" HOME="${HOME}" NVM_DIR="${NVM_DIR:-}" NODEJS_HOME="${NODEJS_HOME:-}" \
-                    bash "${REMOTE_SH}" "${DEPLOY_BRANCH}" "${REMOTE_VITE}" "${DEPLOY_ROOT}" "${APP_SERVICE_NAME}" "${APP_HEALTHCHECK_URL}" "${RELEASE_ID}" "${WORKSPACE}"
+                    bash "${REMOTE_SH}" "${DEPLOY_BRANCH}" "${REMOTE_VITE}" "${DEPLOY_ROOT}" "${APP_SERVICE_NAME}" "${APP_HEALTHCHECK_URL}" "${RELEASE_ID}" "${VPS_REPO_DIR}"
                 '''
               }
             }

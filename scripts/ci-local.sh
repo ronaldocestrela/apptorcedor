@@ -35,29 +35,11 @@ run_step() {
 }
 
 run_step "Backend (.NET)" \
-  "cd backend && dotnet restore tests/AppTorcedor.Api.Tests/AppTorcedor.Api.Tests.csproj" \
-  "cd backend && dotnet restore tests/AppTorcedor.Identity.Tests/AppTorcedor.Identity.Tests.csproj" \
-  "cd backend && dotnet restore tests/AppTorcedor.Application.Tests/AppTorcedor.Application.Tests.csproj" \
-  "cd backend && dotnet build tests/AppTorcedor.Api.Tests/AppTorcedor.Api.Tests.csproj -c Release --no-restore" \
-  "cd backend && dotnet build tests/AppTorcedor.Identity.Tests/AppTorcedor.Identity.Tests.csproj -c Release --no-restore" \
-  "cd backend && dotnet build tests/AppTorcedor.Application.Tests/AppTorcedor.Application.Tests.csproj -c Release --no-restore" \
-  "cd backend && dotnet test tests/AppTorcedor.Api.Tests/AppTorcedor.Api.Tests.csproj -c Release --no-build --verbosity normal" \
-  "cd backend && dotnet test tests/AppTorcedor.Identity.Tests/AppTorcedor.Identity.Tests.csproj -c Release --no-build --verbosity normal" \
-  "cd backend && dotnet test tests/AppTorcedor.Application.Tests/AppTorcedor.Application.Tests.csproj -c Release --no-build --verbosity normal"
+  "cd backend && dotnet test tests/AppTorcedor.Api.Tests/AppTorcedor.Api.Tests.csproj -c Release --verbosity normal" \
+  "cd backend && dotnet test tests/AppTorcedor.Identity.Tests/AppTorcedor.Identity.Tests.csproj -c Release --verbosity normal" \
+  "cd backend && dotnet test tests/AppTorcedor.Application.Tests/AppTorcedor.Application.Tests.csproj -c Release --verbosity normal"
 
 run_step "Frontend (Node)" \
-  "cd frontend && npm ci" \
-  "cd frontend && npm run lint" \
-  "cd frontend && npm run test" \
-  "cd frontend && npm run build"
-
-run_step "Deploy/CD tooling" \
-  "bash -n deploy/vps/deploy.sh" \
-  "bash -n deploy/vps/build-and-deploy.sh" \
-  "bash -n deploy/ci/wait-github-ci.sh" \
-  "python3 -m unittest discover -s deploy/ci -p 'test_*.py' -v"
-
-run_step "Docker Compose (config)" \
-  "docker compose --env-file .env.compose.example config --quiet"
+  "cd frontend && npm test"
 
 printf '\nLocal CI finished successfully.\n'
