@@ -1,0 +1,38 @@
+# API + SPA. O banco (SQL Server) fica em outro servidor — defina `DATABASE_CONNECTION_STRING` no `.env`.
+#
+# Copie `.env.compose.example` para `.env` e ajuste variáveis (JWT, connection string, etc.).
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-5031}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: ${DATABASE_CONNECTION_STRING:?Defina DATABASE_CONNECTION_STRING no arquivo .env}
+      Jwt__Key: ${JWT_KEY:?Defina JWT_KEY no arquivo .env (min. 32 caracteres UTF-8)}
+      Jwt__Issuer: ${JWT_ISSUER:-AppTorcedor}
+      Jwt__Audience: ${JWT_AUDIENCE:-AppTorcedor}
+      Payments__WebhookSecret: ${PAYMENTS_WEBHOOK_SECRET:-local-docker-webhook}
+      Payments__Provider: ${PAYMENTS_PROVIDER:-Mock}
+      Payments__Stripe__ApiKey: ${STRIPE_API_KEY:-}
+      Payments__Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
+      Payments__Stripe__SuccessUrl: ${STRIPE_SUCCESS_URL:-}
+      Payments__Stripe__CancelUrl: ${STRIPE_CANCEL_URL:-}
+      ADMIN_MASTER_INITIAL_PASSWORD: ${ADMIN_MASTER_INITIAL_PASSWORD:?Defina ADMIN_MASTER_INITIAL_PASSWORD no arquivo .env}
+      Cors__AllowedOrigins__0: ${CORS_ORIGIN:-http://localhost:5173}
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5031}
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-5173}:80"
+    depends_on:
+      - api

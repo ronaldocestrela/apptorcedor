@@ -1,0 +1,184 @@
+# App Torcedor
+
+Monólito modular para **sócio torcedor** de um único clube (single tenant). A base inclui **Identity**, **JWT** (access + refresh), **permissões granulares** (claims `permission` + políticas na API), **CQRS (MediatR)** no projeto `AppTorcedor.Application`, **auditoria** e **configurações** administráveis, além da **SPA** em React (Vite).
+
+## Pré-requisitos
+
+| Ferramenta | Uso |
+|------------|-----|
+| [.NET 10 SDK](https://dotnet.microsoft.com/download) | API e testes |
+| Node.js 20+ e npm | Frontend |
+| Docker (opcional) | Stack **API + SPA** (`docker compose`); banco SQL em **servidor externo** |
+
+## Estrutura do repositório
+
+```text
+backend/          → Solução .NET (API, Identity, Infrastructure, testes)
+frontend/         → React + Vite (login, **cadastro e Minha conta (C.1)**, **notícias e benefícios (C.2)** no `/news` e `/benefits`, **catálogo de planos (D.1)** em `/plans`, **detalhe de plano (D.2)** em `/plans/:planId`, **carteirinha (C.3)** em `/digital-card`, **jogos e ingressos (C.4)** em `/games` e `/tickets`, **fidelidade (C.5)** em `/loyalty`, login Google opcional, convite staff, **usuários admin**, dashboard admin, **pagamentos admin (B.6)**, **notícias admin (B.9)**, **fidelidade/benefícios admin (B.10)**, **chamados/suporte admin (B.11)**, gestão de matriz de permissões, refresh de token)
+deploy/           → CD na VPS (`deploy/vps/build-and-deploy.sh`, `deploy/vps/deploy.sh` legado), helpers (`deploy/ci/`) — ver `docs/architecture/parte-f1-jenkins-cd-pos-ci.md`
+Jenkinsfile       → CD: após CI verde, GitHub Actions dispara o job; segredos em Jenkins Credentials; build na VPS (git pull + publish + Vite)
+docs/             → Documentação técnica por fase (Stripe: [docs/deploy/guia-configuracao-stripe.md](docs/deploy/guia-configuracao-stripe.md))
+docker-compose.yml → **API + frontend** (imagens locais); connection string aponta para SQL em outro servidor
+AGENTS.md         → Visão de produto, regras e arquitetura alvo
+```
+
+## Uso rápido (desenvolvimento)
+
+### 1. Backend (API)
+
+No ambiente **Development** o padrão é **banco em memória** (não precisa de SQL Server para subir a API).
+
+```bash
+cd backend
+dotnet restore
+dotnet run --project src/AppTorcedor.Api/AppTorcedor.Api.csproj
+```
+
+- URL HTTP padrão: **http://localhost:5031** (definida em [`backend/src/AppTorcedor.Api/Properties/launchSettings.json`](backend/src/AppTorcedor.Api/Properties/launchSettings.json)).
+- Documentação OpenAPI (somente Development): **GET** `http://localhost:5031/openapi/v1.json`.
+
+### 2. Frontend (SPA)
+
+Em outro terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+- A URL do Vite aparece no terminal (geralmente `http://localhost:5173`).
+- A API é configurada pela variável **`VITE_API_URL`**. O arquivo [`frontend/.env.development`](frontend/.env.development) já aponta para `http://localhost:5031`. Para outro host/porta, ajuste ou copie de [`frontend/.env.example`](frontend/.env.example).
+
+### 3. Fluxo na interface
+
+1. Com a API e o frontend rodando, abra a URL do Vite.
+2. Faça login com o e-mail e senha do seed (veja a seção **Credenciais iniciais** abaixo).
+3. Após autenticar, você acessa a área logada (**/**, **/account**, **/news**, **/benefits**, **/plans**, **/digital-card**, **/games**, **/tickets**, **/loyalty**); usuários com permissões administrativas podem abrir **/admin** e sub-rotas (ver [docs/frontend/backoffice.md](docs/frontend/backoffice.md)).
+
+## Docker: API + SPA (banco à parte)
+
+O repositório define um **Dockerfile** em [`backend/Dockerfile`](backend/Dockerfile) e outro em [`frontend/Dockerfile`](frontend/Dockerfile). O [`docker-compose.yml`](docker-compose.yml) sobe **apenas** os serviços `api` e `web`. O **SQL Server fica em outro servidor**; em [`ConnectionStrings:DefaultConnection`](backend/src/AppTorcedor.Api/appsettings.json) / variável `DATABASE_CONNECTION_STRING` use o host do seu banco (acessível a partir dos containers ou da API, conforme a rede).
+
+1. Copie o exemplo de variáveis e ajuste (JWT, connection string, senha do seed, etc.):
+
+   ```bash
+   cp .env.compose.example .env
+   ```
+
+2. Suba os containers:
+
+   ```bash
+   docker compose --env-file .env up --build
+   ```
+
+3. Por padrão: API em **http://localhost:5031**, SPA em **http://localhost:5173**. O build do frontend usa `VITE_API_URL` do `.env` (URL que o **navegador** usa para chamar a API).
+
+## SQL Server em servidor externo (desenvolvimento sem Docker na API)
+
+Se quiser usar SQL Server **fora** deste repositório (outro host, managed, etc.) com `dotnet run` local:
+
+1. Em [`backend/src/AppTorcedor.Api/appsettings.Development.json`](backend/src/AppTorcedor.Api/appsettings.Development.json), defina **`UseInMemoryDatabase`** como **`false`** e ajuste **`ConnectionStrings:DefaultConnection`** (ou use variáveis de ambiente / user secrets).
+
+2. Aplique as migrations na primeira vez (a partir da pasta `backend`):
+
+   ```bash
+   dotnet ef database update --project src/AppTorcedor.Infrastructure/AppTorcedor.Infrastructure.csproj --startup-project src/AppTorcedor.Api/AppTorcedor.Api.csproj
+   ```
+
+   É necessário ter a [CLI do EF](https://learn.microsoft.com/ef/core/cli/dotnet) instalada (`dotnet tool install --global dotnet-ef`).
+
+## Credenciais iniciais (seed)
+
+Na primeira execução, o sistema cria as **roles** (Administrador Master, Administrador, Financeiro, etc.) e o usuário administrador.
+
+| Configuração | Descrição |
+|--------------|-----------|
+| `Seed:AdminMaster:Email` | E-mail do administrador (padrão em dev: `admin@torcedor.local`) |
+| `Seed:AdminMaster:Password` | Opcional em Development; se vazio, o seed usa senha de integração definida em código ([`IdentityDataSeeder`](backend/src/AppTorcedor.Infrastructure/Identity/IdentityDataSeeder.cs)) |
+| `ADMIN_MASTER_INITIAL_PASSWORD` | Variável de ambiente; **use em produção** em vez de senha em arquivo |
+
+Fora dos ambientes Development/Testing, a senha do seed **de** estar em configuração ou em `ADMIN_MASTER_INITIAL_PASSWORD`, caso contrário a aplicação falha na inicialização (comportamento intencional).
+
+**Segurança:** credenciais reais de banco ou de produção não devem ser versionadas. Se algum host/senha chegou a existir em histórico do Git, **rotacione** no provedor (SQL, JWT, webhooks, etc.).
+
+## CD com Jenkins (após CI no GitHub)
+
+O repositório inclui [`Jenkinsfile`](Jenkinsfile) para **deploy contínuo na VPS**: o workflow **CI** (GitHub Actions) valida o código e, em **push** para `single-tenant`, o job **`trigger-jenkins`** chama o Jenkins. O pipeline grava **`/etc/apptorcedor/api.env`** a partir do **Jenkins Credentials** e executa [`deploy/vps/build-and-deploy.sh`](deploy/vps/build-and-deploy.sh) na VPS (**git pull**, **dotnet publish**, **npm build**). Segredos não ficam em `.env` manual no servidor.
+
+- Fluxo, secrets do GitHub (`JENKINS_*`) e credenciais Jenkins: [`docs/architecture/parte-f1-jenkins-cd-pos-ci.md`](docs/architecture/parte-f1-jenkins-cd-pos-ci.md) e [`docs/deploy/guia-deploy.md`](docs/deploy/guia-deploy.md).
+- Chaves de referência para `api.env`: [`deploy/vps/api.env.example`](deploy/vps/api.env.example); systemd: [`deploy/vps/apptorcedor-api.service.example`](deploy/vps/apptorcedor-api.service.example).
+
+## Endpoints principais da API
+
+| Método | Rota | Autenticação | Função |
+|--------|------|--------------|--------|
+| POST | `/api/auth/login` | Não | Retorna `accessToken`, `refreshToken`, `expiresIn`, `roles` |
+| POST | `/api/auth/refresh` | Não | Troca o refresh por um novo par de tokens |
+| POST | `/api/auth/logout` | Não | Revoga o refresh informado |
+| GET | `/api/auth/me` | Bearer (JWT) | Dados do usuário, roles, **permissions** e `requiresProfileCompletion` |
+| POST | `/api/auth/google` | Não | Login Google (`idToken` + consentimentos para novos usuários); retorno igual ao login |
+| GET | `/api/account/register/requirements` | Não | IDs das versões publicadas de termos e privacidade (cadastro) |
+| POST | `/api/account/register` | Não | Cadastro público (LGPD); retorno igual ao login |
+| GET | `/api/account/profile` | Bearer | Perfil do torcedor (`UserProfile` sem nota admin) |
+| PUT | `/api/account/profile` | Bearer | Atualiza perfil |
+| POST | `/api/account/profile/photo` | Bearer | Upload multipart `file` (foto) |
+| GET | `/api/diagnostics/admin-master-only` | Bearer + permissão `Administracao.Diagnostics` | Diagnóstico (via MediatR); JWT inclui claims `permission` conforme role |
+| GET | `/health/live` | Não | Liveness (tag `live`) |
+| GET | `/health/ready` | Não | Readiness (inclui checagem do banco; tag `ready`) |
+| GET | `/api/admin/memberships` | Bearer + `Socios.Gerenciar` | Lista associações (filtros `status`, `userId`, paginação) |
+| GET | `/api/admin/memberships/{id}` | Bearer + `Socios.Gerenciar` | Detalhe da associação (snapshot + usuário) |
+| GET | `/api/admin/memberships/{id}/history` | Bearer + `Socios.Gerenciar` | Histórico operacional (`MembershipHistories`) |
+| PATCH | `/api/admin/memberships/{id}/status` | Bearer + `Socios.Gerenciar` | Atualiza status com `reason` obrigatório (auditoria + histórico de domínio) |
+| GET | `/api/admin/config` | Bearer + `Configuracoes.Visualizar` | Lista configurações |
+| PUT | `/api/admin/config/{key}` | Bearer + `Configuracoes.Editar` | Cria/atualiza configuração (auditoria) |
+| GET | `/api/admin/role-permissions` | Bearer + `Configuracoes.Visualizar` | Matriz role × permissão |
+| GET | `/api/admin/audit-logs` | Bearer + `Configuracoes.Visualizar` | Consulta recente de auditoria (query `entityType`, `take`) |
+| GET | `/api/admin/lgpd/documents` | Bearer + `Lgpd.Documentos.Visualizar` | Lista documentos legais e versão publicada |
+| GET | `/api/admin/lgpd/documents/{id}` | Bearer + `Lgpd.Documentos.Visualizar` | Detalhe com todas as versões |
+| POST | `/api/admin/lgpd/documents` | Bearer + `Lgpd.Documentos.Editar` | Cria documento (tipo único: termos / política) |
+| POST | `/api/admin/lgpd/documents/{id}/versions` | Bearer + `Lgpd.Documentos.Editar` | Nova versão (rascunho) |
+| POST | `/api/admin/lgpd/legal-document-versions/{versionId}/publish` | Bearer + `Lgpd.Documentos.Editar` | Publica versão |
+| GET | `/api/admin/lgpd/users/{userId}/consents` | Bearer + `Lgpd.Consentimentos.Visualizar` | Lista consentimentos do usuário |
+| POST | `/api/admin/lgpd/users/{userId}/consents` | Bearer + `Lgpd.Consentimentos.Registrar` | Registra aceite (versão publicada) |
+| POST | `/api/admin/lgpd/users/{userId}/export` | Bearer + `Lgpd.Dados.Exportar` | Exporta JSON de dados da conta |
+| POST | `/api/admin/lgpd/users/{userId}/anonymize` | Bearer + `Lgpd.Dados.Anonimizar` | Anonimiza PII e revoga refresh tokens |
+| GET | `/api/admin/digital-cards` | Bearer + `Carteirinha.Visualizar` | Lista emissões da carteirinha (filtros `userId`, `membershipId`, `status`, paginação) |
+| GET | `/api/admin/digital-cards/{id}` | Bearer + `Carteirinha.Visualizar` | Detalhe com `token` e linhas de preview do template fixo |
+| POST | `/api/admin/digital-cards/issue` | Bearer + `Carteirinha.Gerenciar` | Emite carteirinha (`membershipId`; exige associação **Ativa** e sem emissão ativa) |
+| POST | `/api/admin/digital-cards/{id}/regenerate` | Bearer + `Carteirinha.Gerenciar` | Regenera versão (invalida a ativa, novo token) |
+| POST | `/api/admin/digital-cards/{id}/invalidate` | Bearer + `Carteirinha.Gerenciar` | Invalida emissão ativa (`reason` obrigatório) |
+
+## Testes automatizados
+
+```bash
+# Backend (xUnit) — inclui Application, Infrastructure, API e Identity
+cd backend
+dotnet test AppTorcedor.slnx
+
+# Frontend (Vitest)
+cd frontend
+npm test
+```
+
+## Configuração JWT (produção)
+
+Em [`appsettings.json`](backend/src/AppTorcedor.Api/appsettings.json) (ou variáveis de ambiente), ajuste a seção **`Jwt`**:
+
+- **`Key`**: chave simétrica com **pelo menos 32 bytes** em UTF-8.
+- **`Issuer`** e **`Audience`**: devem bater com a validação configurada na API.
+
+Não commite chaves reais; use secrets ou variáveis de ambiente no deploy.
+
+## Documentação adicional
+
+- [docs/deploy/guia-deploy.md](docs/deploy/guia-deploy.md) — **guia passo a passo de deploy** (Jenkins + VPS, Docker Compose, variáveis, checklist).
+- [AGENTS.md](AGENTS.md) — escopo do produto, módulos e regras do projeto.
+- [docs/architecture/auth-bootstrap.md](docs/architecture/auth-bootstrap.md) — decisões da fase de autenticação, detalhes técnicos e variáveis.
+- [docs/architecture/parte-a-fundacao.md](docs/architecture/parte-a-fundacao.md) — Parte A: CQRS, permissões, auditoria, configurações e observabilidade.
+- [docs/frontend/backoffice.md](docs/frontend/backoffice.md) — painel administrativo na SPA (rotas e permissões).
+- [docs/ROADMAP-PENDENCIAS.md](docs/ROADMAP-PENDENCIAS.md) — backlog do que falta fazer, com prioridade para gestão e contratação de planos pelo torcedor ao final.
+- [docs/architecture/parte-f1-jenkins-cd-pos-ci.md](docs/architecture/parte-f1-jenkins-cd-pos-ci.md) — Jenkins CD pós-CI (disparo via GitHub Actions, build na VPS, credenciais).
+- [docs/architecture/parte-b2-lgpd.md](docs/architecture/parte-b2-lgpd.md) — Parte B.2: documentos legais, consentimentos, exportação e anonimização.
+- [docs/architecture/parte-b7-digital-card-admin.md](docs/architecture/parte-b7-digital-card-admin.md) — Parte B.7: carteirinha digital (admin), versionamento e token.
+- [docs/architecture/parte-b8-games-tickets-admin.md](docs/architecture/parte-b8-games-tickets-admin.md) — Parte B.8: jogos e ingressos (admin), `ITicketProvider` mock e fluxos de reserva/compra/sync/redeem.

@@ -1,312 +1,389 @@
-# 📄 AGENTS.md — SaaS Sócio Torcedor (MVP)
+# 📄 AGENTS.md — Sistema de Sócio Torcedor (Single Tenant)
 
 ## 🧠 Visão Geral
 
-Este projeto é um SaaS multitenant para gestão de **sócio torcedor de clubes esportivos**.
+Este projeto é um sistema de **sócio torcedor para um único clube**, desenvolvido como um **monólito modular**.
 
-Cada clube é um tenant isolado com:
+### Stack principal
 
-* banco de dados próprio (SQL Server)
-* configuração própria
-* usuários próprios
-
-O sistema será dividido em:
-
-* Backend: `.NET 10`, `ASP.NET Core`, `Identity`, `CQRS`, `Modular Monolith`
-* Frontend Web: `React + Vite + Axios` (SPA)
-* Mobile: `Flutter`
+* **Backend:** .NET 10 + ASP.NET Core + Identity + CQRS + SQL Server
+* **Frontend Web:** React + Vite + Axios (SPA)
+* **Mobile:** Flutter
 
 ---
 
-## 🏗️ Arquitetura Geral
+## 🎯 Objetivo do Sistema
 
-### Estilo Arquitetural
+Permitir:
 
-* Modular Monolith
-* CQRS (Commands + Queries)
-* Clean Architecture por módulo
-* Separação clara entre:
-
-  * Domain
-  * Application
-  * Infrastructure
-  * API
-
----
-
-## 🧩 Multitenancy
-
-### Modelo
-
-* 1 tenant = 1 clube
-* 1 banco por tenant
-* banco central (master) para gestão do SaaS
-
-### Identificação do Tenant
-
-**Header HTTP `X-Tenant-Id`** (slug do tenant enviado pelo frontend / cliente)
-
-#### Exemplo:
-
-```http
-X-Tenant-Id: flamengo
-```
-
-### Fluxo de resolução
-
-1. Request chega com o header `X-Tenant-Id` (valor = slug, ex.: `flamengo`)
-2. Buscar tenant no banco master pelo slug
-3. Resolver:
-
-   * TenantId
-   * ConnectionString
-   * Configurações
-   * AllowedOrigins (CORS)
-
-### API administrativa (Backoffice)
-
-* Rotas **`api/backoffice/*`**: não exigem **`X-Tenant-Id`** (operação central no banco master).
-* Autenticação: header **`X-Api-Key`**, conferido com a configuração **`Backoffice:ApiKey`**.
-* **OpenAPI (Scalar)**: nas rotas de tenant, o parâmetro **`X-Tenant-Id`** continua documentado; no backoffice, o esquema **`BackofficeApiKey`** documenta **`X-Api-Key`**. A referência interativa fica em **`/scalar`** (desenvolvimento ou `EXPOSE_OPENAPI_JSON=true`); use a autenticação da UI (**Bearer** e **BackofficeApiKey**) para testar as operações.
+* cadastro externo de usuários
+* gestão de sócios e não sócios
+* controle de planos e assinaturas
+* pagamentos recorrentes (PIX e cartão)
+* carteirinha digital
+* resgate e visualização de ingressos
+* notícias e notificações
+* ranking/fidelidade
+* atendimento/chamados
+* controle administrativo completo com permissões granulares
 
 ---
 
-## 🌐 CORS Dinâmico por Tenant
+## 🏗️ Diretrizes Arquiteturais
 
-Cada tenant terá seus próprios domínios autorizados.
+### Estilo
 
-### Exemplo (banco master)
+* Monólito
+* Modularização por domínio
+* CQRS
+* Clean Architecture (por módulo)
 
-```json
-{
-  "tenant": "flamengo",
-  "allowedOrigins": [
-    "https://flamengo.meusistema.com",
-    "https://app.flamengo.com"
-  ]
-}
-```
+### NÃO utilizar
 
-### Middleware de CORS dinâmico
-
-* Resolver tenant antes do pipeline
-* Aplicar CORS baseado no tenant atual
-
-### Estratégia
-
-```csharp
-app.Use(async (context, next) =>
-{
-    var tenant = context.Items["Tenant"];
-
-    var origins = tenant.AllowedOrigins;
-
-    context.Response.Headers["Access-Control-Allow-Origin"] = origins;
-    
-    await next();
-});
-```
-
-### Observação importante
-
-* NÃO usar CORS fixo no `Program.cs`
-* CORS deve ser resolvido por request
-* Permitir atualização sem rebuild
-* **Novo tenant:** na criação (`CreateTenant`), é registrada automaticamente uma origem permitida a partir de **`CORS_BASE_DOMAIN`** (chave raiz em `appsettings` ou variável de ambiente). Se **ausente ou só espaços**, o fallback é **`http://{slug}.localhost:5173`** (ex.: slug `feira` → `http://feira.localhost:5173`). Se **`CORS_BASE_DOMAIN`** for uma URL completa **sem** o placeholder **`{slug}`**, essa origem é usada igual para todos os novos tenants. Se contiver **`{slug}`**, o placeholder é substituído pelo slug. Se for só **host** (ex. `localhost:5173` ou `app.meuclube.com`), monta-se **`http://{slug}.…`** em ambiente local (host com `localhost`) ou **`https://{slug}.…`** caso contrário. Outras origens continuam via backoffice (`POST /api/backoffice/tenants/{id}/domains`).
+* Multitenancy
+* Microservices
+* Arquitetura distribuída
 
 ---
 
-## 🗄️ Banco de Dados
+## ⚠️ Princípios Obrigatórios
 
-### Banco Master
+### 1. TDD (Test Driven Development)
+
+Este projeto **DEVE obrigatoriamente seguir TDD**.
+
+#### Regras:
+
+* Nenhuma funcionalidade pode ser implementada sem teste
+* Sempre seguir ciclo:
+
+  1. Escrever teste (falhando)
+  2. Implementar código mínimo
+  3. Refatorar
+
+#### Tipos de testes obrigatórios:
+
+* Unitários (Domain + Application)
+* Integração (Infrastructure)
+* Testes de API (Controllers)
+
+---
+
+### 2. Atualização de documentação (MANDATÓRIO)
+
+Ao final de **cada execução do agente**, deve-se:
+
+* Atualizar documentação do projeto
+* Registrar:
+
+  * funcionalidades criadas
+  * decisões técnicas
+  * endpoints adicionados
+  * mudanças em regras de negócio
+* Garantir consistência entre código e documentação
+
+---
+
+### 3. Separação de responsabilidades
+
+O sistema deve separar claramente:
+
+* **Conta (User)**
+* **Permissões (Roles/Permissions)**
+* **Associação (Membership)**
+
+Esses conceitos **NÃO podem ser acoplados**.
+
+---
+
+## 👤 Modelo de Usuário
+
+### Regras
+
+* qualquer pessoa pode se cadastrar
+* nem todo usuário é sócio
+* nem todo usuário tem acesso administrativo
+* nem todo sócio é administrador
+
+---
+
+## 🧩 Camadas conceituais
+
+### 1. Conta (Identity)
 
 Responsável por:
 
-* Tenants
-* Configuração global
-* Planos do SaaS
-* Feature flags
-
-#### Tabelas principais:
-
-* Tenants
-* TenantSettings
-* TenantDomains
-* TenantPlans
-* SaaSPlans
-* Permissions
+* login
+* senha
+* autenticação
+* login social
 
 ---
 
-### Banco por Tenant
+### 2. Perfil funcional
 
-Cada clube possui seu próprio banco com:
+Define o que o usuário pode fazer:
 
-#### Módulos:
-
-* Users / Identity
-* MemberProfiles
-* Plans
-* Subscriptions
-* Payments
-* Games
-* Tickets
-* News
-* Loyalty
-* Benefits
-* SupportTickets
+* administrador
+* financeiro
+* atendimento
+* marketing
+* operador
+* torcedor
 
 ---
 
-## 🔐 Autenticação e Autorização
+### 3. Associação (Membership)
 
-### Autenticação
+Define se o usuário é sócio:
 
-* **Rotas de sócio / tenant:** ASP.NET Identity + JWT (Bearer).
-* **Rotas `api/backoffice/*`:** chave de API **`X-Api-Key`** (config **`Backoffice:ApiKey`**), sem JWT.
-* Email + senha
-* Login social:
+* não associado
+* ativo
+* inadimplente
+* suspenso
+* cancelado
 
-  * Google
-  * Facebook
-  * Apple
+---
 
-### Autorização
+## 🔐 Perfis do sistema
 
-* Role + Permission Claims
+* Administrador Master (seed inicial)
+* Administrador
+* Financeiro
+* Atendimento
+* Marketing
+* Operador
+* Torcedor
 
-#### Exemplo de permissões:
+---
+
+## 🔑 Permissões (granular)
+
+Exemplo:
 
 ```text
-Socios.Criar
-Socios.Editar
-Socios.Visualizar
+Usuarios.Visualizar
+Usuarios.Editar
+Socios.Gerenciar
+Planos.Visualizar
+Planos.Criar
 Pagamentos.Estornar
-Planos.Gerenciar
+Jogos.Visualizar
+Jogos.Criar
+Jogos.Editar
+Ingressos.Visualizar
+Ingressos.Gerenciar
 Noticias.Publicar
+Fidelidade.Visualizar
+Fidelidade.Gerenciar
+Beneficios.Visualizar
+Beneficios.Gerenciar
 Chamados.Responder
+Carteirinha.Visualizar
+Carteirinha.Gerenciar
+Configuracoes.Editar
 ```
 
 ---
 
-## 📦 Estrutura do Backend
+## 🧱 Módulos do Sistema
+
+### 1. Identity
+
+* autenticação
+* login social
+* roles
+* permissões
+* LGPD
+
+### 2. Users
+
+* cadastro
+* dados pessoais
+* ativação/inativação
+
+### 3. Membership
+
+* status de sócio
+* vínculo com plano
+* histórico
+
+### 4. Plans
+
+* planos
+* benefícios
+* regras
+
+### 5. Payments
+
+* PIX
+* cartão
+* recorrência
+* inadimplência
+
+### 6. Digital Card
+
+* carteirinha
+* exibição
+
+### 7. Games
+
+* jogos
+* regras
+
+### 8. Tickets
+
+* integração externa
+* resgate
+* QR Code
+
+### 9. News
+
+* notícias
+* notificações
+
+### 10. Loyalty
+
+* pontos
+* ranking
+
+### 11. Benefits
+
+* parceiros
+* vantagens
+
+### 12. Support
+
+* chamados
+* atendimento
+
+### 13. Administration
+
+* permissões
+* usuários internos
+* configurações
+
+---
+
+## 🗄️ Modelagem principal
+
+### ApplicationUser
+
+* Id
+* Name
+* Email
+* PasswordHash
+* PhoneNumber
+* IsActive
+* CreatedAt
+
+---
+
+### UserProfile
+
+* UserId
+* Document
+* BirthDate
+* PhotoUrl
+* Address
+
+---
+
+### Membership
+
+* Id
+* UserId
+* PlanId
+* Status
+* StartDate
+* EndDate
+* NextDueDate
+
+#### Status:
 
 ```text
-src/
-
-  BuildingBlocks/
-    Domain/
-    Application/
-    Infrastructure/
-    Shared/
-
-  Modules/
-
-    Backoffice/
-    Identity/
-    Tenancy/
-    Membership/
-    Plans/
-    Payments/
-    Games/
-    Tickets/
-    News/
-    Loyalty/
-    Benefits/
-    Support/
-
-  Host/
-    Api/
+NaoAssociado
+Ativo
+Inadimplente
+Suspenso
+Cancelado
+PendingPayment
 ```
 
 ---
 
-## 🧱 Estrutura de um Módulo
+### MembershipPlan
 
-```text
-ModuleName/
+* Id
+* Name
+* Price
+* BillingCycle
+* DiscountPercentage
+* IsActive
 
-  Domain/
-    Entities/
-    Enums/
-    ValueObjects/
-    Rules/
-    Events/
+---
 
-  Application/
-    Commands/
-    Queries/
-    Handlers/
-    DTOs/
-    Validators/
+### Payment
 
-  Infrastructure/
-    Persistence/
-    Repositories/
-    Services/
-    Integrations/
+* Id
+* UserId
+* MembershipId
+* Amount
+* Status
+* DueDate
+* PaidAt
 
-  Api/
-    Controllers/
-```
+---
+
+### Game
+
+* Id
+* Opponent
+* Competition
+* GameDate
+
+---
+
+### Ticket
+
+* Id
+* UserId
+* GameId
+* ExternalTicketId
+* QrCode
+* Status
 
 ---
 
 ## ⚙️ CQRS
 
-### Commands (Write)
+### Commands
 
-* CreateMember
-* UpdateMember
+* CreateUser
+* RegisterUser
+* SubscribeMember
 * ChangePlan
-* CancelSubscription
 * RegisterPayment
 * CreateGame
+* RedeemTicket
 * PublishNews
-* OpenTicket
-
-### Queries (Read)
-
-* GetMemberProfile
-* GetMembership
-* ListPlans
-* ListGames
-* ListTickets
-* GetNews
-* GetRanking
 
 ---
 
-## 👤 Domínio: Sócio Torcedor
+### Queries
 
-### Regras
-
-* 1 plano ativo por usuário
-* pode fazer upgrade/downgrade
-* status controlado (no backend, enum `MemberStatus`; valores de produto abaixo; existe também `PendingCompletion` para fluxos futuros de cadastro incompleto):
-
-```text
-Ativo (Active)
-Inadimplente (Delinquent)
-Cancelado (Canceled)
-Suspenso (Suspended)
-```
-
-* alteração de status por **administrador do tenant**: `PATCH /api/members/{id}/status` (JWT + role `Administrador` + header `X-Tenant-Id`); listagem admin com filtro opcional `?status=`
+* GetUserProfile
+* GetMembershipStatus
+* ListPlans
+* ListGames
+* GetNewsFeed
+* GetTickets
 
 ---
 
 ## 💳 Pagamentos
 
-### Requisitos
-
-* PIX
-* Cartão
-* Recorrência automática
-
-### Arquitetura
-
-Abstração de provider:
+### Interface obrigatória
 
 ```csharp
 public interface IPaymentProvider
@@ -315,54 +392,29 @@ public interface IPaymentProvider
     Task CreatePixAsync(...);
     Task CreateCardAsync(...);
     Task CancelAsync(...);
-    Task GetStatusAsync(...);
 }
 ```
-
-### Observação
-
-* Implementação futura:
-
-  * Asaas
-  * Pagar.me
-  * Mercado Pago
 
 ---
 
 ## 🎟️ Ingressos
 
-### Estratégia
+### Interface obrigatória
 
-* Sistema NÃO emite ingressos
-* Integra com fornecedor externo
-
-### Responsabilidades internas
-
-* validar benefício do sócio
-* aplicar desconto
-* solicitar ingresso ao provider externo
-* armazenar metadados
-* exibir QR Code
-
----
-
-## 📱 Mobile (Flutter)
-
-### Funcionalidades
-
-* login
-* cadastro
-* assinatura de plano
-* carteirinha digital
-* resgatar ingresso
-* visualizar ingressos (QR Code)
-* notícias
+```csharp
+public interface ITicketProvider
+{
+    Task ReserveAsync(...);
+    Task PurchaseAsync(...);
+    Task GetAsync(...);
+}
+```
 
 ---
 
 ## 🌐 Frontend Web
 
-### Tecnologias
+### Stack
 
 * React
 * Vite
@@ -373,170 +425,146 @@ public interface IPaymentProvider
 ```text
 src/
   app/
-    auth/
-    backoffice/     # rotas /backoffice/* (X-Api-Key), shell e guards
-    router/
-    theme/          # useTheme, ThemeToggle; tema em data-theme no <html>
   shared/
-    http/           # apiClient (tenant JWT) + backofficeClient (X-Api-Key)
-    backoffice/     # tipos e APIs api/backoffice/*
-    tenant/
-    auth/           # sessão + decodificação de claims do JWT (roles, email)
-    payments/
-    members/        # GET /api/members/me
   features/
   pages/
-    backoffice/     # UI SaaS (tenants, planos, vínculos, detalhe tenant)
 ```
-
-### UI e tema
-
-* Estilos globais em **`web/src/index.css`**: **CSS Custom Properties** por tema (`:root` claro, `[data-theme="dark"]` escuro), layout responsivo (ex.: menu colapsável no shell abaixo de ~600px).
-* **Tema claro/escuro:** preferência persistida em **`localStorage`** (`theme` = `light` | `dark`); script inline em **`web/index.html`** aplica o tema antes do primeiro paint (evita flash); toggle nas páginas autenticadas (**`AppShell`**) e em login/cadastro / **`TenantNotResolvedPage`** / **backoffice** (**`BackofficeShell`**).
-
-### Backoffice SaaS (web)
-
-* Rotas **`/backoffice/*`**: operação no master com header **`X-Api-Key`** (chave informada na tela **`/backoffice/login`** e guardada em **`sessionStorage`**); **`backofficeClient`** não envia **`X-Tenant-Id`** nem Bearer.
-* **`App.tsx`**: se o path começa com **`/backoffice`**, não aplica resolução de tenant por hostname (permite usar `localhost` sem subdomínio de clube).
-* Guia: **`docs/user_guid/backoffice-frontend.md`**.
-
-### Sessão e papéis no SPA
-
-* Além de `accessToken` e `expiresAtUtc`, a sessão em **`sessionStorage`** guarda **`roles`** extraídas do JWT (claim curta **`role`** ou claim longa do .NET); sessões antigas sem `roles` são normalizadas ao carregar, decodificando o token de novo.
-* **Navegação:** os links **Admin**, **Planos**, **Faturamento SaaS** e **Gateway** só aparecem para usuários com role **`Administrador`**. Usuários apenas **`Socio`** continuam com **Sócio** e **Pagamentos**. Não há bloqueio de rota por papel no front (apenas visibilidade no menu); a API continua a autorizar com JWT + roles.
-
-### Áreas
-
-#### Admin
-
-* sócios
-* planos
-* pagamentos
-* configuração **gateway de pagamentos** (Stripe direto / credenciais do clube — UI **`/admin/stripe`**, API `api/payments/admin/member-gateway/*`)
-* jogos
-* notícias
-* suporte
-
-#### Sócio
-
-* perfil (**`/member`** — dados de **`GET /api/members/me`**; e-mail da sessão via JWT quando o perfil ainda não existe)
-* plano
-* carteirinha
-* ingressos
-* notícias
 
 ---
 
-## 🔔 Notificações
+## 📱 Mobile (Flutter)
 
-### Canais
+### Funcionalidades
 
-* Email
-* Push
-
-### Eventos
-
-* novo jogo
-* vencimento próximo
-* inadimplência
+* login
+* cadastro
+* assinatura
+* carteirinha
+* ingressos (QR Code)
+* notícias
+* perfil
+* chamados
 
 ---
 
 ## ⚖️ LGPD
 
-* aceite de termos obrigatório e de política de privacidade no **`POST /api/auth/register`** (IDs das versões vigentes do tenant)
-* versionamento por tenant: tabelas `LegalDocumentVersions` e `UserLegalConsents` no banco do tenant (módulo Identity)
-* registro de data/hora (UTC), IP e user-agent no consentimento
-* **Leitura pública (sem JWT)**: `GET /api/legal-documents/current` — retorna as versões atuais de termos e privacidade (exige `X-Tenant-Id`)
-* **Publicação (admin do clube)**: `POST /api/legal-documents` — role `Administrador`, corpo com `kind` (`TermsOfUse` / `PrivacyPolicy`) e `content`
-* após migrations, tenants sem documentos recebem seed mínimo (placeholder) na subida da API ou na criação do tenant; o clube deve substituir pelo texto oficial
-* após migrations do Identity por tenant, o seed **`RoleTenantSeed`** garante as roles **`Socio`** e **`Administrador`** em `AspNetRoles` (idempotente); o primeiro cadastro continua atribuindo **`Socio`**; atribuir **`Administrador`** a um usuário é feito fora do registro público (ex.: operação administrativa ou banco)
+Obrigatório:
 
----
-
-## 🚀 Fases de Implementação
-
-**Legenda:** **✅** = já entregue no estado atual do repositório (backend).
-
-### Fase 1 — Fundação
-
-* ✅ estrutura base
-* ✅ tenancy por header `X-Tenant-Id` (slug)
-* ✅ CORS dinâmico
-* ✅ Identity
-* ✅ permissões
-* ✅ OpenAPI + Scalar (referência em `/scalar`; JSON em `/swagger/v1/swagger.json`)
-* ✅ Docker
-
-### Fase 2 — Backoffice
-
-* ✅ gestão de tenants
-* ✅ planos SaaS
-* ✅ **MVP web** — UI em **`/backoffice`** (login com API key, tenants, planos SaaS, vínculos, detalhe com domínios/settings/plano/pagamentos SaaS/gateway de sócios); ver **`docs/user_guid/backoffice-frontend.md`**
-
-### Fase 3 — Sócio
-
-* ✅ cadastro (perfil `MemberProfile`, `api/members`)
-* ✅ planos de sócio (`MemberPlan`, vantagens em JSON, `api/plans`) — Fase 3.2
-* ✅ **Fase 3.3** — ciclo de vida do sócio: `MemberStatus` (incl. inadimplente/cancelado/suspenso), regras de transição, `PATCH /api/members/{id}/status`, filtro `GET /api/members?status=`
-* ✅ **Fase 3.4** — LGPD no cadastro: documentos versionados, consentimento obrigatório no register, endpoints `GET /api/legal-documents/current` e `POST /api/legal-documents`
-
-### Fase 4 — Pagamentos
-
-* ✅ **MVP backend** — módulo `Payments`: assinatura + faturas SaaS (master) e sócio (tenant); `POST/GET` backoffice em `api/backoffice/payments/saas/*`; **`Stripe`** (Stripe.net 51): Billing SaaS com price IDs nos planos; **gateway por tenant** — backoffice escolhe provedor (`api/backoffice/payments/member-gateway/*`), admin do clube configura **Stripe direto** (`api/payments/admin/member-gateway/*` com JWT + `Administrador`); checkout sócio e **`POST /api/webhooks/stripe/saas`** (conta plataforma) + **`POST /api/webhooks/stripe/member/{tenantId}`** (conta do clube) — webhooks **thin** (Event Destinations, `v2.core.event`); idempotência alinhada ao snapshot via `snapshot_event` quando a Stripe envia; `Payments:StripeWebhookShadowMode` para validação sem gravar inbox/efeitos; `api/payments/member/*` (subscribe, PIX, sessão Stripe quando gateway configurado, **`GET /api/payments/member/me/subscription`** com `planName`); **`IPaymentProvider`** via **`RoutingPaymentProvider`** (conta plataforma + Stripe direto do tenant); **`StripePaymentProvider.CancelAsync`** só chama a API para IDs `sub_*` e trata `resource_missing` como idempotente — ver `backend/src/Modules/Payments/AGENTS.md` e `docs/Stripe/configuracao-chaves-e-webhooks.md`
-* ✅ **MVP web** — rotas `/member` (perfil sócio, `GET /api/members/me`), `/member/billing` (fluxo sócio), `/admin/billing` (orientação SaaS para admins do clube), **`/admin/stripe`** (credenciais e status do **gateway** de sócios) e **`/backoffice`** (operadores da plataforma com `X-Api-Key`); UI responsiva, tema claro/escuro, menu admin do tenant visível só para role **`Administrador`**
-* recorrência end-to-end com gateway de produção (operacionalização, monitoramento)
-* cartão (tokenização / 3DS) no fluxo de sócio
-* conciliação e jobs de cobrança
-
-### Fase 5 — Jogos / Ingressos
-
-* jogos
-* benefícios
-* integração externa
-
-### Fase 6 — Comunicação
-
-* email
-* push
-* eventos
-
-### Fase 7 — Fidelidade / Benefícios
-
-### Fase 8 — Atendimento
-
-### Fase 9 — Apps (Web + Mobile)
-
-* **Web (SPA em `web/`):** UI responsiva, tema claro/escuro, navegação admin do **clube** condicionada à role **`Administrador`**, área do sócio em **`/member`** com perfil via **`GET /api/members/me`**, **backoffice SaaS** em **`/backoffice`** (API key, sem tenant por subdomínio).
+* aceite de termos
+* aceite de política
+* versionamento
+* data/hora do aceite
 
 ---
 
 ## 🐳 Infraestrutura
 
 * Docker obrigatório
-* VPS inicial
-* logs estruturados
-* pronto para escalar
+* SQL Server
+* API .NET
+* React
+* Flutter
+* VPS
 
 ---
 
-## ⚠️ Pontos Críticos
+## 🚀 Fases de Implementação
 
-* resolução de tenant antes de qualquer acesso ao banco
-* gestão de múltiplas connection strings
-* migrations por tenant
-* isolamento de dados
-* integração com gateway de pagamento
-* integração com sistema de ingressos
+### Fase 1 — Fundação
+
+* arquitetura base
+* Identity
+* seed admin master
+* testes iniciais
+* Swagger
+
+### Fase 2 — Usuários
+
+* cadastro externo
+* perfis
+* permissões
+
+### Fase 3 — Sócio
+
+* planos
+* assinatura
+* status
+* carteirinha
+
+### Fase 4 — Pagamentos
+
+* recorrência
+* PIX
+* cartão
+
+### Fase 5 — Jogos e ingressos
+
+### Fase 6 — Notícias
+
+### Fase 7 — Fidelidade
+
+### Fase 8 — Atendimento
+
+---
+
+## ⚠️ Regras Críticas
+
+### O sistema deve permitir:
+
+* usuários sem plano
+* sócios ativos
+* administradores sem plano
+* regras diferentes por status
 
 ---
 
 ## ✅ Conclusão
 
-Este sistema deve ser construído como:
+Este sistema deve ser:
 
-* SaaS multitenant robusto
-* altamente desacoplado
-* preparado para escalar
-* simples o suficiente para MVP
-* com base sólida para evolução futura
+* simples (monólito)
+* bem estruturado
+* altamente testável (TDD)
+* desacoplado internamente
+* preparado para evolução futura
+
+---
+
+## 📌 Regras finais obrigatórias para o agente
+
+1. Sempre usar TDD
+2. Nunca implementar sem testes
+3. Atualizar documentação ao final de cada execução
+4. Manter separação entre User, Membership e Permissions
+5. Não acoplar regras de negócio indevidamente
+6. Garantir código limpo e organizado
+7. Seguir arquitetura modular definida
+
+---
+
+## Estado do repositório (bootstrap)
+
+* **Backend:** solução em `backend/` — `AppTorcedor.Api` + `AppTorcedor.Application` (CQRS/MediatR) + `AppTorcedor.Identity` + `AppTorcedor.Infrastructure`; Identity com JWT (access + refresh) e claims de **permissões granulares**; seed de **Administrador Master**, roles base e catálogo de permissões (todas atribuídas ao Master); auditoria (`AuditLogs`), configurações (`AppConfigurationEntries`), entidades iniciais de sócio/plano/pagamento; health checks e correlação HTTP; testes xUnit (API, Application, Infrastructure, Identity).
+* **Frontend:** `frontend/` — React + Vite, login, **cadastro público (`/register`)**, **Minha conta (`/account`)**, **catálogo de planos (`/plans`, D.1)** e **checkout de assinatura (`/plans/:planId/checkout`, D.4)**, **carteirinha torcedor (`/digital-card`, C.3)**, login Google opcional (GIS + `VITE_GOOGLE_CLIENT_ID`), convite staff (`/accept-staff-invite`), armazenamento de tokens, interceptor Axios com refresh, rotas protegidas, **`/api/auth/me` com `permissions` e `requiresProfileCompletion`** e painel **`/admin`** (dashboard, staff, diagnóstico, configurações, auditoria, role × permissão editável, **membership admin (B.4)** listagem/histórico/status+motivo, **planos (B.5)** CRUD/publicação e benefícios por plano, **pagamentos (B.6)** listagem/conciliação/cancelamento/estorno, **carteirinha digital (B.7)** listagem/preview/emissão/regeneração/invalidação, **jogos e ingressos (B.8)** CRUD de jogos e gestão de ingressos com provedor mock, **notícias (B.9)**, **fidelidade e benefícios (B.10)**, **suporte/chamados (B.11)** filas/SLA/histórico com `Chamados.Responder`, **LGPD** documentos/consentimentos/dados); ver `docs/frontend/backoffice.md`.
+* **Infra local:** `docker-compose.yml` (imagens **API + SPA**; SQL Server em servidor externo via `DATABASE_CONNECTION_STRING`); Dockerfiles em `backend/` e `frontend/`; **CD:** após CI verde no GitHub Actions, job `trigger-jenkins` dispara o Jenkins; pipeline grava `api.env` na VPS a partir do **Jenkins Credentials** e roda `deploy/vps/build-and-deploy.sh` (**git pull** + publish + Vite na VPS); ver `docs/architecture/parte-f1-jenkins-cd-pos-ci.md` e `docs/deploy/guia-deploy.md`; documentação em `docs/architecture/auth-bootstrap.md`, `docs/architecture/parte-a-fundacao.md`, `docs/architecture/parte-b2-lgpd.md`, `docs/architecture/parte-b3-users-admin.md`, `docs/architecture/parte-b4-membership-admin.md`, `docs/architecture/parte-b5-plans-admin.md`, `docs/architecture/parte-b6-payments-admin.md`, `docs/architecture/parte-b7-digital-card-admin.md`, `docs/architecture/parte-b8-games-tickets-admin.md`, `docs/architecture/parte-b9-news-admin.md`, `docs/architecture/parte-b10-loyalty-benefits-admin.md`, `docs/architecture/parte-b11-support-admin.md`, `docs/architecture/parte-c1-cadastro-perfil-torcedor.md`, `docs/architecture/parte-c2-noticias-beneficios-torcedor.md`, `docs/architecture/parte-c3-carteirinha-torcedor.md`, `docs/architecture/parte-c4-jogos-ingressos-torcedor.md`, `docs/architecture/parte-c5-fidelidade-torcedor.md`, `docs/architecture/parte-d1-catalogo-planos-torcedor.md`, `docs/architecture/parte-d2-simulacao-detalhe-plano-torcedor.md`, `docs/architecture/parte-d3-contratacao-backend.md`, `docs/architecture/parte-d4-integracao-pagamento-contratacao.md`, `docs/frontend/backoffice.md` e `README.md`.
+* **B.3 Users (admin):** tabela `UserProfiles`, API `GET/PATCH/PUT /api/admin/users...`, SPA `/admin/users`; exportação/anonimização LGPD inclui/remove perfil estendido.
+* **B.4 Membership (admin):** tabela `MembershipHistories`, API `GET /api/admin/memberships`, `GET .../{id}`, `GET .../{id}/history`, `PATCH .../{id}/status` com `reason`; SPA `/admin/membership`; ver `docs/architecture/parte-b4-membership-admin.md`.
+* **B.5 Plans (admin):** tabela `MembershipPlanBenefits`, campos de publicação em `MembershipPlans`, API `GET/POST /api/admin/plans`, `GET/PUT /api/admin/plans/{id}`; permissões `Planos.Visualizar`, `Planos.Criar`, `Planos.Editar`; SPA `/admin/plans`; ver `docs/architecture/parte-b5-plans-admin.md`.
+* **B.6 Payments (admin):** evolução da tabela `Payments`, API `GET /api/admin/payments`, `GET /api/admin/payments/{id}`, `POST .../conciliate`, `.../cancel`, `.../refund`; permissões `Pagamentos.Visualizar`, `Pagamentos.Gerenciar`, `Pagamentos.Estornar`; `IPaymentProvider` mock; sweep de inadimplência (`IPaymentDelinquencySweep` + hosted service); SPA `/admin/payments`; ver `docs/architecture/parte-b6-payments-admin.md`.
+* **B.7 Digital Card (admin):** tabela `DigitalCards`, API `GET /api/admin/digital-cards`, `GET .../{id}`, `POST .../issue`, `POST .../{id}/regenerate`, `POST .../{id}/invalidate`; permissões `Carteirinha.Visualizar`, `Carteirinha.Gerenciar`; template de exibição fixo em código na API; SPA `/admin/digital-cards`; ver `docs/architecture/parte-b7-digital-card-admin.md`.
+* **B.8 Games & Tickets (admin):** tabelas `Games`, `Tickets`; API `GET/POST /api/admin/games`, `GET/PUT/DELETE /api/admin/games/{id}` (DELETE desativa), `GET /api/admin/tickets`, `GET .../{id}`, `POST .../reserve`, `POST .../{id}/purchase`, `.../sync`, `.../redeem`; permissões `Jogos.Visualizar`, `Jogos.Criar`, `Jogos.Editar`, `Ingressos.Visualizar`, `Ingressos.Gerenciar`; `ITicketProvider` com `MockTicketProvider` (singleton); SPA `/admin/games`, `/admin/tickets`; ver `docs/architecture/parte-b8-games-tickets-admin.md`.
+* **B.9 News (admin):** tabelas `NewsArticles`, `InAppNotifications`; API `GET/POST /api/admin/news`, `GET/PUT /api/admin/news/{id}`, `POST .../publish`, `.../unpublish`, `.../notifications`; permissão `Noticias.Publicar`; notificações **in-app** imediatas ou agendadas (`IInAppNotificationDispatchService` + hosted service); SPA `/admin/news`; ver `docs/architecture/parte-b9-news-admin.md`.
+* **B.10 Loyalty & Benefits (admin):** tabelas `LoyaltyCampaigns`, `LoyaltyPointRules`, `LoyaltyPointLedgerEntries`, `BenefitPartners`, `BenefitOffers`, elegibilidades e `BenefitRedemptions`; API `GET/POST/PUT /api/admin/loyalty/...`, rankings, ajuste manual; `GET/POST/PUT /api/admin/benefits/...` e resgate; permissões `Fidelidade.Visualizar`, `Fidelidade.Gerenciar`, `Beneficios.Visualizar`, `Beneficios.Gerenciar`; gatilhos de pontos pós-conciliação de pagamento e pós-compra/resgate de ingresso (`ILoyaltyPointsTriggerPort`); SPA `/admin/loyalty`, `/admin/benefits`; ver `docs/architecture/parte-b10-loyalty-benefits-admin.md`.
+* **B.11 Support (admin):** tabelas `SupportTickets`, `SupportTicketMessages`, `SupportTicketHistories`; API `GET/POST /api/admin/support/tickets`, `GET .../{id}`, `POST .../{id}/reply`, `.../assign`, `.../status`; permissão `Chamados.Responder`; dashboard `openSupportTickets` com contagem de abertos; SPA `/admin/support`; ver `docs/architecture/parte-b11-support-admin.md`.
+* **C.3 Carteirinha (torcedor):** `GET /api/account/digital-card` (JWT); `IDigitalCardTorcedorPort` + `GetMyDigitalCardQuery`; estados `NotAssociated` / `MembershipInactive` / `AwaitingIssuance` / `Active`; SPA `/digital-card` com cache local opcional (`cacheValidUntilUtc`); ver `docs/architecture/parte-c3-carteirinha-torcedor.md`.
+* **C.4 Jogos e ingressos (torcedor):** `GET /api/games`, `GET /api/tickets`, `GET /api/tickets/{id}`, `POST /api/tickets/{id}/redeem` (JWT); `IGameTorcedorReadPort`, `ITicketTorcedorPort` + queries/commands em `Modules/Torcedor`; SPA `/games` e `/tickets`; ver `docs/architecture/parte-c4-jogos-ingressos-torcedor.md`.
+* **C.5 Fidelidade (torcedor):** `GET /api/loyalty/me/summary`, `GET /api/loyalty/rankings/monthly`, `GET /api/loyalty/rankings/all-time` (JWT); `ILoyaltyTorcedorReadPort` + queries em `Modules/Torcedor`; SPA `/loyalty`; ver `docs/architecture/parte-c5-fidelidade-torcedor.md`.
+* **D.1 Catálogo de planos (torcedor):** `GET /api/plans` (JWT; sem exigir sócio); `ITorcedorPublishedPlansReadPort` + `ListPublishedPlansQuery`; planos `IsPublished` e `IsActive`; SPA `/plans` e `plansService.listPublished()`; ver `docs/architecture/parte-d1-catalogo-planos-torcedor.md`.
+* **D.2 Detalhe / simulação de plano (torcedor):** `GET /api/plans/{id}` (JWT; sem exigir sócio; só planos publicados e ativos, senão 404); `GetPlanDetailsQuery` + `GetPublishedActiveByIdAsync`; SPA `/plans/:planId` e `plansService.getById()`; ver `docs/architecture/parte-d2-simulacao-detalhe-plano-torcedor.md`.
+* **D.3 Contratação — command (torcedor, backend):** `SubscribeMemberCommand` + `SubscribeMemberCommandHandler`; `ITorcedorMembershipSubscriptionPort` + `TorcedorMembershipSubscriptionService`; status inicial **`PendingPayment`**; histórico `MembershipHistoryEventTypes.Subscribed`; evento MediatR `MemberSubscribedEvent`; testes em Application + Infrastructure; ver `docs/architecture/parte-d3-contratacao-backend.md` (endpoint HTTP em D.4).
+* **D.4 Checkout e pagamento (torcedor):** `POST /api/subscriptions` (JWT) + `POST /api/subscriptions/payments/callback` (segredo `Payments:WebhookSecret`, legacy) + `POST /api/webhooks/stripe` (Stripe assinado, `Payments:Stripe:WebhookSecret`); `CreateTorcedorSubscriptionCheckoutCommand` / `ConfirmTorcedorSubscriptionPaymentCommand` + `ITorcedorSubscriptionCheckoutPort` + `TorcedorSubscriptionCheckoutService`; `IPaymentProvider` **Mock** ou **Stripe** (`Payments:Provider`); Stripe usa Checkout Session (cartão); PIX com provedor Stripe retorna `payment_method_not_supported`; SPA `/plans/:planId/checkout` e `subscriptionsService.subscribe()`; ver `docs/architecture/parte-d4-integracao-pagamento-contratacao.md`.
+* **D.5 Pós-contratação (torcedor):** `GetMySubscriptionSummaryQuery` + `GET /api/account/subscription` (JWT); `ITorcedorSubscriptionSummaryPort` + `TorcedorSubscriptionSummaryReadService` (membership, plano, último pagamento, carteirinha via `IDigitalCardTorcedorPort`); SPA `/subscription/confirmation` (redirect pós-checkout), `subscriptionsService.getMySummary()`, resumo em `/account`; ver `docs/architecture/parte-d5-pos-contratacao-confirmacao-recibo-torcedor.md`.
+* **D.6 Troca de plano (torcedor):** `ChangePlanCommand` + `PUT /api/account/subscription/plan` (JWT); `ITorcedorPlanChangePort` + `TorcedorPlanChangeService` (proporcional, cancela cobranças abertas, nova cobrança Pix/cartão); callback D.4 reconhece proporcional em membership **Ativa**; histórico `PlanChanged`; SPA `/account` seção "Trocar plano" com `plansService.listPublished()` e `subscriptionsService.changePlan()`; ver `docs/architecture/parte-d6-troca-plano-torcedor.md`.
+* **D.7 Cancelamento (torcedor):** `CancelMembershipCommand` + `DELETE /api/account/subscription` (JWT); `ITorcedorMembershipCancellationPort` + `TorcedorMembershipCancellationService` (política `Membership.CancellationCoolingOffDays` em `AppConfigurationEntries`, `IPaymentProvider.CancelAsync`, histórico `CancelledByMember`; fora do prazo de arrependimento mantém `Ativo` até `NextDueDate` com `EndDate` e sweep `IMembershipScheduledCancellationEffectiveSweep` no `PaymentDelinquencySweep`); SPA `/account` com `subscriptionsService.cancelMembership()`; ver `docs/architecture/parte-d7-cancelamento-torcedor.md`.
+* **C.6 Suporte (torcedor):** `GET/POST /api/support/tickets`, `GET /api/support/tickets/{id}`, `POST .../reply`, `.../cancel`, `.../reopen`, `GET .../attachments/{attachmentId}` (JWT; sem exigir sócio); anexos em `SupportTicketMessageAttachments` + `ISupportTicketAttachmentStorage`; download staff em `GET /api/admin/support/tickets/{id}/attachments/{attachmentId}`; SPA `/support`; ver `docs/architecture/parte-c6-suporte-torcedor.md`.

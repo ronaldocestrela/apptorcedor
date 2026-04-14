@@ -1,9 +1,6 @@
-**/[Bb]in/
-**/[Oo]bj/
+**/bin/
+**/obj/
 **/.vs/
-**/.vscode/
-**/.git/
-**/tests/
+**/.idea/
 **/*.user
-**/*.suo
-SocioTorcedor.slnx
+**/tests/

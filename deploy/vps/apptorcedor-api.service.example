@@ -1,0 +1,22 @@
+# Exemplo de unidade systemd. Ajustar caminhos e usuário.
+#
+# sudo install -m 644 apptorcedor-api.service.example /etc/systemd/system/apptorcedor-api.service
+# sudo systemctl daemon-reload && sudo systemctl enable --now apptorcedor-api
+#
+# O deploy Jenkins coloca binários em /opt/apptorcedor/current (symlink).
+
+[Unit]
+Description=AppTorcedor API
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/apptorcedor/current
+EnvironmentFile=/etc/apptorcedor/api.env
+ExecStart=/usr/bin/dotnet /opt/apptorcedor/current/AppTorcedor.Api.dll
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
