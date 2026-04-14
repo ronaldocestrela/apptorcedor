@@ -82,5 +82,11 @@ public sealed class TorcedorSubscriptionCheckoutCommandHandlerTests
             ConfirmCalls.Add((paymentId, webhookSecret));
             return Task.FromResult(ConfirmResult);
         }
+
+        public Task<ConfirmTorcedorSubscriptionPaymentResult> ConfirmPaymentAfterProviderSuccessAsync(
+            Guid paymentId,
+            string? providerPaymentReference,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(ConfirmResult);
     }
 }

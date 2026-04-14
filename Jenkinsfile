@@ -7,7 +7,12 @@
 // - api-connection-string     (Secret text) ConnectionStrings__DefaultConnection
 // - api-jwt-key               (Secret text) Jwt__Key
 // - api-admin-password        (Secret text) ADMIN_MASTER_INITIAL_PASSWORD
-// - api-webhook-secret        (Secret text) Payments__WebhookSecret
+// - api-webhook-secret        (Secret text) Payments__WebhookSecret / PAYMENTS_WEBHOOK_SECRET (callback legacy; não é whsec do Stripe)
+// - stripe-api-key            (Secret text) STRIPE_API_KEY (sk_test_/sk_live_; use Secret vazio se só Mock)
+// - stripe-webhook-secret     (Secret text) STRIPE_WEBHOOK_SECRET (whsec_; Secret vazio se só Mock)
+// - payments-provider         (Secret text) PAYMENTS_PROVIDER — Mock ou Stripe
+// - stripe-success-url        (Secret text) STRIPE_SUCCESS_URL (HTTPS da SPA após Checkout; vazio se não usar)
+// - stripe-cancel-url         (Secret text) STRIPE_CANCEL_URL (HTTPS ao cancelar Checkout; vazio se não usar)
 // - api-cors-origin           (Secret text) Cors__AllowedOrigins__0
 // - api-aspnetcore-urls       (Secret text) ASPNETCORE_URLS (ex.: http://127.0.0.1:5031)
 // - vite-public-api-url       (Secret text) URL pública da API para build do Vite (gravada também no arquivo vite na VPS)
@@ -17,7 +22,7 @@
 // - vps-ssh-key               (SSH Username with private key)
 // - vps-host                  (Secret text) hostname ou IP (sem https://)
 //
-// Variáveis de job (opcional, não secret): DEPLOY_ROOT, APP_SERVICE_NAME, APP_HEALTHCHECK_URL, VPS_PORT,
+// Variáveis de job (opcional): DEPLOY_ROOT, APP_SERVICE_NAME, APP_HEALTHCHECK_URL, VPS_PORT,
 // DEPLOY_BRANCH, VPS_REPO_DIR, JENKINS_LOCAL_DEPLOY, NODEJS_HOME, DEPLOY_USE_COMPOSE, COMPOSE_FILE, API_PORT, WEB_PORT
 
 pipeline {
@@ -88,7 +93,12 @@ pipeline {
             string(credentialsId: 'api-webhook-secret', variable: 'API_WEBHOOK'),
             string(credentialsId: 'api-cors-origin', variable: 'API_CORS'),
             string(credentialsId: 'api-aspnetcore-urls', variable: 'API_ASPNET_URLS'),
-            string(credentialsId: 'vite-public-api-url', variable: 'VITE_API_URL')
+            string(credentialsId: 'vite-public-api-url', variable: 'VITE_API_URL'),
+            string(credentialsId: 'stripe-api-key', variable: 'STRIPE_API_KEY'),
+            string(credentialsId: 'stripe-webhook-secret', variable: 'STRIPE_WEBHOOK_SECRET'),
+            string(credentialsId: 'payments-provider', variable: 'PAYMENTS_PROVIDER'),
+            string(credentialsId: 'stripe-success-url', variable: 'STRIPE_SUCCESS_URL'),
+            string(credentialsId: 'stripe-cancel-url', variable: 'STRIPE_CANCEL_URL')
           ]
 
           def useCompose = (env.DEPLOY_USE_COMPOSE ?: 'true').trim().equalsIgnoreCase('true')
@@ -112,6 +122,11 @@ pipeline {
                     printf 'ADMIN_MASTER_INITIAL_PASSWORD=%s\n' "${API_ADMIN_PW}"
                     printf 'Cors__AllowedOrigins__0=%s\n' "${API_CORS}"
                     printf 'ASPNETCORE_URLS=%s\n' "${API_ASPNET_URLS}"
+                    printf 'Payments__Provider=%s\n' "${PAYMENTS_PROVIDER}"
+                    printf 'Payments__Stripe__ApiKey=%s\n' "${STRIPE_API_KEY:-}"
+                    printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
+                    printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
+                    printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   cp "${API_ENV_LOCAL}" "${REMOTE_ENV}"
@@ -122,6 +137,11 @@ pipeline {
                     echo 'JWT_AUDIENCE=AppTorcedor'
                     printf 'ADMIN_MASTER_INITIAL_PASSWORD=%s\n' "${API_ADMIN_PW}"
                     printf 'PAYMENTS_WEBHOOK_SECRET=%s\n' "${API_WEBHOOK}"
+                    printf 'PAYMENTS_PROVIDER=%s\n' "${PAYMENTS_PROVIDER}"
+                    printf 'STRIPE_API_KEY=%s\n' "${STRIPE_API_KEY:-}"
+                    printf 'STRIPE_WEBHOOK_SECRET=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
+                    printf 'STRIPE_SUCCESS_URL=%s\n' "${STRIPE_SUCCESS_URL:-}"
+                    printf 'STRIPE_CANCEL_URL=%s\n' "${STRIPE_CANCEL_URL:-}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -153,6 +173,11 @@ pipeline {
                     printf 'ADMIN_MASTER_INITIAL_PASSWORD=%s\n' "${API_ADMIN_PW}"
                     printf 'Cors__AllowedOrigins__0=%s\n' "${API_CORS}"
                     printf 'ASPNETCORE_URLS=%s\n' "${API_ASPNET_URLS}"
+                    printf 'Payments__Provider=%s\n' "${PAYMENTS_PROVIDER}"
+                    printf 'Payments__Stripe__ApiKey=%s\n' "${STRIPE_API_KEY:-}"
+                    printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
+                    printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
+                    printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"
@@ -211,6 +236,11 @@ pipeline {
                     printf 'ADMIN_MASTER_INITIAL_PASSWORD=%s\n' "${API_ADMIN_PW}"
                     printf 'Cors__AllowedOrigins__0=%s\n' "${API_CORS}"
                     printf 'ASPNETCORE_URLS=%s\n' "${API_ASPNET_URLS}"
+                    printf 'Payments__Provider=%s\n' "${PAYMENTS_PROVIDER}"
+                    printf 'Payments__Stripe__ApiKey=%s\n' "${STRIPE_API_KEY:-}"
+                    printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
+                    printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
+                    printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   {
@@ -220,6 +250,11 @@ pipeline {
                     echo 'JWT_AUDIENCE=AppTorcedor'
                     printf 'ADMIN_MASTER_INITIAL_PASSWORD=%s\n' "${API_ADMIN_PW}"
                     printf 'PAYMENTS_WEBHOOK_SECRET=%s\n' "${API_WEBHOOK}"
+                    printf 'PAYMENTS_PROVIDER=%s\n' "${PAYMENTS_PROVIDER}"
+                    printf 'STRIPE_API_KEY=%s\n' "${STRIPE_API_KEY:-}"
+                    printf 'STRIPE_WEBHOOK_SECRET=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
+                    printf 'STRIPE_SUCCESS_URL=%s\n' "${STRIPE_SUCCESS_URL:-}"
+                    printf 'STRIPE_CANCEL_URL=%s\n' "${STRIPE_CANCEL_URL:-}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -256,6 +291,11 @@ pipeline {
                     printf 'ADMIN_MASTER_INITIAL_PASSWORD=%s\n' "${API_ADMIN_PW}"
                     printf 'Cors__AllowedOrigins__0=%s\n' "${API_CORS}"
                     printf 'ASPNETCORE_URLS=%s\n' "${API_ASPNET_URLS}"
+                    printf 'Payments__Provider=%s\n' "${PAYMENTS_PROVIDER}"
+                    printf 'Payments__Stripe__ApiKey=%s\n' "${STRIPE_API_KEY:-}"
+                    printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
+                    printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
+                    printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"

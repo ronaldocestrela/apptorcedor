@@ -136,6 +136,7 @@ public sealed class AccountController(
             ChangePlanError.MissingBillingCycleContext => Conflict(new { error = "missing_billing_context" }),
             ChangePlanError.PlanNotFoundOrNotAvailable => BadRequest(new { error = "plan_not_available" }),
             ChangePlanError.SamePlan => BadRequest(new { error = "same_plan" }),
+            ChangePlanError.GatewayDoesNotSupportPaymentMethod => BadRequest(new { error = "payment_method_not_supported" }),
             _ => BadRequest(),
         };
 

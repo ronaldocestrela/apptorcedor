@@ -5,6 +5,8 @@ namespace AppTorcedor.Infrastructure.Services.Payments;
 /// <summary>Deterministic mock provider for B.6 / D.4 until a real gateway is wired.</summary>
 public sealed class MockPaymentProvider : IPaymentProvider
 {
+    public string ProviderKey => "Mock";
+
     public Task CreateSubscriptionAsync(Guid paymentId, decimal amount, string currency, CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
 

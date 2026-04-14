@@ -15,6 +15,7 @@ public enum ChangePlanError
     MissingBillingCycleContext,
     PlanNotFoundOrNotAvailable,
     SamePlan,
+    GatewayDoesNotSupportPaymentMethod,
 }
 
 public sealed record ChangePlanPlanSnapshotDto(

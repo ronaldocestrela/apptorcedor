@@ -13,7 +13,6 @@ public sealed class TorcedorPlanChangeService(
     TimeProvider timeProvider) : ITorcedorPlanChangePort
 {
     private const string Currency = "BRL";
-    private const string ProviderName = "Mock";
 
     public async Task<ChangePlanResult> ChangePlanAsync(
         Guid userId,
@@ -21,6 +20,10 @@ public sealed class TorcedorPlanChangeService(
         TorcedorSubscriptionPaymentMethod paymentMethod,
         CancellationToken cancellationToken = default)
     {
+        if (paymentMethod == TorcedorSubscriptionPaymentMethod.Pix
+            && string.Equals(paymentProvider.ProviderKey, "Stripe", StringComparison.OrdinalIgnoreCase))
+            return ChangePlanResult.Failure(ChangePlanError.GatewayDoesNotSupportPaymentMethod);
+
         var membership = await db.Memberships
             .Where(m => m.UserId == userId)
             .OrderByDescending(m => m.StartDate)
@@ -127,6 +130,7 @@ public sealed class TorcedorPlanChangeService(
         if (proration > 0)
         {
             paymentId = Guid.NewGuid();
+            var externalRef = paymentId.Value.ToString("N");
             if (paymentMethod == TorcedorSubscriptionPaymentMethod.Pix)
             {
                 var r = await paymentProvider
@@ -140,6 +144,7 @@ public sealed class TorcedorPlanChangeService(
                     .CreateCardAsync(paymentId.Value, proration, Currency, cancellationToken)
                     .ConfigureAwait(false);
                 card = new TorcedorSubscriptionCheckoutCardDto(r.CheckoutUrl);
+                externalRef = r.ProviderReference ?? paymentId.Value.ToString("N");
             }
 
             db.Payments.Add(
@@ -153,8 +158,8 @@ public sealed class TorcedorPlanChangeService(
                     DueDate = now.AddDays(1),
                     PaidAt = null,
                     PaymentMethod = paymentMethod == TorcedorSubscriptionPaymentMethod.Pix ? "Pix" : "Card",
-                    ExternalReference = paymentId.Value.ToString("N"),
-                    ProviderName = ProviderName,
+                    ExternalReference = externalRef,
+                    ProviderName = paymentProvider.ProviderKey,
                     CreatedAt = now,
                     UpdatedAt = now,
                     StatusReason = TorcedorPlanChangePaymentReasons.ProrationPrefix,

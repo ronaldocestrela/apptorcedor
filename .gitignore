@@ -24,6 +24,7 @@ bld/
 [Rr]eleases/
 [Aa]rtifacts/
 publish/
+support-attachments/
 
 *.nupkg
 *.snupkg

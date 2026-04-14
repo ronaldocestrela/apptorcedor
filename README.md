@@ -17,7 +17,7 @@ backend/          → Solução .NET (API, Identity, Infrastructure, testes)
 frontend/         → React + Vite (login, **cadastro e Minha conta (C.1)**, **notícias e benefícios (C.2)** no `/news` e `/benefits`, **catálogo de planos (D.1)** em `/plans`, **detalhe de plano (D.2)** em `/plans/:planId`, **carteirinha (C.3)** em `/digital-card`, **jogos e ingressos (C.4)** em `/games` e `/tickets`, **fidelidade (C.5)** em `/loyalty`, login Google opcional, convite staff, **usuários admin**, dashboard admin, **pagamentos admin (B.6)**, **notícias admin (B.9)**, **fidelidade/benefícios admin (B.10)**, **chamados/suporte admin (B.11)**, gestão de matriz de permissões, refresh de token)
 deploy/           → CD na VPS (`deploy/vps/build-and-deploy.sh`, `deploy/vps/deploy.sh` legado), helpers (`deploy/ci/`) — ver `docs/architecture/parte-f1-jenkins-cd-pos-ci.md`
 Jenkinsfile       → CD: após CI verde, GitHub Actions dispara o job; segredos em Jenkins Credentials; build na VPS (git pull + publish + Vite)
-docs/             → Documentação técnica por fase
+docs/             → Documentação técnica por fase (Stripe: [docs/deploy/guia-configuracao-stripe.md](docs/deploy/guia-configuracao-stripe.md))
 docker-compose.yml → **API + frontend** (imagens locais); connection string aponta para SQL em outro servidor
 AGENTS.md         → Visão de produto, regras e arquitetura alvo
 ```

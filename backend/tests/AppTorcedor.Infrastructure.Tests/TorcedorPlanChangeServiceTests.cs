@@ -27,7 +27,7 @@ public sealed class TorcedorPlanChangeServiceTests
         var loyalty = new NoOpLoyalty();
         var paymentProvider = new MockPaymentProvider();
         var opts = Microsoft.Extensions.Options.Options.Create(
-            new Infrastructure.Options.PaymentWebhookOptions { WebhookSecret = webhookSecret });
+            new Infrastructure.Options.PaymentsOptions { WebhookSecret = webhookSecret });
         return new TorcedorSubscriptionCheckoutService(mediator, db, paymentProvider, loyalty, opts);
     }
 

@@ -61,7 +61,12 @@ Ajuste os IDs no [`Jenkinsfile`](../../Jenkinsfile) ou use **folder credentials*
 | `api-connection-string` | Secret text | `ConnectionStrings__DefaultConnection` |
 | `api-jwt-key` | Secret text | `Jwt__Key` |
 | `api-admin-password` | Secret text | `ADMIN_MASTER_INITIAL_PASSWORD` |
-| `api-webhook-secret` | Secret text | `Payments__WebhookSecret` |
+| `api-webhook-secret` | Secret text | `Payments__WebhookSecret` / `PAYMENTS_WEBHOOK_SECRET` (callback legacy D.4) |
+| `stripe-api-key` | Secret text | `STRIPE_API_KEY` (`sk_…`; vazio se só Mock) |
+| `stripe-webhook-secret` | Secret text | `STRIPE_WEBHOOK_SECRET` (`whsec_…`; vazio se só Mock) |
+| `payments-provider` | Secret text | `PAYMENTS_PROVIDER` — `Mock` ou `Stripe` |
+| `stripe-success-url` | Secret text | `STRIPE_SUCCESS_URL` (HTTPS; vazio se não usar) |
+| `stripe-cancel-url` | Secret text | `STRIPE_CANCEL_URL` (HTTPS; vazio se não usar) |
 | `api-cors-origin` | Secret text | `Cors__AllowedOrigins__0` |
 | `api-aspnetcore-urls` | Secret text | `ASPNETCORE_URLS` (ex.: `http://127.0.0.1:5031`) |
 | `vite-public-api-url` | Secret text | `VITE_API_URL` no build do frontend na VPS |
