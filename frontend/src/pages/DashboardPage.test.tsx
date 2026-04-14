@@ -67,13 +67,13 @@ describe('DashboardPage', () => {
   it('shows profile completion alert when requiresProfileCompletion is true', () => {
     authMock.user.requiresProfileCompletion = true
 
-    render(
+    const { container } = render(
       <MemoryRouter>
         <DashboardPage />
       </MemoryRouter>,
     )
 
-    expect(container => container.querySelector('.dash-alert')).toBeDefined()
+    expect(container.querySelector('.dash-alert')).toBeInTheDocument()
     expect(screen.getByText(/Complete seu perfil/i)).toBeInTheDocument()
   })
 })

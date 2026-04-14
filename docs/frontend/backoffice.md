@@ -60,6 +60,7 @@ LGPD: [`frontend/src/features/admin/services/lgpdApi.ts`](../../frontend/src/fea
 ## Testes
 
 - `npm test` — helpers de permissão (`permissionUtils.test.ts`), `authStorage`, `adminApi.support.test.ts`, etc.
+- ajuste de tipagem em `DashboardPage.test.tsx` para manter `tsc -b` do frontend verde durante o build.
 
 ## Sistema Visual Admin (Fase 1)
 
