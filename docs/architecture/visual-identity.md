@@ -190,11 +190,26 @@ A fonte **Outfit** deve ser carregada via Google Fonts ou bundled. É humanista,
 - **Mobile (<640px):** `grid-template-columns: repeat(2, 1fr)`, `gap: 0.75rem`
 - **Desktop (≥640px):** `grid-template-columns: repeat(4, 1fr)`
 
-### 4.8 KPI Grid Admin
+### 4.8 Layout de Notícias Torcedor (`.news-*`)
+
+**Mobile (< 640px):**
+- `.news-featured-area` → bloco vertical sem grid; `margin-bottom: 0.75rem`
+- `.news-featured-secondary` → `display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem` — empilha os cards abaixo do hero com espaçamento correto
+- `.news-grid` → `grid-template-columns: 1fr 1fr; gap: 0.75rem` — 2 colunas para artigos restantes
+
+**Desktop (≥ 640px):**
+- `.news-featured-area` → `display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem` — hero à esquerda (2/3), dois cards à direita (1/3)
+- `.news-featured-secondary` → `margin-top: 0` (sobrescreve mobile); `flex-direction: column; gap: 0.75rem`
+- `.news-grid` → `grid-template-columns: repeat(3, 1fr)` — 3 colunas
+- Bottom nav oculta; `padding-bottom: 0`
+
+### 4.9 KPI Grid Admin
 
 - `grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))`
 - `gap: 1rem`
 - `max-width: 920px`
+
+---
 
 ---
 
@@ -492,6 +507,7 @@ O projeto usa **Plain CSS com BEM-like naming**. Sem CSS Modules, sem Tailwind.
 | `.app-input`, `.app-select`, `.app-textarea` | Formulários globais |
 | `.plans-page__*` | Página de planos |
 | `.account-page__*` | Página de conta |
+| `.news-*` | Páginas de notícias do torcedor (`/news` e `/news/:id`) |
 
 ---
 
@@ -511,6 +527,14 @@ O `#root` padrão tem `width: 1126px` para páginas públicas. Páginas que deve
 }
 
 #root:has(.dash-root) {
+  width: 100vw;
+  max-width: 100vw;
+  margin: 0;
+  border-inline: none;
+  padding: 0;
+}
+
+#root:has(.news-root) {
   width: 100vw;
   max-width: 100vw;
   margin: 0;
