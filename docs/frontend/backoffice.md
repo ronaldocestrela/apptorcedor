@@ -62,6 +62,7 @@ LGPD: [`frontend/src/features/admin/services/lgpdApi.ts`](../../frontend/src/fea
 - `npm test` — helpers de permissão (`permissionUtils.test.ts`), `authStorage`, `adminApi.support.test.ts`, etc.
 - ajuste de tipagem em `DashboardPage.test.tsx` para manter `tsc -b` do frontend verde durante o build.
 - limpeza de blocos legados duplicados em `DigitalCardPage.tsx` e `LoyaltyPage.tsx` para restaurar parse e execução da suíte Vitest.
+- restauração dos rótulos com `:` em `LoyaltyPage.tsx` para manter compatibilidade com o contrato textual coberto pelos testes de interface.
 
 ## Sistema Visual Admin (Fase 1)
 
