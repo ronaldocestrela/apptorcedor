@@ -29,7 +29,15 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ProfilePhotoStorageOptions>(configuration.GetSection(ProfilePhotoStorageOptions.SectionName));
-        services.Configure<PaymentWebhookOptions>(configuration.GetSection(PaymentWebhookOptions.SectionName));
+        services.Configure<PaymentsOptions>(configuration.GetSection(PaymentsOptions.SectionName));
+
+        var paymentsProvider = configuration.GetValue<string>("Payments:Provider") ?? "Mock";
+        if (string.Equals(paymentsProvider.Trim(), "Stripe", StringComparison.OrdinalIgnoreCase))
+            services.AddScoped<IPaymentProvider, StripePaymentProvider>();
+        else
+            services.AddScoped<IPaymentProvider, MockPaymentProvider>();
+
+        services.AddScoped<IStripeWebhookProcessor, StripeWebhookProcessor>();
         services.Configure<SupportTicketAttachmentStorageOptions>(
             configuration.GetSection(SupportTicketAttachmentStorageOptions.SectionName));
         services.AddScoped<CurrentAuditContext>();
@@ -87,7 +95,6 @@ public static class DependencyInjection
         services.AddScoped<ILgpdAdministrationPort, LgpdAdministrationService>();
         services.AddSingleton<ITicketProvider, MockTicketProvider>();
         services.AddSingleton(TimeProvider.System);
-        services.AddScoped<IPaymentProvider, MockPaymentProvider>();
         services.AddScoped<IPaymentsAdministrationPort, PaymentAdministrationService>();
         services.AddScoped<IGameAdministrationPort, GameAdministrationService>();
         services.AddScoped<ITicketAdministrationPort, TicketAdministrationService>();

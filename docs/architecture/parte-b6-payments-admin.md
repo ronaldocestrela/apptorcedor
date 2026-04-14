@@ -1,12 +1,13 @@
 # Parte B.6 — Payments (visão financeira / admin)
 
-Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B.6) e [AGENTS.md](../../AGENTS.md): listagem administrativa de cobranças (`PaymentRecord`), estados canônicos de cobrança, conciliação manual (marcar pago), cancelamento e estorno com permissões distintas, `IPaymentProvider` com adaptador **mock**, sweep automático de inadimplência (marca cobranças vencidas e atualiza `Membership` quando aplicável) e SPA `/admin/payments`. Não implementa contratação pública nem fluxo do torcedor (Parte D).
+Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B.6) e [AGENTS.md](../../AGENTS.md): listagem administrativa de cobranças (`PaymentRecord`), estados canônicos de cobrança, conciliação manual (marcar pago), cancelamento e estorno com permissões distintas, `IPaymentProvider` com implementação **Mock** ou **Stripe** conforme `Payments:Provider`, sweep automático de inadimplência (marca cobranças vencidas e atualiza `Membership` quando aplicável) e SPA `/admin/payments`. Não implementa contratação pública nem fluxo do torcedor (Parte D).
 
 ## Modelo de dados
 
 | Tabela | Descrição |
 |--------|-----------|
 | `Payments` | Cobrança: `UserId`, `MembershipId`, `Amount`, `Status`, `DueDate`, `PaidAt`, `PaymentMethod`, `ExternalReference`, `ProviderName`, `CancelledAt`, `RefundedAt`, `CreatedAt`, `UpdatedAt`, `LastProviderSyncAt`, `StatusReason`. |
+| `ProcessedStripeWebhookEvents` | Idempotência de webhooks Stripe (`EventId`, tipo, `ProcessedAtUtc`, `RelatedPaymentId`). |
 
 Migração EF: `PartB6PaymentsAdmin` em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
 

@@ -77,4 +77,13 @@ public interface ITorcedorSubscriptionCheckoutPort
         Guid paymentId,
         string? webhookSecret,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Marks the payment paid after the gateway verified success (e.g. Stripe signed webhook).
+    /// Optionally updates the payment's external reference (e.g. to <c>pi_</c> for refunds).
+    /// </summary>
+    Task<ConfirmTorcedorSubscriptionPaymentResult> ConfirmPaymentAfterProviderSuccessAsync(
+        Guid paymentId,
+        string? providerPaymentReference,
+        CancellationToken cancellationToken = default);
 }

@@ -77,6 +77,7 @@ public sealed class TorcedorSubscriptionsController(IMediator mediator) : Contro
             SubscribeMemberError.AlreadyActiveSubscription => Conflict(new { error = "already_active_subscription" }),
             SubscribeMemberError.SubscriptionPendingPayment => Conflict(new { error = "subscription_pending_payment" }),
             SubscribeMemberError.MembershipStatusPreventsSubscribe => BadRequest(new { error = "membership_status_prevents_subscribe" }),
+            SubscribeMemberError.GatewayDoesNotSupportPaymentMethod => BadRequest(new { error = "payment_method_not_supported" }),
             _ => BadRequest(),
         };
 

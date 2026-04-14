@@ -82,14 +82,34 @@ Defina no servidor (systemd `EnvironmentFile` ou `environment` do Compose). Em A
 | `Jwt__Issuer` | Recomendado | Padrão no código: `AppTorcedor`. |
 | `Jwt__Audience` | Recomendado | Padrão: `AppTorcedor`. |
 | `ADMIN_MASTER_INITIAL_PASSWORD` | Sim (Production) | Senha inicial do usuário Administrador Master (seed). |
-| `Payments__WebhookSecret` | Recomendado | Segredo do callback de pagamento (`POST` de webhook). |
+| `Payments__WebhookSecret` | Recomendado | Segredo do callback legacy `POST /api/subscriptions/payments/callback` (testes / integrações manuais). |
+| `Payments__Provider` | Opcional | `Mock` (padrão) ou `Stripe`. Em produção com cartão real use `Stripe`. |
+| `Payments__Stripe__ApiKey` | Se Stripe | Chave secreta `sk_live_…` ou `sk_test_…`. |
+| `Payments__Stripe__WebhookSecret` | Se Stripe | Segredo do endpoint no Dashboard Stripe (`whsec_…`) para `POST /api/webhooks/stripe`. |
+| `Payments__Stripe__SuccessUrl` | Se Stripe | URL HTTPS de sucesso após Checkout (ex. página de confirmação da SPA). |
+| `Payments__Stripe__CancelUrl` | Se Stripe | URL HTTPS se o utilizador cancelar o Checkout. |
 | `ASPNETCORE_ENVIRONMENT` | Sim | `Production`. |
 | `ASPNETCORE_URLS` | Recomendado | Onde o Kestrel escuta (ex.: `http://127.0.0.1:5031` atrás do proxy). Alinhar com health check e proxy. |
 | `Cors__AllowedOrigins__0` | Sim (se CORS restrito) | URL pública da SPA. Índices `__1`, `__2` para mais origens. |
 | `Google__Auth__ClientId` | Opcional | Login Google na web. |
 | `Seed__AdminMaster__Email` | Opcional | E-mail do master (há default no código). |
 
-Modelo comentado: [`deploy/vps/api.env.example`](../../deploy/vps/api.env.example). No fluxo **Jenkins + VPS**, o conteúdo de produção é **gerado pelo Jenkins** a cada deploy (não é necessário manter `api.env` manual na VPS).
+Modelo comentado: [`deploy/vps/api.env.example`](../../deploy/vps/api.env.example). No fluxo **Jenkins + VPS**, o conteúdo de produção é **gerado pelo Jenkins** a cada deploy, incluindo **Stripe** quando configurado nas credenciais (ver [§4.3](#43-credenciais-no-jenkins)).
+
+### 3.1 Docker Compose (ficheiro `.env` na raiz do repo)
+
+O [`docker-compose.yml`](../../docker-compose.yml) lê nomes curtos e injeta na API como `Payments__*`. Use o mesmo ficheiro [`.env.compose.example`](../../.env.compose.example) como modelo.
+
+| Variável no `.env` | Vai para a API como | Quando |
+|--------------------|---------------------|--------|
+| `PAYMENTS_WEBHOOK_SECRET` | `Payments__WebhookSecret` | Sempre (callback legacy). |
+| `PAYMENTS_PROVIDER` | `Payments__Provider` | `Mock` (omissão) ou `Stripe` para cartão real. |
+| `STRIPE_API_KEY` | `Payments__Stripe__ApiKey` | Obrigatório se `PAYMENTS_PROVIDER=Stripe`. |
+| `STRIPE_WEBHOOK_SECRET` | `Payments__Stripe__WebhookSecret` | Obrigatório se Stripe (`whsec_…` do Dashboard). |
+| `STRIPE_SUCCESS_URL` | `Payments__Stripe__SuccessUrl` | Obrigatório se Stripe (HTTPS em produção). |
+| `STRIPE_CANCEL_URL` | `Payments__Stripe__CancelUrl` | Obrigatório se Stripe. |
+
+**Detalhes Stripe (Dashboard, webhook `POST /api/webhooks/stripe`, diferença entre os dois segredos):** [guia-configuracao-stripe.md](guia-configuracao-stripe.md).
 
 **SPA — build time**
 
@@ -137,13 +157,20 @@ Crie credenciais (IDs podem ser alterados no [`Jenkinsfile`](../../Jenkinsfile) 
 | `api-connection-string` | Secret text | `ConnectionStrings__DefaultConnection` |
 | `api-jwt-key` | Secret text | `Jwt__Key` (≥ 32 bytes UTF-8) |
 | `api-admin-password` | Secret text | `ADMIN_MASTER_INITIAL_PASSWORD` |
-| `api-webhook-secret` | Secret text | `Payments__WebhookSecret` |
+| `api-webhook-secret` | Secret text | `Payments__WebhookSecret` e, no Compose, `PAYMENTS_WEBHOOK_SECRET` (callback legacy; **não** é o `whsec` do Stripe) |
+| `stripe-api-key` | Secret text | `STRIPE_API_KEY` → `Payments__Stripe__ApiKey`. Com só **Mock**, crie credencial **Secret text vazio** (obrigatório existir o ID). |
+| `stripe-webhook-secret` | Secret text | `STRIPE_WEBHOOK_SECRET` → `Payments__Stripe__WebhookSecret` (`whsec_…`). Vazio se só Mock. |
+| `payments-provider` | Secret text | `PAYMENTS_PROVIDER` no Compose — texto **`Mock`** ou **`Stripe`**. |
+| `stripe-success-url` | Secret text | `STRIPE_SUCCESS_URL` — URL HTTPS da SPA após Checkout (ex.: `…/subscription/confirmation`). Vazio se ainda não usar. |
+| `stripe-cancel-url` | Secret text | `STRIPE_CANCEL_URL` — URL HTTPS ao cancelar Checkout (ex.: `…/plans`). Vazio se ainda não usar. |
 | `api-cors-origin` | Secret text | `Cors__AllowedOrigins__0` |
 | `api-aspnetcore-urls` | Secret text | `ASPNETCORE_URLS` (ex.: `http://127.0.0.1:5031`) |
 | `vite-public-api-url` | Secret text | `VITE_API_URL` (build do Vite na VPS) |
 | `github-token-deploy-status` | Secret text | PAT com escopo **`repo:status`** |
 | `vps-ssh-key` | SSH Username with private key | Só se **`JENKINS_LOCAL_DEPLOY=false`**: utilizador + chave privada para `scp`/`ssh` |
 | `vps-host` | Secret text | Só se **`JENKINS_LOCAL_DEPLOY=false`**: hostname ou IP (sem `https://`) |
+
+As variáveis do [`docker-compose.yml`](../../docker-compose.yml) (`PAYMENTS_WEBHOOK_SECRET`, `PAYMENTS_PROVIDER`, `STRIPE_*`) são preenchidas pelo pipeline a partir das credenciais da tabela acima (`api-webhook-secret`, `stripe-api-key`, `stripe-webhook-secret`, **`payments-provider`**, **`stripe-success-url`**, **`stripe-cancel-url`**). Detalhes Stripe: [guia-configuracao-stripe.md](guia-configuracao-stripe.md).
 
 Com **`JENKINS_LOCAL_DEPLOY=true`** (Jenkins na mesma VPS), **não** são necessárias `vps-ssh-key` nem `vps-host`. Para deploy remoto por SSH, gera e configura chaves conforme [chave-ssh-gerar-e-configurar.md](chave-ssh-gerar-e-configurar.md).
 
@@ -314,9 +341,19 @@ Em geral você coloca um reverse proxy na frente das portas publicadas ou public
 
 ---
 
-## 6. Webhook de pagamento (D.4)
+## 6. Webhooks de pagamento (D.4)
 
-O callback usa o segredo `Payments__WebhookSecret`. O provedor de pagamento deve chamar a URL pública configurada na aplicação; o valor do segredo na VPS / `.env` deve ser o **mesmo** configurado no provedor. Não commite o segredo no Git.
+| Fluxo | Rota | Segredo na app | Uso |
+|--------|------|----------------|-----|
+| **Callback legacy** | `POST /api/subscriptions/payments/callback` | `Payments__WebhookSecret` | Corpo JSON `{ "paymentId", "secret" }`; testes e integrações manuais; **não** substitui o webhook assinado do Stripe. |
+| **Stripe (recomendado com `Provider=Stripe`)** | `POST /api/webhooks/stripe` | `Payments__Stripe__WebhookSecret` (`whsec_…`) | Corpo bruto + cabeçalho `Stripe-Signature`; evento mínimo **`checkout.session.completed`**. |
+
+- A URL do webhook no Dashboard Stripe deve ser **`https://<host-público-da-API>/api/webhooks/stripe`** — **sem** sufixos extra (ex.: `/member/{id}` não existe na API).
+- `Payments__WebhookSecret` e `Payments__Stripe__WebhookSecret` são **dois valores diferentes**; não os misture.
+
+Não commite segredos no Git.
+
+**Guia detalhado (Stripe Dashboard + variáveis da app):** [guia-configuracao-stripe.md](guia-configuracao-stripe.md).
 
 ---
 
@@ -330,6 +367,7 @@ O callback usa o segredo `Payments__WebhookSecret`. O provedor de pagamento deve
 - [ ] `VITE_API_URL` no build apontando para a API pública correta.
 - [ ] TLS ativo no proxy; HTTP redirecionado para HTTPS se aplicável.
 - [ ] `GET /health/live` e `GET /health/ready` OK.
+- [ ] Com **Stripe:** `Payments__Provider=Stripe` (ou `PAYMENTS_PROVIDER=Stripe` no `.env` do Compose), `Payments__Stripe__ApiKey`, `Payments__Stripe__WebhookSecret`, `SuccessUrl` / `CancelUrl`, webhook no Dashboard em `https://<API>/api/webhooks/stripe`, migração `ProcessedStripeWebhookEvents` aplicada. Ver [guia-configuracao-stripe.md](guia-configuracao-stripe.md).
 - [ ] Estratégia de backup do banco e de arquivos de upload definida.
 - [ ] GitHub: secrets `JENKINS_*` para o job `trigger-jenkins`; Jenkins: credenciais de API + PAT `repo:status`; se deploy remoto (`JENKINS_LOCAL_DEPLOY=false`), credenciais SSH + `vps-host`.
 

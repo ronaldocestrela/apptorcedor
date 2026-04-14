@@ -16,10 +16,9 @@ public sealed class TorcedorSubscriptionCheckoutService(
     AppDbContext db,
     IPaymentProvider paymentProvider,
     ILoyaltyPointsTriggerPort loyaltyPoints,
-    IOptions<PaymentWebhookOptions> webhookOptions) : ITorcedorSubscriptionCheckoutPort
+    IOptions<PaymentsOptions> paymentsOptions) : ITorcedorSubscriptionCheckoutPort
 {
     private const string Currency = "BRL";
-    private const string ProviderName = "Mock";
 
     public async Task<CreateTorcedorSubscriptionCheckoutResult> CreateCheckoutAsync(
         Guid userId,
@@ -27,6 +26,13 @@ public sealed class TorcedorSubscriptionCheckoutService(
         TorcedorSubscriptionPaymentMethod paymentMethod,
         CancellationToken cancellationToken = default)
     {
+        if (paymentMethod == TorcedorSubscriptionPaymentMethod.Pix
+            && string.Equals(paymentProvider.ProviderKey, "Stripe", StringComparison.OrdinalIgnoreCase))
+        {
+            return CreateTorcedorSubscriptionCheckoutResult.SubscribeFailed(
+                SubscribeMemberError.GatewayDoesNotSupportPaymentMethod);
+        }
+
         var subscribed = await mediator
             .Send(new SubscribeMemberCommand(userId, planId), cancellationToken)
             .ConfigureAwait(false);
@@ -48,6 +54,7 @@ public sealed class TorcedorSubscriptionCheckoutService(
 
         TorcedorSubscriptionCheckoutPixDto? pix = null;
         TorcedorSubscriptionCheckoutCardDto? card = null;
+        string externalReference = paymentId.ToString("N");
 
         if (paymentMethod == TorcedorSubscriptionPaymentMethod.Pix)
         {
@@ -58,6 +65,7 @@ public sealed class TorcedorSubscriptionCheckoutService(
         {
             var r = await paymentProvider.CreateCardAsync(paymentId, amount, Currency, cancellationToken).ConfigureAwait(false);
             card = new TorcedorSubscriptionCheckoutCardDto(r.CheckoutUrl);
+            externalReference = r.ProviderReference ?? paymentId.ToString("N");
         }
 
         db.Payments.Add(
@@ -71,8 +79,8 @@ public sealed class TorcedorSubscriptionCheckoutService(
                 DueDate = utc.AddDays(1),
                 PaidAt = null,
                 PaymentMethod = paymentMethod == TorcedorSubscriptionPaymentMethod.Pix ? "Pix" : "Card",
-                ExternalReference = paymentId.ToString("N"),
-                ProviderName = ProviderName,
+                ExternalReference = externalReference,
+                ProviderName = paymentProvider.ProviderKey,
                 CreatedAt = utc,
                 UpdatedAt = utc,
                 StatusReason = "Cobrança gerada na contratação (D.4).",
@@ -91,15 +99,23 @@ public sealed class TorcedorSubscriptionCheckoutService(
             card);
     }
 
-    public async Task<ConfirmTorcedorSubscriptionPaymentResult> ConfirmPaymentAsync(
+    public Task<ConfirmTorcedorSubscriptionPaymentResult> ConfirmPaymentAsync(
         Guid paymentId,
         string? webhookSecret,
         CancellationToken cancellationToken = default)
     {
-        var expected = webhookOptions.Value.WebhookSecret ?? string.Empty;
+        var expected = paymentsOptions.Value.WebhookSecret ?? string.Empty;
         if (string.IsNullOrWhiteSpace(expected) || !string.Equals(expected, webhookSecret, StringComparison.Ordinal))
-            return ConfirmTorcedorSubscriptionPaymentResult.Failure(ConfirmTorcedorSubscriptionPaymentError.InvalidWebhookSecret);
+            return Task.FromResult(ConfirmTorcedorSubscriptionPaymentResult.Failure(ConfirmTorcedorSubscriptionPaymentError.InvalidWebhookSecret));
 
+        return ConfirmPaymentAfterProviderSuccessAsync(paymentId, providerPaymentReference: null, cancellationToken);
+    }
+
+    public async Task<ConfirmTorcedorSubscriptionPaymentResult> ConfirmPaymentAfterProviderSuccessAsync(
+        Guid paymentId,
+        string? providerPaymentReference,
+        CancellationToken cancellationToken = default)
+    {
         var payment = await db.Payments.FirstOrDefaultAsync(p => p.Id == paymentId, cancellationToken).ConfigureAwait(false);
         if (payment is null)
             return ConfirmTorcedorSubscriptionPaymentResult.Failure(ConfirmTorcedorSubscriptionPaymentError.NotFound);
@@ -127,6 +143,8 @@ public sealed class TorcedorSubscriptionCheckoutService(
             payment.UpdatedAt = now;
             payment.LastProviderSyncAt = now;
             payment.StatusReason = "Pagamento confirmado — troca de plano (D.6).";
+            if (!string.IsNullOrWhiteSpace(providerPaymentReference))
+                payment.ExternalReference = providerPaymentReference;
 
             await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -147,6 +165,8 @@ public sealed class TorcedorSubscriptionCheckoutService(
         payment.UpdatedAt = now;
         payment.LastProviderSyncAt = now;
         payment.StatusReason = "Pagamento confirmado via webhook/callback (D.4).";
+        if (!string.IsNullOrWhiteSpace(providerPaymentReference))
+            payment.ExternalReference = providerPaymentReference;
 
         var fromStatus = membership.Status;
         membership.Status = MembershipStatus.Ativo;

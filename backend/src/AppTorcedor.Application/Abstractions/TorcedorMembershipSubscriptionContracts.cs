@@ -9,6 +9,9 @@ public enum SubscribeMemberError
     AlreadyActiveSubscription,
     SubscriptionPendingPayment,
     MembershipStatusPreventsSubscribe,
+
+    /// <summary>Used only by checkout when the active gateway does not support the requested payment method (e.g. PIX with Stripe).</summary>
+    GatewayDoesNotSupportPaymentMethod,
 }
 
 /// <summary>Resultado de <see cref="ITorcedorMembershipSubscriptionPort.SubscribeToPlanAsync"/>.</summary>

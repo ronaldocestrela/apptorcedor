@@ -2,7 +2,7 @@
 
 Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (D.6) e [AGENTS.md](../../AGENTS.md): torcedor com assinatura **Ativa** pode trocar para outro plano **publicado e ativo**, com **ajuste proporcional** sobre os dias restantes até `NextDueDate`, **cancelamento** de cobranças `Pending`/`Overdue` do ciclo via `IPaymentProvider.CancelAsync`, e **nova cobrança** Pix/cartão quando o proporcional é maior que zero.
 
-**Fora de escopo:** cancelamento pelo torcedor (D.7), gateway real, crédito em dinheiro no downgrade (proporcional negativo é tratado como zero — sem estorno automático).
+**Fora de escopo:** cancelamento pelo torcedor (D.7), crédito em dinheiro no downgrade (proporcional negativo é tratado como zero — sem estorno automático). Com **`Payments:Provider=Stripe`**, apenas **cartão** é suportado na nova cobrança (PIX retorna `400` `payment_method_not_supported`).
 
 ## Decisões de produto / técnicas
 
@@ -45,7 +45,7 @@ Erros típicos:
 
 - `404` `membership_not_found`
 - `409` `membership_not_active`, `missing_billing_context`
-- `400` `plan_not_available`, `same_plan`
+- `400` `plan_not_available`, `same_plan`, `payment_method_not_supported` (PIX com provedor Stripe)
 
 Controller: `AccountController.ChangeSubscriptionPlan`.
 
