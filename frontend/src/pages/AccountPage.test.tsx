@@ -240,7 +240,8 @@ describe('AccountPage — photo crop flow', () => {
     return class FakeFileReader {
       result: string = dataUrl
       onload: ((e: ProgressEvent) => void) | null = null
-      readAsDataURL(_file: File) {
+      readAsDataURL(file: File) {
+        void file
         this.onload?.({ target: this } as unknown as ProgressEvent)
       }
     }

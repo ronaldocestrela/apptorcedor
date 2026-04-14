@@ -7,6 +7,16 @@ Este documento descreve, passo a passo, como colocar a aplicação em produção
 
 O **CI** roda no **GitHub Actions** ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)). O deploy via Jenkins é disparado **somente após** todos os jobs do workflow **`CI`** concluírem com **sucesso** em um **push** à branch **`single-tenant`** (job `trigger-jenkins`).
 
+### CI local equivalente ao GitHub Actions
+
+Para validar localmente os mesmos gates do workflow antes do push, execute na raiz do repositório:
+
+```bash
+./scripts/ci-local.sh
+```
+
+O script replica backend, frontend, validação de tooling e validação do Compose. Para apenas listar as etapas sem executar, use `./scripts/ci-local.sh --dry-run`. O escopo local não inclui `trigger-jenkins` nem deploy na VPS.
+
 ---
 
 ## 1. Visão geral da arquitetura

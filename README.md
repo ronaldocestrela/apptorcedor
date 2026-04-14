@@ -161,6 +161,36 @@ cd frontend
 npm test
 ```
 
+## Esteira CI local
+
+Para rodar localmente os mesmos gates do GitHub Actions, use o script abaixo a partir da raiz do repositório:
+
+```bash
+./scripts/ci-local.sh
+```
+
+Ele replica os jobs de [/.github/workflows/ci.yml](.github/workflows/ci.yml):
+
+- backend: restore, build e testes dos projetos usados na Action;
+- frontend: `npm ci`, `npm run lint`, `npm run test` e `npm run build`;
+- tooling: `bash -n` dos scripts de deploy e testes Python em `deploy/ci`;
+- compose: `docker compose --env-file .env.compose.example config --quiet`.
+
+Pré-requisitos para equivalência com a pipeline do GitHub:
+
+- .NET 10 SDK
+- Node.js 22+ e npm
+- Python 3
+- Docker com plugin `docker compose`
+
+Para inspecionar a esteira sem executá-la, use:
+
+```bash
+./scripts/ci-local.sh --dry-run
+```
+
+O script não tenta disparar o Jenkins nem executar deploy remoto; ele cobre apenas os gates de CI local.
+
 ## Configuração JWT (produção)
 
 Em [`appsettings.json`](backend/src/AppTorcedor.Api/appsettings.json) (ou variáveis de ambiente), ajuste a seção **`Jwt`**:
