@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { getRegistrationRequirements, type RegistrationRequirements } from '../features/account/accountApi'
 import { loadGoogleScript } from '../features/account/loadGoogleScript'
 import { useAuth } from '../features/auth/AuthContext'
+import './LoginPage.css'
 
 export function LoginPage() {
   const { user, login, googleSignIn } = useAuth()
@@ -94,67 +95,91 @@ export function LoginPage() {
   }
 
   return (
-    <main style={{ maxWidth: 360, margin: '4rem auto', fontFamily: 'system-ui' }}>
-      <h1>Entrar</h1>
-      <form onSubmit={onSubmit}>
-        <label style={{ display: 'block', marginBottom: 8 }}>
-          E-mail
-          <input
-            type="email"
-            value={email}
-            onChange={(ev) => setEmail(ev.target.value)}
-            required
-            style={{ display: 'block', width: '100%', marginTop: 4 }}
+    <main className="login-page">
+      <section className="login-page__panel">
+        <div className="login-page__panel-content">
+          <img
+            className="login-page__logo"
+            src="/logos/ESCUDO_FFC_VERDE.png"
+            alt="FFC"
+            width={56}
+            height={56}
+            decoding="async"
           />
-        </label>
-        <label style={{ display: 'block', marginBottom: 16 }}>
-          Senha
-          <input
-            type="password"
-            value={password}
-            onChange={(ev) => setPassword(ev.target.value)}
-            required
-            style={{ display: 'block', width: '100%', marginTop: 4 }}
-          />
-        </label>
-        {error ? <p role="alert" style={{ color: 'crimson' }}>{error}</p> : null}
-        <button type="submit" disabled={busy}>
-          {busy ? 'Entrando...' : 'Entrar'}
-        </button>
-      </form>
+          <h1 className="login-page__title">Acesse a sua Conta</h1>
+          <p className="login-page__subtitle">Insira seu e-mail e senha para prosseguir.</p>
 
-      {clientId && legal ? (
-        <section style={{ marginTop: 32 }}>
-          <h2 style={{ fontSize: '1rem' }}>Ou continue com Google</h2>
-          <fieldset style={{ border: '1px solid #ccc', padding: 12, marginBottom: 12 }}>
-            <legend style={{ fontSize: '0.85rem' }}>LGPD</legend>
-            <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 8 }}>
+          <form className="login-form" onSubmit={onSubmit}>
+            <label className="login-form__field">
+              Email
               <input
-                type="checkbox"
-                checked={acceptTerms}
-                onChange={(ev) => setAcceptTerms(ev.target.checked)}
+                type="email"
+                value={email}
+                onChange={(ev) => setEmail(ev.target.value)}
+                required
+                autoComplete="email"
               />
-              <span>Aceito: {legal.termsTitle}</span>
             </label>
-            <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <label className="login-form__field">
+              Senha
               <input
-                type="checkbox"
-                checked={acceptPrivacy}
-                onChange={(ev) => setAcceptPrivacy(ev.target.checked)}
+                type="password"
+                value={password}
+                onChange={(ev) => setPassword(ev.target.value)}
+                required
+                autoComplete="current-password"
               />
-              <span>Aceito: {legal.privacyTitle}</span>
             </label>
-          </fieldset>
-          <div ref={googleBtnRef} />
-          {!acceptTerms || !acceptPrivacy ? (
-            <p style={{ fontSize: '0.85rem', color: '#555' }}>Marque as caixas para habilitar o botão Google.</p>
-          ) : null}
-        </section>
-      ) : null}
+            <Link className="login-form__forgot" to="/support">Esqueceu sua senha?</Link>
+            {error ? <p role="alert" className="login-form__error">{error}</p> : null}
+            <button className="login-form__submit" type="submit" disabled={busy}>
+              {busy ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
 
-      <p style={{ marginTop: 24 }}>
-        <Link to="/register">Criar conta</Link>
-      </p>
+          <div className="login-page__divider"><span>Ou continue com</span></div>
+
+          {clientId && legal ? (
+            <>
+              <fieldset className="login-consents">
+                <legend>LGPD</legend>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(ev) => setAcceptTerms(ev.target.checked)}
+                  />
+                  <span>Aceito: {legal.termsTitle}</span>
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={acceptPrivacy}
+                    onChange={(ev) => setAcceptPrivacy(ev.target.checked)}
+                  />
+                  <span>Aceito: {legal.privacyTitle}</span>
+                </label>
+              </fieldset>
+              <div className="login-form__google" ref={googleBtnRef} />
+              {!acceptTerms || !acceptPrivacy ? (
+                <p className="login-form__hint">Marque as caixas para habilitar o botão Google.</p>
+              ) : null}
+            </>
+          ) : (
+            <button className="login-form__social" type="button" disabled>
+              Entrar com Google
+            </button>
+          )}
+          <button className="login-form__social" type="button" disabled>
+            Entrar com Apple
+          </button>
+
+          <p className="login-page__register">
+            Não possui uma conta? <Link to="/register">Cadastrar-se</Link>
+          </p>
+        </div>
+      </section>
+      <section className="login-page__hero" aria-hidden />
     </main>
   )
 }

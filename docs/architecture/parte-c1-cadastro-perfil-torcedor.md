@@ -36,6 +36,7 @@ Expor fluxos **self-service** para o torcedor: cadastro público com LGPD, perfi
 - Rotas: `/register`, `/account` (protegida), login com link para cadastro e bloco Google quando `VITE_GOOGLE_CLIENT_ID` está definido.
 - Variáveis: `VITE_API_URL`, `VITE_GOOGLE_CLIENT_ID` (opcional).
 - Fotos: URLs relativas da API são resolvidas com `resolvePublicAssetUrl` para o host da API.
+- Login (`/login`): interface atualizada para layout split-screen (formulário à esquerda e hero visual à direita), mantendo autenticação por e-mail/senha, integração de Google Sign-In condicionada a consentimento LGPD e CTA de cadastro; favicon e logo da página usam `public/logos/ESCUDO_FFC_PNG.png`. Em viewport estreita de celular (≤768px), o painel com a imagem de fundo fica oculto (`display: none`).
 
 ## Testes (TDD)
 
