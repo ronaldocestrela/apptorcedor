@@ -11,6 +11,15 @@ vi.mock('../features/account/accountApi', () => ({
   uploadProfilePhoto: vi.fn(),
 }))
 
+vi.mock('../shared/cropImage', () => ({
+  getCroppedImg: vi.fn().mockResolvedValue(new Blob(['cropped'], { type: 'image/jpeg' })),
+}))
+
+// react-easy-crop is a visual component; stub it to avoid canvas/ResizeObserver issues in jsdom
+vi.mock('react-easy-crop', () => ({
+  default: () => null,
+}))
+
 vi.mock('../features/plans/plansService', () => ({
   plansService: {
     listPublished: vi.fn(),
@@ -32,7 +41,8 @@ vi.mock('../features/auth/AuthContext', () => ({
   }),
 }))
 
-import { getMyProfile } from '../features/account/accountApi'
+import { getMyProfile, uploadProfilePhoto, upsertMyProfile } from '../features/account/accountApi'
+import { getCroppedImg } from '../shared/cropImage'
 import { plansService } from '../features/plans/plansService'
 import { subscriptionsService } from '../features/plans/subscriptionsService'
 
@@ -194,5 +204,115 @@ describe('AccountPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/ainda não possui assinatura/i)).toBeInTheDocument()
     })
+  })
+})
+
+describe('AccountPage — photo crop flow', () => {
+  beforeEach(() => {
+    vi.mocked(getMyProfile).mockReset()
+    vi.mocked(getMyProfile).mockResolvedValue({
+      document: null,
+      birthDate: null,
+      photoUrl: null,
+      address: null,
+    })
+    vi.mocked(subscriptionsService.getMySummary).mockResolvedValue({
+      hasMembership: false,
+      membershipId: null,
+      membershipStatus: null,
+      startDate: null,
+      endDate: null,
+      nextDueDate: null,
+      plan: null,
+      lastPayment: null,
+      digitalCard: null,
+    })
+    vi.mocked(uploadProfilePhoto).mockReset()
+    vi.mocked(upsertMyProfile).mockReset()
+    vi.mocked(getCroppedImg).mockReset()
+    vi.mocked(getCroppedImg).mockResolvedValue(new Blob(['cropped'], { type: 'image/jpeg' }))
+    vi.mocked(uploadProfilePhoto).mockResolvedValue('/uploads/profile-photos/me/profile.jpg')
+    vi.mocked(upsertMyProfile).mockResolvedValue(undefined)
+  })
+
+  function makeFakeFileReader(dataUrl = 'data:image/jpeg;base64,/9j/test') {
+    // FileReader is used as `new FileReader()`, so we need a class constructor
+    return class FakeFileReader {
+      result: string = dataUrl
+      onload: ((e: ProgressEvent) => void) | null = null
+      readAsDataURL(_file: File) {
+        this.onload?.({ target: this } as unknown as ProgressEvent)
+      }
+    }
+  }
+
+  function renderPage() {
+    return render(
+      <MemoryRouter>
+        <AccountPage />
+      </MemoryRouter>,
+    )
+  }
+
+  it('opens crop modal when a file is selected', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal('FileReader', makeFakeFileReader())
+
+    renderPage()
+    await waitFor(() => expect(screen.getByTitle(/Clique para alterar a foto/i)).toBeInTheDocument())
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    expect(fileInput).not.toBeNull()
+
+    const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' })
+    await user.upload(fileInput, file)
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: /Ajustar foto/i })).toBeInTheDocument()
+    })
+
+    vi.unstubAllGlobals()
+  })
+
+  it('closes crop modal on cancel without uploading', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal('FileReader', makeFakeFileReader())
+
+    renderPage()
+    await waitFor(() => expect(screen.getByTitle(/Clique para alterar a foto/i)).toBeInTheDocument())
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' })
+    await user.upload(fileInput, file)
+
+    await waitFor(() => expect(screen.getByRole('dialog', { name: /Ajustar foto/i })).toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: /^Cancelar$/i }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /Ajustar foto/i })).not.toBeInTheDocument()
+    })
+    expect(uploadProfilePhoto).not.toHaveBeenCalled()
+
+    vi.unstubAllGlobals()
+  })
+
+  it('renders Confirmar button (disabled) inside crop modal when opened', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal('FileReader', makeFakeFileReader())
+
+    renderPage()
+    await waitFor(() => expect(screen.getByTitle(/Clique para alterar a foto/i)).toBeInTheDocument())
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' })
+    await user.upload(fileInput, file)
+
+    await waitFor(() => expect(screen.getByRole('dialog', { name: /Ajustar foto/i })).toBeInTheDocument())
+
+    // Confirm is disabled until the Cropper fires onCropComplete (mocked to null)
+    expect(screen.getByRole('button', { name: /^Confirmar$/i })).toBeInTheDocument()
+
+    vi.unstubAllGlobals()
   })
 })

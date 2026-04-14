@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Home, Newspaper, Calendar, CreditCard, User } from 'lucide-react'
+import { Home, Newspaper, Calendar, CreditCard, User, Camera } from 'lucide-react'
 import axios from 'axios'
+import Cropper from 'react-easy-crop'
+import type { Area } from 'react-easy-crop'
 import { getMyProfile, resolvePublicAssetUrl, upsertMyProfile, uploadProfilePhoto } from '../features/account/accountApi'
+import { getCroppedImg } from '../shared/cropImage'
 import { plansService } from '../features/plans/plansService'
 import {
   subscriptionsService,
@@ -44,6 +47,19 @@ export function AccountPage() {
   const [cancelBusy, setCancelBusy] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
   const [cancelResult, setCancelResult] = useState<CancelMembershipResponse | null>(null)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Crop states
+  const [pendingCropSrc, setPendingCropSrc] = useState<string | null>(null)
+  const [showCropModal, setShowCropModal] = useState(false)
+  const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 })
+  const [cropZoom, setCropZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
+
+  const onCropComplete = useCallback((_croppedArea: Area, pixels: Area) => {
+    setCroppedAreaPixels(pixels)
+  }, [])
 
   const scheduledCancellation = useMemo(() => {
     if (!subscription?.hasMembership)
@@ -228,14 +244,33 @@ export function AccountPage() {
     }
   }
 
-  async function onPhoto(ev: ChangeEvent<HTMLInputElement>) {
+  function onPhoto(ev: ChangeEvent<HTMLInputElement>) {
     const file = ev.target.files?.[0]
     if (!file)
       return
+    // Reset input so the same file can be re-selected after cancel
+    ev.target.value = ''
+    const reader = new FileReader()
+    reader.onload = () => {
+      setPendingCropSrc(reader.result as string)
+      setCropPosition({ x: 0, y: 0 })
+      setCropZoom(1)
+      setCroppedAreaPixels(null)
+      setShowCropModal(true)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  async function onCropConfirm() {
+    if (!pendingCropSrc || !croppedAreaPixels)
+      return
     setSaveError(null)
     setBusy(true)
+    setShowCropModal(false)
     try {
-      const url = await uploadProfilePhoto(file)
+      const blob = await getCroppedImg(pendingCropSrc, croppedAreaPixels)
+      const croppedFile = new File([blob], 'profile.jpg', { type: 'image/jpeg' })
+      const url = await uploadProfilePhoto(croppedFile)
       setPhotoUrl(url)
       await upsertMyProfile({ photoUrl: url })
       await refreshProfile()
@@ -243,6 +278,7 @@ export function AccountPage() {
       setSaveError('Falha no envio da foto (tipo ou tamanho).')
     } finally {
       setBusy(false)
+      setPendingCropSrc(null)
     }
   }
 
@@ -447,15 +483,69 @@ export function AccountPage() {
         </p>
       ) : null}
       {loadError ? <p role="alert" style={{ color: '#ffc6c6' }}>{loadError}</p> : null}
-      {photoUrl ? (
-        <p style={{ textAlign: 'center' }}>
-          <img
-            src={resolvePublicAssetUrl(photoUrl)}
-            alt="Foto"
-            style={{ maxWidth: 160, borderRadius: 8 }}
-          />
-        </p>
-      ) : null}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0' }}>
+        <button
+          type="button"
+          onClick={() => !busy && fileInputRef.current?.click()}
+          disabled={busy}
+          title="Clique para alterar a foto"
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: busy ? 'default' : 'pointer',
+            padding: 0,
+            borderRadius: '50%',
+            position: 'relative',
+            display: 'inline-block',
+          }}
+        >
+          {photoUrl ? (
+            <img
+              src={resolvePublicAssetUrl(photoUrl)}
+              alt="Foto de perfil"
+              style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', display: 'block' }}
+            />
+          ) : (
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 120,
+                height: 120,
+                borderRadius: '50%',
+                background: 'rgba(119,177,137,0.15)',
+                border: '2px dashed rgba(119,177,137,0.5)',
+                color: 'rgba(220,246,227,0.6)',
+                fontSize: '0.8rem',
+                textAlign: 'center',
+                lineHeight: 1.3,
+                padding: '0 12px',
+              }}
+            >
+              Adicionar foto
+            </span>
+          )}
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              bottom: 4,
+              right: 4,
+              background: 'transparent',
+              borderRadius: '50%',
+              width: 28,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Camera size={20} stroke="#ffffff" fill="none" strokeWidth={2} />
+          </span>
+        </button>
+        <span className="app-muted" style={{ fontSize: '0.8rem' }}>Clique para alterar</span>
+      </div>
       <form onSubmit={onSubmit} className="app-surface account-page__form">
         <label className="account-page__field">
           Documento (CPF ou equivalente)
@@ -483,18 +573,19 @@ export function AccountPage() {
             className="app-textarea"
           />
         </label>
-        <label className="account-page__field" style={{ marginBottom: 4 }}>
-          Foto do perfil
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(ev) => void onPhoto(ev)} disabled={busy} />
-        </label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(ev) => onPhoto(ev)}
+          disabled={busy}
+          style={{ display: 'none' }}
+        />
         {saveError ? <p role="alert" style={{ color: '#ffc6c6' }}>{saveError}</p> : null}
         <button type="submit" disabled={busy} className="btn-primary">
           {busy ? 'Salvando...' : 'Salvar perfil'}
         </button>
       </form>
-      <p style={{ marginTop: 24 }}>
-        <Link to="/" className="app-back-link">Voltar</Link>
-      </p>
       {showCancelModal ? (
         <div
           role="presentation"
@@ -533,6 +624,73 @@ export function AccountPage() {
               >
                 {cancelBusy ? 'Processando…' : 'Confirmar cancelamento'}
               </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {showCropModal && pendingCropSrc ? (
+        <div
+          role="presentation"
+          className="account-page__modal-overlay"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape')
+              setShowCropModal(false)
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="crop-dialog-title"
+            className="account-page__modal account-page__crop-modal"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+          >
+            <h2 id="crop-dialog-title" style={{ margin: '0 0 0.75rem', fontSize: '1.05rem' }}>
+              Ajustar foto
+            </h2>
+            <div className="account-page__crop-container">
+              <Cropper
+                image={pendingCropSrc}
+                crop={cropPosition}
+                zoom={cropZoom}
+                aspect={1}
+                onCropChange={setCropPosition}
+                onZoomChange={setCropZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+            <div className="account-page__crop-controls">
+              <label style={{ fontSize: '0.85rem' }}>
+                Zoom
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.05}
+                  value={cropZoom}
+                  onChange={e => setCropZoom(Number(e.target.value))}
+                />
+              </label>
+              <div className="account-page__modal-actions">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    setShowCropModal(false)
+                    setPendingCropSrc(null)
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={!croppedAreaPixels}
+                  onClick={() => void onCropConfirm()}
+                >
+                  Confirmar
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -35,10 +35,12 @@ Expor fluxos **self-service** para o torcedor: cadastro público com LGPD, perfi
 
 - Rotas: `/register`, `/account` (protegida), login com link para cadastro e bloco Google quando `VITE_GOOGLE_CLIENT_ID` está definido.
 - Variáveis: `VITE_API_URL`, `VITE_GOOGLE_CLIENT_ID` (opcional).
-- Fotos: URLs relativas da API são resolvidas com `resolvePublicAssetUrl` para o host da API.
+- Fotos: URLs relativas da API são resolvidas com `resolvePublicAssetUrl` para o host da API. A foto de perfil é exibida como avatar circular (120×120 px). Ao clicar na foto (ou no placeholder circular "Adicionar foto"), o seletor de arquivo é aberto — ao escolher uma imagem, um modal de corte 1:1 é exibido com pan + zoom (biblioteca `react-easy-crop`); só após confirmar o corte a imagem é processada via Canvas API (`getCroppedImg` em `src/shared/cropImage.ts`) e enviada para a API. O modal pode ser cancelado sem upload.
 - Login (`/login`): interface atualizada para layout split-screen (formulário à esquerda e hero visual à direita), mantendo autenticação por e-mail/senha, integração de Google Sign-In condicionada a consentimento LGPD e CTA de cadastro; favicon e logo da página usam `public/logos/ESCUDO_FFC_PNG.png`. Em viewport estreita de celular (≤768px), o painel com a imagem de fundo fica oculto (`display: none`).
 
 ## Testes (TDD)
 
 - **Application:** `RegisterTorcedorCommandHandlerTests` (normalização de entrada).
 - **API:** `PartC1TorcedorAccountTests` (requisitos, cadastro, perfil, `me`, foto, Google com fake validator).
+- **Frontend — unitário:** `src/shared/cropImage.test.ts` — cobre `getCroppedImg`: retorno de Blob, coordenadas de corte, parâmetros de `toBlob` (jpeg/0.9), indisponibilidade do contexto Canvas, e falha de `toBlob`.
+- **Frontend — componente:** `src/pages/AccountPage.test.tsx` — `AccountPage — photo crop flow`: botão de foto clicável, abertura do modal de crop ao selecionar arquivo, cancelamento sem upload e presença do botão Confirmar no modal.
