@@ -109,3 +109,40 @@ Implementado um baseline de visual contínuo para o painel administrativo, inspi
 - não houve alteração de contratos de API (`adminApi.ts`) nem de políticas de autorização;
 - foco em refatoração visual incremental para reduzir risco de regressão funcional;
 - tokens globais `--admin-*` foram preferidos para facilitar reaproveitamento futuro no restante do frontend.
+
+## Modernização Responsiva (Fase 2)
+
+Evolução visual aplicada às telas do torcedor com foco em responsividade, sem mudanças em regras de negócio.
+
+### Escopo entregue
+
+- `frontend/src/pages/AppShell.css` (novo)
+	- camada visual reutilizável para páginas autenticadas do torcedor;
+	- containers fluidos (`app-shell`), superfícies modernas (`app-surface`), botões, campos e grid responsivo;
+	- regras mobile-first para breakpoints até 760px.
+
+- `frontend/src/pages/DashboardPage.tsx`
+	- modernização do painel inicial autenticado com hero + acessos rápidos em grid responsivo;
+	- manutenção de `canAccessAdminArea(...)`, permissões e logout sem alteração funcional.
+
+- `frontend/src/pages/PlansPage.tsx`
+	- catálogo de planos modernizado em cards responsivos;
+	- sem alterações no fluxo de `plansService.listPublished()`.
+
+- `frontend/src/pages/AccountPage.tsx`
+	- reorganização visual de assinatura, troca/cancelamento e formulário de perfil usando classes reutilizáveis;
+	- preservados os fluxos de `subscriptionsService` e `accountApi` (upload/salvar perfil, troca de plano, cancelamento, modal de confirmação).
+
+### Testes adicionados (TDD)
+
+- `frontend/src/pages/DashboardPage.test.tsx`
+	- valida estrutura moderna (`.dashboard-page`, hero e grid) e comportamento de visibilidade do link admin por permissão.
+
+- `frontend/src/pages/PlansPage.test.tsx`
+	- valida grid e cards do catálogo modernizado, além do estado vazio.
+
+### Compatibilidade e riscos
+
+- nenhum endpoint novo foi criado;
+- nenhuma permissão/rota foi alterada;
+- resultado de lint manteve warning pré-existente de `react-hooks/exhaustive-deps` em `AccountPage.tsx` (sem erro de compilação).

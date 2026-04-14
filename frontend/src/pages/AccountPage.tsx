@@ -11,6 +11,7 @@ import {
   type SubscriptionPaymentMethod,
 } from '../features/plans/subscriptionsService'
 import { useAuth } from '../features/auth/AuthContext'
+import './AppShell.css'
 
 export function AccountPage() {
   const { user, refreshProfile } = useAuth()
@@ -234,28 +235,24 @@ export function AccountPage() {
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: '2rem auto', fontFamily: 'system-ui' }}>
-      <h1>Minha conta</h1>
-      <p>
-        <strong>{user?.name}</strong> ({user?.email})
-      </p>
+    <main className="app-shell app-shell--narrow account-page">
+      <section className="app-surface">
+        <h1 className="app-title">Minha conta</h1>
+        <p className="app-muted">
+          <strong>{user?.name}</strong>
+          {' '}
+          ({user?.email})
+        </p>
+      </section>
       {user?.requiresProfileCompletion ? (
-        <p style={{ color: '#856404', background: '#fff3cd', padding: 8 }}>
+        <p className="account-page__alert-warning">
           Complete seu perfil (documento obrigatório para seguir).
         </p>
       ) : null}
-      {subscriptionError ? <p style={{ color: '#721c24', fontSize: '0.9rem' }}>{subscriptionError}</p> : null}
+      {subscriptionError ? <p style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>{subscriptionError}</p> : null}
       {subscription?.hasMembership ? (
-        <section
-          style={{
-            border: '1px solid #ddd',
-            borderRadius: 8,
-            padding: '1rem',
-            marginBottom: '1rem',
-            background: '#f9f9f9',
-          }}
-        >
-          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.05rem' }}>Assinatura</h2>
+        <section className="app-surface account-page__subscription">
+          <h2 className="account-page__section-title" style={{ fontSize: '1.05rem' }}>Assinatura</h2>
           <p style={{ margin: '0.25rem 0' }}>
             <strong>Status:</strong>
             {' '}
@@ -269,24 +266,24 @@ export function AccountPage() {
               : '—'}
           </p>
           {subscription.plan ? (
-            <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#444' }}>
+            <p className="app-muted" style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
               Plano:
               {' '}
               {subscription.plan.name}
             </p>
           ) : null}
           <p style={{ margin: '0.75rem 0 0' }}>
-            <Link to="/digital-card">Carteirinha digital</Link>
+            <Link to="/digital-card" className="app-back-link">Carteirinha digital</Link>
             {' · '}
-            <Link to="/plans">Planos</Link>
+            <Link to="/plans" className="app-back-link">Planos</Link>
           </p>
           {subscription.membershipStatus === 'Cancelado' ? (
-            <p style={{ margin: '0.75rem 0 0', fontSize: '0.9rem', color: '#555' }}>
+            <p className="app-muted" style={{ margin: '0.75rem 0 0', fontSize: '0.9rem' }}>
               Assinatura cancelada.
             </p>
           ) : null}
           {scheduledCancellation ? (
-            <p style={{ margin: '0.75rem 0 0', fontSize: '0.9rem', color: '#555' }}>
+            <p className="app-muted" style={{ margin: '0.75rem 0 0', fontSize: '0.9rem' }}>
               Cancelamento agendado. Acesso até
               {' '}
               {subscription.endDate
@@ -295,9 +292,9 @@ export function AccountPage() {
             </p>
           ) : null}
           {canRequestCancellation ? (
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(119, 177, 137, 0.28)' }}>
               <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Cancelar assinatura</h3>
-              <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#444' }}>
+              <p className="app-muted" style={{ margin: '0 0 0.5rem', fontSize: '0.85rem' }}>
                 O clube pode oferecer prazo de arrependimento (configurável). Dentro desse prazo o cancelamento é imediato;
                 depois dele, o acesso segue até a data do fim do ciclo atual.
               </p>
@@ -307,12 +304,12 @@ export function AccountPage() {
                   setCancelError(null)
                   setShowCancelModal(true)
                 }}
-                style={{ color: '#721c24', borderColor: '#721c24', background: '#fff' }}
+                className="btn-secondary"
               >
                 Cancelar assinatura
               </button>
               {cancelResult ? (
-                <div style={{ marginTop: 12, fontSize: '0.9rem', background: '#fff', padding: 8, borderRadius: 6 }}>
+                <div style={{ marginTop: 12, fontSize: '0.9rem', background: 'rgba(14, 29, 22, 0.6)', padding: 8, borderRadius: 6 }}>
                   <p style={{ margin: 0 }}>{cancelResult.message}</p>
                   {cancelResult.mode === 'ScheduledEndOfCycle' && cancelResult.accessValidUntilUtc ? (
                     <p style={{ margin: '0.5rem 0 0' }}>
@@ -326,18 +323,18 @@ export function AccountPage() {
             </div>
           ) : null}
           {subscription.membershipStatus === 'Ativo' && subscription.plan ? (
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(119, 177, 137, 0.28)' }}>
               <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Trocar plano</h3>
-              {plansLoadError ? <p style={{ color: '#721c24', fontSize: '0.9rem' }}>{plansLoadError}</p> : null}
+              {plansLoadError ? <p style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>{plansLoadError}</p> : null}
               {!plansLoadError && publishedPlans === null ? (
-                <p style={{ fontSize: '0.9rem', color: '#555' }}>Carregando planos…</p>
+                <p className="app-muted" style={{ fontSize: '0.9rem' }}>Carregando planos…</p>
               ) : null}
               {!plansLoadError && publishedPlans && otherPlans.length === 0 ? (
-                <p style={{ fontSize: '0.9rem', color: '#555' }}>Não há outros planos publicados para troca.</p>
+                <p className="app-muted" style={{ fontSize: '0.9rem' }}>Não há outros planos publicados para troca.</p>
               ) : null}
               {!plansLoadError && otherPlans.length > 0 ? (
                 <>
-                  <label style={{ display: 'block', marginBottom: 8, fontSize: '0.9rem' }}>
+                  <label className="account-page__field" style={{ display: 'block', marginBottom: 8, fontSize: '0.9rem' }}>
                     Outro plano
                     <select
                       value={selectedPlanId}
@@ -345,7 +342,7 @@ export function AccountPage() {
                         setSelectedPlanId(ev.target.value)
                         setChangeResult(null)
                       }}
-                      style={{ display: 'block', width: '100%', marginTop: 4 }}
+                      className="app-select"
                     >
                       <option value="">Selecione…</option>
                       {otherPlans.map(p => (
@@ -390,14 +387,15 @@ export function AccountPage() {
                     type="button"
                     disabled={!selectedPlanId || changeBusy}
                     onClick={() => void onConfirmPlanChange()}
+                    className="btn-primary"
                   >
                     {changeBusy ? 'Processando…' : 'Confirmar troca'}
                   </button>
                 </>
               ) : null}
-              {changeError ? <p role="alert" style={{ color: 'crimson', fontSize: '0.9rem', marginTop: 8 }}>{changeError}</p> : null}
+              {changeError ? <p role="alert" style={{ color: '#ffc6c6', fontSize: '0.9rem', marginTop: 8 }}>{changeError}</p> : null}
               {changeResult ? (
-                <div style={{ marginTop: 12, fontSize: '0.9rem', background: '#fff', padding: 8, borderRadius: 6 }}>
+                <div style={{ marginTop: 12, fontSize: '0.9rem', background: 'rgba(14, 29, 22, 0.6)', padding: 8, borderRadius: 6 }}>
                   <p style={{ margin: '0 0 0.5rem' }}>
                     <strong>Troca registrada.</strong>
                     {' '}
@@ -415,13 +413,13 @@ export function AccountPage() {
                   ) : null}
                   {changeResult.prorationAmount > 0 && changeResult.card ? (
                     <p style={{ margin: '0.5rem 0 0' }}>
-                      <a href={changeResult.card.checkoutUrl} target="_blank" rel="noreferrer">
+                      <a href={changeResult.card.checkoutUrl} target="_blank" rel="noreferrer" className="app-back-link">
                         Abrir checkout do cartão
                       </a>
                     </p>
                   ) : null}
                   {changeResult.prorationAmount === 0 ? (
-                    <p style={{ margin: 0, color: '#555' }}>Sem cobrança proporcional. Seu plano já foi atualizado.</p>
+                    <p className="app-muted" style={{ margin: 0 }}>Sem cobrança proporcional. Seu plano já foi atualizado.</p>
                   ) : null}
                 </div>
               ) : null}
@@ -429,13 +427,13 @@ export function AccountPage() {
           ) : null}
         </section>
       ) : !subscriptionError && subscription && !subscription.hasMembership ? (
-        <p style={{ fontSize: '0.95rem', color: '#555' }}>
+        <p className="app-muted" style={{ fontSize: '0.95rem' }}>
           Você ainda não possui assinatura de sócio.
           {' '}
-          <Link to="/plans">Ver planos</Link>
+          <Link to="/plans" className="app-back-link">Ver planos</Link>
         </p>
       ) : null}
-      {loadError ? <p role="alert" style={{ color: 'crimson' }}>{loadError}</p> : null}
+      {loadError ? <p role="alert" style={{ color: '#ffc6c6' }}>{loadError}</p> : null}
       {photoUrl ? (
         <p>
           <img
@@ -445,58 +443,49 @@ export function AccountPage() {
           />
         </p>
       ) : null}
-      <form onSubmit={onSubmit}>
-        <label style={{ display: 'block', marginBottom: 8 }}>
+      <form onSubmit={onSubmit} className="app-surface account-page__form">
+        <label className="account-page__field">
           Documento (CPF ou equivalente)
           <input
             value={document}
             onChange={(ev) => setDocument(ev.target.value)}
-            style={{ display: 'block', width: '100%', marginTop: 4 }}
+            className="app-input"
           />
         </label>
-        <label style={{ display: 'block', marginBottom: 8 }}>
+        <label className="account-page__field">
           Data de nascimento
           <input
             type="date"
             value={birthDate}
             onChange={(ev) => setBirthDate(ev.target.value)}
-            style={{ display: 'block', width: '100%', marginTop: 4 }}
+            className="app-input"
           />
         </label>
-        <label style={{ display: 'block', marginBottom: 8 }}>
+        <label className="account-page__field">
           Endereço
           <textarea
             value={address}
             onChange={(ev) => setAddress(ev.target.value)}
             rows={3}
-            style={{ display: 'block', width: '100%', marginTop: 4 }}
+            className="app-textarea"
           />
         </label>
-        <label style={{ display: 'block', marginBottom: 16 }}>
+        <label className="account-page__field" style={{ marginBottom: 4 }}>
           Foto do perfil
           <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(ev) => void onPhoto(ev)} disabled={busy} />
         </label>
-        {saveError ? <p role="alert" style={{ color: 'crimson' }}>{saveError}</p> : null}
-        <button type="submit" disabled={busy}>
+        {saveError ? <p role="alert" style={{ color: '#ffc6c6' }}>{saveError}</p> : null}
+        <button type="submit" disabled={busy} className="btn-primary">
           {busy ? 'Salvando...' : 'Salvar perfil'}
         </button>
       </form>
       <p style={{ marginTop: 24 }}>
-        <Link to="/">Voltar</Link>
+        <Link to="/" className="app-back-link">Voltar</Link>
       </p>
       {showCancelModal ? (
         <div
           role="presentation"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: 16,
-          }}
+          className="account-page__modal-overlay"
           onClick={() => !cancelBusy && setShowCancelModal(false)}
           onKeyDown={(e) => {
             if (e.key === 'Escape' && !cancelBusy)
@@ -507,34 +496,27 @@ export function AccountPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="cancel-dialog-title"
-            style={{
-              background: '#fff',
-              borderRadius: 8,
-              padding: '1.25rem',
-              maxWidth: 400,
-              width: '100%',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
-            }}
+            className="account-page__modal"
             onClick={e => e.stopPropagation()}
             onKeyDown={e => e.stopPropagation()}
           >
             <h2 id="cancel-dialog-title" style={{ margin: '0 0 0.75rem', fontSize: '1.1rem' }}>
               Confirmar cancelamento
             </h2>
-            <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: '#333' }}>
+            <p style={{ margin: '0 0 1rem', fontSize: '0.9rem' }}>
               Tem certeza? Se você estiver no prazo de arrependimento, o cancelamento será imediato. Caso contrário, você
               mantém o acesso até o fim do período já pago (próximo vencimento).
             </p>
-            {cancelError ? <p role="alert" style={{ color: 'crimson', fontSize: '0.9rem', margin: '0 0 1rem' }}>{cancelError}</p> : null}
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button type="button" disabled={cancelBusy} onClick={() => setShowCancelModal(false)}>
+            {cancelError ? <p role="alert" style={{ color: '#ffc6c6', fontSize: '0.9rem', margin: '0 0 1rem' }}>{cancelError}</p> : null}
+            <div className="account-page__modal-actions">
+              <button type="button" className="btn-secondary" disabled={cancelBusy} onClick={() => setShowCancelModal(false)}>
                 Voltar
               </button>
               <button
                 type="button"
                 disabled={cancelBusy}
                 onClick={() => void onConfirmCancelSubscription()}
-                style={{ background: '#721c24', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4 }}
+                className="btn-danger"
               >
                 {cancelBusy ? 'Processando…' : 'Confirmar cancelamento'}
               </button>
