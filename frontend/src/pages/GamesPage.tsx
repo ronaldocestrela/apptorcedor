@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
+import { ArrowLeft, Calendar, Home, Newspaper, CreditCard, User } from 'lucide-react'
 import { listTorcedorGames, type TorcedorGameListItem } from '../features/torcedor/torcedorGamesApi'
+import './AppShell.css'
+
+const BOTTOM_NAV = [
+  { to: '/', label: 'Início', icon: <Home size={22} /> },
+  { to: '/news', label: 'Notícias', icon: <Newspaper size={22} /> },
+  { to: '/games', label: 'Jogos', icon: <Calendar size={22} /> },
+  { to: '/digital-card', label: 'Carteirinha', icon: <CreditCard size={22} /> },
+  { to: '/account', label: 'Conta', icon: <User size={22} /> },
+]
 
 export function GamesPage() {
   const [items, setItems] = useState<TorcedorGameListItem[]>([])
@@ -35,40 +45,53 @@ export function GamesPage() {
   }, [])
 
   return (
-    <main style={{ maxWidth: 640, margin: '2rem auto', fontFamily: 'system-ui' }}>
-      <p>
-        <Link to="/">← Início</Link>
-      </p>
-      <h1>Jogos</h1>
-      <p style={{ color: '#555', fontSize: '0.9rem' }}>
-        Partidas ativas divulgadas pelo clube (somente leitura).
-      </p>
-      {loading ? <p>Carregando…</p> : null}
-      {error ? <p style={{ color: '#721c24' }}>{error}</p> : null}
-      {!loading && !error ? (
-        <p style={{ color: '#555' }}>
-          {total}
-          {' '}
-          jogo(s)
-        </p>
-      ) : null}
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {items.map(g => (
-          <li key={g.gameId} style={{ marginBottom: '1rem', borderBottom: '1px solid #eee', paddingBottom: '0.75rem' }}>
-            <strong>
-              {g.opponent}
-            </strong>
-            <span style={{ color: '#666', marginLeft: 8 }}>
-              —
-              {g.competition}
-            </span>
-            <p style={{ margin: '0.35rem 0 0', fontSize: '0.9rem', color: '#444' }}>
-              {new Date(g.gameDate).toLocaleString()}
-            </p>
-          </li>
+    <div className="games-root">
+      <header className="subpage-header">
+        <Link to="/" className="subpage-header__back" aria-label="Voltar">
+          <ArrowLeft size={18} />
+        </Link>
+        <h1 className="subpage-header__title">Jogos</h1>
+        {!loading && !error ? (
+          <span className="subpage-header__badge">{total}</span>
+        ) : null}
+      </header>
+
+      <main className="subpage-content">
+        {loading ? <p className="app-muted">Carregando…</p> : null}
+        {error ? <p role="alert" style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>{error}</p> : null}
+        {!loading && items.length === 0 && !error ? (
+          <p className="app-muted">Nenhum jogo disponível no momento.</p>
+        ) : null}
+        <ul className="game-list">
+          {items.map(g => (
+            <li key={g.gameId} className="game-card">
+              <p className="game-card__opponent">{g.opponent}</p>
+              <div className="game-card__meta">
+                <span className="game-card__competition">{g.competition}</span>
+                <span className="game-card__date">
+                  {new Date(g.gameDate).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </main>
+
+      <nav className="dash-bottom-nav" aria-label="Navegação principal">
+        {BOTTOM_NAV.map(item => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === '/'}
+            className={({ isActive }) =>
+              `dash-bottom-nav__item${isActive ? ' active' : ''}`
+            }
+          >
+            {item.icon}
+            {item.label}
+          </NavLink>
         ))}
-      </ul>
-      {!loading && items.length === 0 ? <p>Nenhum jogo disponível no momento.</p> : null}
-    </main>
+      </nav>
+    </div>
   )
 }

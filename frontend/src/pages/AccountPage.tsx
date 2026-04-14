@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
+import { Home, Newspaper, Calendar, CreditCard, User } from 'lucide-react'
 import axios from 'axios'
 import { getMyProfile, resolvePublicAssetUrl, upsertMyProfile, uploadProfilePhoto } from '../features/account/accountApi'
 import { plansService } from '../features/plans/plansService'
@@ -12,6 +13,14 @@ import {
 } from '../features/plans/subscriptionsService'
 import { useAuth } from '../features/auth/AuthContext'
 import './AppShell.css'
+
+const BOTTOM_NAV = [
+  { to: '/', label: 'Início', icon: <Home size={22} /> },
+  { to: '/news', label: 'Notícias', icon: <Newspaper size={22} /> },
+  { to: '/games', label: 'Jogos', icon: <Calendar size={22} /> },
+  { to: '/digital-card', label: 'Carteirinha', icon: <CreditCard size={22} /> },
+  { to: '/account', label: 'Conta', icon: <User size={22} /> },
+]
 
 export function AccountPage() {
   const { user, refreshProfile } = useAuth()
@@ -238,7 +247,8 @@ export function AccountPage() {
   }
 
   return (
-    <main className="app-shell app-shell--narrow account-page">
+    <>
+    <main className="app-shell app-shell--narrow account-page" style={{ paddingBottom: '5rem' }}>
       <section className="app-surface">
         <h1 className="app-title">Minha conta</h1>
         <p className="app-muted">
@@ -438,7 +448,7 @@ export function AccountPage() {
       ) : null}
       {loadError ? <p role="alert" style={{ color: '#ffc6c6' }}>{loadError}</p> : null}
       {photoUrl ? (
-        <p>
+        <p style={{ textAlign: 'center' }}>
           <img
             src={resolvePublicAssetUrl(photoUrl)}
             alt="Foto"
@@ -528,5 +538,21 @@ export function AccountPage() {
         </div>
       ) : null}
     </main>
+    <nav className="dash-bottom-nav" aria-label="Navegação principal">
+      {BOTTOM_NAV.map(item => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.to === '/'}
+          className={({ isActive }) =>
+            `dash-bottom-nav__item${isActive ? ' active' : ''}`
+          }
+        >
+          {item.icon}
+          {item.label}
+        </NavLink>
+      ))}
+    </nav>
+    </>
   )
 }
