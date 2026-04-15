@@ -23,18 +23,18 @@ Ambos os contextos usam um **tema escuro único** — não há modo claro. O sis
 
 | Nome semântico | Valor hex / rgba | Uso |
 |---|---|---|
-| `bg-deepest` | `#080808` | Fundo mais escuro; gradiente final torcedor |
+| `bg-deepest` | `#0b0f14` | Fundo mais escuro; gradiente final torcedor |
 | `bg-deep` | `#0e131a` | Fundo base da tela torcedor |
 | `bg-main` | `#0e131a` (var `--admin-bg-main`) | Fundo principal do admin |
-| `bg-sidebar` | `#080808` (var `--admin-bg-sidebar`) | Fundo sidebar admin |
-| `bg-sidebar-end` | `#080808` | Gradiente final da sidebar |
-| `bg-card` | `rgba(14, 19, 26, 0.6)` | Cards de acesso rápido (torcedor) |
-| `bg-card-hover` | `rgba(14, 19, 26, 0.75)` | Estado hover dos cards |
-| `bg-surface` | `rgba(14, 19, 26, 0.56)` a `rgba(14, 19, 26, 0.72)` | KPI cards admin (gradiente diagonal) |
+| `bg-sidebar` | `#0f2a1f` (var `--admin-bg-sidebar`) | Fundo sidebar admin |
+| `bg-sidebar-end` | `#0e131a` | Gradiente final da sidebar |
+| `bg-card` | `rgba(14, 19, 26, 0.82)` | Cards de acesso rápido (torcedor) |
+| `bg-card-hover` | `rgba(15, 42, 31, 0.9)` | Estado hover dos cards |
+| `bg-surface` | `rgba(15, 42, 31, 0.56)` a `rgba(11, 15, 20, 0.86)` | KPI cards admin (gradiente diagonal) |
 | `bg-header-torcedor` | `rgba(14, 19, 26, 0.9)` | Header sticky torcedor (com blur) |
-| `bg-header-admin` | `rgba(14, 19, 26, 0.6)` | Header sticky admin (com blur) |
-| `bg-bottom-nav` | `rgba(14, 19, 26, 0.95)` | Bottom nav fixa (com blur) |
-| `bg-modal-overlay` | `rgba(8, 8, 8, 0.65)` | Overlay de modais |
+| `bg-header-admin` | `rgba(14, 19, 26, 0.72)` | Header sticky admin (com blur) |
+| `bg-bottom-nav` | `rgba(11, 15, 20, 0.95)` | Bottom nav fixa (com blur) |
+| `bg-modal-overlay` | `rgba(11, 15, 20, 0.72)` | Overlay de modais |
 
 ### 2.2 Cor de Acento — Verde Limão
 
@@ -42,23 +42,20 @@ O acento primário é um **verde limão vibrante**, usado para CTAs, links ativo
 
 | Token CSS | Valor hex | Uso |
 |---|---|---|
-| `--admin-accent` | `#8cd392` | Acento principal (light mode) |
-| `--admin-accent` dark | `#8cd392` | Acento em prefers-color-scheme: dark |
-| `--admin-accent-soft` | `rgba(140,211,146,0.2)` | Variante suavizada para gradientes de avatar |
+| `--admin-accent` | `#8cd392` | Acento principal |
+| `--admin-accent-soft` | `rgba(140, 211, 146, 0.2)` | Variante suavizada para fundos e gradientes de destaque |
 
 ### 2.3 Cores de Texto
 
 | Token CSS / Nome | Valor | Uso |
 |---|---|---|
 | `--admin-text-primary` | `#f5f7fa` | Texto principal admin |
-| `--admin-text-primary` dark | `#f5f7fa` | Texto principal admin (dark) |
 | `--admin-text-muted` | `#a6b0bf` | Texto secundário / labels / subtítulos admin |
-| `--admin-text-muted` dark | `#a6b0bf` | |
 | `text-primary-torcedor` | `#f5f7fa` | Texto principal torcedor |
 | `text-muted-torcedor` | `#a6b0bf` | Texto secundário torcedor (saudação, hints) |
 | `text-muted-nav` | `#7b8794` | Ícones/labels inativos do bottom nav |
 | `text-card-label` | `#f5f7fa` | Labels nos quick-cards |
-| `text-card-body` | `#f5f7fa` | Texto genérico em cards |
+| `text-card-body` | `#a6b0bf` | Texto genérico em cards |
 
 ### 2.4 Cores Semânticas (KPI Cards)
 
@@ -66,7 +63,7 @@ Usadas nos KPI cards do admin para codificação de significado:
 
 | Variante | Cor do ícone / valor | Background do ícone |
 |---|---|---|
-| `success` | `#8cd392` (verde — usa `--admin-accent`) | `rgba(140, 211, 146, 0.15)` |
+| `success` | `#8cd392` (verde — usa `--admin-accent`) | `rgba(140, 211, 146, 0.2)` |
 | `warning` | `#f59e0b` (âmbar) | `rgba(245, 158, 11, 0.15)` |
 | `info` | `#60a5fa` (azul) | `rgba(96, 165, 250, 0.15)` |
 | `danger` | `#f87171` (vermelho) | `rgba(248, 113, 113, 0.15)` |
@@ -81,20 +78,20 @@ Usadas nos KPI cards do admin para codificação de significado:
 
 | Token CSS | Valor | Uso |
 |---|---|---|
-| `--admin-border-soft` | `rgba(255,255,255,0.08)` | Bordas sutis (cabeçalhos, separadores) |
-| `--admin-border-strong` | `rgba(140,211,146,0.42)` | Bordas visíveis (cards, sidebar) |
-| `border-card-torcedor` | `rgba(140,211,146,0.22)` | Bordas dos quick-cards |
-| `border-card-torcedor-hover` | `rgba(140,211,146,0.5)` | Hover dos quick-cards |
-| `border-bottom-nav` | `rgba(255,255,255,0.08)` | Separador bottom nav |
-| `border-header-torcedor` | `rgba(255,255,255,0.08)` | Separador header torcedor |
+| `--admin-border-soft` | `rgba(255, 255, 255, 0.08)` | Bordas sutis (cabeçalhos, separadores) |
+| `--admin-border-strong` | `rgba(140, 211, 146, 0.42)` | Bordas visíveis (cards, sidebar) |
+| `border-card-torcedor` | `rgba(255, 255, 255, 0.08)` | Bordas dos quick-cards |
+| `border-card-torcedor-hover` | `rgba(140, 211, 146, 0.42)` | Hover dos quick-cards |
+| `border-bottom-nav` | `rgba(255, 255, 255, 0.08)` | Separador bottom nav |
+| `border-header-torcedor` | `rgba(255, 255, 255, 0.08)` | Separador header torcedor |
 | `border-link-active` | cor `--admin-accent`, espessura `2px` no lado esquerdo | Link ativo na sidebar |
 
 ### 2.7 Botões
 
 | Classe | Background | Cor do texto | Borda |
 |---|---|---|---|
-| `.btn-primary` | `#8cd392` | `#f5f7fa` | `#8cd392` |
-| `.btn-secondary` | `rgba(166,176,191,0.2)` | `#f5f7fa` | `rgba(140,211,146,0.38)` |
+| `.btn-primary` | `transparent` | `#8cd392` | `#8cd392` |
+| `.btn-secondary` | `rgba(140, 211, 146, 0.2)` | `#f5f7fa` | `rgba(140, 211, 146, 0.42)` |
 | `.btn-danger` | `#8d2c34` | `#fff4f4` | `#bb4f58` |
 
 Todos os botões: `border-radius: 10px`, `padding: 0.6rem 1rem`, `font-size: 0.92rem`. Disabled: `opacity: 0.7`.
@@ -116,17 +113,17 @@ A fonte **Outfit** deve ser carregada via Google Fonts ou bundled. É humanista,
 
 | Elemento | Tamanho | Peso | Cor | Notas |
 |---|---|---|---|---|
-| Título dashboard admin | `clamp(1.6rem, 2.8vw, 2.2rem)` | 700 | `#f5f7fa` | letter-spacing: -0.02em |
-| Subtítulo dashboard admin | `0.93rem` | 400 | `#a6b0bf` | max-width: 52ch |
+| Título dashboard admin | `clamp(1.6rem, 2.8vw, 2.2rem)` | 700 | `--admin-text-primary` | letter-spacing: -0.02em |
+| Subtítulo dashboard admin | `0.93rem` | 400 | `--admin-text-muted` | max-width: 52ch |
 | Label seção sidebar | `0.68rem` | 700 | uppercase, letter-spacing: 0.1em | |
-| Link sidebar | `0.88rem` | 500 | `#a6b0bf` → ativo: `#8cd392` | |
-| Nome do usuário (header admin) | `0.85rem` | 600 | `#f5f7fa` | |
-| Role do usuário (header admin) | `0.72rem` | 400 | `#a6b0bf` | capitalize |
-| Label KPI card | `0.8rem` | 600 | `#a6b0bf` | uppercase, letter-spacing: 0.07em |
+| Link sidebar | `0.88rem` | 500 | `--admin-text-muted` → ativo: `--admin-accent` | |
+| Nome do usuário (header admin) | `0.85rem` | 600 | `--admin-text-primary` | |
+| Role do usuário (header admin) | `0.72rem` | 400 | `--admin-text-muted` | capitalize |
+| Label KPI card | `0.8rem` | 600 | `--admin-text-muted` | uppercase, letter-spacing: 0.07em |
 | Valor KPI card | `2.5rem` | 700 | variant-dependent | line-height: 1 |
-| Hint KPI card | `0.8rem` | 400 | `#a6b0bf` | |
-| Título "quick actions" | `0.75rem` | 600 | `#a6b0bf` | uppercase, letter-spacing: 0.1em |
-| Card quick action | `0.88rem` | 500 | `#f5f7fa` | |
+| Hint KPI card | `0.8rem` | 400 | `--admin-text-muted` | |
+| Título "quick actions" | `0.75rem` | 600 | `--admin-text-muted` | uppercase, letter-spacing: 0.1em |
+| Card quick action | `0.88rem` | 500 | `--admin-text-primary` | |
 | Saudação torcedor pequena | `0.95rem` | 400 | `#a6b0bf` | "Olá," |
 | Nome torcedor | `1.6rem` | 700 | `#f5f7fa` | line-height: 1.1 |
 | Label quick-card torcedor | `0.9rem` | 600 | `#f5f7fa` | |
@@ -190,14 +187,6 @@ A fonte **Outfit** deve ser carregada via Google Fonts ou bundled. É humanista,
 - **Mobile (<640px):** `grid-template-columns: repeat(2, 1fr)`, `gap: 0.75rem`
 - **Desktop (≥640px):** `grid-template-columns: repeat(4, 1fr)`
 
-### 4.7.1 Carrossel de benefícios na home (`.dash-benefits-*`)
-
-- **Seção:** `.dash-benefits-section` — bloco abaixo do hero/alertas e acima de “Acessos rápidos”; só aparece se houver ofertas elegíveis (ou skeleton enquanto carrega).
-- **Trilho:** `.dash-benefits-carousel` — `display: flex`, `gap: 0.75rem`, `overflow-x: auto`, `scroll-snap-type: x mandatory`, scrollbar oculta (webkit + Firefox).
-- **Banner:** `.dash-benefit-banner` — `scroll-snap-align: start`, largura ~`80vw` com `max-width: 300px`, superfície e borda no mesmo padrão dos `.dash-quick-card`; link para `/benefits/:offerId`.
-- **Skeleton:** `.dash-benefit-banner-skeleton` — altura fixa ~148px, animação `shimmer` (mesma dos feeds).
-- **Detalhe / resgate:** `.benefit-detail-root` + `.benefit-detail-card` — subpágina com ícone `Gift`, texto e botão `.btn-primary` “Resgatar benefício”; viewport full-bleed via `#root:has(.benefit-detail-root)`.
-
 ### 4.8 Layout de Notícias Torcedor (`.news-*`)
 
 **Mobile (< 640px):**
@@ -236,15 +225,15 @@ initials = nome.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
 ### Avatar Torcedor (`.dash-avatar`)
 
 - **Tamanho:** `34×34px`
-- **Background:** `linear-gradient(135deg, rgba(140,211,146,0.2), #8cd392)`
+- **Background:** `linear-gradient(135deg, #0f2a1f, #8cd392)`
 - **Cor do texto:** `#f5f7fa`, peso 700, tamanho 0.85rem
-- **Borda:** `2px solid rgba(140,211,146,0.4)`
+- **Borda:** `2px solid rgba(140, 211, 146, 0.42)`
 
 ### Avatar Admin (`.admin-shell__user-avatar`)
 
 - **Tamanho:** `36×36px`
-- **Background:** `linear-gradient(135deg, rgba(140,211,146,0.2), #8cd392)`
-- **Cor do texto:** `#0d2118` (escuro — legível sobre fundo verde)
+- **Background:** `linear-gradient(135deg, rgba(140, 211, 146, 0.2), #8cd392)`
+- **Cor do texto:** `#0b0f14` (escuro — legível sobre fundo verde)
 - **Peso:** 700, tamanho 0.78rem, letter-spacing: 0.04em
 
 ---
@@ -348,26 +337,26 @@ Em mobile (≤900px), o accordion é sempre forçado aberto:
 
 ### Torcedor Home
 ```css
-background: linear-gradient(160deg, #0e131a 0%, #080808 100%);
+background: linear-gradient(160deg, #0e131a 0%, #0b0f14 100%);
 ```
 
 ### Admin Shell
 ```css
 background:
-  radial-gradient(circle at 12% 88%, rgba(14, 19, 26, 0.32), transparent 42%),
-  radial-gradient(circle at 80% 0%, rgba(140, 211, 146, 0.22), transparent 38%),
-  #0e131a;
+  radial-gradient(circle at 12% 88%, rgba(140, 211, 146, 0.2), transparent 42%),
+  radial-gradient(circle at 80% 0%, rgba(140, 211, 146, 0.12), transparent 38%),
+  var(--admin-bg-main);
 ```
 Dois gradientes radiais sobrepostos criam um efeito de "luz" nos cantos inferior-esquerdo e superior-direito.
 
 ### Admin Sidebar
 ```css
-background: linear-gradient(180deg, #080808, #080808);
+background: linear-gradient(180deg, var(--admin-bg-sidebar), #0e131a);
 ```
 
 ### `app-surface` (surfaces genéricas)
 ```css
-background: linear-gradient(180deg, rgba(14, 19, 26, 0.8), rgba(8, 8, 8, 0.96));
+background: linear-gradient(180deg, rgba(15, 42, 31, 0.58), rgba(11, 15, 20, 0.96));
 ```
 
 ---
@@ -377,13 +366,13 @@ background: linear-gradient(180deg, rgba(14, 19, 26, 0.8), rgba(8, 8, 8, 0.96));
 ```css
 /* .app-input, .app-select, .app-textarea */
 border-radius: 10px;
-border: 1px solid rgba(140,211,146,0.38);
-background: rgba(14,19,26,0.82);
+border: 1px solid rgba(255, 255, 255, 0.08);
+background: rgba(14, 19, 26, 0.82);
 color: #f5f7fa;
 padding: 0.58rem 0.72rem;
 
 /* Focus */
-outline: 2px solid rgba(140,211,146,0.4);
+outline: 2px solid rgba(140, 211, 146, 0.42);
 outline-offset: 1px;
 ```
 
@@ -508,8 +497,7 @@ O projeto usa **Plain CSS com BEM-like naming**. Sem CSS Modules, sem Tailwind.
 | `.admin-kpi-card*` | Componente KPI card |
 | `.admin-kpi-skeleton` | Skeleton loading KPI |
 | `.admin-dashboard__*` | Página dashboard admin |
-| `.dash-*` | Tela home do torcedor (mobile-first); inclui `.dash-benefits-*` (carrossel de benefícios) |
-| `.benefit-detail-*` | Página de detalhe e resgate self-service (`/benefits/:offerId`) |
+| `.dash-*` | Tela home do torcedor (mobile-first) |
 | `.app-shell*` | Container genérico de páginas públicas/torcedor |
 | `.app-surface` | Card/container com fundo translúcido verde |
 | `.btn-*` | Botões globais |
@@ -580,9 +568,9 @@ Auto-abertura de seção: baseada em `useLocation().pathname` + lista de `routes
 ## 15. Paleta Resumida — Referência Rápida
 
 ```
-VERDE MAIS ESCURO (fundos)     #080808
+VERDE MAIS ESCURO (fundos)     #0b0f14
 VERDE ESCURO BASE              #0e131a
-VERDE ESCURO SIDEBAR           #080808
+VERDE ESCURO SIDEBAR           #0f2a1f
 VERDE ACENTO LIMÃO             #8cd392
 VERDE ACENTO SUAVE             rgba(140,211,146,0.2)
 
