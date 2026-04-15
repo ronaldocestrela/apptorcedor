@@ -1,0 +1,180 @@
+.register-page {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  min-height: 100svh;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  background: #fff;
+  text-align: left;
+}
+
+.register-page__panel {
+  border-right: 1px solid #e8e8e8;
+  display: flex;
+  justify-content: center;
+}
+
+.register-page__panel-content {
+  width: min(320px, 100%);
+  padding: 56px 0 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #212121;
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+.register-page__logo {
+  align-self: center;
+  display: block;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.register-page__title {
+  margin: 0;
+  color: #111;
+  font-size: 2rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.register-page__subtitle {
+  font-size: 0.87rem;
+  color: #6b6b6b;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.register-form__field {
+  font-size: 0.78rem;
+  color: #5d5d5d;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.register-form__field input {
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  color: #101010;
+  outline: none;
+  background: #fff;
+}
+
+.register-form__field input:focus {
+  border-color: #0f6f48;
+  box-shadow: 0 0 0 3px rgba(15, 111, 72, 0.12);
+}
+
+.register-form__error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #cc1f1f;
+}
+
+.register-form__load-error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #cc1f1f;
+}
+
+.register-form__submit {
+  border: 0;
+  border-radius: 8px;
+  height: 40px;
+  background: linear-gradient(180deg, #0f8b57 0%, #0b6c44 100%);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.register-form__submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.register-consents {
+  margin: 0;
+  border: 1px solid #e7e7e7;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.register-consents legend {
+  padding: 0 6px;
+  font-size: 0.72rem;
+  color: #666;
+}
+
+.register-consents label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: #4f4f4f;
+}
+
+.register-page__loading {
+  font-size: 0.87rem;
+  color: #6b6b6b;
+}
+
+.register-page__login {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.register-page__login a {
+  color: #0f6f48;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.register-page__hero {
+  background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)), url('/login-hero.png');
+  background-size: cover;
+  background-position: center;
+}
+
+@media (max-width: 900px) {
+  .register-page {
+    grid-template-columns: 1fr;
+  }
+
+  .register-page__panel {
+    border-right: 0;
+  }
+
+  .register-page__panel-content {
+    width: min(360px, calc(100% - 32px));
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+
+  .register-page__hero {
+    min-height: 38vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .register-page__hero {
+    display: none;
+  }
+}

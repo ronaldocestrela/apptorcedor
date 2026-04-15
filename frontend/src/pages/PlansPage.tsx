@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { plansService, type TorcedorPublishedPlan } from '../features/plans/plansService'
+import './AppShell.css'
 
 function billingCycleLabel(cycle: string): string {
   switch (cycle) {
@@ -50,41 +51,32 @@ export function PlansPage() {
   }, [])
 
   return (
-    <main style={{ maxWidth: 720, margin: '2rem auto', fontFamily: 'system-ui' }}>
+    <main className="app-shell plans-page">
       <p>
-        <Link to="/">← Início</Link>
+        <Link to="/" className="app-back-link">← Início</Link>
       </p>
-      <h1>Planos de sócio</h1>
-      <p style={{ color: '#555' }}>
-        Confira os planos disponíveis. Toque em Assinar para ver o detalhe e seguir para o checkout (PIX ou cartão).
-      </p>
-      {loading ? <p>Carregando…</p> : null}
-      {error ? <p style={{ color: '#721c24' }}>{error}</p> : null}
-      {!loading && !error && plans.length === 0 ? (
-        <p>Nenhum plano publicado no momento.</p>
-      ) : null}
-      <div
-        style={{
-          display: 'grid',
-          gap: '1.25rem',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          marginTop: '1.5rem',
-        }}
-      >
+      <section className="app-surface">
+        <h1 className="app-title">Planos de sócio</h1>
+        <p className="app-muted">
+          Confira os planos disponíveis. Toque em Assinar para ver o detalhe e seguir para o checkout (PIX ou cartão).
+        </p>
+        {loading ? <p className="app-muted">Carregando…</p> : null}
+        {error ? <p style={{ color: '#ffc6c6' }}>{error}</p> : null}
+        {!loading && !error && plans.length === 0 ? (
+          <p className="app-muted">Nenhum plano publicado no momento.</p>
+        ) : null}
+      </section>
+
+      <section className="plans-page__grid" aria-label="Lista de planos">
         {plans.map(plan => (
           <article
             key={plan.planId}
-            style={{
-              border: '1px solid #ddd',
-              borderRadius: 8,
-              padding: '1.25rem',
-              background: '#fafafa',
-            }}
+            className="plans-page__card"
           >
             <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.15rem' }}>{plan.name}</h2>
-            <p style={{ margin: 0, fontSize: '1.35rem', fontWeight: 600 }}>
+            <p className="plans-page__price">
               {formatPrice(plan.price)}
-              <span style={{ fontSize: '0.85rem', fontWeight: 400, color: '#555' }}>
+              <span className="plans-page__cycle">
                 {' '}
                 /
                 {' '}
@@ -92,24 +84,24 @@ export function PlansPage() {
               </span>
             </p>
             {plan.discountPercentage > 0 ? (
-              <p style={{ margin: '0.35rem 0 0', fontSize: '0.9rem', color: '#2a6' }}>
+              <p className="plans-page__discount">
                 Desconto
                 {' '}
                 {plan.discountPercentage}
                 %
               </p>
             ) : null}
-            {plan.summary ? <p style={{ margin: '0.75rem 0 0', color: '#444' }}>{plan.summary}</p> : null}
+            {plan.summary ? <p className="app-muted" style={{ marginTop: '0.75rem' }}>{plan.summary}</p> : null}
             {plan.benefits.length > 0 ? (
               <div style={{ marginTop: '0.75rem' }}>
                 <strong style={{ fontSize: '0.85rem' }}>Benefícios</strong>
-                <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1.1rem', fontSize: '0.9rem', color: '#333' }}>
+                <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1.1rem', fontSize: '0.9rem', color: '#cce9d4' }}>
                   {plan.benefits.slice(0, 5).map(b => (
                     <li key={b.benefitId}>{b.title}</li>
                   ))}
                 </ul>
                 {plan.benefits.length > 5 ? (
-                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#666' }}>
+                  <p className="app-muted" style={{ margin: '0.25rem 0 0', fontSize: '0.8rem' }}>
                     +
                     {plan.benefits.length - 5}
                     {' '}
@@ -121,25 +113,14 @@ export function PlansPage() {
             <p style={{ margin: '1rem 0 0' }}>
               <Link
                 to={`/plans/${plan.planId}`}
-                style={{
-                  display: 'block',
-                  textAlign: 'center',
-                  padding: '0.5rem 1rem',
-                  borderRadius: 6,
-                  border: '1px solid #1976d2',
-                  background: '#1976d2',
-                  color: '#fff',
-                  textDecoration: 'none',
-                  width: '100%',
-                  boxSizing: 'border-box',
-                }}
+                className="dashboard-page__link-card"
               >
                 Assinar
               </Link>
             </p>
           </article>
         ))}
-      </div>
+      </section>
     </main>
   )
 }

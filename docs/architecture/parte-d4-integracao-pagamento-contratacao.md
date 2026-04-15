@@ -50,7 +50,7 @@ Erros de assinatura (D.3) no POST `/api/subscriptions`:
 - **Webhook Stripe:** no Dashboard, apontar apenas para **`POST /api/webhooks/stripe`** na API (não usar paths como `/api/webhooks/stripe/member/...`). Ver [guia-configuracao-stripe.md](../deploy/guia-configuracao-stripe.md).
 - **URLs da SPA:** `SuccessUrl` / `CancelUrl` devem usar as rotas do frontend (**`/subscription/confirmation`**, **`/plans`**), não **`/api/...`** no host do Vite (o prefixo `/api` é da API, não da SPA).
 
-Ambiente de testes da API define `Payments:WebhookSecret` via `AppWebApplicationFactory` (provedor permanece **Mock**).
+Ambiente de testes da API força `Payments:Provider=Mock` e define `Payments:WebhookSecret` via `AppWebApplicationFactory`, garantindo que cenários D.4/D.5/D.6/D.7 usem payloads de pagamento determinísticos (PIX mock e checkout mock) sem depender de chaves Stripe.
 
 ## Frontend (SPA)
 

@@ -19,6 +19,9 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("Seed:AdminMaster:Password", "TestPassword123!");
         builder.UseSetting("Testing:SeedSampleUsers", "true");
         builder.UseSetting("Testing:SeedMinimalLegalDocuments", "false");
+        builder.UseSetting("Payments:Provider", "Mock");
         builder.UseSetting("Payments:WebhookSecret", "test-webhook-secret");
+        builder.UseSetting("ProfilePhotos:Provider", "Local");
+        builder.UseSetting("SupportTicketAttachments:Provider", "Local");
     }
 }

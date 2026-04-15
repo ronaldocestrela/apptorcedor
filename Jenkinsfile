@@ -13,6 +13,10 @@
 // - payments-provider         (Secret text) PAYMENTS_PROVIDER — Mock ou Stripe
 // - stripe-success-url        (Secret text) STRIPE_SUCCESS_URL (HTTPS da SPA após Checkout; vazio se não usar)
 // - stripe-cancel-url         (Secret text) STRIPE_CANCEL_URL (HTTPS ao cancelar Checkout; vazio se não usar)
+// - support-ticket-attachments-provider (Secret text) SupportTicketAttachments__Provider (Local ou Cloudinary)
+// - cloudinary-cloud-name     (Secret text) Cloudinary__CloudName
+// - cloudinary-api-key        (Secret text) Cloudinary__ApiKey
+// - cloudinary-api-secret     (Secret text) Cloudinary__ApiSecret
 // - api-cors-origin           (Secret text) Cors__AllowedOrigins__0
 // - api-aspnetcore-urls       (Secret text) ASPNETCORE_URLS (ex.: http://127.0.0.1:5031)
 // - vite-public-api-url       (Secret text) URL pública da API para build do Vite (gravada também no arquivo vite na VPS)
@@ -42,7 +46,8 @@ pipeline {
     APP_HEALTHCHECK_URL = "${env.APP_HEALTHCHECK_URL ?: 'http://127.0.0.1:5031/health/live'}"
     VPS_PORT = "${env.VPS_PORT ?: '22'}"
     VPS_REPO_DIR = "${env.VPS_REPO_DIR ?: '/opt/apptorcedor/repo'}"
-    // true = sem scp/ssh; usa WORKSPACE como repositório git no deploy local (Jenkins na mesma VPS).
+    // true = sem scp/ssh; usa VPS_REPO_DIR como clone dedicado de deploy na mesma VPS,
+    // evitando alterar permissões do WORKSPACE do Jenkins com comandos via sudo.
     JENKINS_LOCAL_DEPLOY = "${env.JENKINS_LOCAL_DEPLOY ?: 'true'}"
     // Opcional: ex. saída de `dirname $(nvm which node)` ou /usr (Node de sistema). Só fluxo systemd (DEPLOY_USE_COMPOSE=false).
     NODEJS_HOME = "${env.NODEJS_HOME ?: ''}"
@@ -98,7 +103,11 @@ pipeline {
             string(credentialsId: 'stripe-webhook-secret', variable: 'STRIPE_WEBHOOK_SECRET'),
             string(credentialsId: 'payments-provider', variable: 'PAYMENTS_PROVIDER'),
             string(credentialsId: 'stripe-success-url', variable: 'STRIPE_SUCCESS_URL'),
-            string(credentialsId: 'stripe-cancel-url', variable: 'STRIPE_CANCEL_URL')
+            string(credentialsId: 'stripe-cancel-url', variable: 'STRIPE_CANCEL_URL'),
+            string(credentialsId: 'support-ticket-attachments-provider', variable: 'SUPPORT_ATTACHMENTS_PROVIDER'),
+            string(credentialsId: 'cloudinary-cloud-name', variable: 'CLOUDINARY_CLOUD_NAME'),
+            string(credentialsId: 'cloudinary-api-key', variable: 'CLOUDINARY_API_KEY'),
+            string(credentialsId: 'cloudinary-api-secret', variable: 'CLOUDINARY_API_SECRET')
           ]
 
           def useCompose = (env.DEPLOY_USE_COMPOSE ?: 'true').trim().equalsIgnoreCase('true')
@@ -127,6 +136,10 @@ pipeline {
                     printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SupportTicketAttachments__Provider=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   cp "${API_ENV_LOCAL}" "${REMOTE_ENV}"
@@ -142,6 +155,10 @@ pipeline {
                     printf 'STRIPE_WEBHOOK_SECRET=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'STRIPE_SUCCESS_URL=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'STRIPE_CANCEL_URL=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SUPPORT_TICKET_ATTACHMENTS_PROVIDER=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'CLOUDINARY_CLOUD_NAME=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'CLOUDINARY_API_KEY=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'CLOUDINARY_API_SECRET=%s\n' "${CLOUDINARY_API_SECRET}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -153,7 +170,7 @@ pipeline {
                   rm -f "${API_ENV_LOCAL}"
                   sudo mkdir -p /etc/apptorcedor
                   sudo install -m 600 -o root -g root "${REMOTE_ENV}" /etc/apptorcedor/api.env
-                  sudo bash "${REMOTE_SH}" "${DEPLOY_BRANCH}" "${REMOTE_COMPOSE_ENV}" "${APP_HEALTHCHECK_URL}" "${RELEASE_ID}" "${WORKSPACE}" "${COMPOSE_FILE}"
+                  sudo bash "${REMOTE_SH}" "${DEPLOY_BRANCH}" "${REMOTE_COMPOSE_ENV}" "${APP_HEALTHCHECK_URL}" "${RELEASE_ID}" "${VPS_REPO_DIR}" "${COMPOSE_FILE}"
                 '''
               } else {
                 sh '''#!/bin/bash
@@ -178,6 +195,10 @@ pipeline {
                     printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SupportTicketAttachments__Provider=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"
@@ -205,7 +226,7 @@ pipeline {
                   sudo mkdir -p /etc/apptorcedor
                   sudo install -m 600 -o root -g root "${REMOTE_ENV}" /etc/apptorcedor/api.env
                   sudo env PATH="${DEPLOY_PATH}" HOME="${HOME}" NVM_DIR="${NVM_DIR:-}" NODEJS_HOME="${NODEJS_HOME:-}" \
-                    bash "${REMOTE_SH}" "${DEPLOY_BRANCH}" "${REMOTE_VITE}" "${DEPLOY_ROOT}" "${APP_SERVICE_NAME}" "${APP_HEALTHCHECK_URL}" "${RELEASE_ID}" "${WORKSPACE}"
+                    bash "${REMOTE_SH}" "${DEPLOY_BRANCH}" "${REMOTE_VITE}" "${DEPLOY_ROOT}" "${APP_SERVICE_NAME}" "${APP_HEALTHCHECK_URL}" "${RELEASE_ID}" "${VPS_REPO_DIR}"
                 '''
               }
             }
@@ -241,6 +262,10 @@ pipeline {
                     printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SupportTicketAttachments__Provider=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   {
@@ -255,6 +280,10 @@ pipeline {
                     printf 'STRIPE_WEBHOOK_SECRET=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'STRIPE_SUCCESS_URL=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'STRIPE_CANCEL_URL=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SUPPORT_TICKET_ATTACHMENTS_PROVIDER=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'CLOUDINARY_CLOUD_NAME=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'CLOUDINARY_API_KEY=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'CLOUDINARY_API_SECRET=%s\n' "${CLOUDINARY_API_SECRET}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -296,6 +325,10 @@ pipeline {
                     printf 'Payments__Stripe__WebhookSecret=%s\n' "${STRIPE_WEBHOOK_SECRET:-}"
                     printf 'Payments__Stripe__SuccessUrl=%s\n' "${STRIPE_SUCCESS_URL:-}"
                     printf 'Payments__Stripe__CancelUrl=%s\n' "${STRIPE_CANCEL_URL:-}"
+                    printf 'SupportTicketAttachments__Provider=%s\n' "${SUPPORT_ATTACHMENTS_PROVIDER}"
+                    printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
+                    printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
+                    printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"

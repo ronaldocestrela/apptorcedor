@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { getRegistrationRequirements, type RegistrationRequirements } from '../features/account/accountApi'
 import { useAuth } from '../features/auth/AuthContext'
+import './RegisterPage.css'
 
 export function RegisterPage() {
   const { user, register } = useAuth()
@@ -64,77 +65,102 @@ export function RegisterPage() {
   }
 
   return (
-    <main style={{ maxWidth: 420, margin: '3rem auto', fontFamily: 'system-ui' }}>
-      <h1>Criar conta</h1>
-      {loadError ? <p role="alert" style={{ color: 'crimson' }}>{loadError}</p> : null}
-      {legal ? (
-        <form onSubmit={onSubmit}>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            Nome
-            <input
-              value={name}
-              onChange={(ev) => setName(ev.target.value)}
-              required
-              style={{ display: 'block', width: '100%', marginTop: 4 }}
-            />
-          </label>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            E-mail
-            <input
-              type="email"
-              value={email}
-              onChange={(ev) => setEmail(ev.target.value)}
-              required
-              style={{ display: 'block', width: '100%', marginTop: 4 }}
-            />
-          </label>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            Senha
-            <input
-              type="password"
-              value={password}
-              onChange={(ev) => setPassword(ev.target.value)}
-              required
-              minLength={8}
-              style={{ display: 'block', width: '100%', marginTop: 4 }}
-            />
-          </label>
-          <label style={{ display: 'block', marginBottom: 16 }}>
-            Celular (opcional)
-            <input
-              value={phone}
-              onChange={(ev) => setPhone(ev.target.value)}
-              style={{ display: 'block', width: '100%', marginTop: 4 }}
-            />
-          </label>
-          <fieldset style={{ marginBottom: 16, border: '1px solid #ccc', padding: 12 }}>
-            <legend>LGPD</legend>
-            <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 8 }}>
-              <input
-                type="checkbox"
-                checked={acceptTerms}
-                onChange={(ev) => setAcceptTerms(ev.target.checked)}
-              />
-              <span>Li e aceito: {legal.termsTitle}</span>
-            </label>
-            <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <input
-                type="checkbox"
-                checked={acceptPrivacy}
-                onChange={(ev) => setAcceptPrivacy(ev.target.checked)}
-              />
-              <span>Li e aceito: {legal.privacyTitle}</span>
-            </label>
-          </fieldset>
-          {error ? <p role="alert" style={{ color: 'crimson' }}>{error}</p> : null}
-          <button type="submit" disabled={busy || !legal}>
-            {busy ? 'Cadastrando...' : 'Cadastrar'}
-          </button>
-        </form>
-      ) : loadError ? null : <p>Carregando...</p>}
-      <p style={{ marginTop: 24 }}>
-        <Link to="/login">Já tenho conta</Link>
-      </p>
+    <main className="register-page">
+      <section className="register-page__panel">
+        <div className="register-page__panel-content">
+          <img
+            className="register-page__logo"
+            src="/logos/ESCUDO_FFC_VERDE.png"
+            alt="FFC"
+            width={56}
+            height={56}
+            decoding="async"
+          />
+          <h1 className="register-page__title">Crie sua Conta</h1>
+          <p className="register-page__subtitle">Preencha os dados abaixo para se registrar.</p>
+
+          {loadError ? <p role="alert" className="register-form__load-error">{loadError}</p> : null}
+
+          {!legal && !loadError ? (
+            <p className="register-page__loading">Carregando...</p>
+          ) : null}
+
+          {legal ? (
+            <form className="register-form" onSubmit={onSubmit}>
+              <label className="register-form__field">
+                Nome
+                <input
+                  value={name}
+                  onChange={(ev) => setName(ev.target.value)}
+                  required
+                  autoComplete="name"
+                />
+              </label>
+              <label className="register-form__field">
+                E-mail
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(ev) => setEmail(ev.target.value)}
+                  required
+                  autoComplete="email"
+                />
+              </label>
+              <label className="register-form__field">
+                Senha
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(ev) => setPassword(ev.target.value)}
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+              </label>
+              <label className="register-form__field">
+                Celular <span style={{ fontWeight: 400, color: '#9b9b9b' }}>(opcional)</span>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(ev) => setPhone(ev.target.value)}
+                  autoComplete="tel"
+                />
+              </label>
+
+              <fieldset className="register-consents">
+                <legend>LGPD</legend>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(ev) => setAcceptTerms(ev.target.checked)}
+                  />
+                  <span>Li e aceito: {legal.termsTitle}</span>
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={acceptPrivacy}
+                    onChange={(ev) => setAcceptPrivacy(ev.target.checked)}
+                  />
+                  <span>Li e aceito: {legal.privacyTitle}</span>
+                </label>
+              </fieldset>
+
+              {error ? <p role="alert" className="register-form__error">{error}</p> : null}
+
+              <button className="register-form__submit" type="submit" disabled={busy}>
+                {busy ? 'Cadastrando...' : 'Criar conta'}
+              </button>
+            </form>
+          ) : null}
+
+          <p className="register-page__login">
+            Já possui uma conta? <Link to="/login">Entrar</Link>
+          </p>
+        </div>
+      </section>
+      <section className="register-page__hero" aria-hidden />
     </main>
   )
 }

@@ -7,6 +7,16 @@ Este documento descreve, passo a passo, como colocar a aplicação em produção
 
 O **CI** roda no **GitHub Actions** ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)). O deploy via Jenkins é disparado **somente após** todos os jobs do workflow **`CI`** concluírem com **sucesso** em um **push** à branch **`single-tenant`** (job `trigger-jenkins`).
 
+### CI local equivalente ao GitHub Actions
+
+Para validar localmente os mesmos gates do workflow antes do push, execute na raiz do repositório:
+
+```bash
+./scripts/ci-local.sh
+```
+
+O script replica backend, frontend, validação de tooling e validação do Compose. Para apenas listar as etapas sem executar, use `./scripts/ci-local.sh --dry-run`. O escopo local não inclui `trigger-jenkins` nem deploy na VPS.
+
 ---
 
 ## 1. Visão geral da arquitetura
@@ -163,6 +173,10 @@ Crie credenciais (IDs podem ser alterados no [`Jenkinsfile`](../../Jenkinsfile) 
 | `payments-provider` | Secret text | `PAYMENTS_PROVIDER` no Compose — texto **`Mock`** ou **`Stripe`**. |
 | `stripe-success-url` | Secret text | `STRIPE_SUCCESS_URL` — URL HTTPS da SPA após Checkout (ex.: `…/subscription/confirmation`). Vazio se ainda não usar. |
 | `stripe-cancel-url` | Secret text | `STRIPE_CANCEL_URL` — URL HTTPS ao cancelar Checkout (ex.: `…/plans`). Vazio se ainda não usar. |
+| `support-ticket-attachments-provider` | Secret text | `SupportTicketAttachments__Provider` (use `Local` ou `Cloudinary`). |
+| `cloudinary-cloud-name` | Secret text | `Cloudinary__CloudName`. |
+| `cloudinary-api-key` | Secret text | `Cloudinary__ApiKey`. |
+| `cloudinary-api-secret` | Secret text | `Cloudinary__ApiSecret`. |
 | `api-cors-origin` | Secret text | `Cors__AllowedOrigins__0` |
 | `api-aspnetcore-urls` | Secret text | `ASPNETCORE_URLS` (ex.: `http://127.0.0.1:5031`) |
 | `vite-public-api-url` | Secret text | `VITE_API_URL` (build do Vite na VPS) |
@@ -267,6 +281,34 @@ deployuser ALL=(root) NOPASSWD: /usr/bin/install, /bin/bash /tmp/apptorcedor-bui
 
 Cada release substitui o conteúdo publicado; diretórios de upload devem **persistir fora** do diretório versionado ou usar storage externo / volume em `wwwroot/uploads`.
 
+**4.6.8 Storage em Cloudinary (opcional, recomendado para produção)**
+
+Para eliminar dependência de disco local em uploads de foto/anexos:
+
+- `ProfilePhotos__Provider=Cloudinary`
+- `SupportTicketAttachments__Provider=Cloudinary`
+- `Cloudinary__CloudName=<cloud_name>`
+- `Cloudinary__ApiKey=<api_key>`
+- `Cloudinary__ApiSecret=<api_secret>`
+- opcional: `ProfilePhotos__Cloudinary__Folder=profile-photos`
+- opcional: `SupportTicketAttachments__Cloudinary__Folder=support-attachments`
+
+Com provider `Local`, os fluxos continuam funcionando como antes. Isso permite rollout gradual por ambiente e rollback rápido apenas trocando configuração.
+
+No Jenkins, os campos `SupportTicketAttachments__Provider`, `Cloudinary__CloudName`, `Cloudinary__ApiKey` e `Cloudinary__ApiSecret` são preenchidos por credenciais dedicadas (`support-ticket-attachments-provider`, `cloudinary-cloud-name`, `cloudinary-api-key`, `cloudinary-api-secret`) e gravados automaticamente no `api.env` de deploy.
+
+**4.6.9 Estratégia recomendada de migração (sem lote)**
+
+Para a migração em produção sem copiar arquivos legados em massa:
+
+1. habilite Cloudinary primeiro em staging;
+2. valide upload/troca de foto (`/api/account/profile/photo`) e anexos (`/api/support/tickets`);
+3. promova para produção com os mesmos envs;
+4. mantenha registros legados com URL local (`/uploads/...`) coexistindo com novos registros Cloudinary;
+5. em caso de incidente, faça rollback apenas alterando `ProfilePhotos__Provider` e `SupportTicketAttachments__Provider` para `Local`.
+
+Observação: na estratégia sem lote, fotos/anexos antigos locais continuam válidos enquanto os novos passam a ser gravados no Cloudinary.
+
 ### 4.7 Criar o job no Jenkins
 
 1. Novo item → **Pipeline** (ou **Multibranch Pipeline** apontando para o GitHub).
@@ -283,6 +325,10 @@ O disparo após push é feito pelo GitHub Actions (`trigger-jenkins`); não é o
 3. Acompanhe logs: scp → deploy remoto → status no GitHub.
 4. Na VPS: com **Compose**, `docker compose ps` e `docker compose logs -f api`; com **systemd**, `sudo systemctl status apptorcedor-api` e `journalctl -u apptorcedor-api -f`.
 5. Teste `curl -sS` em `APP_HEALTHCHECK_URL` (ex.: `http://127.0.0.1:5031/health/live` alinhado a `API_PORT`).
+6. Se Cloudinary estiver ativo, valide também:
+   - upload de foto em `/api/account/profile/photo`;
+   - abertura de chamado com anexo em `/api/support/tickets`;
+   - download do anexo por torcedor e por staff.
 
 ### 4.9 Reverse proxy em frente à API (ex.: Nginx)
 
@@ -338,6 +384,7 @@ Em geral você coloca um reverse proxy na frente das portas publicadas ou public
 
 - **Banco**: já está fora do Compose.
 - **Uploads em `wwwroot`**: use volume Docker montado no caminho de uploads da API ou configure storage externo; senão, dados podem ser perdidos ao recriar o container.
+- **Cloudinary**: ao usar provider Cloudinary para fotos/anexos, o risco de perda por recriação de container é removido para esses ativos.
 
 ---
 
@@ -367,6 +414,8 @@ Não commite segredos no Git.
 - [ ] `VITE_API_URL` no build apontando para a API pública correta.
 - [ ] TLS ativo no proxy; HTTP redirecionado para HTTPS se aplicável.
 - [ ] `GET /health/live` e `GET /health/ready` OK.
+- [ ] Se usar Cloudinary: `ProfilePhotos__Provider` e `SupportTicketAttachments__Provider` definidos para `Cloudinary` + credenciais válidas (`Cloudinary__CloudName`, `Cloudinary__ApiKey`, `Cloudinary__ApiSecret`).
+- [ ] Se migração sem lote: confirmar coexistência de URLs locais (`/uploads/...`) e URLs Cloudinary nos fluxos de perfil e suporte.
 - [ ] Com **Stripe:** `Payments__Provider=Stripe` (ou `PAYMENTS_PROVIDER=Stripe` no `.env` do Compose), `Payments__Stripe__ApiKey`, `Payments__Stripe__WebhookSecret`, `SuccessUrl` / `CancelUrl`, webhook no Dashboard em `https://<API>/api/webhooks/stripe`, migração `ProcessedStripeWebhookEvents` aplicada. Ver [guia-configuracao-stripe.md](guia-configuracao-stripe.md).
 - [ ] Estratégia de backup do banco e de arquivos de upload definida.
 - [ ] GitHub: secrets `JENKINS_*` para o job `trigger-jenkins`; Jenkins: credenciais de API + PAT `repo:status`; se deploy remoto (`JENKINS_LOCAL_DEPLOY=false`), credenciais SSH + `vps-host`.

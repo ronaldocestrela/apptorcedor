@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { Link, NavLink } from 'react-router-dom'
+import { Home, Newspaper, Calendar, CreditCard, User, Camera } from 'lucide-react'
 import axios from 'axios'
+import Cropper from 'react-easy-crop'
+import type { Area } from 'react-easy-crop'
 import { getMyProfile, resolvePublicAssetUrl, upsertMyProfile, uploadProfilePhoto } from '../features/account/accountApi'
+import { getCroppedImg } from '../shared/cropImage'
 import { plansService } from '../features/plans/plansService'
 import {
   subscriptionsService,
@@ -11,6 +15,15 @@ import {
   type SubscriptionPaymentMethod,
 } from '../features/plans/subscriptionsService'
 import { useAuth } from '../features/auth/AuthContext'
+import './AppShell.css'
+
+const BOTTOM_NAV = [
+  { to: '/', label: 'Início', icon: <Home size={22} /> },
+  { to: '/news', label: 'Notícias', icon: <Newspaper size={22} /> },
+  { to: '/games', label: 'Jogos', icon: <Calendar size={22} /> },
+  { to: '/digital-card', label: 'Carteirinha', icon: <CreditCard size={22} /> },
+  { to: '/account', label: 'Conta', icon: <User size={22} /> },
+]
 
 export function AccountPage() {
   const { user, refreshProfile } = useAuth()
@@ -34,6 +47,19 @@ export function AccountPage() {
   const [cancelBusy, setCancelBusy] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
   const [cancelResult, setCancelResult] = useState<CancelMembershipResponse | null>(null)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Crop states
+  const [pendingCropSrc, setPendingCropSrc] = useState<string | null>(null)
+  const [showCropModal, setShowCropModal] = useState(false)
+  const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 })
+  const [cropZoom, setCropZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
+
+  const onCropComplete = useCallback((_croppedArea: Area, pixels: Area) => {
+    setCroppedAreaPixels(pixels)
+  }, [])
 
   const scheduledCancellation = useMemo(() => {
     if (!subscription?.hasMembership)
@@ -97,8 +123,11 @@ export function AccountPage() {
     }
   }, [])
 
+  const currentMembershipStatus = subscription?.membershipStatus ?? null
+  const currentPlanId = subscription?.plan?.planId ?? null
+
   useEffect(() => {
-    if (subscription?.membershipStatus !== 'Ativo' || !subscription.plan) {
+    if (currentMembershipStatus !== 'Ativo' || currentPlanId === null) {
       setPublishedPlans(null)
       setPlansLoadError(null)
       setSelectedPlanId('')
@@ -122,7 +151,7 @@ export function AccountPage() {
     return () => {
       cancelled = true
     }
-  }, [subscription?.membershipStatus, subscription?.plan?.planId])
+  }, [currentMembershipStatus, currentPlanId])
 
   async function refreshSubscription() {
     try {
@@ -215,14 +244,33 @@ export function AccountPage() {
     }
   }
 
-  async function onPhoto(ev: ChangeEvent<HTMLInputElement>) {
+  function onPhoto(ev: ChangeEvent<HTMLInputElement>) {
     const file = ev.target.files?.[0]
     if (!file)
       return
+    // Reset input so the same file can be re-selected after cancel
+    ev.target.value = ''
+    const reader = new FileReader()
+    reader.onload = () => {
+      setPendingCropSrc(reader.result as string)
+      setCropPosition({ x: 0, y: 0 })
+      setCropZoom(1)
+      setCroppedAreaPixels(null)
+      setShowCropModal(true)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  async function onCropConfirm() {
+    if (!pendingCropSrc || !croppedAreaPixels)
+      return
     setSaveError(null)
     setBusy(true)
+    setShowCropModal(false)
     try {
-      const url = await uploadProfilePhoto(file)
+      const blob = await getCroppedImg(pendingCropSrc, croppedAreaPixels)
+      const croppedFile = new File([blob], 'profile.jpg', { type: 'image/jpeg' })
+      const url = await uploadProfilePhoto(croppedFile)
       setPhotoUrl(url)
       await upsertMyProfile({ photoUrl: url })
       await refreshProfile()
@@ -230,32 +278,30 @@ export function AccountPage() {
       setSaveError('Falha no envio da foto (tipo ou tamanho).')
     } finally {
       setBusy(false)
+      setPendingCropSrc(null)
     }
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: '2rem auto', fontFamily: 'system-ui' }}>
-      <h1>Minha conta</h1>
-      <p>
-        <strong>{user?.name}</strong> ({user?.email})
-      </p>
+    <>
+    <main className="app-shell app-shell--narrow account-page" style={{ paddingBottom: '5rem' }}>
+      <section className="app-surface">
+        <h1 className="app-title">Minha conta</h1>
+        <p className="app-muted">
+          <strong>{user?.name}</strong>
+          {' '}
+          ({user?.email})
+        </p>
+      </section>
       {user?.requiresProfileCompletion ? (
-        <p style={{ color: '#856404', background: '#fff3cd', padding: 8 }}>
+        <p className="account-page__alert-warning">
           Complete seu perfil (documento obrigatório para seguir).
         </p>
       ) : null}
-      {subscriptionError ? <p style={{ color: '#721c24', fontSize: '0.9rem' }}>{subscriptionError}</p> : null}
+      {subscriptionError ? <p style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>{subscriptionError}</p> : null}
       {subscription?.hasMembership ? (
-        <section
-          style={{
-            border: '1px solid #ddd',
-            borderRadius: 8,
-            padding: '1rem',
-            marginBottom: '1rem',
-            background: '#f9f9f9',
-          }}
-        >
-          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.05rem' }}>Assinatura</h2>
+        <section className="app-surface account-page__subscription">
+          <h2 className="account-page__section-title" style={{ fontSize: '1.05rem' }}>Assinatura</h2>
           <p style={{ margin: '0.25rem 0' }}>
             <strong>Status:</strong>
             {' '}
@@ -269,24 +315,24 @@ export function AccountPage() {
               : '—'}
           </p>
           {subscription.plan ? (
-            <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#444' }}>
+            <p className="app-muted" style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
               Plano:
               {' '}
               {subscription.plan.name}
             </p>
           ) : null}
           <p style={{ margin: '0.75rem 0 0' }}>
-            <Link to="/digital-card">Carteirinha digital</Link>
+            <Link to="/digital-card" className="app-back-link">Carteirinha digital</Link>
             {' · '}
-            <Link to="/plans">Planos</Link>
+            <Link to="/plans" className="app-back-link">Planos</Link>
           </p>
           {subscription.membershipStatus === 'Cancelado' ? (
-            <p style={{ margin: '0.75rem 0 0', fontSize: '0.9rem', color: '#555' }}>
+            <p className="app-muted" style={{ margin: '0.75rem 0 0', fontSize: '0.9rem' }}>
               Assinatura cancelada.
             </p>
           ) : null}
           {scheduledCancellation ? (
-            <p style={{ margin: '0.75rem 0 0', fontSize: '0.9rem', color: '#555' }}>
+            <p className="app-muted" style={{ margin: '0.75rem 0 0', fontSize: '0.9rem' }}>
               Cancelamento agendado. Acesso até
               {' '}
               {subscription.endDate
@@ -295,9 +341,9 @@ export function AccountPage() {
             </p>
           ) : null}
           {canRequestCancellation ? (
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(119, 177, 137, 0.28)' }}>
               <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Cancelar assinatura</h3>
-              <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#444' }}>
+              <p className="app-muted" style={{ margin: '0 0 0.5rem', fontSize: '0.85rem' }}>
                 O clube pode oferecer prazo de arrependimento (configurável). Dentro desse prazo o cancelamento é imediato;
                 depois dele, o acesso segue até a data do fim do ciclo atual.
               </p>
@@ -307,12 +353,12 @@ export function AccountPage() {
                   setCancelError(null)
                   setShowCancelModal(true)
                 }}
-                style={{ color: '#721c24', borderColor: '#721c24', background: '#fff' }}
+                className="btn-secondary"
               >
                 Cancelar assinatura
               </button>
               {cancelResult ? (
-                <div style={{ marginTop: 12, fontSize: '0.9rem', background: '#fff', padding: 8, borderRadius: 6 }}>
+                <div style={{ marginTop: 12, fontSize: '0.9rem', background: 'rgba(14, 29, 22, 0.6)', padding: 8, borderRadius: 6 }}>
                   <p style={{ margin: 0 }}>{cancelResult.message}</p>
                   {cancelResult.mode === 'ScheduledEndOfCycle' && cancelResult.accessValidUntilUtc ? (
                     <p style={{ margin: '0.5rem 0 0' }}>
@@ -326,18 +372,18 @@ export function AccountPage() {
             </div>
           ) : null}
           {subscription.membershipStatus === 'Ativo' && subscription.plan ? (
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(119, 177, 137, 0.28)' }}>
               <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Trocar plano</h3>
-              {plansLoadError ? <p style={{ color: '#721c24', fontSize: '0.9rem' }}>{plansLoadError}</p> : null}
+              {plansLoadError ? <p style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>{plansLoadError}</p> : null}
               {!plansLoadError && publishedPlans === null ? (
-                <p style={{ fontSize: '0.9rem', color: '#555' }}>Carregando planos…</p>
+                <p className="app-muted" style={{ fontSize: '0.9rem' }}>Carregando planos…</p>
               ) : null}
               {!plansLoadError && publishedPlans && otherPlans.length === 0 ? (
-                <p style={{ fontSize: '0.9rem', color: '#555' }}>Não há outros planos publicados para troca.</p>
+                <p className="app-muted" style={{ fontSize: '0.9rem' }}>Não há outros planos publicados para troca.</p>
               ) : null}
               {!plansLoadError && otherPlans.length > 0 ? (
                 <>
-                  <label style={{ display: 'block', marginBottom: 8, fontSize: '0.9rem' }}>
+                  <label className="account-page__field" style={{ display: 'block', marginBottom: 8, fontSize: '0.9rem' }}>
                     Outro plano
                     <select
                       value={selectedPlanId}
@@ -345,7 +391,7 @@ export function AccountPage() {
                         setSelectedPlanId(ev.target.value)
                         setChangeResult(null)
                       }}
-                      style={{ display: 'block', width: '100%', marginTop: 4 }}
+                      className="app-select"
                     >
                       <option value="">Selecione…</option>
                       {otherPlans.map(p => (
@@ -390,14 +436,15 @@ export function AccountPage() {
                     type="button"
                     disabled={!selectedPlanId || changeBusy}
                     onClick={() => void onConfirmPlanChange()}
+                    className="btn-primary"
                   >
                     {changeBusy ? 'Processando…' : 'Confirmar troca'}
                   </button>
                 </>
               ) : null}
-              {changeError ? <p role="alert" style={{ color: 'crimson', fontSize: '0.9rem', marginTop: 8 }}>{changeError}</p> : null}
+              {changeError ? <p role="alert" style={{ color: '#ffc6c6', fontSize: '0.9rem', marginTop: 8 }}>{changeError}</p> : null}
               {changeResult ? (
-                <div style={{ marginTop: 12, fontSize: '0.9rem', background: '#fff', padding: 8, borderRadius: 6 }}>
+                <div style={{ marginTop: 12, fontSize: '0.9rem', background: 'rgba(14, 29, 22, 0.6)', padding: 8, borderRadius: 6 }}>
                   <p style={{ margin: '0 0 0.5rem' }}>
                     <strong>Troca registrada.</strong>
                     {' '}
@@ -415,13 +462,13 @@ export function AccountPage() {
                   ) : null}
                   {changeResult.prorationAmount > 0 && changeResult.card ? (
                     <p style={{ margin: '0.5rem 0 0' }}>
-                      <a href={changeResult.card.checkoutUrl} target="_blank" rel="noreferrer">
+                      <a href={changeResult.card.checkoutUrl} target="_blank" rel="noreferrer" className="app-back-link">
                         Abrir checkout do cartão
                       </a>
                     </p>
                   ) : null}
                   {changeResult.prorationAmount === 0 ? (
-                    <p style={{ margin: 0, color: '#555' }}>Sem cobrança proporcional. Seu plano já foi atualizado.</p>
+                    <p className="app-muted" style={{ margin: 0 }}>Sem cobrança proporcional. Seu plano já foi atualizado.</p>
                   ) : null}
                 </div>
               ) : null}
@@ -429,74 +476,120 @@ export function AccountPage() {
           ) : null}
         </section>
       ) : !subscriptionError && subscription && !subscription.hasMembership ? (
-        <p style={{ fontSize: '0.95rem', color: '#555' }}>
+        <p className="app-muted" style={{ fontSize: '0.95rem' }}>
           Você ainda não possui assinatura de sócio.
           {' '}
-          <Link to="/plans">Ver planos</Link>
+          <Link to="/plans" className="app-back-link">Ver planos</Link>
         </p>
       ) : null}
-      {loadError ? <p role="alert" style={{ color: 'crimson' }}>{loadError}</p> : null}
-      {photoUrl ? (
-        <p>
-          <img
-            src={resolvePublicAssetUrl(photoUrl)}
-            alt="Foto"
-            style={{ maxWidth: 160, borderRadius: 8 }}
-          />
-        </p>
-      ) : null}
-      <form onSubmit={onSubmit}>
-        <label style={{ display: 'block', marginBottom: 8 }}>
+      {loadError ? <p role="alert" style={{ color: '#ffc6c6' }}>{loadError}</p> : null}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0' }}>
+        <button
+          type="button"
+          onClick={() => !busy && fileInputRef.current?.click()}
+          disabled={busy}
+          title="Clique para alterar a foto"
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: busy ? 'default' : 'pointer',
+            padding: 0,
+            borderRadius: '50%',
+            position: 'relative',
+            display: 'inline-block',
+          }}
+        >
+          {photoUrl ? (
+            <img
+              src={resolvePublicAssetUrl(photoUrl)}
+              alt="Foto de perfil"
+              style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', display: 'block' }}
+            />
+          ) : (
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 120,
+                height: 120,
+                borderRadius: '50%',
+                background: 'rgba(119,177,137,0.15)',
+                border: '2px dashed rgba(119,177,137,0.5)',
+                color: 'rgba(220,246,227,0.6)',
+                fontSize: '0.8rem',
+                textAlign: 'center',
+                lineHeight: 1.3,
+                padding: '0 12px',
+              }}
+            >
+              Adicionar foto
+            </span>
+          )}
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              bottom: 4,
+              right: 4,
+              background: 'transparent',
+              borderRadius: '50%',
+              width: 28,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Camera size={20} stroke="#ffffff" fill="none" strokeWidth={2} />
+          </span>
+        </button>
+        <span className="app-muted" style={{ fontSize: '0.8rem' }}>Clique para alterar</span>
+      </div>
+      <form onSubmit={onSubmit} className="app-surface account-page__form">
+        <label className="account-page__field">
           Documento (CPF ou equivalente)
           <input
             value={document}
             onChange={(ev) => setDocument(ev.target.value)}
-            style={{ display: 'block', width: '100%', marginTop: 4 }}
+            className="app-input"
           />
         </label>
-        <label style={{ display: 'block', marginBottom: 8 }}>
+        <label className="account-page__field">
           Data de nascimento
           <input
             type="date"
             value={birthDate}
             onChange={(ev) => setBirthDate(ev.target.value)}
-            style={{ display: 'block', width: '100%', marginTop: 4 }}
+            className="app-input"
           />
         </label>
-        <label style={{ display: 'block', marginBottom: 8 }}>
+        <label className="account-page__field">
           Endereço
           <textarea
             value={address}
             onChange={(ev) => setAddress(ev.target.value)}
             rows={3}
-            style={{ display: 'block', width: '100%', marginTop: 4 }}
+            className="app-textarea"
           />
         </label>
-        <label style={{ display: 'block', marginBottom: 16 }}>
-          Foto do perfil
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(ev) => void onPhoto(ev)} disabled={busy} />
-        </label>
-        {saveError ? <p role="alert" style={{ color: 'crimson' }}>{saveError}</p> : null}
-        <button type="submit" disabled={busy}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(ev) => onPhoto(ev)}
+          disabled={busy}
+          style={{ display: 'none' }}
+        />
+        {saveError ? <p role="alert" style={{ color: '#ffc6c6' }}>{saveError}</p> : null}
+        <button type="submit" disabled={busy} className="btn-primary">
           {busy ? 'Salvando...' : 'Salvar perfil'}
         </button>
       </form>
-      <p style={{ marginTop: 24 }}>
-        <Link to="/">Voltar</Link>
-      </p>
       {showCancelModal ? (
         <div
           role="presentation"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: 16,
-          }}
+          className="account-page__modal-overlay"
           onClick={() => !cancelBusy && setShowCancelModal(false)}
           onKeyDown={(e) => {
             if (e.key === 'Escape' && !cancelBusy)
@@ -507,34 +600,27 @@ export function AccountPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="cancel-dialog-title"
-            style={{
-              background: '#fff',
-              borderRadius: 8,
-              padding: '1.25rem',
-              maxWidth: 400,
-              width: '100%',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
-            }}
+            className="account-page__modal"
             onClick={e => e.stopPropagation()}
             onKeyDown={e => e.stopPropagation()}
           >
             <h2 id="cancel-dialog-title" style={{ margin: '0 0 0.75rem', fontSize: '1.1rem' }}>
               Confirmar cancelamento
             </h2>
-            <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: '#333' }}>
+            <p style={{ margin: '0 0 1rem', fontSize: '0.9rem' }}>
               Tem certeza? Se você estiver no prazo de arrependimento, o cancelamento será imediato. Caso contrário, você
               mantém o acesso até o fim do período já pago (próximo vencimento).
             </p>
-            {cancelError ? <p role="alert" style={{ color: 'crimson', fontSize: '0.9rem', margin: '0 0 1rem' }}>{cancelError}</p> : null}
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button type="button" disabled={cancelBusy} onClick={() => setShowCancelModal(false)}>
+            {cancelError ? <p role="alert" style={{ color: '#ffc6c6', fontSize: '0.9rem', margin: '0 0 1rem' }}>{cancelError}</p> : null}
+            <div className="account-page__modal-actions">
+              <button type="button" className="btn-secondary" disabled={cancelBusy} onClick={() => setShowCancelModal(false)}>
                 Voltar
               </button>
               <button
                 type="button"
                 disabled={cancelBusy}
                 onClick={() => void onConfirmCancelSubscription()}
-                style={{ background: '#721c24', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4 }}
+                className="btn-danger"
               >
                 {cancelBusy ? 'Processando…' : 'Confirmar cancelamento'}
               </button>
@@ -542,6 +628,89 @@ export function AccountPage() {
           </div>
         </div>
       ) : null}
+      {showCropModal && pendingCropSrc ? (
+        <div
+          role="presentation"
+          className="account-page__modal-overlay"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape')
+              setShowCropModal(false)
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="crop-dialog-title"
+            className="account-page__modal account-page__crop-modal"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+          >
+            <h2 id="crop-dialog-title" style={{ margin: '0 0 0.75rem', fontSize: '1.05rem' }}>
+              Ajustar foto
+            </h2>
+            <div className="account-page__crop-container">
+              <Cropper
+                image={pendingCropSrc}
+                crop={cropPosition}
+                zoom={cropZoom}
+                aspect={1}
+                onCropChange={setCropPosition}
+                onZoomChange={setCropZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+            <div className="account-page__crop-controls">
+              <label style={{ fontSize: '0.85rem' }}>
+                Zoom
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.05}
+                  value={cropZoom}
+                  onChange={e => setCropZoom(Number(e.target.value))}
+                />
+              </label>
+              <div className="account-page__modal-actions">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    setShowCropModal(false)
+                    setPendingCropSrc(null)
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={!croppedAreaPixels}
+                  onClick={() => void onCropConfirm()}
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
+    <nav className="dash-bottom-nav" aria-label="Navegação principal">
+      {BOTTOM_NAV.map(item => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.to === '/'}
+          className={({ isActive }) =>
+            `dash-bottom-nav__item${isActive ? ' active' : ''}`
+          }
+        >
+          {item.icon}
+          {item.label}
+        </NavLink>
+      ))}
+    </nav>
+    </>
   )
 }

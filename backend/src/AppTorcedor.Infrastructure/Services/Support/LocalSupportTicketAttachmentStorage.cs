@@ -48,10 +48,10 @@ public sealed class LocalSupportTicketAttachmentStorage(
         return $"{ticketId:N}/{messageId:N}/{storedName}";
     }
 
-    public Stream? OpenRead(string storageKey)
+    public Task<Stream?> OpenReadAsync(string storageKey, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(storageKey) || storageKey.Contains("..", StringComparison.Ordinal) || Path.IsPathRooted(storageKey))
-            return null;
+            return Task.FromResult<Stream?>(null);
 
         var root = string.IsNullOrWhiteSpace(options.Value.RootPath)
             ? Path.Combine(env.ContentRootPath, "Data", "support-attachments")
@@ -59,9 +59,34 @@ public sealed class LocalSupportTicketAttachmentStorage(
         var full = Path.GetFullPath(Path.Combine(root, storageKey));
         var rootFull = Path.GetFullPath(root);
         if (!full.StartsWith(rootFull, StringComparison.OrdinalIgnoreCase) || !File.Exists(full))
-            return null;
+            return Task.FromResult<Stream?>(null);
 
-        return File.OpenRead(full);
+        return Task.FromResult<Stream?>(File.OpenRead(full));
+    }
+
+    public Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(storageKey) || storageKey.Contains("..", StringComparison.Ordinal) || Path.IsPathRooted(storageKey))
+            return Task.CompletedTask;
+
+        var root = string.IsNullOrWhiteSpace(options.Value.RootPath)
+            ? Path.Combine(env.ContentRootPath, "Data", "support-attachments")
+            : options.Value.RootPath;
+        var full = Path.GetFullPath(Path.Combine(root, storageKey));
+        var rootFull = Path.GetFullPath(root);
+        if (!full.StartsWith(rootFull, StringComparison.OrdinalIgnoreCase) || !File.Exists(full))
+            return Task.CompletedTask;
+
+        try
+        {
+            File.Delete(full);
+        }
+        catch
+        {
+            // Best effort cleanup.
+        }
+
+        return Task.CompletedTask;
     }
 
     private static string ExtensionForContentType(string contentType) =>

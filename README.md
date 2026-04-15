@@ -161,6 +161,34 @@ cd frontend
 npm test
 ```
 
+Nos testes de API (`AppTorcedor.Api.Tests`), o host de teste força `Payments:Provider=Mock` e storage local para `ProfilePhotos` e `SupportTicketAttachments`, evitando dependência de credenciais externas como Stripe e Cloudinary.
+
+## Esteira CI local
+
+Para rodar localmente uma esteira enxuta focada apenas em testes de backend e frontend, use o script abaixo a partir da raiz do repositório:
+
+```bash
+./scripts/ci-local.sh
+```
+
+Ele executa apenas:
+
+- backend: `dotnet test` dos três projetos usados na CI;
+- frontend: `npm test`.
+
+Pré-requisitos:
+
+- .NET 10 SDK
+- Node.js e npm
+
+Para inspecionar a esteira sem executá-la, use:
+
+```bash
+./scripts/ci-local.sh --dry-run
+```
+
+O script não tenta disparar o Jenkins nem executar deploy remoto; ele cobre apenas os gates de CI local.
+
 ## Configuração JWT (produção)
 
 Em [`appsettings.json`](backend/src/AppTorcedor.Api/appsettings.json) (ou variáveis de ambiente), ajuste a seção **`Jwt`**:

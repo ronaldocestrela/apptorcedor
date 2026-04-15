@@ -76,6 +76,35 @@ public sealed class LocalProfilePhotoStorage(
         return $"/uploads/profile-photos/{userId:N}/{storedName}";
     }
 
+    public Task<bool> DeleteProfilePhotoAsync(string photoUrl, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(photoUrl))
+            return Task.FromResult(false);
+
+        const string prefix = "/uploads/profile-photos/";
+        if (!photoUrl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return Task.FromResult(false);
+
+        var relative = photoUrl[prefix.Length..].Replace('/', Path.DirectorySeparatorChar);
+        var root = string.IsNullOrWhiteSpace(options.Value.RootPath)
+            ? Path.Combine(env.ContentRootPath, "wwwroot", "uploads", "profile-photos")
+            : options.Value.RootPath;
+        var full = Path.GetFullPath(Path.Combine(root, relative));
+        var allowedRoot = Path.GetFullPath(root);
+        if (!full.StartsWith(allowedRoot, StringComparison.OrdinalIgnoreCase) || !File.Exists(full))
+            return Task.FromResult(false);
+
+        try
+        {
+            File.Delete(full);
+            return Task.FromResult(true);
+        }
+        catch
+        {
+            return Task.FromResult(false);
+        }
+    }
+
     private static string ExtensionForContentType(string contentType) =>
         contentType.Trim().ToLowerInvariant() switch
         {

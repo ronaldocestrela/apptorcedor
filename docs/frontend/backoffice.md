@@ -60,3 +60,92 @@ LGPD: [`frontend/src/features/admin/services/lgpdApi.ts`](../../frontend/src/fea
 ## Testes
 
 - `npm test` — helpers de permissão (`permissionUtils.test.ts`), `authStorage`, `adminApi.support.test.ts`, etc.
+- ajuste de tipagem em `DashboardPage.test.tsx` para manter `tsc -b` do frontend verde durante o build.
+- limpeza de blocos legados duplicados em `DigitalCardPage.tsx` e `LoyaltyPage.tsx` para restaurar parse e execução da suíte Vitest.
+- restauração dos rótulos com `:` em `LoyaltyPage.tsx` para manter compatibilidade com o contrato textual coberto pelos testes de interface.
+
+## Sistema Visual Admin (Fase 1)
+
+Implementado um baseline de visual contínuo para o painel administrativo, inspirado no mock escuro-esverdeado.
+
+### Objetivo desta fase
+
+- alinhar a experiência visual do shell administrativo (`/admin/*`) sem alterar regras de negócio;
+- manter intactas permissões granulares, rotas e integrações HTTP existentes;
+- criar base reutilizável para estender o mesmo padrão visual às demais páginas.
+
+### Mudanças entregues
+
+- `frontend/src/features/admin/layout/AdminLayout.tsx`
+	- migração de estilos inline para classes CSS;
+	- preservação da lógica de visibilidade por permissão (`hasPermission(...)` por item de menu);
+	- preservação do `Outlet` e da navegação das rotas administrativas existentes.
+
+- `frontend/src/features/admin/layout/AdminLayout.css` (novo)
+	- shell admin com sidebar escura, gradientes e estados ativos/hover para links;
+	- área de conteúdo com cabeçalho visual e ajustes responsivos básicos.
+
+- `frontend/src/features/admin/pages/AdminDashboardPage.tsx`
+	- adoção de classes sem alterar fluxo de dados (`getAdminDashboard`), loading/error e `PermissionGate`.
+
+- `frontend/src/features/admin/pages/AdminDashboardPage.css` (novo)
+	- tipografia, espaçamentos e grid de KPIs alinhados ao novo tema.
+
+- `frontend/src/features/admin/components/KpiCard.tsx` + `KpiCard.css` (novos)
+	- componente reutilizável para cards de indicadores.
+
+- `frontend/src/index.css`
+	- novos design tokens `--admin-*` para tema escuro verde (superfície, texto, destaque e bordas).
+
+### Testes adicionados (TDD)
+
+- `frontend/src/features/admin/layout/AdminLayout.test.tsx`
+	- valida estrutura visual base do shell por classes (`.admin-shell`, `.admin-shell__sidebar`, `.admin-shell__content`);
+	- valida manutenção da visibilidade de menu orientada por permissões.
+
+- `frontend/src/features/admin/pages/AdminDashboardPage.test.tsx`
+	- valida renderização do dashboard com classes novas e 3 cards KPI após carregamento;
+	- valida mensagem de erro em falha de API.
+
+### Decisões técnicas
+
+- não houve alteração de contratos de API (`adminApi.ts`) nem de políticas de autorização;
+- foco em refatoração visual incremental para reduzir risco de regressão funcional;
+- tokens globais `--admin-*` foram preferidos para facilitar reaproveitamento futuro no restante do frontend.
+
+## Modernização Responsiva (Fase 2)
+
+Evolução visual aplicada às telas do torcedor com foco em responsividade, sem mudanças em regras de negócio.
+
+### Escopo entregue
+
+- `frontend/src/pages/AppShell.css` (novo)
+	- camada visual reutilizável para páginas autenticadas do torcedor;
+	- containers fluidos (`app-shell`), superfícies modernas (`app-surface`), botões, campos e grid responsivo;
+	- regras mobile-first para breakpoints até 760px.
+
+- `frontend/src/pages/DashboardPage.tsx`
+	- modernização do painel inicial autenticado com hero + acessos rápidos em grid responsivo;
+	- manutenção de `canAccessAdminArea(...)`, permissões e logout sem alteração funcional.
+
+- `frontend/src/pages/PlansPage.tsx`
+	- catálogo de planos modernizado em cards responsivos;
+	- sem alterações no fluxo de `plansService.listPublished()`.
+
+- `frontend/src/pages/AccountPage.tsx`
+	- reorganização visual de assinatura, troca/cancelamento e formulário de perfil usando classes reutilizáveis;
+	- preservados os fluxos de `subscriptionsService` e `accountApi` (upload/salvar perfil, troca de plano, cancelamento, modal de confirmação).
+
+### Testes adicionados (TDD)
+
+- `frontend/src/pages/DashboardPage.test.tsx`
+	- valida estrutura moderna (`.dashboard-page`, hero e grid) e comportamento de visibilidade do link admin por permissão.
+
+- `frontend/src/pages/PlansPage.test.tsx`
+	- valida grid e cards do catálogo modernizado, além do estado vazio.
+
+### Compatibilidade e riscos
+
+- nenhum endpoint novo foi criado;
+- nenhuma permissão/rota foi alterada;
+- lint do frontend foi saneado após remover atualização síncrona de estado em efeito no shell admin e estabilizar dependências do efeito de assinatura em `AccountPage.tsx`.

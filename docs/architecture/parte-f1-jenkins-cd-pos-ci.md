@@ -111,6 +111,7 @@ Ajuste os IDs no [`Jenkinsfile`](../../Jenkinsfile) ou use **folder credentials*
 | Sintoma | Verificação |
 |---------|-------------|
 | `trigger-jenkins` falha no GitHub | Secrets `JENKINS_*` preenchidos; URL do job correta; usuário e API token válidos; token de trigger igual ao do job |
+| `git checkout` no Jenkins falha com `unable to unlink old ... Permission denied` | O deploy local anterior provavelmente rodou com `sudo` sobre o `WORKSPACE`. O `Jenkinsfile` deve usar `VPS_REPO_DIR` como clone dedicado no modo `JENKINS_LOCAL_DEPLOY=true`; após corrigir, faça limpeza única do workspace com `sudo chown -R jenkins:jenkins /var/lib/jenkins/workspace/<job>` ou recrie o workspace antes do próximo build. |
 | Deploy falha no `git pull` | Permissões do clone em `VPS_REPO_DIR`; rede; branch existe no remoto |
 | Build falha na VPS | SDK .NET e Node instalados; `npm ci` com lockfile consistente |
 | Health falha | `ASPNETCORE_URLS` vs `APP_HEALTHCHECK_URL`; SQL acessível; JWT com tamanho mínimo |
