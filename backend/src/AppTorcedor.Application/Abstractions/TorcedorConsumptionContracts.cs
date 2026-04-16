@@ -32,6 +32,40 @@ public sealed record TorcedorEligibleBenefitOffersPageDto(
     int TotalCount,
     IReadOnlyList<TorcedorEligibleBenefitOfferItemDto> Items);
 
+public sealed record TorcedorEligibleBenefitOfferDetailDto(
+    Guid OfferId,
+    Guid PartnerId,
+    string PartnerName,
+    string Title,
+    string? Description,
+    DateTimeOffset StartAt,
+    DateTimeOffset EndAt,
+    bool AlreadyRedeemed,
+    DateTimeOffset? RedemptionDateUtc);
+
+public enum TorcedorRedemptionError
+{
+    NotFound,
+    NotEligible,
+    AlreadyRedeemed,
+}
+
+public sealed record TorcedorRedemptionResult(bool Ok, Guid? RedemptionId, TorcedorRedemptionError? Error)
+{
+    public static TorcedorRedemptionResult Success(Guid redemptionId) => new(true, redemptionId, null);
+
+    public static TorcedorRedemptionResult Fail(TorcedorRedemptionError error) => new(false, null, error);
+}
+
+/// <summary>Self-service benefit redemption for authenticated torcedor (no admin actor).</summary>
+public interface ITorcedorBenefitRedemptionPort
+{
+    Task<TorcedorRedemptionResult> RedeemOfferAsync(
+        Guid offerId,
+        Guid userId,
+        CancellationToken cancellationToken = default);
+}
+
 public sealed record TorcedorPublishedPlanBenefitDto(Guid BenefitId, string Title, string? Description);
 
 public sealed record TorcedorPublishedPlanItemDto(
@@ -85,6 +119,12 @@ public interface ITorcedorBenefitsReadPort
         Guid userId,
         int page,
         int pageSize,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Detail for one offer when it is currently eligible to the user; otherwise null.</summary>
+    Task<TorcedorEligibleBenefitOfferDetailDto?> GetEligibleOfferDetailAsync(
+        Guid userId,
+        Guid offerId,
         CancellationToken cancellationToken = default);
 }
 

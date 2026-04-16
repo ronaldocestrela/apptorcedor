@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Newspaper,
@@ -10,11 +11,16 @@ import {
   LogOut,
   ShieldCheck,
   AlertTriangle,
+  ChevronRight,
 } from 'lucide-react'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import { ADMIN_AREA_PERMISSIONS } from '../shared/auth/applicationPermissions'
 import { canAccessAdminArea } from '../shared/auth/permissionUtils'
 import { useAuth } from '../features/auth/AuthContext'
+import {
+  listEligibleBenefitOffers,
+  type TorcedorEligibleBenefitOffer,
+} from '../features/torcedor/torcedorBenefitsApi'
 import './AppShell.css'
 
 const QUICK_LINKS = [
@@ -42,6 +48,31 @@ export function DashboardPage() {
   const { user, logout } = useAuth()
   const showAdmin = canAccessAdminArea(user, ADMIN_AREA_PERMISSIONS)
   const firstName = user?.name?.split(' ')[0] ?? ''
+  const [benefitBanners, setBenefitBanners] = useState<TorcedorEligibleBenefitOffer[]>([])
+  const [benefitsLoading, setBenefitsLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        setBenefitsLoading(true)
+        const page = await listEligibleBenefitOffers({ page: 1, pageSize: 10 })
+        if (!cancelled)
+          setBenefitBanners(page.items)
+      }
+      catch {
+        if (!cancelled)
+          setBenefitBanners([])
+      }
+      finally {
+        if (!cancelled)
+          setBenefitsLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className="dash-root">
@@ -78,6 +109,46 @@ export function DashboardPage() {
             <ShieldCheck size={16} />
             Painel administrativo
           </Link>
+        ) : null}
+
+        {benefitsLoading ? (
+          <section className="dash-benefits-section" aria-label="Benefícios em destaque">
+            <p className="dash-section-title">Benefícios</p>
+            <div className="dash-benefits-carousel" role="presentation">
+              <div className="dash-benefit-banner-skeleton" />
+              <div className="dash-benefit-banner-skeleton" />
+            </div>
+          </section>
+        ) : null}
+        {!benefitsLoading && benefitBanners.length > 0 ? (
+          <section className="dash-benefits-section" aria-label="Benefícios em destaque">
+            <p className="dash-section-title">Benefícios</p>
+            <div className="dash-benefits-carousel">
+              {benefitBanners.map(item => (
+                <Link
+                  key={item.offerId}
+                  to={`/benefits/${item.offerId}`}
+                  className="dash-benefit-banner"
+                >
+                  <span className="dash-benefit-banner__eyebrow">
+                    <Gift size={16} />
+                    Resgatar
+                  </span>
+                  <span className="dash-benefit-banner__title">{item.title}</span>
+                  <span className="dash-benefit-banner__partner">{item.partnerName}</span>
+                  <span className="dash-benefit-banner__dates">
+                    Até
+                    {' '}
+                    {new Date(item.endAt).toLocaleDateString('pt-BR')}
+                  </span>
+                  <span className="dash-benefit-banner__cta">
+                    Ver detalhes
+                    <ChevronRight size={16} />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
         ) : null}
 
         <p className="dash-section-title">Acessos rápidos</p>

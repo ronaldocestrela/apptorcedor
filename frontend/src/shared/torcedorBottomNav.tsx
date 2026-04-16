@@ -3,11 +3,11 @@ import { Calendar, CreditCard, Gift, Home, Newspaper, User } from 'lucide-react'
 
 const ITEMS = [
   { to: '/', label: 'Início', icon: Home, end: true as const },
-  { to: '/news', label: 'Notícias', icon: Newspaper },
-  { to: '/games', label: 'Jogos', icon: Calendar },
-  { to: '/digital-card', label: 'Carteirinha', icon: CreditCard },
-  { to: '/benefits', label: 'Benefícios', icon: Gift },
-  { to: '/account', label: 'Conta', icon: User },
+  { to: '/news', label: 'Notícias', icon: Newspaper, end: false as const },
+  { to: '/games', label: 'Jogos', icon: Calendar, end: false as const },
+  { to: '/digital-card', label: 'Carteirinha', icon: CreditCard, end: false as const },
+  { to: '/benefits', label: 'Benefícios', icon: Gift, end: false as const },
+  { to: '/account', label: 'Conta', icon: User, end: false as const },
 ] as const
 
 export function TorcedorBottomNav() {

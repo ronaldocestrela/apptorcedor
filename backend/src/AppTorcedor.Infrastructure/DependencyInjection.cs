@@ -128,6 +128,7 @@ public static class DependencyInjection
         services.AddScoped<ITorcedorPublishedPlansReadPort, TorcedorPublishedPlansReadService>();
         services.AddScoped<ITorcedorMembershipSubscriptionPort, TorcedorMembershipSubscriptionService>();
         services.AddScoped<ITorcedorBenefitsReadPort, TorcedorBenefitsReadService>();
+        services.AddScoped<ITorcedorBenefitRedemptionPort, TorcedorBenefitRedemptionService>();
         services.AddScoped<ISupportAdministrationPort, SupportAdministrationService>();
         services.AddScoped<ISupportTorcedorPort, SupportTorcedorService>();
         services.AddScoped<LoyaltyAdministrationService>();
