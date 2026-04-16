@@ -88,6 +88,7 @@ describe('AccountPage', () => {
       expect(screen.getByText('Sócio Torcedor')).toBeInTheDocument()
     })
     expect(screen.getByRole('link', { name: /Expandir Carteirinha/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Fidelidade/i })).toHaveAttribute('href', '/loyalty')
     expect(screen.getByText('Gold')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Abrir configurações/i }))
     await waitFor(() => {
@@ -212,6 +213,8 @@ describe('AccountPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/ainda não possui assinatura/i)).toBeInTheDocument()
     })
+    expect(screen.getByText('Sem plano ativo')).toBeInTheDocument()
+    expect(document.querySelector('.account-page__header-name')).toHaveTextContent('T')
   })
 })
 

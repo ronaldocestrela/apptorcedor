@@ -219,22 +219,15 @@ A fonte **Outfit** deve ser carregada via Google Fonts ou bundled. É humanista,
 
 ## 5. Avatares de Usuário
 
-Ambos os contextos usam um **avatar com iniciais** gerado dinamicamente a partir do nome do usuário.
+O **painel admin** usa avatar com iniciais no header. O **header do dashboard** (`.dash-header`) e o **cabeçalho da caixa de perfil em Conta** (`/account`, `.account-page__header`) não exibem círculo de usuário — só nome (Conta) e ações. Foto ou iniciais do torcedor em `/account` ficam no **quadrado 64px** do card (sócio ou sem plano).
 
-### Lógica de Iniciais
+### Lógica de Iniciais (onde aplicável)
 
 ```
 initials = nome.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
 // "Ronaldo Silva" → "RS"
 // "João" → "J"
 ```
-
-### Avatar Torcedor (`.dash-avatar`)
-
-- **Tamanho:** `34×34px`
-- **Background:** `linear-gradient(135deg, #0f2a1f, #8cd392)`
-- **Cor do texto:** `#f5f7fa`, peso 700, tamanho 0.85rem
-- **Borda:** `2px solid rgba(140, 211, 146, 0.42)`
 
 ### Avatar Admin (`.admin-shell__user-avatar`)
 
@@ -398,6 +391,7 @@ A biblioteca utilizada é **`lucide-react`**. Não usar outras bibliotecas de í
 | Carteirinha | `CreditCard` |
 | Planos | `ShieldCheck` |
 | Fidelidade | `Trophy` |
+| Fidelidade — atalho na Conta (`/account`) | `ListChecks` |
 | Benefícios | `Gift` |
 | Ingressos | `Ticket` |
 | Suporte / Chamados | `Headphones` |
@@ -456,16 +450,7 @@ Estrutura HTML:
 
 Elemento `div.admin-kpi-skeleton` com `height: 128px` e animação shimmer. Exibido enquanto dados carregam.
 
-### 10.3 `UserAvatar` (helper interno em DashboardPage)
-
-```tsx
-function UserAvatar({ name }: { name: string }) {
-  const initials = name.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
-  return <span className="dash-avatar">{initials}</span>
-}
-```
-
-### 10.4 `<SidebarSection>` (Admin Accordion)
+### 10.3 `<SidebarSection>` (Admin Accordion)
 
 Props:
 ```tsx
@@ -479,7 +464,7 @@ interface SidebarSectionProps {
 
 Comportamento: usa `useLocation().pathname` para detectar se alguma rota do array `routes` está ativa. Se sim, adiciona `has-active` no botão e abre automaticamente via `useEffect`.
 
-### 10.5 `<NavItem>` (Admin Sidebar Link)
+### 10.4 `<NavItem>` (Admin Sidebar Link)
 
 ```tsx
 interface NavItemProps {
@@ -491,7 +476,7 @@ interface NavItemProps {
 
 Usa `<NavLink>` do react-router com classe `is-active` aplicada automaticamente.
 
-### 10.6 Página de Jogos (`/games`) — cartão de partida
+### 10.5 Página de Jogos (`/games`) — cartão de partida
 
 Implementação em `frontend/src/pages/GamesPage.tsx` + estilos em `frontend/src/pages/AppShell.css`.
 
@@ -533,7 +518,7 @@ O projeto usa **Plain CSS com BEM-like naming**. Sem CSS Modules, sem Tailwind.
 | `.btn-*` | Botões globais |
 | `.app-input`, `.app-select`, `.app-textarea` | Formulários globais |
 | `.plans-page__*` | Página de planos |
-| `.account-page__*` | Página de conta |
+| `.account-root`, `.account-page__*` | Página de conta (`/account`) — wrapper full-viewport + conteúdo |
 | `.news-*` | Páginas de notícias do torcedor (`/news` e `/news/:id`) |
 | `.games-page__*`, `.games-schedule`, `.games-day__*`, `.game-card-ev*` | Página de jogos (`/games`) — cartões de partida por dia |
 
@@ -569,16 +554,18 @@ O `#root` padrão tem `width: 1126px` para páginas públicas. Páginas que deve
   border-inline: none;
   padding: 0;
 }
+
+/* Conta (`/account`): wrapper `.account-root` — ver `src/index.css` junto às demais subpáginas torcedor */
 ```
 
-**Regra:** toda nova tela que precisar de full-viewport deve adicionar a classe raiz correspondente como seletor `:has()` aqui.
+**Regra:** toda nova tela que precisar de full-viewport deve adicionar a classe raiz correspondente como seletor `:has()` em `src/index.css` (ex.: `.account-root` para a Conta).
 
 ---
 
 ## 13. Bottom Navigation — Comportamento
 
 - Visível apenas em mobile (`< 640px`)
-- 5 itens fixos: Início (`/`), Notícias (`/news`), Jogos (`/games`), Carteirinha (`/digital-card`), Conta (`/account`); **Benefícios** não entram na barra — acesso em Conta (`/account`) pelo botão “Meus benefícios” (`/benefits`)
+- 5 itens fixos: Início (`/`), Notícias (`/news`), Jogos (`/games`), Carteirinha (`/digital-card`), Conta (`/account`); **Benefícios** não entram na barra — acesso em Conta (`/account`) pelo botão “Meus benefícios” (`/benefits`); **Fidelidade** na mesma tela — botão “Fidelidade” para `/loyalty` (mesmo estilo de cartão que “Meus benefícios”, ícone `ListChecks`); cabeçalho da Conta (`.account-page__header`) com nome e configurações
 - Usa `<NavLink>` com classe `active` aplicada via callback
 - Altura 64px + `env(safe-area-inset-bottom)` para iPhone X+
 - O `.dash-root` tem `padding-bottom: 68px` para não ficar atrás da barra

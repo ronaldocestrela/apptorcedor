@@ -153,21 +153,6 @@
   gap: 0.5rem;
 }
 
-.dash-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(140, 211, 146, 0.2), #8cd392);
-  color: #f5f7fa;
-  font-weight: 700;
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border: 2px solid rgba(140, 211, 146, 0.4);
-}
-
 .dash-header__logout {
   background: transparent;
   border: none;
@@ -861,11 +846,51 @@
   font-size: 0.9rem;
 }
 
+.account-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  background:
+    radial-gradient(ellipse 130% 70% at 50% -35%, rgba(140, 211, 146, 0.14), transparent 52%),
+    linear-gradient(180deg, #121212 0%, #0a0c0f 100%);
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  color: #f5f7fa;
+  padding-bottom: 68px;
+}
+
+.account-page {
+  box-sizing: border-box;
+  flex: 1;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.account-page__profile-box {
+  border: 1px solid rgba(140, 211, 146, 0.38);
+  border-radius: 18px;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(180deg, rgba(14, 19, 26, 0.82), rgba(8, 8, 8, 0.96));
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.26);
+}
+
+.account-page__profile-box--stacked .account-page__no-plan-body {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(140, 211, 146, 0.22);
+}
+
+.account-page__profile-box--stacked .account-page__empty-copy {
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
 .account-page__header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1rem 0;
+  padding: 0;
 }
 
 .account-page__header-name {
@@ -891,12 +916,6 @@
 
 .account-page__settings-btn:hover {
   background: rgba(140, 211, 146, 0.12);
-}
-
-.account-page__photo-standalone {
-  display: flex;
-  justify-content: flex-end;
-  margin: 0 0 0.5rem;
 }
 
 .account-page__member-photo-btn {
@@ -942,11 +961,11 @@
 }
 
 .account-page__member-card {
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
   border: 1px solid rgba(140, 211, 146, 0.38);
   border-radius: 18px;
   padding: 1.25rem;
-  background: linear-gradient(180deg, rgba(14, 19, 26, 0.8), rgba(8, 8, 8, 0.96));
+  background: linear-gradient(180deg, rgba(14, 19, 26, 0.82), rgba(8, 8, 8, 0.96));
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.26);
 }
 
@@ -960,7 +979,8 @@
 
 .account-page__plan-label {
   font-size: 0.78rem;
-  color: #a6b0bf;
+  font-weight: 600;
+  color: #f5f7fa;
   margin: 0 0 0.2rem;
 }
 
@@ -998,22 +1018,22 @@
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 0.65rem 1rem;
-  border-radius: 10px;
-  border: 1px solid rgba(140, 211, 146, 0.38);
-  background: rgba(14, 19, 26, 0.7);
-  color: #f5f7fa;
+  padding: 0.72rem 1.15rem;
+  border-radius: 9999px;
+  border: none;
+  background: #8cd392;
+  color: #0e131a;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 700;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease;
+  transition: background 160ms ease, filter 160ms ease;
 }
 
 .account-page__expand-btn:hover {
-  background: rgba(140, 211, 146, 0.12);
-  border-color: rgba(140, 211, 146, 0.55);
+  background: #9fe0a4;
+  filter: brightness(1.02);
 }
 
 .account-page__benefits-btn {

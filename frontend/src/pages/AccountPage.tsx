@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Camera, Gift, Settings } from 'lucide-react'
+import { Camera, Gift, ListChecks, Settings } from 'lucide-react'
 import axios from 'axios'
 import Cropper from 'react-easy-crop'
 import type { Area } from 'react-easy-crop'
@@ -326,9 +326,24 @@ export function AccountPage() {
     </button>
   )
 
+  const accountPageHeader = (
+    <header className="account-page__header">
+      <span className="account-page__header-name">{user?.name ?? '—'}</span>
+      <button
+        type="button"
+        className="account-page__settings-btn"
+        aria-expanded={showSettings}
+        aria-label={showSettings ? 'Fechar configurações' : 'Abrir configurações'}
+        onClick={() => setShowSettings(s => !s)}
+      >
+        <Settings size={22} stroke="#f5f7fa" aria-hidden="true" />
+      </button>
+    </header>
+  )
+
   return (
-    <>
-    <main className="app-shell app-shell--narrow account-page" style={{ paddingBottom: '5rem' }}>
+    <div className="account-root">
+    <main className="app-shell app-shell--narrow account-page">
       <input
         ref={fileInputRef}
         type="file"
@@ -337,24 +352,44 @@ export function AccountPage() {
         disabled={busy}
         style={{ display: 'none' }}
       />
-      <header className="account-page__header">
-        <span className="account-page__header-name">{user?.name ?? '—'}</span>
-        <button
-          type="button"
-          className="account-page__settings-btn"
-          aria-expanded={showSettings}
-          aria-label={showSettings ? 'Fechar configurações' : 'Abrir configurações'}
-          onClick={() => setShowSettings(s => !s)}
-        >
-          <Settings size={22} stroke="#f5f7fa" aria-hidden="true" />
-        </button>
-      </header>
       {user?.requiresProfileCompletion ? (
         <p className="account-page__alert-warning">
           Complete seu perfil (documento obrigatório para seguir).
         </p>
       ) : null}
-      {subscriptionError ? <p style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>{subscriptionError}</p> : null}
+      <div
+        className={
+          subscription?.hasMembership
+            ? 'account-page__profile-box'
+            : 'account-page__profile-box account-page__profile-box--stacked'
+        }
+      >
+        {accountPageHeader}
+        {subscription === null ? (
+          <div className="account-page__no-plan-body">
+            {subscriptionError ? (
+              <p className="account-page__empty-copy" role="alert" style={{ color: '#ffc6c6' }}>{subscriptionError}</p>
+            ) : (
+              <p className="account-page__empty-copy app-muted">Carregando informações da conta…</p>
+            )}
+          </div>
+        ) : null}
+        {subscription && !subscription.hasMembership ? (
+          <div className="account-page__no-plan-body">
+            <div className="account-page__member-card-top">
+              <div>
+                <p className="account-page__plan-label">Sem plano ativo</p>
+                <p className="account-page__empty-copy app-muted">
+                  Você ainda não possui assinatura de sócio.
+                  {' '}
+                  <Link to="/plans" className="app-back-link">Ver planos</Link>
+                </p>
+              </div>
+              {photoEditSquare}
+            </div>
+          </div>
+        ) : null}
+      </div>
       {subscription?.hasMembership ? (
         <div className="account-page__member-card">
           <div className="account-page__member-card-top">
@@ -387,21 +422,14 @@ export function AccountPage() {
             Expandir Carteirinha
           </Link>
         </div>
-      ) : (
-        <>
-          <div className="account-page__photo-standalone">{photoEditSquare}</div>
-          {!subscriptionError && subscription && !subscription.hasMembership ? (
-            <p className="app-muted" style={{ fontSize: '0.95rem' }}>
-              Você ainda não possui assinatura de sócio.
-              {' '}
-              <Link to="/plans" className="app-back-link">Ver planos</Link>
-            </p>
-          ) : null}
-        </>
-      )}
+      ) : null}
       <Link to="/benefits" className="account-page__benefits-btn">
         Meus benefícios
         <Gift size={22} stroke="currentColor" aria-hidden="true" />
+      </Link>
+      <Link to="/loyalty" className="account-page__benefits-btn">
+        Fidelidade
+        <ListChecks size={22} stroke="currentColor" aria-hidden="true" />
       </Link>
       {loadError ? <p role="alert" style={{ color: '#ffc6c6' }}>{loadError}</p> : null}
       {showSettings ? (
@@ -731,6 +759,6 @@ export function AccountPage() {
       ) : null}
     </main>
     <TorcedorBottomNav />
-    </>
+    </div>
   )
 }

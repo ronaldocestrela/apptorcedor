@@ -35,16 +35,6 @@ const QUICK_LINKS = [
   { to: '/support', label: 'Chamados', icon: <Headphones size={20} /> },
 ]
 
-function UserAvatar({ name }: { name: string }) {
-  const initials = name
-    .split(' ')
-    .slice(0, 2)
-    .map(p => p[0])
-    .join('')
-    .toUpperCase()
-  return <span className="dash-avatar">{initials}</span>
-}
-
 export function DashboardPage() {
   const { user, logout } = useAuth()
   const showAdmin = canAccessAdminArea(user, ADMIN_AREA_PERMISSIONS)
@@ -83,7 +73,6 @@ export function DashboardPage() {
           <span className="dash-header__logo-text">AppTorcedor</span>
         </div>
         <div className="dash-header__right">
-          {user?.name ? <UserAvatar name={user.name} /> : null}
           <button
             type="button"
             className="dash-header__logout"
