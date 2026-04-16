@@ -47,6 +47,7 @@ Controladores: `TorcedorGamesController`, `TorcedorTicketsController`.
 
 - Rotas: `/games` (`GamesPage`), `/tickets` (`MyTicketsPage`), registradas em `frontend/src/app/App.tsx`; links no `DashboardPage`.
 - Clientes: `frontend/src/features/torcedor/torcedorGamesApi.ts`, `torcedorTicketsApi.ts`.
+- UI `/games`: listagem em cartões de partida agrupados por dia (`.game-card-ev`, `.games-day__*`), jogo “próximo” em destaque (`.game-card-ev--active`) e demais em estado visual muted; sigla da casa configurável por `VITE_CLUB_SHORT_NAME` (padrão `FFC`). Ver `docs/architecture/visual-identity.md` §10.6.
 
 ## Testes
 

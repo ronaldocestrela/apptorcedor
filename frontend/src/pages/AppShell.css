@@ -1211,67 +1211,227 @@
   padding: 1.25rem 1rem 0;
 }
 
-/* ── Games page ── */
-.game-list {
+/* ── Games page (cartão de partida — referência mock mobile) ── */
+.games-page__error {
+  border-radius: 12px;
+  border: 1px solid rgba(141, 44, 52, 0.6);
+  background: rgba(141, 44, 52, 0.18);
+  color: #ffb4ba;
+  padding: 0.8rem 1rem;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.games-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+.games-day__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.games-day__date {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f5f7fa;
+}
+
+.games-day__badge {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #96d696;
+  background: rgba(18, 18, 18, 0.85);
+  border: 1px solid rgba(150, 214, 150, 0.55);
+  border-radius: 999px;
+  padding: 0.28rem 0.65rem;
+  white-space: nowrap;
+}
+
+.games-day__list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
-.game-card {
-  border-radius: 14px;
-  border: 1px solid rgba(140, 211, 146, 0.22);
-  padding: 0.9rem 1rem;
-  background: rgba(14, 19, 26, 0.6);
+.game-card-ev {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #1e1e1e;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.game-card__head {
+.game-card-ev--active {
+  border-color: rgba(150, 214, 150, 0.35);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+.game-card-ev--muted {
+  opacity: 0.5;
+  filter: grayscale(0.15);
+}
+
+.game-card-ev--muted .game-card-ev__cta {
+  background: #2c2c2c;
+  color: #7b8794;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: not-allowed;
+}
+
+.game-card-ev__body {
+  padding: 1rem 1rem 1.1rem;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.65rem;
+  text-align: center;
 }
 
-.game-card__logo {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  border-radius: 10px;
-  border: 1px solid rgba(140, 211, 146, 0.25);
-  background: rgba(8, 8, 8, 0.35);
-  flex-shrink: 0;
-}
-
-.game-card__opponent {
+.game-card-ev__title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #f5f7fa;
+  letter-spacing: 0.02em;
 }
 
-.game-card__meta {
+.game-card-ev__title-sep {
+  font-weight: 700;
+  color: #f5f7fa;
+  margin: 0 0.15rem;
+}
+
+.game-card-ev__subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #c8cdd4;
+  line-height: 1.35;
+}
+
+.game-card-ev__logos {
   display: flex;
-  gap: 0.5rem;
   align-items: center;
-  flex-wrap: wrap;
-  margin-top: 0.35rem;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+  min-height: 72px;
 }
 
-.game-card__competition {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #8cd392;
-  background: rgba(140, 211, 146, 0.1);
-  border: 1px solid rgba(140, 211, 146, 0.2);
-  border-radius: 20px;
-  padding: 0.15rem 0.55rem;
+.game-card-ev__logo-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 72px;
 }
 
-.game-card__date {
-  font-size: 0.85rem;
+.game-card-ev__shield {
+  max-width: 100%;
+  max-height: 64px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.game-card-ev__vs {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f5f7fa;
+  line-height: 1;
+  user-select: none;
+}
+
+.game-card-ev__opponent-logo {
+  max-width: 100%;
+  max-height: 64px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.game-card-ev__opponent-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(150, 214, 150, 0.25);
+  font-size: 0.72rem;
+  font-weight: 700;
   color: #a6b0bf;
+  letter-spacing: 0.04em;
+}
+
+.game-card-ev__cta-wrap {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.game-card-ev__cta {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 999px;
+  padding: 0.72rem 1rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-family: inherit;
+  text-align: center;
+  color: #121212;
+  background: #96d696;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.game-card-ev__cta:disabled {
+  cursor: not-allowed;
+}
+
+.game-card-ev--active .game-card-ev__cta {
+  box-shadow: 0 4px 14px rgba(150, 214, 150, 0.25);
+}
+
+/* Toast de sucesso (referência visual; pode ser usado em fluxos futuros) */
+.game-card-ev__toast {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: calc(100% - 1.5rem);
+  max-width: 280px;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  background: #96d696;
+  color: #121212;
+  text-align: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.35;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.game-card-ev__toast-sub {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 /* ── Benefits (eligible offers) page ── */

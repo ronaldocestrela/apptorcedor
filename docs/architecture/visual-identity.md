@@ -491,6 +491,29 @@ interface NavItemProps {
 
 Usa `<NavLink>` do react-router com classe `is-active` aplicada automaticamente.
 
+### 10.6 Página de Jogos (`/games`) — cartão de partida
+
+Implementação em `frontend/src/pages/GamesPage.tsx` + estilos em `frontend/src/pages/AppShell.css`.
+
+**Layout**
+
+- Raiz: `.games-root` (full-viewport, mesmo padrão das outras subpáginas torcedor).
+- Conteúdo: `.games-page` dentro de `.subpage-content`.
+- Agenda agrupada por dia local: `.games-schedule` → seções `.games-day`.
+- Cabeçalho do dia: `.games-day__header` com `.games-day__date` (título `h2`, data `dd/mm/aaaa`) e, quando o dia contém o jogo em destaque, selo `.games-day__badge` (“Evento Próximo”).
+- Lista do dia: `.games-day__list`.
+
+**Cartão (`.game-card-ev`)**
+
+- Estados: `.game-card-ev--active` (próximo jogo futuro na ordenação global, ou o primeiro da lista se todos forem passados) e `.game-card-ev--muted` (demais jogos — opacidade reduzida, CTA visualmente desabilitado).
+- Corpo: `.game-card-ev__body` — título do confronto `.game-card-ev__title` (`{sigla} x {adversário}`; sigla via `VITE_CLUB_SHORT_NAME`, padrão `FFC`), subtítulo `.game-card-ev__subtitle` (`{competition} - {horário}` a partir da API).
+- Logos: `.game-card-ev__logos` com escudo da casa (imagem resolvida uma vez via `GET /api/branding` + `resolvePublicAssetUrl`, fallback ao placeholder SVG), separador `.game-card-ev__vs`, logo do adversário ou `.game-card-ev__opponent-fallback` com iniciais.
+- CTA somente visual: `button.game-card-ev__cta` (“Ingresso disponível”; `disabled` quando `.game-card-ev--muted`) — no estado ativo, fundo mint `#96d696` e texto escuro; no muted, estilos definidos em `.game-card-ev--muted .game-card-ev__cta`.
+
+**Toast de sucesso (referência)**
+
+- Classe `.game-card-ev__toast` (+ `.game-card-ev__toast-sub`) definida para alinhar a mockups / fluxos futuros; não é obrigatório renderizar na listagem estática.
+
 ---
 
 ## 11. Estrutura de Namespaces CSS
@@ -512,6 +535,7 @@ O projeto usa **Plain CSS com BEM-like naming**. Sem CSS Modules, sem Tailwind.
 | `.plans-page__*` | Página de planos |
 | `.account-page__*` | Página de conta |
 | `.news-*` | Páginas de notícias do torcedor (`/news` e `/news/:id`) |
+| `.games-page__*`, `.games-schedule`, `.games-day__*`, `.game-card-ev*` | Página de jogos (`/games`) — cartões de partida por dia |
 
 ---
 
