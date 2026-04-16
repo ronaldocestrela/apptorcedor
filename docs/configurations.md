@@ -110,6 +110,19 @@ Este documento descreve **todas as configurações disponíveis** no sistema, or
 
 ---
 
+### 7.6. Logos de adversário em jogos (OpponentLogos)
+
+Armazenamento das imagens enviadas para a **biblioteca de logos do adversário** (`POST /api/admin/games/opponent-logos`), no mesmo padrão Local/Cloudinary das demais mídias administrativas.
+
+| Chave | Variável de Ambiente | Padrão | Descrição |
+|-------|----------------------|--------|-----------|
+| `OpponentLogos:Provider` | `OpponentLogos__Provider` | `Local` | `Local` (`wwwroot/uploads/opponent-logos`) ou `Cloudinary`. |
+| `OpponentLogos:RootPath` | `OpponentLogos__RootPath` | *(vazio = automático)* | Caminho absoluto local opcional. |
+| `OpponentLogos:MaxBytes` | `OpponentLogos__MaxBytes` | `6291456` (6 MB) | Tamanho máximo (JPEG, PNG ou WebP). |
+| `OpponentLogos:Cloudinary:Folder` | `OpponentLogos__Cloudinary__Folder` | `opponent-logos` | Pasta no Cloudinary para novos uploads (um `public_id` por arquivo). |
+
+---
+
 ### 8. Armazenamento de Anexos de Suporte
 
 | Chave | Variável de Ambiente | Padrão | Descrição |
@@ -126,7 +139,7 @@ Este documento descreve **todas as configurações disponíveis** no sistema, or
 
 ### 9. Cloudinary — CDN de Mídia
 
-Necessário quando `ProfilePhotos:Provider=Cloudinary`, `SupportTicketAttachments:Provider=Cloudinary` ou `TeamShield:Provider=Cloudinary`.
+Necessário quando `ProfilePhotos:Provider=Cloudinary`, `SupportTicketAttachments:Provider=Cloudinary`, `TeamShield:Provider=Cloudinary` ou `OpponentLogos:Provider=Cloudinary`.
 
 | Chave | Variável de Ambiente | Padrão | Descrição |
 |-------|----------------------|--------|-----------|
@@ -277,6 +290,7 @@ Payments__Stripe__CancelUrl=https://app.seudominio.com.br/plans
 # Storage de mídia
 ProfilePhotos__Provider=Cloudinary
 TeamShield__Provider=Cloudinary
+OpponentLogos__Provider=Cloudinary
 SupportTicketAttachments__Provider=Cloudinary
 Cloudinary__CloudName=apptorcedor
 Cloudinary__ApiKey=...

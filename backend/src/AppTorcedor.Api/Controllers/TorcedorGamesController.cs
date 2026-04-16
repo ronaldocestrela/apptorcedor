@@ -26,6 +26,7 @@ public sealed class TorcedorGamesController(IMediator mediator) : ControllerBase
                 i.GameId,
                 i.Opponent,
                 i.Competition,
+                i.OpponentLogoUrl,
                 i.GameDate,
                 i.CreatedAt))
             .ToList();

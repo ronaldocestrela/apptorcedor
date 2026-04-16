@@ -1228,6 +1228,22 @@
   background: rgba(14, 19, 26, 0.6);
 }
 
+.game-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.game-card__logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid rgba(140, 211, 146, 0.25);
+  background: rgba(8, 8, 8, 0.35);
+  flex-shrink: 0;
+}
+
 .game-card__opponent {
   margin: 0;
   font-size: 1rem;

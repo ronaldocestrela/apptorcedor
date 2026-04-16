@@ -72,6 +72,7 @@ public sealed record TorcedorGameListItemResponse(
     Guid GameId,
     string Opponent,
     string Competition,
+    string? OpponentLogoUrl,
     DateTimeOffset GameDate,
     DateTimeOffset CreatedAt);
 

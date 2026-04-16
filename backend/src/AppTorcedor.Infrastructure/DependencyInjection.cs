@@ -32,6 +32,7 @@ public static class DependencyInjection
     {
         services.Configure<ProfilePhotoStorageOptions>(configuration.GetSection(ProfilePhotoStorageOptions.SectionName));
         services.Configure<TeamShieldStorageOptions>(configuration.GetSection(TeamShieldStorageOptions.SectionName));
+        services.Configure<OpponentLogoStorageOptions>(configuration.GetSection(OpponentLogoStorageOptions.SectionName));
         services.Configure<CloudinaryOptions>(configuration.GetSection(CloudinaryOptions.SectionName));
         services.Configure<PaymentsOptions>(configuration.GetSection(PaymentsOptions.SectionName));
 
@@ -113,6 +114,17 @@ public static class DependencyInjection
             });
         services.AddScoped<LocalTeamShieldStorage>();
         services.AddScoped<CloudinaryTeamShieldStorage>();
+        services.AddScoped<IOpponentLogoStorage>(
+            sp =>
+            {
+                var logoOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpponentLogoStorageOptions>>().Value;
+                if (logoOptions.Provider.Equals("Cloudinary", StringComparison.OrdinalIgnoreCase))
+                    return sp.GetRequiredService<CloudinaryOpponentLogoStorage>();
+                return sp.GetRequiredService<LocalOpponentLogoStorage>();
+            });
+        services.AddScoped<LocalOpponentLogoStorage>();
+        services.AddScoped<CloudinaryOpponentLogoStorage>();
+        services.AddScoped<IOpponentLogoLibraryAdminPort, OpponentLogoLibraryAdminService>();
         services.AddScoped<ISupportTicketAttachmentStorage>(
             sp =>
             {

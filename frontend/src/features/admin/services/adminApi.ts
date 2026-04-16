@@ -561,6 +561,7 @@ export type AdminGameListItem = {
   gameId: string
   opponent: string
   competition: string
+  opponentLogoUrl: string | null
   gameDate: string
   isActive: boolean
   createdAt: string
@@ -575,6 +576,7 @@ export type AdminGameDetail = {
   gameId: string
   opponent: string
   competition: string
+  opponentLogoUrl: string | null
   gameDate: string
   isActive: boolean
   createdAt: string
@@ -585,6 +587,44 @@ export type UpsertGameBody = {
   competition: string
   gameDate: string
   isActive: boolean
+  opponentLogoUrl?: string | null
+}
+
+export type AdminOpponentLogoItem = {
+  id: string
+  url: string
+  createdAt: string
+}
+
+export type AdminOpponentLogoListPage = {
+  totalCount: number
+  items: AdminOpponentLogoItem[]
+}
+
+export async function listAdminOpponentLogos(params?: {
+  page?: number
+  pageSize?: number
+}): Promise<AdminOpponentLogoListPage> {
+  const { data } = await api.get<AdminOpponentLogoListPage>('/api/admin/games/opponent-logos', {
+    params: {
+      page: params?.page ?? 1,
+      pageSize: params?.pageSize ?? 50,
+    },
+  })
+  return data
+}
+
+export async function uploadAdminOpponentLogo(file: File): Promise<string> {
+  const fd = new FormData()
+  fd.append('file', file)
+  const { data } = await api.post<{ url: string }>('/api/admin/games/opponent-logos', fd, {
+    transformRequest: (body, headers) => {
+      if (body instanceof FormData)
+        delete headers['Content-Type']
+      return body
+    },
+  })
+  return data.url
 }
 
 export async function listAdminGames(params: {

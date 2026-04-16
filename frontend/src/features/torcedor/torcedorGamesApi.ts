@@ -4,6 +4,7 @@ export type TorcedorGameListItem = {
   gameId: string
   opponent: string
   competition: string
+  opponentLogoUrl: string | null
   gameDate: string
   createdAt: string
 }

@@ -34,7 +34,7 @@ Base: **`api/games`** e **`api/tickets`** — `[Authorize]` no controlador (mesm
 
 | Método | Rota | Descrição |
 |--------|------|------------|
-| GET | `/api/games?search=&page=&pageSize=` | Jogos **ativos** (paginação). |
+| GET | `/api/games?search=&page=&pageSize=` | Jogos **ativos** (paginação). Cada item inclui `opponentLogoUrl` (opcional) para exibição no app. |
 | GET | `/api/tickets?gameId=&status=&page=&pageSize=` | Ingressos do usuário autenticado. |
 | GET | `/api/tickets/{ticketId}` | Detalhe **somente se** o ingresso pertencer ao usuário; caso contrário `404`. |
 | POST | `/api/tickets/{ticketId}/redeem` | Resgate `Purchased` → `Redeemed` (mesma regra de negócio da B.8 + `ILoyaltyPointsTriggerPort`); `404` se ingresso inexistente ou de outro usuário; `400` se transição inválida. |
@@ -51,7 +51,7 @@ Controladores: `TorcedorGamesController`, `TorcedorTicketsController`.
 ## Testes
 
 - **Application:** `TorcedorGamesTicketsHandlersTests` — delegação aos ports.
-- **API:** `PartC4TorcedorGamesTicketsTests` — auth, jogos ativos vs inativos, fluxo listagem/detalhe/resgate, isolamento entre usuários, resgate inválido em `Reserved`.
+- **API:** `PartC4TorcedorGamesTicketsTests` — auth, jogos ativos vs inativos, `opponentLogoUrl` na listagem, fluxo listagem/detalhe/resgate, isolamento entre usuários, resgate inválido em `Reserved`.
 - **Frontend:** `torcedorGamesTicketsApi.test.ts` — chamadas Axios.
 
 ## Referências

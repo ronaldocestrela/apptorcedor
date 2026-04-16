@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { resolvePublicAssetUrl } from '../features/account/accountApi'
 import { listTorcedorGames, type TorcedorGameListItem } from '../features/torcedor/torcedorGamesApi'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
@@ -58,7 +59,18 @@ export function GamesPage() {
         <ul className="game-list">
           {items.map(g => (
             <li key={g.gameId} className="game-card">
-              <p className="game-card__opponent">{g.opponent}</p>
+              <div className="game-card__head">
+                {g.opponentLogoUrl
+                  ? (
+                      <img
+                        className="game-card__logo"
+                        src={resolvePublicAssetUrl(g.opponentLogoUrl) ?? ''}
+                        alt=""
+                      />
+                    )
+                  : null}
+                <p className="game-card__opponent">{g.opponent}</p>
+              </div>
               <div className="game-card__meta">
                 <span className="game-card__competition">{g.competition}</span>
                 <span className="game-card__date">
