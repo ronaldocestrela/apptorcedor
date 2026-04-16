@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { Link, NavLink } from 'react-router-dom'
-import { Home, Newspaper, Calendar, CreditCard, User, Camera } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Camera } from 'lucide-react'
 import axios from 'axios'
 import Cropper from 'react-easy-crop'
 import type { Area } from 'react-easy-crop'
@@ -15,15 +15,8 @@ import {
   type SubscriptionPaymentMethod,
 } from '../features/plans/subscriptionsService'
 import { useAuth } from '../features/auth/AuthContext'
+import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
-
-const BOTTOM_NAV = [
-  { to: '/', label: 'Início', icon: <Home size={22} /> },
-  { to: '/news', label: 'Notícias', icon: <Newspaper size={22} /> },
-  { to: '/games', label: 'Jogos', icon: <Calendar size={22} /> },
-  { to: '/digital-card', label: 'Carteirinha', icon: <CreditCard size={22} /> },
-  { to: '/account', label: 'Conta', icon: <User size={22} /> },
-]
 
 export function AccountPage() {
   const { user, refreshProfile } = useAuth()
@@ -696,21 +689,7 @@ export function AccountPage() {
         </div>
       ) : null}
     </main>
-    <nav className="dash-bottom-nav" aria-label="Navegação principal">
-      {BOTTOM_NAV.map(item => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.to === '/'}
-          className={({ isActive }) =>
-            `dash-bottom-nav__item${isActive ? ' active' : ''}`
-          }
-        >
-          {item.icon}
-          {item.label}
-        </NavLink>
-      ))}
-    </nav>
+    <TorcedorBottomNav />
     </>
   )
 }
