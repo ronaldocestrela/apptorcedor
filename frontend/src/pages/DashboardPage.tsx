@@ -1,4 +1,4 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   Newspaper,
   Calendar,
@@ -10,9 +10,8 @@ import {
   LogOut,
   ShieldCheck,
   AlertTriangle,
-  Home,
-  User,
 } from 'lucide-react'
+import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import { ADMIN_AREA_PERMISSIONS } from '../shared/auth/applicationPermissions'
 import { canAccessAdminArea } from '../shared/auth/permissionUtils'
 import { useAuth } from '../features/auth/AuthContext'
@@ -27,14 +26,6 @@ const QUICK_LINKS = [
   { to: '/benefits', label: 'Benefícios', icon: <Gift size={20} /> },
   { to: '/tickets', label: 'Ingressos', icon: <Ticket size={20} /> },
   { to: '/support', label: 'Chamados', icon: <Headphones size={20} /> },
-]
-
-const BOTTOM_NAV = [
-  { to: '/', label: 'Início', icon: <Home size={22} /> },
-  { to: '/news', label: 'Notícias', icon: <Newspaper size={22} /> },
-  { to: '/games', label: 'Jogos', icon: <Calendar size={22} /> },
-  { to: '/digital-card', label: 'Carteirinha', icon: <CreditCard size={22} /> },
-  { to: '/account', label: 'Conta', icon: <User size={22} /> },
 ]
 
 function UserAvatar({ name }: { name: string }) {
@@ -100,20 +91,7 @@ export function DashboardPage() {
         </nav>
       </main>
 
-      <nav className="dash-bottom-nav" aria-label="Navegação principal">
-        {BOTTOM_NAV.map(item => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `dash-bottom-nav__item${isActive ? ' active' : ''}`
-            }
-          >
-            {item.icon}
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
+      <TorcedorBottomNav />
     </div>
   )
 }

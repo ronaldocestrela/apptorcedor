@@ -1,17 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
-import { useParams } from 'react-router-dom'
-import { ArrowLeft, Newspaper, Home, Calendar, CreditCard, User } from 'lucide-react'
+import { Link, useParams } from 'react-router-dom'
+import { ArrowLeft, Newspaper } from 'lucide-react'
 import { getTorcedorNewsDetail, type TorcedorNewsDetail } from '../features/torcedor/torcedorNewsApi'
+import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
-
-const BOTTOM_NAV = [
-  { to: '/', label: 'Início', icon: <Home size={22} /> },
-  { to: '/news', label: 'Notícias', icon: <Newspaper size={22} /> },
-  { to: '/games', label: 'Jogos', icon: <Calendar size={22} /> },
-  { to: '/digital-card', label: 'Carteirinha', icon: <CreditCard size={22} /> },
-  { to: '/account', label: 'Conta', icon: <User size={22} /> },
-]
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', {
@@ -114,20 +106,7 @@ export function NewsDetailPage() {
         ) : null}
       </main>
 
-      <nav className="dash-bottom-nav" aria-label="Navegação principal">
-        {BOTTOM_NAV.map(item => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `dash-bottom-nav__item${isActive ? ' active' : ''}`
-            }
-          >
-            {item.icon}
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
+      <TorcedorBottomNav />
     </div>
   )
 }
