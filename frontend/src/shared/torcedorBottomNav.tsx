@@ -1,11 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { Calendar, CreditCard, Home, Newspaper, User } from 'lucide-react'
+import { Calendar, Home, Newspaper, ShieldCheck, User } from 'lucide-react'
 
 const ITEMS = [
   { to: '/', label: 'Início', icon: Home, end: true as const },
   { to: '/news', label: 'Notícias', icon: Newspaper, end: false as const },
   { to: '/games', label: 'Jogos', icon: Calendar, end: false as const },
-  { to: '/digital-card', label: 'Carteirinha', icon: CreditCard, end: false as const },
+  { to: '/plans', label: 'Planos', icon: ShieldCheck, end: false as const },
   { to: '/account', label: 'Conta', icon: User, end: false as const },
 ] as const
 
