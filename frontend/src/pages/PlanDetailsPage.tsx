@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowLeft, Settings } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import { plansService, type TorcedorPublishedPlanDetail } from '../features/plans/plansService'
+import { subscriptionsService } from '../features/plans/subscriptionsService'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -30,6 +31,39 @@ export function PlanDetailsPage() {
   const [plan, setPlan] = useState<TorcedorPublishedPlanDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [subscribing, setSubscribing] = useState(false)
+  const [subscribeError, setSubscribeError] = useState<string | null>(null)
+
+  async function handleSubscribe() {
+    if (!planId || subscribing)
+      return
+    try {
+      setSubscribing(true)
+      setSubscribeError(null)
+      const res = await subscriptionsService.subscribe(planId, 'Card')
+      const url = res.card?.checkoutUrl
+      if (url) {
+        window.location.href = url
+        return
+      }
+      setSubscribeError('Não foi possível obter o link de pagamento. Tente novamente.')
+      setSubscribing(false)
+    }
+    catch (e) {
+      if (isAxiosError(e)) {
+        if (e.response?.status === 409)
+          setSubscribeError('Você já possui uma assinatura ativa.')
+        else if (e.response?.status === 400)
+          setSubscribeError('Este plano não está mais disponível.')
+        else
+          setSubscribeError(e.message ?? 'Erro ao iniciar o checkout.')
+      }
+      else {
+        setSubscribeError(e instanceof Error ? e.message : 'Erro ao iniciar o checkout.')
+      }
+      setSubscribing(false)
+    }
+  }
 
   const sortedBenefits = useMemo(() => {
     if (!plan)
@@ -119,9 +153,17 @@ export function PlanDetailsPage() {
                 ))}
               </ul>
             ) : null}
-            <Link to={`/plans/${plan.planId}/checkout`} className="plan-detail__cta">
-              Assinar agora
-            </Link>
+            {subscribeError ? (
+              <p role="alert" className="plan-detail__error">{subscribeError}</p>
+            ) : null}
+            <button
+              type="button"
+              className="plan-detail__cta"
+              onClick={() => void handleSubscribe()}
+              disabled={subscribing}
+            >
+              {subscribing ? 'Aguarde…' : 'Assinar agora'}
+            </button>
             <p className="plan-detail__note">
               Você será direcionado ao checkout em uma plataforma externa.*
             </p>

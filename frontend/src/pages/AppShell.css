@@ -1029,16 +1029,23 @@
   color: #8cd392;
   font-size: 0.85rem;
   font-weight: 700;
+  font-family: inherit;
   letter-spacing: 0.1em;
   text-align: center;
   text-decoration: none;
   text-transform: uppercase;
+  cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease;
 }
 
-.plan-detail__cta:hover {
+.plan-detail__cta:hover:not(:disabled) {
   background: rgba(140, 211, 146, 0.1);
   border-color: rgba(140, 211, 146, 0.8);
+}
+
+.plan-detail__cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .plan-detail__note {
