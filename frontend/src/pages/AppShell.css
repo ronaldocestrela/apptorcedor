@@ -960,6 +960,94 @@
   text-align: center;
 }
 
+/* ── Plan Detail (`/plans/:id`) ── */
+.plan-detail {
+  padding: 0 1rem 1.5rem;
+}
+
+.plan-detail__error {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #ffc6c6;
+  text-align: center;
+}
+
+.plan-detail__card {
+  border: 1px solid rgba(140, 211, 146, 0.7);
+  border-radius: 18px;
+  padding: 1.5rem 1.25rem 1.25rem;
+  background: rgba(14, 19, 26, 0.82);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.26);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.plan-detail__name {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f5f7fa;
+  text-align: center;
+}
+
+.plan-detail__summary {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #a6b0bf;
+  text-align: center;
+}
+
+.plan-detail__benefits {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.plan-detail__benefit-item {
+  font-size: 0.88rem;
+  color: #a6b0bf;
+  text-align: center;
+  padding: 0.65rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.plan-detail__cta {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 1rem;
+  padding: 0.72rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(140, 211, 146, 0.55);
+  background: transparent;
+  color: #8cd392;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.plan-detail__cta:hover {
+  background: rgba(140, 211, 146, 0.1);
+  border-color: rgba(140, 211, 146, 0.8);
+}
+
+.plan-detail__note {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  color: #7b8794;
+  text-align: center;
+}
+
 .account-root {
   display: flex;
   flex-direction: column;

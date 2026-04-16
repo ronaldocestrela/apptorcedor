@@ -105,7 +105,11 @@ export function PlansPage() {
                       %
                     </p>
                   ) : null}
-                  <Link to={`/plans/${plan.planId}`} className="plans-page__cta">
+                  <Link
+                    to={`/plans/${plan.planId}`}
+                    state={{ featured: index === 0 }}
+                    className="plans-page__cta"
+                  >
                     Mais detalhes
                   </Link>
                 </div>
