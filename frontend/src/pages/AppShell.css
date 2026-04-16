@@ -236,6 +236,115 @@
   color: #7b8794;
 }
 
+.dash-benefits-section {
+  margin-bottom: 1.5rem;
+}
+
+.dash-benefits-section .dash-section-title {
+  margin-bottom: 0.65rem;
+}
+
+.dash-benefits-carousel {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0.25rem 0;
+}
+
+.dash-benefits-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.dash-benefit-banner {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  width: 80vw;
+  max-width: 300px;
+  border-radius: 16px;
+  border: 1px solid rgba(140, 211, 146, 0.22);
+  background: rgba(14, 19, 26, 0.6);
+  padding: 1rem 1rem 0.85rem;
+  text-decoration: none;
+  color: #f5f7fa;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  transition: border-color 180ms ease, background 180ms ease, transform 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dash-benefit-banner:active {
+  transform: scale(0.97);
+}
+
+.dash-benefit-banner:hover {
+  border-color: rgba(140, 211, 146, 0.5);
+  background: rgba(14, 19, 26, 0.75);
+}
+
+.dash-benefit-banner__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8cd392;
+}
+
+.dash-benefit-banner__title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #f5f7fa;
+}
+
+.dash-benefit-banner__partner {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a6b0bf;
+  background: rgba(140, 211, 146, 0.1);
+  border: 1px solid rgba(140, 211, 146, 0.2);
+  border-radius: 20px;
+  padding: 0.12rem 0.5rem;
+}
+
+.dash-benefit-banner__dates {
+  font-size: 0.78rem;
+  color: #7b8794;
+}
+
+.dash-benefit-banner__cta {
+  margin-top: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #8cd392;
+}
+
+.dash-benefit-banner-skeleton {
+  flex-shrink: 0;
+  width: 80vw;
+  max-width: 300px;
+  height: 148px;
+  border-radius: 16px;
+  background: linear-gradient(
+    90deg,
+    rgba(140, 211, 146, 0.08) 0%,
+    rgba(140, 211, 146, 0.18) 50%,
+    rgba(140, 211, 146, 0.08) 100%
+  );
+  background-size: 1200px 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
 .dash-quick-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -981,6 +1090,23 @@
   background: rgba(14, 19, 26, 0.6);
 }
 
+a.benefit-offer-card--link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 180ms ease, background 180ms ease, transform 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a.benefit-offer-card--link:active {
+  transform: scale(0.99);
+}
+
+a.benefit-offer-card--link:hover {
+  border-color: rgba(140, 211, 146, 0.45);
+  background: rgba(14, 19, 26, 0.72);
+}
+
 .benefit-offer-card__title {
   margin: 0;
   font-size: 1rem;
@@ -1017,6 +1143,93 @@
   margin: 0;
   font-size: 0.95rem;
   color: #7b8794;
+}
+
+/* ── Benefit offer detail (torcedor self-service redeem) ── */
+.benefit-detail-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: linear-gradient(160deg, #0e131a 0%, #080808 100%);
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  color: #f5f7fa;
+  padding-bottom: 68px;
+}
+
+.benefit-detail-card {
+  border-radius: 16px;
+  border: 1px solid rgba(140, 211, 146, 0.22);
+  background: rgba(14, 19, 26, 0.6);
+  padding: 1.15rem 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.benefit-detail-card__icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(140, 211, 146, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8cd392;
+}
+
+.benefit-detail-card__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f5f7fa;
+  line-height: 1.2;
+}
+
+.benefit-detail-card__partner {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #8cd392;
+  background: rgba(140, 211, 146, 0.1);
+  border: 1px solid rgba(140, 211, 146, 0.2);
+  border-radius: 20px;
+  padding: 0.15rem 0.55rem;
+}
+
+.benefit-detail-card__description {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #a6b0bf;
+}
+
+.benefit-detail-card__dates {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #7b8794;
+}
+
+.benefit-detail-redeemed-badge {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #8cd392;
+  background: rgba(140, 211, 146, 0.12);
+  border: 1px solid rgba(140, 211, 146, 0.28);
+  border-radius: 10px;
+  padding: 0.45rem 0.65rem;
+}
+
+.benefit-detail-redeem-btn {
+  margin-top: 0.35rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.benefit-detail-error {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #ffc6c6;
 }
 
 /* ── Tickets page ── */

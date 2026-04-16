@@ -32,6 +32,17 @@ public sealed record TorcedorEligibleBenefitOffersPageResponse(
     int TotalCount,
     IReadOnlyList<TorcedorEligibleBenefitOfferResponse> Items);
 
+public sealed record TorcedorEligibleBenefitOfferDetailResponse(
+    Guid OfferId,
+    Guid PartnerId,
+    string PartnerName,
+    string Title,
+    string? Description,
+    DateTimeOffset StartAt,
+    DateTimeOffset EndAt,
+    bool AlreadyRedeemed,
+    DateTimeOffset? RedemptionDateUtc);
+
 public sealed record TorcedorPublishedPlanBenefitResponse(Guid BenefitId, string Title, string? Description);
 
 public sealed record TorcedorPublishedPlanItemResponse(

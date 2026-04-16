@@ -64,21 +64,23 @@ export function BenefitsEligiblePage() {
         ) : null}
         <ul className="benefit-offer-list">
           {items.map(item => (
-            <li key={item.offerId} className="benefit-offer-card">
-              <p className="benefit-offer-card__title">{item.title}</p>
-              <span className="benefit-offer-card__partner">{item.partnerName}</span>
-              {item.description ? (
-                <p className="benefit-offer-card__description">{item.description}</p>
-              ) : null}
-              <p className="benefit-offer-card__dates">
-                Válido de
-                {' '}
-                {new Date(item.startAt).toLocaleDateString('pt-BR')}
-                {' '}
-                até
-                {' '}
-                {new Date(item.endAt).toLocaleDateString('pt-BR')}
-              </p>
+            <li key={item.offerId}>
+              <Link to={`/benefits/${item.offerId}`} className="benefit-offer-card benefit-offer-card--link">
+                <p className="benefit-offer-card__title">{item.title}</p>
+                <span className="benefit-offer-card__partner">{item.partnerName}</span>
+                {item.description ? (
+                  <p className="benefit-offer-card__description">{item.description}</p>
+                ) : null}
+                <p className="benefit-offer-card__dates">
+                  Válido de
+                  {' '}
+                  {new Date(item.startAt).toLocaleDateString('pt-BR')}
+                  {' '}
+                  até
+                  {' '}
+                  {new Date(item.endAt).toLocaleDateString('pt-BR')}
+                </p>
+              </Link>
             </li>
           ))}
         </ul>

@@ -190,6 +190,14 @@ A fonte **Outfit** deve ser carregada via Google Fonts ou bundled. É humanista,
 - **Mobile (<640px):** `grid-template-columns: repeat(2, 1fr)`, `gap: 0.75rem`
 - **Desktop (≥640px):** `grid-template-columns: repeat(4, 1fr)`
 
+### 4.7.1 Carrossel de benefícios na home (`.dash-benefits-*`)
+
+- **Seção:** `.dash-benefits-section` — bloco abaixo do hero/alertas e acima de “Acessos rápidos”; só aparece se houver ofertas elegíveis (ou skeleton enquanto carrega).
+- **Trilho:** `.dash-benefits-carousel` — `display: flex`, `gap: 0.75rem`, `overflow-x: auto`, `scroll-snap-type: x mandatory`, scrollbar oculta (webkit + Firefox).
+- **Banner:** `.dash-benefit-banner` — `scroll-snap-align: start`, largura ~`80vw` com `max-width: 300px`, superfície e borda no mesmo padrão dos `.dash-quick-card`; link para `/benefits/:offerId`.
+- **Skeleton:** `.dash-benefit-banner-skeleton` — altura fixa ~148px, animação `shimmer` (mesma dos feeds).
+- **Detalhe / resgate:** `.benefit-detail-root` + `.benefit-detail-card` — subpágina com ícone `Gift`, texto e botão `.btn-primary` “Resgatar benefício”; viewport full-bleed via `#root:has(.benefit-detail-root)`.
+
 ### 4.8 Layout de Notícias Torcedor (`.news-*`)
 
 **Mobile (< 640px):**
@@ -500,7 +508,8 @@ O projeto usa **Plain CSS com BEM-like naming**. Sem CSS Modules, sem Tailwind.
 | `.admin-kpi-card*` | Componente KPI card |
 | `.admin-kpi-skeleton` | Skeleton loading KPI |
 | `.admin-dashboard__*` | Página dashboard admin |
-| `.dash-*` | Tela home do torcedor (mobile-first) |
+| `.dash-*` | Tela home do torcedor (mobile-first); inclui `.dash-benefits-*` (carrossel de benefícios) |
+| `.benefit-detail-*` | Página de detalhe e resgate self-service (`/benefits/:offerId`) |
 | `.app-shell*` | Container genérico de páginas públicas/torcedor |
 | `.app-surface` | Card/container com fundo translúcido verde |
 | `.btn-*` | Botões globais |

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Calendar } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { listTorcedorGames, type TorcedorGameListItem } from '../features/torcedor/torcedorGamesApi'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'

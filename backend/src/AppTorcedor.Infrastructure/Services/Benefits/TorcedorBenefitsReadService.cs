@@ -78,4 +78,64 @@ public sealed class TorcedorBenefitsReadService(AppDbContext db) : ITorcedorBene
 
         return new TorcedorEligibleBenefitOffersPageDto(total, pageItems);
     }
+
+    public async Task<TorcedorEligibleBenefitOfferDetailDto?> GetEligibleOfferDetailAsync(
+        Guid userId,
+        Guid offerId,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        var membership = await db.Memberships.AsNoTracking()
+            .FirstOrDefaultAsync(m => m.UserId == userId, cancellationToken)
+            .ConfigureAwait(false);
+        var snapshot = membership is null
+            ? null
+            : new MembershipRecordSnapshot(membership.PlanId, membership.Status);
+
+        var row = await (
+                from o in db.BenefitOffers.AsNoTracking()
+                join p in db.BenefitPartners.AsNoTracking() on o.PartnerId equals p.Id
+                where o.Id == offerId
+                select new { Offer = o, Partner = p })
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (row is null)
+            return null;
+
+        if (!row.Partner.IsActive || !row.Offer.IsActive || now < row.Offer.StartAt || now > row.Offer.EndAt)
+            return null;
+
+        var planRows = await db.BenefitOfferPlanEligibilities.AsNoTracking()
+            .Where(e => e.OfferId == offerId)
+            .Select(e => e.PlanId)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var statusRows = await db.BenefitOfferMembershipStatusEligibilities.AsNoTracking()
+            .Where(e => e.OfferId == offerId)
+            .Select(e => e.Status)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!BenefitOfferEligibility.MatchesPlanAndStatus(planRows, statusRows, snapshot))
+            return null;
+
+        var redemption = await db.BenefitRedemptions.AsNoTracking()
+            .Where(r => r.OfferId == offerId && r.UserId == userId)
+            .OrderByDescending(r => r.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return new TorcedorEligibleBenefitOfferDetailDto(
+            row.Offer.Id,
+            row.Offer.PartnerId,
+            row.Partner.Name,
+            row.Offer.Title,
+            row.Offer.Description,
+            row.Offer.StartAt,
+            row.Offer.EndAt,
+            redemption is not null,
+            redemption?.CreatedAt);
+    }
 }
