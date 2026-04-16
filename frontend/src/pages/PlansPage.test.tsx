@@ -16,7 +16,7 @@ describe('PlansPage', () => {
     vi.mocked(plansService.listPublished).mockReset()
   })
 
-  it('renders modern catalog grid with cards and actions', async () => {
+  it('renders catalog with header, featured badge and MAIS DETALHES links', async () => {
     vi.mocked(plansService.listPublished).mockResolvedValue({
       items: [
         {
@@ -38,13 +38,43 @@ describe('PlansPage', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Planos de sócio/i })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /^Planos$/i })).toBeInTheDocument()
     })
 
+    expect(container.querySelector('.plans-root')).toBeInTheDocument()
     expect(container.querySelector('.plans-page')).toBeInTheDocument()
-    expect(container.querySelector('.plans-page__grid')).toBeInTheDocument()
+    expect(container.querySelector('.plans-page__list')).toBeInTheDocument()
     expect(container.querySelectorAll('.plans-page__card')).toHaveLength(1)
-    expect(screen.getByRole('link', { name: /Assinar/i })).toBeInTheDocument()
+    expect(screen.getByText('Mais Popular')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Mais detalhes/i })).toHaveAttribute('href', '/plans/p1')
+    expect(screen.getByText('99,00')).toBeInTheDocument()
+    expect(screen.getByText('/ mês')).toBeInTheDocument()
+  })
+
+  it('shows billing period suffix from plan billingCycle', async () => {
+    vi.mocked(plansService.listPublished).mockResolvedValue({
+      items: [
+        {
+          planId: 'p1',
+          name: 'Anual',
+          price: 1200,
+          billingCycle: 'Yearly',
+          discountPercentage: 0,
+          summary: null,
+          benefits: [],
+        },
+      ],
+    })
+
+    render(
+      <MemoryRouter>
+        <PlansPage />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('/ ano')).toBeInTheDocument()
+    })
   })
 
   it('shows empty state when no plans are published', async () => {

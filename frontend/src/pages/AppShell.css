@@ -815,35 +815,149 @@
   }
 }
 
-.plans-page__grid {
-  margin-top: 1.35rem;
-  display: grid;
+/* ── Planos (`/plans`) — catálogo mobile (mock) ── */
+.plans-page {
+  padding: 0 1rem 1.5rem;
+}
+
+.plans-page__header-title {
+  text-align: center;
+}
+
+.plans-page__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.plans-page__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .plans-page__card {
+  width: 100%;
+  box-sizing: border-box;
   border: 1px solid rgba(140, 211, 146, 0.28);
-  border-radius: 14px;
-  padding: 1rem;
-  background: rgba(14, 19, 26, 0.8);
+  border-radius: 18px;
+  padding: 1.5rem 1.25rem 1.25rem;
+  background: rgba(14, 19, 26, 0.82);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.26);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.plans-page__card--featured {
+  border-color: rgba(140, 211, 146, 0.7);
+}
+
+.plans-page__badge {
+  display: inline-block;
+  padding: 0.25rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(140, 211, 146, 0.6);
+  background: rgba(140, 211, 146, 0.12);
+  color: #8cd392;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.plans-page__name {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f5f7fa;
+  text-align: center;
+}
+
+.plans-page__summary {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #a6b0bf;
+  text-align: center;
 }
 
 .plans-page__price {
-  margin: 0;
-  font-size: 1.4rem;
-  color: #f5f7fa;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  margin: 0.5rem 0;
 }
 
-.plans-page__cycle {
-  font-size: 0.86rem;
+.plans-page__price-currency {
+  font-size: 0.85rem;
+  color: #f5f7fa;
+  font-weight: 600;
+}
+
+.plans-page__price-value {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #8cd392;
+  line-height: 1;
+}
+
+.plans-page__price-cycle {
+  font-size: 0.85rem;
   color: #a6b0bf;
+  margin-left: 0.2rem;
+}
+
+.plans-page__cta {
+  display: block;
+  margin-top: 0.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(140, 211, 146, 0.55);
+  background: transparent;
+  color: #8cd392;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.plans-page__cta:hover {
+  background: rgba(140, 211, 146, 0.1);
+  border-color: rgba(140, 211, 146, 0.8);
+}
+
+.plans-page__settings-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #f5f7fa;
+  padding: 0;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.plans-page__settings-btn:hover {
+  color: #8cd392;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .plans-page__discount {
-  margin: 0.35rem 0 0;
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
   color: #8cd392;
-  font-size: 0.9rem;
+  text-align: center;
 }
 
 .account-root {
@@ -1160,12 +1274,13 @@
   }
 }
 
-/* ── Torcedor subpages: Games, Tickets, Digital Card, Loyalty, Benefits ── */
+/* ── Torcedor subpages: Games, Tickets, Digital Card, Loyalty, Benefits, Planos ── */
 .games-root,
 .tickets-root,
 .digital-card-root,
 .loyalty-root,
-.benefits-root {
+.benefits-root,
+.plans-root {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
