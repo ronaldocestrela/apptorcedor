@@ -39,7 +39,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Ronaldo')).toBeInTheDocument()
     const bottomNav = container.querySelector('.dash-bottom-nav')
     expect(bottomNav).toBeInTheDocument()
-    expect(bottomNav!.querySelectorAll('.dash-bottom-nav__item')).toHaveLength(6)
+    expect(bottomNav!.querySelectorAll('.dash-bottom-nav__item')).toHaveLength(5)
   })
 
   it('shows admin badge when user has admin permissions', () => {

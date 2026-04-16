@@ -547,7 +547,7 @@ O `#root` padrão tem `width: 1126px` para páginas públicas. Páginas que deve
 ## 13. Bottom Navigation — Comportamento
 
 - Visível apenas em mobile (`< 640px`)
-- 5 itens fixos: Início (`/dashboard`), Notícias (`/news`), Jogos (`/games`), Carteirinha (`/digital-card`), Conta (`/account`)
+- 5 itens fixos: Início (`/`), Notícias (`/news`), Jogos (`/games`), Carteirinha (`/digital-card`), Conta (`/account`); **Benefícios** não entram na barra — acesso em Conta (`/account`) pelo botão “Meus benefícios” (`/benefits`)
 - Usa `<NavLink>` com classe `active` aplicada via callback
 - Altura 64px + `env(safe-area-inset-bottom)` para iPhone X+
 - O `.dash-root` tem `padding-bottom: 68px` para não ficar atrás da barra
