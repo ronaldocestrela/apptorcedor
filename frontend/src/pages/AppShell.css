@@ -1372,6 +1372,8 @@
 /* ── Torcedor subpages: Games, Tickets, Digital Card, Loyalty, Benefits, Planos ── */
 .games-root,
 .tickets-root,
+.support-root,
+.support-detail-root,
 .digital-card-root,
 .loyalty-root,
 .benefits-root,
@@ -1434,6 +1436,32 @@
   border: 1px solid rgba(140, 211, 146, 0.2);
   border-radius: 20px;
   padding: 0.18rem 0.6rem;
+}
+
+.subpage-header__badge-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #f5f7fa;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: color 200ms ease, background 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.subpage-header__badge-btn:hover {
+  color: #8cd392;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.subpage-header__badge-btn:focus-visible {
+  outline: 2px solid rgba(140, 211, 146, 0.55);
+  outline-offset: 2px;
 }
 
 .subpage-content {
@@ -2059,4 +2087,376 @@ a.benefit-offer-card--link:hover {
   margin-top: 0.6rem;
   font-size: 0.88rem;
   color: #a6b0bf;
+}
+
+/* ── Support (chamados / tickets) ── */
+.support-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  padding: 2.5rem 1rem 1.5rem;
+  max-width: 22rem;
+  margin: 0 auto;
+}
+
+.support-empty__text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #cccccc;
+  font-style: italic;
+}
+
+.support-new-btn {
+  margin-top: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.75rem;
+  border-radius: 999px;
+  border: 1.5px solid #66bb6a;
+  background: rgba(8, 8, 8, 0.45);
+  color: #66bb6a;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    border-color 200ms ease,
+    color 200ms ease,
+    background 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.support-new-btn:hover:not(:disabled) {
+  border-color: #8cd392;
+  color: #8cd392;
+  background: rgba(140, 211, 146, 0.08);
+}
+
+.support-new-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.support-form-panel {
+  margin-bottom: 1.25rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(14, 19, 26, 0.75);
+  padding: 1rem 1rem 1.1rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+}
+
+.support-form-panel__title {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f5f7fa;
+}
+
+.support-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.support-form__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.support-form__row label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a6b0bf;
+}
+
+.support-form__row input,
+.support-form__row select,
+.support-form__row textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 8, 8, 0.55);
+  color: #f5f7fa;
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.support-form__row input::placeholder,
+.support-form__row textarea::placeholder {
+  color: #7b8794;
+}
+
+.support-form__row input:focus,
+.support-form__row select:focus,
+.support-form__row textarea:focus {
+  outline: none;
+  border-color: rgba(140, 211, 146, 0.45);
+  box-shadow: 0 0 0 1px rgba(140, 211, 146, 0.2);
+}
+
+.support-form__row select {
+  cursor: pointer;
+}
+
+.support-form__row input[type='file'] {
+  padding: 0.45rem 0;
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  color: #a6b0bf;
+}
+
+.support-form__error {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #ffb4ba;
+}
+
+.support-form__submit {
+  margin-top: 0.35rem;
+  align-self: flex-start;
+  padding: 0.55rem 1.25rem;
+  border-radius: 999px;
+  border: none;
+  background: #8cd392;
+  color: #0e131a;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: filter 200ms ease, opacity 200ms ease;
+}
+
+.support-form__submit:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.support-form__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.support-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.support-ticket-card {
+  display: block;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.9rem 1rem;
+  background: rgba(14, 19, 26, 0.6);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 200ms ease,
+    background 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.support-ticket-card:hover {
+  border-color: rgba(140, 211, 146, 0.28);
+  background: rgba(14, 19, 26, 0.85);
+}
+
+.support-ticket-card__subject {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f5f7fa;
+  line-height: 1.3;
+}
+
+.support-ticket-card__meta {
+  margin: 0.45rem 0 0;
+  font-size: 0.82rem;
+  color: #a6b0bf;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.support-ticket-card__date {
+  font-size: 0.8rem;
+  color: #7b8794;
+  margin: 0.35rem 0 0;
+}
+
+.support-status-badge {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid transparent;
+}
+
+.support-status-badge--open {
+  color: #96d696;
+  background: rgba(140, 211, 146, 0.12);
+  border-color: rgba(140, 211, 146, 0.35);
+}
+
+.support-status-badge--progress {
+  color: #8ec5ff;
+  background: rgba(100, 160, 255, 0.12);
+  border-color: rgba(100, 160, 255, 0.35);
+}
+
+.support-status-badge--closed {
+  color: #7b8794;
+  background: rgba(123, 135, 148, 0.15);
+  border-color: rgba(123, 135, 148, 0.35);
+}
+
+.support-status-badge--default {
+  color: #c8cdd4;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.support-status-badge--sla {
+  color: #ffb4ba;
+  background: rgba(141, 44, 52, 0.2);
+  border-color: rgba(255, 140, 140, 0.45);
+}
+
+.support-detail-meta {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: #a6b0bf;
+  line-height: 1.45;
+}
+
+.support-detail-meta strong {
+  color: #f5f7fa;
+  font-weight: 600;
+}
+
+.support-msg-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.support-msg-card {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(30, 30, 30, 0.65);
+  padding: 0.85rem 1rem;
+}
+
+.support-msg-card__body {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  color: #e8eaed;
+  line-height: 1.45;
+}
+
+.support-msg-card__time {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: #7b8794;
+}
+
+.support-msg-card__attachments {
+  margin: 0.55rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  color: #a6b0bf;
+}
+
+.support-msg-card__attachments button {
+  background: none;
+  border: none;
+  color: #8cd392;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font: inherit;
+}
+
+.support-section-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7b8794;
+}
+
+.support-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
+.support-btn-secondary {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(8, 8, 8, 0.4);
+  color: #f5f7fa;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.support-btn-secondary:hover:not(:disabled) {
+  border-color: rgba(140, 211, 146, 0.4);
+}
+
+.support-btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.support-history {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.support-history__list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  color: #a6b0bf;
+  line-height: 1.45;
+}
+
+.support-history__list li {
+  margin-bottom: 0.45rem;
+}
+
+.subpage-header__title--truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }

@@ -521,6 +521,7 @@ O projeto usa **Plain CSS com BEM-like naming**. Sem CSS Modules, sem Tailwind.
 | `.account-root`, `.account-page__*` | Página de conta (`/account`) — wrapper full-viewport + conteúdo |
 | `.news-*` | Páginas de notícias do torcedor (`/news` e `/news/:id`) |
 | `.games-page__*`, `.games-schedule`, `.games-day__*`, `.game-card-ev*` | Página de jogos (`/games`) — cartões de partida por dia |
+| `.support-root`, `.support-detail-root`, `.support-ticket-card`, `.support-empty`, `.support-new-btn`, `.support-form*`, `.support-msg-card`, `.support-status-badge*` | Chamados do torcedor (`/support`, `/support/:ticketId`) — mesmo gradiente full-viewport que `.tickets-root`, header `.subpage-header`, estado vazio com CTA outline mint (`#66bb6a`), lista em cards escuros, formulário em `.support-form-panel`; botão de ação no header: `.subpage-header__badge-btn` (ícone engrenagem) |
 
 ---
 
@@ -555,10 +556,10 @@ O `#root` padrão tem `width: 1126px` para páginas públicas. Páginas que deve
   padding: 0;
 }
 
-/* Conta (`/account`): `.account-root`; planos (`/plans`): `.plans-root` — ver `src/index.css` (mesmo bloco `:has()` das subpáginas torcedor). */
+/* Conta (`/account`): `.account-root`; planos (`/plans`): `.plans-root`; chamados (`/support`): `.support-root` e `.support-detail-root` — ver `src/index.css` (mesmo bloco `:has()` das subpáginas torcedor). */
 ```
 
-**Regra:** toda nova tela que precisar de full-viewport deve adicionar a classe raiz correspondente como seletor `:has()` em `src/index.css` (ex.: `.account-root`, `.plans-root`).
+**Regra:** toda nova tela que precisar de full-viewport deve adicionar a classe raiz correspondente como seletor `:has()` em `src/index.css` (ex.: `.account-root`, `.plans-root`, `.support-root`).
 
 ---
 
