@@ -82,6 +82,19 @@ export async function updateConfiguration(key: string, value: string): Promise<A
   return data
 }
 
+export async function uploadTeamShield(file: File): Promise<string> {
+  const fd = new FormData()
+  fd.append('file', file)
+  const { data } = await api.post<{ teamShieldUrl: string }>('/api/admin/config/team-shield', fd, {
+    transformRequest: (body, headers) => {
+      if (body instanceof FormData)
+        delete headers['Content-Type']
+      return body
+    },
+  })
+  return data.teamShieldUrl
+}
+
 export async function listAuditLogs(params: { entityType?: string; take?: number }): Promise<AuditLogRow[]> {
   const { data } = await api.get<AuditLogRow[]>('/api/admin/audit-logs', {
     params: {

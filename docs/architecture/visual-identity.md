@@ -15,6 +15,13 @@ O sistema possui **dois contextos visuais distintos** que compartilham a mesma p
 
 Ambos os contextos usam um **tema escuro único** — não há modo claro. O sistema é inspirado em cores de campo de futebol: verde escuro profundo como base, verde limão brilhante como acento.
 
+### 1.1 Escudo do clube (marca dinâmica)
+
+- O **escudo exibido** no login (`/login`), cadastro (`/register`), sidebar do admin e cabeçalho do dashboard do torcedor vem da API: `GET /api/branding` → `teamShieldUrl` (pode ser `null`).
+- **Sem URL configurada:** o frontend usa um **placeholder SVG** embutido (tons `#1a2229` / `#8cd392`, escudo genérico) — não depende de arquivos em `/public/logos/` para essas telas.
+- **Com URL configurada:** o admin envia imagem em `/admin/configurations` (JPEG/PNG/WebP); a API grava em storage (`TeamShield:Provider` Local ou Cloudinary) e persiste a URL na entrada `Brand.TeamShieldUrl`.
+- O **favicon** em `frontend/index.html` continua apontando para um asset estático em `/logos/` até eventual evolução dedicada.
+
 ---
 
 ## 2. Paleta de Cores

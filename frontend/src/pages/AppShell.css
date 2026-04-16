@@ -126,6 +126,20 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.dash-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.dash-header__logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .dash-header__logo-text {
   font-size: 1.1rem;
   font-weight: 700;

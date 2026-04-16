@@ -22,6 +22,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("Payments:Provider", "Mock");
         builder.UseSetting("Payments:WebhookSecret", "test-webhook-secret");
         builder.UseSetting("ProfilePhotos:Provider", "Local");
+        builder.UseSetting("TeamShield:Provider", "Local");
         builder.UseSetting("SupportTicketAttachments:Provider", "Local");
     }
 }

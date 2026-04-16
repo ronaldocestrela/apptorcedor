@@ -17,6 +17,7 @@ import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import { ADMIN_AREA_PERMISSIONS } from '../shared/auth/applicationPermissions'
 import { canAccessAdminArea } from '../shared/auth/permissionUtils'
 import { useAuth } from '../features/auth/AuthContext'
+import { TeamShieldLogo } from '../shared/branding/TeamShieldLogo'
 import {
   listEligibleBenefitOffers,
   type TorcedorEligibleBenefitOffer,
@@ -77,7 +78,10 @@ export function DashboardPage() {
   return (
     <div className="dash-root">
       <header className="dash-header">
-        <span className="dash-header__logo-text">AppTorcedor</span>
+        <div className="dash-header__brand">
+          <TeamShieldLogo className="dash-header__logo" alt="Escudo do clube" width={36} height={36} />
+          <span className="dash-header__logo-text">AppTorcedor</span>
+        </div>
         <div className="dash-header__right">
           {user?.name ? <UserAvatar name={user.name} /> : null}
           <button

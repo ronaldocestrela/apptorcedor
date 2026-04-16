@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { getRegistrationRequirements, type RegistrationRequirements } from '../features/account/accountApi'
+import { TeamShieldLogo } from '../shared/branding/TeamShieldLogo'
 import { useAuth } from '../features/auth/AuthContext'
 import './RegisterPage.css'
 
@@ -68,14 +69,7 @@ export function RegisterPage() {
     <main className="register-page">
       <section className="register-page__panel">
         <div className="register-page__panel-content">
-          <img
-            className="register-page__logo"
-            src="/logos/ESCUDO_FFC_VERDE.png"
-            alt="FFC"
-            width={56}
-            height={56}
-            decoding="async"
-          />
+          <TeamShieldLogo className="register-page__logo" alt="Escudo do clube" width={56} height={56} />
           <h1 className="register-page__title">Crie sua Conta</h1>
           <p className="register-page__subtitle">Preencha os dados abaixo para se registrar.</p>
 

@@ -95,6 +95,21 @@ Este documento descreve **todas as configurações disponíveis** no sistema, or
 
 ---
 
+### 7.5. Armazenamento do escudo do clube (TeamShield)
+
+| Chave | Variável de Ambiente | Padrão | Descrição |
+|-------|----------------------|--------|-----------|
+| `TeamShield:Provider` | `TeamShield__Provider` | `Local` | Onde a imagem do **escudo do time** é armazenada após upload pelo admin. Valores: `Local` (disco em `wwwroot/uploads/team-shield`) ou `Cloudinary` (URL absoluta HTTPS). |
+| `TeamShield:RootPath` | `TeamShield__RootPath` | *(vazio = automático)* | Caminho absoluto local. Se vazio, usa `{ContentRoot}/wwwroot/uploads/team-shield`. |
+| `TeamShield:MaxBytes` | `TeamShield__MaxBytes` | `5242880` (5 MB) | Tamanho máximo do arquivo (JPEG, PNG ou WebP). |
+| `TeamShield:Cloudinary:Folder` | `TeamShield__Cloudinary__Folder` | `team-shield` | Pasta no Cloudinary para o escudo (sobrescrita no mesmo `public_id` lógico por upload). |
+
+**Leitura pública:** `GET /api/branding` (anônimo) retorna `{ "teamShieldUrl": "<url ou null>" }`. O valor persistido no banco é a chave administrativa `Brand.TeamShieldUrl` (Tipo B).
+
+**Upload administrativo:** `POST /api/admin/config/team-shield` com `multipart/form-data` campo `file` — exige JWT e permissão `Configuracoes.Editar`. Atualiza `Brand.TeamShieldUrl` e remove o arquivo anterior quando aplicável (best effort).
+
+---
+
 ### 8. Armazenamento de Anexos de Suporte
 
 | Chave | Variável de Ambiente | Padrão | Descrição |
@@ -111,7 +126,7 @@ Este documento descreve **todas as configurações disponíveis** no sistema, or
 
 ### 9. Cloudinary — CDN de Mídia
 
-Necessário apenas quando `ProfilePhotos:Provider=Cloudinary` ou `SupportTicketAttachments:Provider=Cloudinary`.
+Necessário quando `ProfilePhotos:Provider=Cloudinary`, `SupportTicketAttachments:Provider=Cloudinary` ou `TeamShield:Provider=Cloudinary`.
 
 | Chave | Variável de Ambiente | Padrão | Descrição |
 |-------|----------------------|--------|-----------|
@@ -196,6 +211,21 @@ Define o **prazo de arrependimento** em dias que o torcedor tem para cancelar a 
 
 ---
 
+### B.2 — Identidade visual (escudo do clube)
+
+#### `Brand.TeamShieldUrl`
+
+| Atributo | Detalhe |
+|----------|---------|
+| **Tipo do valor** | String — caminho relativo servido pela API (ex.: `/uploads/team-shield/....jpg`) ou URL absoluta (Cloudinary) |
+| **Padrão** | *(ausente)* — o frontend usa um **placeholder SVG** até o primeiro upload |
+| **Definido por** | `POST /api/admin/config/team-shield` (recomendado) ou edição manual da chave em `/admin/configurations` |
+| **Consumo** | `GET /api/branding`; componente `TeamShieldLogo` no login, cadastro, shell admin e header do torcedor |
+
+**Nota:** alterar apenas o texto da chave sem enviar arquivo por multipart **não** cria arquivo novo no storage; prefira sempre o upload pelo painel (seção *Identidade — escudo do clube*) para manter arquivo e URL alinhados.
+
+---
+
 ## Comportamentos Automáticos (não configuráveis pelo admin)
 
 Os itens abaixo são comportamentos fixos no código que operam de forma periódica sem configuração administrativa:
@@ -246,6 +276,7 @@ Payments__Stripe__CancelUrl=https://app.seudominio.com.br/plans
 
 # Storage de mídia
 ProfilePhotos__Provider=Cloudinary
+TeamShield__Provider=Cloudinary
 SupportTicketAttachments__Provider=Cloudinary
 Cloudinary__CloudName=apptorcedor
 Cloudinary__ApiKey=...

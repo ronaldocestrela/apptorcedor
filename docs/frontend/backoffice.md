@@ -16,7 +16,7 @@ Rotas do **torcedor** fora do `/admin`: **C.1** — `/register` (cadastro públi
 | `/admin/users` | `Usuarios.Visualizar` — listagem e busca de **todas** as contas (torcedores, não associados e staff); edição de perfil e ativar/inativar conta exige `Usuarios.Editar` |
 | `/admin/users/:userId` | `Usuarios.Visualizar` (detalhe, histórico de auditoria da conta/perfil); mutações como em `/admin/users` |
 | `/admin/diagnostics` | `Administracao.Diagnostics` |
-| `/admin/configurations` | `Configuracoes.Visualizar` (edição exige `Configuracoes.Editar`) |
+| `/admin/configurations` | `Configuracoes.Visualizar` (edição exige `Configuracoes.Editar`); inclui **upload do escudo do clube** (`POST /api/admin/config/team-shield`) e preview via `GET /api/branding` |
 | `/admin/audit-logs` | `Configuracoes.Visualizar` |
 | `/admin/role-permissions` | `Configuracoes.Visualizar` (edição exige `Configuracoes.Editar`) |
 | `/admin/membership` | `Socios.Gerenciar` (filtros `?userId=` / `?membershipId=`; ver [parte-b4-membership-admin.md](../architecture/parte-b4-membership-admin.md)) |
@@ -48,7 +48,7 @@ Rotas do **torcedor** fora do `/admin`: **C.1** — `/register` (cadastro públi
 
 ## Integração HTTP
 
-Serviços em [`frontend/src/features/admin/services/adminApi.ts`](../../frontend/src/features/admin/services/adminApi.ts) centralizam chamadas aos endpoints administrativos (incluindo **usuários** em `/api/admin/users`) e ao aceite de convite (`/api/auth/accept-staff-invite`).
+Serviços em [`frontend/src/features/admin/services/adminApi.ts`](../../frontend/src/features/admin/services/adminApi.ts) centralizam chamadas aos endpoints administrativos (incluindo **usuários** em `/api/admin/users`), **upload do escudo** (`uploadTeamShield` → `POST /api/admin/config/team-shield`) e ao aceite de convite (`/api/auth/accept-staff-invite`). A leitura pública da marca para a SPA está em [`frontend/src/shared/branding/brandingApi.ts`](../../frontend/src/shared/branding/brandingApi.ts) (`GET /api/branding`), usada pelo componente [`TeamShieldLogo.tsx`](../../frontend/src/shared/branding/TeamShieldLogo.tsx) no login, cadastro, sidebar admin e dashboard do torcedor.
 
 LGPD: [`frontend/src/features/admin/services/lgpdApi.ts`](../../frontend/src/features/admin/services/lgpdApi.ts) → `GET/POST /api/admin/lgpd/...` (ver [parte-b2-lgpd.md](../architecture/parte-b2-lgpd.md)).
 
