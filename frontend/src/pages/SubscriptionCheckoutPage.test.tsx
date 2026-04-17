@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AxiosError } from 'axios'
+import { AuthProvider } from '../features/auth/AuthContext'
 import { SubscriptionCheckoutPage } from './SubscriptionCheckoutPage'
 import { SubscriptionConfirmationPage } from './SubscriptionConfirmationPage'
 
@@ -24,12 +25,14 @@ import { subscriptionsService } from '../features/plans/subscriptionsService'
 
 function renderAtCheckout(planId: string) {
   return render(
-    <MemoryRouter initialEntries={[`/plans/${planId}/checkout`]}>
-      <Routes>
-        <Route path="plans/:planId/checkout" element={<SubscriptionCheckoutPage />} />
-        <Route path="subscription/confirmation" element={<SubscriptionConfirmationPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <AuthProvider>
+      <MemoryRouter initialEntries={[`/plans/${planId}/checkout`]}>
+        <Routes>
+          <Route path="plans/:planId/checkout" element={<SubscriptionCheckoutPage />} />
+          <Route path="subscription/confirmation" element={<SubscriptionConfirmationPage />} />
+        </Routes>
+      </MemoryRouter>
+    </AuthProvider>,
   )
 }
 
@@ -89,7 +92,7 @@ describe('SubscriptionCheckoutPage', () => {
     await waitFor(() => {
       expect(subscriptionsService.subscribe).toHaveBeenCalledWith('p1', 'Pix')
     })
-    expect(await screen.findByText(/Contratação registrada/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Você acabou de se tornar/i)).toBeInTheDocument()
     expect(await screen.findByText(/MOCK_PIX\|x/)).toBeInTheDocument()
   })
 

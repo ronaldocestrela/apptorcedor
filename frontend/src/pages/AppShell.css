@@ -960,6 +960,241 @@
   text-align: center;
 }
 
+/* ── Subscription confirmation (`/subscription/confirmation`) ── */
+.sub-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 2rem;
+}
+
+.sub-confirm__eyebrow {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #f5f7fa;
+  line-height: 1.35;
+}
+
+.sub-confirm__plan-pill {
+  margin-bottom: 1.35rem;
+}
+
+.sub-confirm__card {
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  border: 1px solid rgba(140, 211, 146, 0.65);
+  border-radius: 22px;
+  padding: 1.5rem 1.35rem 1.35rem;
+  background: #222222;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sub-confirm__card-title {
+  margin: 0 0 0.85rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #f5f7fa;
+}
+
+.sub-confirm__holder {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #f5f7fa;
+}
+
+.sub-confirm__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  text-align: center;
+}
+
+.sub-confirm__rows li {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #f5f7fa;
+  line-height: 1.45;
+}
+
+.sub-confirm__rows strong {
+  color: #8cd392;
+  font-weight: 700;
+}
+
+.sub-confirm__cta {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 1.25rem;
+  padding: 0.72rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(140, 211, 146, 0.55);
+  background: transparent;
+  color: #8cd392;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-family: inherit;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.sub-confirm__cta:hover {
+  background: rgba(140, 211, 146, 0.1);
+  border-color: rgba(140, 211, 146, 0.85);
+}
+
+.sub-confirm__return {
+  margin: 1.5rem 0 0;
+  font-size: 0.9rem;
+  color: #a6b0bf;
+}
+
+.sub-confirm__return a {
+  color: #8cd392;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sub-confirm__return a:hover {
+  text-decoration: underline;
+}
+
+.sub-confirm__pending {
+  margin-top: 1.25rem;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  padding: 1rem 1rem 1.1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(14, 19, 26, 0.75);
+  text-align: left;
+}
+
+.sub-confirm__pending-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f5f7fa;
+}
+
+.sub-confirm__pending-caption {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  color: #7b8794;
+}
+
+.sub-confirm__pending-pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: rgba(8, 8, 8, 0.5);
+  border: 1px solid rgba(140, 211, 146, 0.22);
+  border-radius: 10px;
+  padding: 0.75rem;
+  font-size: 0.78rem;
+  color: #a6b0bf;
+  margin: 0;
+}
+
+.sub-confirm__pending-copy {
+  margin: 0.75rem 0 0;
+  font-size: 0.82rem;
+  color: #a6b0bf;
+}
+
+.sub-confirm__pending-copy code {
+  font-size: 0.75rem;
+  color: #8cd392;
+  word-break: break-all;
+}
+
+.sub-confirm__pending-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #8cd392;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.sub-confirm__hint {
+  margin-top: 1rem;
+  font-size: 0.82rem;
+  color: #7b8794;
+  max-width: 420px;
+  line-height: 1.45;
+}
+
+.sub-confirm__alert {
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(141, 44, 52, 0.6);
+  background: rgba(141, 44, 52, 0.18);
+  color: #ffb4ba;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.sub-confirm-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1.5rem 1rem 2rem;
+  text-align: center;
+}
+
+.sub-confirm-empty__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f5f7fa;
+}
+
+.sub-confirm-empty__text {
+  margin: 0 0 1rem;
+  font-size: 0.92rem;
+  color: #a6b0bf;
+  line-height: 1.5;
+  max-width: 360px;
+}
+
+.sub-confirm-empty__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  justify-content: center;
+}
+
+.sub-confirm-empty__links a {
+  color: #8cd392;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sub-confirm-empty__links a:hover {
+  text-decoration: underline;
+}
+
 /* ── Plan Detail (`/plans/:id`) ── */
 .plan-detail {
   padding: 0 1rem 1.5rem;
