@@ -49,7 +49,10 @@ public sealed class StripeWebhookProcessor(
         }
 
         if (string.IsNullOrEmpty(stripeSignatureHeader))
+        {
+            logger.LogWarning("Stripe webhook missing Stripe-Signature header (proxy may have stripped it).");
             return StripeWebhookProcessResult.BadSignature;
+        }
 
         try
         {
@@ -68,7 +71,10 @@ public sealed class StripeWebhookProcessor(
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(stripeEvent.Id))
+        {
+            logger.LogWarning("Stripe webhook event has empty Id after signature verification.");
             return StripeWebhookProcessResult.InvalidPayload;
+        }
 
         if (await db.ProcessedStripeWebhookEvents.AsNoTracking()
                 .AnyAsync(e => e.EventId == stripeEvent.Id, cancellationToken)
@@ -79,7 +85,12 @@ public sealed class StripeWebhookProcessor(
             return StripeWebhookProcessResult.IgnoredEventType;
 
         if (stripeEvent.Data.Object is not Session session)
+        {
+            logger.LogWarning(
+                "Stripe checkout.session.completed has unexpected payload type (expected Session). EventType={EventType}.",
+                stripeEvent.Type);
             return StripeWebhookProcessResult.InvalidPayload;
+        }
 
         if (!string.Equals(session.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase))
             return StripeWebhookProcessResult.IgnoredEventType;
@@ -96,7 +107,12 @@ public sealed class StripeWebhookProcessor(
             .FirstOrDefaultAsync(p => p.Id == paymentId, cancellationToken)
             .ConfigureAwait(false);
         if (payment is null)
+        {
+            logger.LogWarning(
+                "Stripe webhook payment_id {PaymentId} not found in database (wrong DB/homolog instance or stale metadata).",
+                paymentId);
             return StripeWebhookProcessResult.InvalidPayload;
+        }
 
         if (!string.Equals(payment.ProviderName, "Stripe", StringComparison.Ordinal))
         {

@@ -72,7 +72,7 @@ Este documento descreve **todas as configurações disponíveis** no sistema, or
 | `Payments:Provider` | `Payments__Provider` | `Mock` | Define qual gateway processa pagamentos. Valores: `Mock` (sem cobranças reais, para testes) ou `Stripe` (cobranças reais via Checkout). |
 | `Payments:WebhookSecret` | `Payments__WebhookSecret` | *(vazio)* | Segredo do callback legacy `POST /api/subscriptions/payments/callback`. Usado em integrações de teste manual ou legado. |
 | `Payments:Stripe:ApiKey` | `Payments__Stripe__ApiKey` | *(vazio)* | Chave secreta do Stripe (`sk_test_…` ou `sk_live_…`). Necessária quando `Provider=Stripe`. |
-| `Payments:Stripe:WebhookSecret` | `Payments__Stripe__WebhookSecret` | *(vazio)* | Signing secret do endpoint de webhook no Stripe Dashboard (`whsec_…`). Valida autenticidade dos eventos recebidos. **Diferente** do `Payments:WebhookSecret`. |
+| `Payments:Stripe:WebhookSecret` | `Payments__Stripe__WebhookSecret` | *(vazio)* | Signing secret do endpoint de webhook no Stripe Dashboard (`whsec_…`). Valida autenticidade dos eventos recebidos. **Diferente** do `Payments:WebhookSecret`. Em respostas de `POST /api/webhooks/stripe`, a API inclui o cabeçalho **`X-Stripe-Webhook-Result`** (`BadSignature`, `InvalidPayload`, `ConfigurationError`, `Ok`, …) para diagnóstico; veja [guia-configuracao-stripe.md](deploy/guia-configuracao-stripe.md) §3.5. |
 | `Payments:Stripe:SuccessUrl` | `Payments__Stripe__SuccessUrl` | *(vazio)* | URL para onde o Stripe redireciona o torcedor após pagamento bem-sucedido. Deve apontar para `{SPA}/subscription/confirmation`. |
 | `Payments:Stripe:CancelUrl` | `Payments__Stripe__CancelUrl` | *(vazio)* | URL para onde o Stripe redireciona se o torcedor abandonar o Checkout. Normalmente `{SPA}/plans`. |
 
