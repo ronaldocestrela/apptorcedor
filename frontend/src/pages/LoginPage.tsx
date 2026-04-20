@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { getRegistrationRequirements, type RegistrationRequirements } from '../features/account/accountApi'
-import { TeamShieldLogo } from '../shared/branding/TeamShieldLogo'
 import { loadGoogleScript } from '../features/account/loadGoogleScript'
 import { useAuth } from '../features/auth/AuthContext'
 import './LoginPage.css'
@@ -99,7 +98,14 @@ export function LoginPage() {
     <main className="login-page">
       <section className="login-page__panel">
         <div className="login-page__panel-content">
-          <TeamShieldLogo className="login-page__logo" alt="Escudo do clube" width={56} height={56} />
+          <img
+            className="login-page__logo"
+            src="/logos/ESCUDO_FFC_VERDE.png"
+            alt="FFC"
+            width={56}
+            height={56}
+            decoding="async"
+          />
           <h1 className="login-page__title">Acesse a sua Conta</h1>
           <p className="login-page__subtitle">Insira seu e-mail e senha para prosseguir.</p>
 

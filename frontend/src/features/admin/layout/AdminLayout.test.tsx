@@ -19,10 +19,6 @@ vi.mock('../../auth/AuthContext', () => ({
   useAuth: () => authMock,
 }))
 
-vi.mock('../../../shared/branding/brandingApi', () => ({
-  getPublicBranding: vi.fn().mockResolvedValue({ teamShieldUrl: null }),
-}))
-
 describe('AdminLayout', () => {
   it('renders themed shell classes and keeps outlet content', () => {
     const { container } = render(

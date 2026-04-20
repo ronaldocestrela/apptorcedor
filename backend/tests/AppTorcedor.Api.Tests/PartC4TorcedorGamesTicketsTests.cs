@@ -9,9 +9,6 @@ namespace AppTorcedor.Api.Tests;
 
 public sealed class PartC4TorcedorGamesTicketsTests(AppWebApplicationFactory factory) : IClassFixture<AppWebApplicationFactory>
 {
-    private static readonly byte[] MinimalPng = Convert.FromBase64String(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
-
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
@@ -88,60 +85,6 @@ public sealed class PartC4TorcedorGamesTicketsTests(AppWebApplicationFactory fac
             ids.Add(el.GetProperty("gameId").GetString()!);
         Assert.Contains(activeId.ToString(), ids);
         Assert.DoesNotContain(inactiveId.ToString(), ids);
-    }
-
-    [Fact]
-    public async Task Torcedor_games_list_includes_opponent_logo_url_when_set()
-    {
-        var admin = await LoginAdminAsync();
-        var member = await LoginMemberAsync();
-
-        string logoUrl;
-        using (var mp = new MultipartFormDataContent())
-        {
-            var fileContent = new ByteArrayContent(MinimalPng);
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
-            mp.Add(fileContent, "file", "logo.png");
-            using var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/games/opponent-logos") { Content = mp };
-            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
-            var res = await _client.SendAsync(post);
-            res.EnsureSuccessStatusCode();
-            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
-            logoUrl = body.GetProperty("url").GetString()!;
-        }
-
-        var opponent = $"C4Logo-{Guid.NewGuid():N}"[..10];
-        Guid gameId;
-        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/games"))
-        {
-            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
-            post.Content = JsonContent.Create(
-                new
-                {
-                    opponent,
-                    competition = "Brasileirão",
-                    gameDate = DateTimeOffset.UtcNow.AddDays(12),
-                    isActive = true,
-                    opponentLogoUrl = logoUrl,
-                });
-            var res = await _client.SendAsync(post);
-            res.EnsureSuccessStatusCode();
-            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
-            gameId = Guid.Parse(body.GetProperty("gameId").GetString()!);
-        }
-
-        using var list = new HttpRequestMessage(HttpMethod.Get, $"/api/games?search=C4Logo&pageSize=50");
-        list.Headers.Authorization = new AuthenticationHeaderValue("Bearer", member);
-        var listRes = await _client.SendAsync(list);
-        listRes.EnsureSuccessStatusCode();
-        var page = await listRes.Content.ReadFromJsonAsync<JsonElement>();
-        string? foundLogo = null;
-        foreach (var el in page.GetProperty("items").EnumerateArray())
-        {
-            if (el.GetProperty("gameId").GetString() == gameId.ToString())
-                foundLogo = el.GetProperty("opponentLogoUrl").GetString();
-        }
-        Assert.Equal(logoUrl, foundLogo);
     }
 
     [Fact]

@@ -6,8 +6,6 @@ using AppTorcedor.Application.Modules.Administration.Commands.DeactivateAdminGam
 using AppTorcedor.Application.Modules.Administration.Commands.UpdateAdminGame;
 using AppTorcedor.Application.Modules.Administration.Queries.GetAdminGame;
 using AppTorcedor.Application.Modules.Administration.Queries.ListAdminGames;
-using AppTorcedor.Application.Modules.Games.Commands.UploadOpponentLogo;
-using AppTorcedor.Application.Modules.Games.Queries.ListOpponentLogoAssets;
 using AppTorcedor.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -20,43 +18,6 @@ namespace AppTorcedor.Api.Controllers;
 [Authorize]
 public sealed class AdminGamesController(IMediator mediator) : ControllerBase
 {
-    [HttpGet("opponent-logos")]
-    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.JogosVisualizar)]
-    public async Task<ActionResult<OpponentLogoAssetListPageResponse>> ListOpponentLogos(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 50,
-        CancellationToken cancellationToken = default)
-    {
-        var pageDto = await mediator
-            .Send(new ListOpponentLogoAssetsQuery(page, pageSize), cancellationToken)
-            .ConfigureAwait(false);
-        var items = pageDto.Items
-            .Select(i => new OpponentLogoAssetListItemResponse(i.Id, i.Url, i.CreatedAt))
-            .ToList();
-        return Ok(new OpponentLogoAssetListPageResponse(pageDto.TotalCount, items));
-    }
-
-    [HttpPost("opponent-logos")]
-    [Authorize(Policy = Policies.GamesOpponentLogosUpload)]
-    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
-    [RequestSizeLimit(6 * 1024 * 1024)]
-    public async Task<ActionResult<OpponentLogoUploadResponse>> UploadOpponentLogo(
-        IFormFile file,
-        CancellationToken cancellationToken = default)
-    {
-        if (file is null || file.Length == 0)
-            return BadRequest(new { error = "File is required." });
-
-        await using var stream = file.OpenReadStream();
-        var result = await mediator
-            .Send(new UploadOpponentLogoCommand(stream, file.FileName, file.ContentType ?? string.Empty), cancellationToken)
-            .ConfigureAwait(false);
-        if (result is null)
-            return BadRequest(new { error = "Unable to upload opponent logo." });
-
-        return Ok(new OpponentLogoUploadResponse(result.Url));
-    }
-
     [HttpGet]
     [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.JogosVisualizar)]
     public async Task<ActionResult<AdminGameListPageDto>> List(
@@ -117,7 +78,7 @@ public sealed class AdminGamesController(IMediator mediator) : ControllerBase
     }
 
     private static AdminGameWriteDto Map(UpsertGameRequest body) =>
-        new(body.Opponent, body.Competition, body.GameDate, body.IsActive, body.OpponentLogoUrl);
+        new(body.Opponent, body.Competition, body.GameDate, body.IsActive);
 
     private static string MapCreateError(GameMutationError? error) =>
         error switch

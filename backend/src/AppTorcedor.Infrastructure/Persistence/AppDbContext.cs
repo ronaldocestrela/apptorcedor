@@ -32,7 +32,6 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<UserProfileRecord> UserProfiles => Set<UserProfileRecord>();
     public DbSet<DigitalCardRecord> DigitalCards => Set<DigitalCardRecord>();
     public DbSet<GameRecord> Games => Set<GameRecord>();
-    public DbSet<OpponentLogoAssetRecord> OpponentLogoAssets => Set<OpponentLogoAssetRecord>();
     public DbSet<TicketRecord> Tickets => Set<TicketRecord>();
     public DbSet<NewsArticleRecord> NewsArticles => Set<NewsArticleRecord>();
     public DbSet<InAppNotificationRecord> InAppNotifications => Set<InAppNotificationRecord>();
@@ -300,18 +299,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Opponent).HasMaxLength(256).IsRequired();
             entity.Property(x => x.Competition).HasMaxLength(256).IsRequired();
-            entity.Property(x => x.OpponentLogoUrl).HasMaxLength(2048);
             entity.HasIndex(x => x.GameDate);
             entity.HasIndex(x => x.IsActive);
-        });
-
-        builder.Entity<OpponentLogoAssetRecord>(entity =>
-        {
-            entity.ToTable("OpponentLogoAssets");
-            entity.HasKey(x => x.Id);
-            entity.Property(x => x.PublicUrl).HasMaxLength(2048).IsRequired();
-            entity.HasIndex(x => x.PublicUrl).IsUnique();
-            entity.HasIndex(x => x.CreatedAt);
         });
 
         builder.Entity<TicketRecord>(entity =>
@@ -451,7 +440,6 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Title).HasMaxLength(256).IsRequired();
             entity.Property(x => x.Description).HasMaxLength(2000);
-            entity.Property(x => x.BannerUrl).HasMaxLength(2048);
             entity.HasIndex(x => x.PartnerId);
             entity.HasIndex(x => new { x.IsActive, x.StartAt, x.EndAt });
             entity

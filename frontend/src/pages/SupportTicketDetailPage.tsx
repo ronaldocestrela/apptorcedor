@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import {
   cancelMySupportTicket,
   downloadMySupportAttachment,
@@ -9,19 +8,6 @@ import {
   replyMySupportTicket,
   type TorcedorSupportDetail,
 } from '../features/torcedor/torcedorSupportApi'
-import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
-import './AppShell.css'
-
-function supportStatusBadgeClass(status: string): string {
-  const s = status.replace(/\s+/g, '').toLowerCase()
-  if (s === 'open')
-    return 'support-status-badge support-status-badge--open'
-  if (s === 'inprogress' || s === 'waitinguser')
-    return 'support-status-badge support-status-badge--progress'
-  if (s === 'resolved' || s === 'closed')
-    return 'support-status-badge support-status-badge--closed'
-  return 'support-status-badge support-status-badge--default'
-}
 
 export function SupportTicketDetailPage() {
   const { ticketId = '' } = useParams()
@@ -119,42 +105,16 @@ export function SupportTicketDetailPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="support-detail-root">
-        <header className="subpage-header">
-          <Link to="/support" className="subpage-header__back" aria-label="Voltar">
-            <ArrowLeft size={18} />
-          </Link>
-          <h1 className="subpage-header__title subpage-header__title--truncate">Chamado</h1>
-          <span className="subpage-header__badge" aria-hidden>…</span>
-        </header>
-        <main className="subpage-content">
-          <p className="app-muted">Carregando…</p>
-        </main>
-        <TorcedorBottomNav />
-      </div>
-    )
-  }
-
+  if (loading)
+    return <p style={{ margin: '2rem', fontFamily: 'system-ui' }}>Carregando…</p>
   if (error || !detail) {
     return (
-      <div className="support-detail-root">
-        <header className="subpage-header">
-          <Link to="/support" className="subpage-header__back" aria-label="Voltar">
-            <ArrowLeft size={18} />
-          </Link>
-          <h1 className="subpage-header__title">Chamado</h1>
-          <span className="subpage-header__badge" aria-hidden>—</span>
-        </header>
-        <main className="subpage-content">
-          <p role="alert" className="games-page__error">{error ?? 'Não encontrado'}</p>
-          <p style={{ marginTop: '1rem' }}>
-            <Link to="/support" style={{ color: '#8cd392' }}>Voltar para Meus chamados</Link>
-          </p>
-        </main>
-        <TorcedorBottomNav />
-      </div>
+      <main style={{ maxWidth: 640, margin: '2rem auto', fontFamily: 'system-ui' }}>
+        <p>
+          <Link to="/support">← Meus chamados</Link>
+        </p>
+        <p style={{ color: '#721c24' }}>{error ?? 'Não encontrado'}</p>
+      </main>
     )
   }
 
@@ -162,143 +122,137 @@ export function SupportTicketDetailPage() {
   const canReopen = detail.status === 'Closed'
 
   return (
-    <div className="support-detail-root">
-      <header className="subpage-header">
-        <Link to="/support" className="subpage-header__back" aria-label="Voltar">
-          <ArrowLeft size={18} />
-        </Link>
-        <h1 className="subpage-header__title subpage-header__title--truncate" title={detail.subject}>
-          {detail.subject}
-        </h1>
-        <span className={supportStatusBadgeClass(detail.status)} title="Status">
-          {detail.status}
-        </span>
-      </header>
+    <main style={{ maxWidth: 640, margin: '2rem auto', fontFamily: 'system-ui' }}>
+      <p>
+        <Link to="/support">← Meus chamados</Link>
+      </p>
+      <h1>{detail.subject}</h1>
+      <p style={{ color: '#555' }}>
+        Fila:
+        {' '}
+        {detail.queue}
+        {' '}
+        · Status:
+        {' '}
+        <strong>{detail.status}</strong>
+        {' '}
+        · Prioridade:
+        {' '}
+        {detail.priority}
+      </p>
+      {detail.isSlaBreached ? <p style={{ color: '#c00' }}>SLA estourado</p> : null}
 
-      <main className="subpage-content">
-        <p className="support-detail-meta">
-          Fila:
-          {' '}
-          <strong>{detail.queue}</strong>
-          {' '}
-          · Prioridade:
-          {' '}
-          <strong>{detail.priority}</strong>
-        </p>
-        {detail.isSlaBreached ? (
-          <p role="status" className="support-form__error" style={{ marginBottom: '1rem' }}>
-            SLA estourado
-          </p>
-        ) : null}
-
-        <section>
-          <h2 className="support-section-title">Mensagens</h2>
-          <ul className="support-msg-list">
-            {detail.messages.map(m => (
-              <li key={m.messageId} className="support-msg-card">
-                <p className="support-msg-card__body">{m.body}</p>
-                <p className="support-msg-card__time">
-                  {new Date(m.createdAtUtc).toLocaleString('pt-BR')}
-                </p>
-                {m.attachments.length > 0 ? (
-                  <ul className="support-msg-card__attachments">
-                    {m.attachments.map(a => (
-                      <li key={a.attachmentId}>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void downloadMySupportAttachment(a.downloadUrl, a.fileName).catch(() => {
-                              /* optional toast */
-                            })}
-                        >
-                          {a.fileName}
-                        </button>
-                        {' '}
-                        (
-                        {a.contentType}
-                        )
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {detail.status !== 'Closed' ? (
-          <section style={{ marginTop: '1.5rem' }}>
-            <h2 className="support-section-title">Responder</h2>
-            <form className="support-form" onSubmit={e => void onReply(e)}>
-              <div className="support-form__row">
-                <label htmlFor="support-reply">Sua mensagem</label>
-                <textarea
-                  id="support-reply"
-                  value={replyBody}
-                  onChange={e => setReplyBody(e.target.value)}
-                  rows={3}
-                  placeholder="Escreva aqui…"
-                />
-              </div>
-              <div className="support-form__row">
-                <label htmlFor="support-reply-files">Anexos</label>
-                <input
-                  id="support-reply-files"
-                  type="file"
-                  multiple
-                  accept="image/jpeg,image/png,image/webp,application/pdf"
-                  onChange={e => setReplyFiles(e.target.files)}
-                />
-              </div>
-              {actionError ? <p className="support-form__error" role="alert">{actionError}</p> : null}
-              <button type="submit" className="support-form__submit" disabled={actionBusy}>
-                {actionBusy ? 'Enviando…' : 'Enviar'}
-              </button>
-            </form>
-          </section>
-        ) : null}
-
-        <div className="support-actions">
-          {canCancel ? (
-            <button
-              type="button"
-              className="support-btn-secondary"
-              onClick={() => void onCancel()}
-              disabled={actionBusy}
+      <section style={{ marginTop: '1.5rem' }}>
+        <h2 style={{ fontSize: '1.05rem' }}>Mensagens</h2>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {detail.messages.map(m => (
+            <li
+              key={m.messageId}
+              style={{
+                marginBottom: '1rem',
+                padding: '0.75rem',
+                background: '#fafafa',
+                borderRadius: 6,
+              }}
             >
-              Cancelar chamado
-            </button>
-          ) : null}
-          {canReopen ? (
-            <button
-              type="button"
-              className="support-btn-secondary"
-              onClick={() => void onReopen()}
-              disabled={actionBusy}
-            >
-              Reabrir chamado
-            </button>
-          ) : null}
-        </div>
+              <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{m.body}</p>
+              <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: '#888' }}>
+                {new Date(m.createdAtUtc).toLocaleString()}
+              </p>
+              {m.attachments.length > 0 ? (
+                <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.2rem' }}>
+                  {m.attachments.map(a => (
+                    <li key={a.attachmentId}>
+                      <button
+                        type="button"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#0645ad',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          padding: 0,
+                          font: 'inherit',
+                        }}
+                        onClick={() =>
+                          void downloadMySupportAttachment(a.downloadUrl, a.fileName).catch(() => {
+                            /* toast optional */
+                          })}
+                      >
+                        {a.fileName}
+                      </button>
+                      {' '}
+                      (
+                      {a.contentType}
+                      )
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </section>
 
-        <section className="support-history">
-          <h2 className="support-section-title">Histórico</h2>
-          <ul className="support-history__list">
-            {detail.history.map(h => (
-              <li key={h.entryId}>
-                <strong>{h.eventType}</strong>
-                {h.reason ? ` — ${h.reason}` : ''}
-                {' '}
-                (
-                {new Date(h.createdAtUtc).toLocaleString('pt-BR')}
-                )
-              </li>
-            ))}
-          </ul>
+      {detail.status !== 'Closed' ? (
+        <section style={{ marginTop: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.05rem' }}>Responder</h2>
+          <form onSubmit={e => void onReply(e)}>
+            <textarea
+              value={replyBody}
+              onChange={e => setReplyBody(e.target.value)}
+              rows={3}
+              placeholder="Sua mensagem"
+              style={{ display: 'block', width: '100%' }}
+            />
+            <input
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              onChange={e => setReplyFiles(e.target.files)}
+              style={{ display: 'block', marginTop: 8 }}
+            />
+            {actionError ? <p style={{ color: '#721c24' }}>{actionError}</p> : null}
+            <button type="submit" disabled={actionBusy} style={{ marginTop: 8 }}>
+              Enviar
+            </button>
+          </form>
         </section>
-      </main>
+      ) : null}
 
-      <TorcedorBottomNav />
-    </div>
+      <section style={{ marginTop: '1.5rem' }}>
+        {canCancel ? (
+          <button type="button" onClick={() => void onCancel()} disabled={actionBusy}>
+            Cancelar chamado
+          </button>
+        ) : null}
+        {canReopen ? (
+          <button
+            type="button"
+            onClick={() => void onReopen()}
+            disabled={actionBusy}
+            style={{ marginLeft: canCancel ? 8 : 0 }}
+          >
+            Reabrir chamado
+          </button>
+        ) : null}
+      </section>
+
+      <section style={{ marginTop: '2rem' }}>
+        <h2 style={{ fontSize: '1.05rem' }}>Histórico</h2>
+        <ul style={{ fontSize: '0.85rem', color: '#555', paddingLeft: '1.2rem' }}>
+          {detail.history.map(h => (
+            <li key={h.entryId} style={{ marginBottom: 6 }}>
+              <strong>{h.eventType}</strong>
+              {h.reason ? ` — ${h.reason}` : ''}
+              {' '}
+              (
+              {new Date(h.createdAtUtc).toLocaleString()}
+              )
+            </li>
+          ))}
+        </ul>
+      </section>
+    </main>
   )
 }

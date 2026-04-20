@@ -1,7 +1,6 @@
 using AppTorcedor.Application.Abstractions;
 using AppTorcedor.Application.Modules.Administration.Commands.CreateBenefitPartner;
 using AppTorcedor.Application.Modules.Administration.Commands.RedeemBenefitOffer;
-using AppTorcedor.Application.Modules.Administration.Commands.UploadBenefitOfferBanner;
 using AppTorcedor.Application.Modules.Administration.Queries.ListBenefitPartners;
 using AppTorcedor.Identity;
 
@@ -40,18 +39,6 @@ public sealed class BenefitsAdminHandlersTests
             CancellationToken.None);
         Assert.True(r.Ok);
         Assert.Single(fake.RedeemCalls);
-    }
-
-    [Fact]
-    public async Task UploadBenefitOfferBanner_delegates_to_port()
-    {
-        await using var stream = new MemoryStream([1, 2, 3]);
-        var fake = new FakeBenefitsPort();
-        var handler = new UploadBenefitOfferBannerCommandHandler(fake);
-        var oid = Guid.NewGuid();
-        _ = await handler.Handle(new UploadBenefitOfferBannerCommand(oid, stream, "a.png", "image/png"), CancellationToken.None);
-        Assert.Single(fake.UploadBannerCalls);
-        Assert.Equal(oid, fake.UploadBannerCalls[0].OfferId);
     }
 
     private sealed class FakeBenefitsPort : IBenefitsAdministrationPort
@@ -107,22 +94,6 @@ public sealed class BenefitsAdminHandlersTests
             Guid offerId,
             BenefitOfferWriteDto dto,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(BenefitMutationResult.Fail(BenefitMutationError.NotFound));
-
-        public List<(Guid OfferId, string FileName)> UploadBannerCalls { get; } = [];
-
-        public Task<BenefitBannerUploadResult> UploadOfferBannerAsync(
-            Guid offerId,
-            Stream content,
-            string fileName,
-            string contentType,
-            CancellationToken cancellationToken = default)
-        {
-            UploadBannerCalls.Add((offerId, fileName));
-            return Task.FromResult(BenefitBannerUploadResult.Fail(BenefitMutationError.Validation));
-        }
-
-        public Task<BenefitMutationResult> RemoveOfferBannerAsync(Guid offerId, CancellationToken cancellationToken = default) =>
             Task.FromResult(BenefitMutationResult.Fail(BenefitMutationError.NotFound));
 
         public Task<BenefitRedeemResult> RedeemOfferAsync(

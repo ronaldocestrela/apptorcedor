@@ -26,24 +26,11 @@ public sealed record TorcedorEligibleBenefitOfferResponse(
     string Title,
     string? Description,
     DateTimeOffset StartAt,
-    DateTimeOffset EndAt,
-    string? BannerUrl);
+    DateTimeOffset EndAt);
 
 public sealed record TorcedorEligibleBenefitOffersPageResponse(
     int TotalCount,
     IReadOnlyList<TorcedorEligibleBenefitOfferResponse> Items);
-
-public sealed record TorcedorEligibleBenefitOfferDetailResponse(
-    Guid OfferId,
-    Guid PartnerId,
-    string PartnerName,
-    string Title,
-    string? Description,
-    DateTimeOffset StartAt,
-    DateTimeOffset EndAt,
-    bool AlreadyRedeemed,
-    DateTimeOffset? RedemptionDateUtc,
-    string? BannerUrl);
 
 public sealed record TorcedorPublishedPlanBenefitResponse(Guid BenefitId, string Title, string? Description);
 
@@ -74,7 +61,6 @@ public sealed record TorcedorGameListItemResponse(
     Guid GameId,
     string Opponent,
     string Competition,
-    string? OpponentLogoUrl,
     DateTimeOffset GameDate,
     DateTimeOffset CreatedAt);
 

@@ -31,13 +31,7 @@ public sealed class GameTorcedorReadService(AppDbContext db) : IGameTorcedorRead
             .ConfigureAwait(false);
 
         var items = rows
-            .Select(g => new TorcedorGameListItemDto(
-                g.Id,
-                g.Opponent,
-                g.Competition,
-                g.OpponentLogoUrl,
-                g.GameDate,
-                g.CreatedAt))
+            .Select(g => new TorcedorGameListItemDto(g.Id, g.Opponent, g.Competition, g.GameDate, g.CreatedAt))
             .ToList();
 
         return new TorcedorGameListPageDto(total, items);
