@@ -34,7 +34,7 @@ Base: **`api/games`** e **`api/tickets`** — `[Authorize]` no controlador (mesm
 
 | Método | Rota | Descrição |
 |--------|------|------------|
-| GET | `/api/games?search=&page=&pageSize=` | Jogos **ativos** (paginação). Cada item inclui `opponentLogoUrl` (opcional) para exibição no app. |
+| GET | `/api/games?search=&page=&pageSize=` | Jogos **ativos** (paginação). |
 | GET | `/api/tickets?gameId=&status=&page=&pageSize=` | Ingressos do usuário autenticado. |
 | GET | `/api/tickets/{ticketId}` | Detalhe **somente se** o ingresso pertencer ao usuário; caso contrário `404`. |
 | POST | `/api/tickets/{ticketId}/redeem` | Resgate `Purchased` → `Redeemed` (mesma regra de negócio da B.8 + `ILoyaltyPointsTriggerPort`); `404` se ingresso inexistente ou de outro usuário; `400` se transição inválida. |
@@ -47,12 +47,11 @@ Controladores: `TorcedorGamesController`, `TorcedorTicketsController`.
 
 - Rotas: `/games` (`GamesPage`), `/tickets` (`MyTicketsPage`), registradas em `frontend/src/app/App.tsx`; links no `DashboardPage`.
 - Clientes: `frontend/src/features/torcedor/torcedorGamesApi.ts`, `torcedorTicketsApi.ts`.
-- UI `/games`: listagem em cartões de partida agrupados por dia (`.game-card-ev`, `.games-day__*`), jogo “próximo” em destaque (`.game-card-ev--active`) e demais em estado visual muted; sigla da casa configurável por `VITE_CLUB_SHORT_NAME` (padrão `FFC`). Ver `docs/architecture/visual-identity.md` §10.6.
 
 ## Testes
 
 - **Application:** `TorcedorGamesTicketsHandlersTests` — delegação aos ports.
-- **API:** `PartC4TorcedorGamesTicketsTests` — auth, jogos ativos vs inativos, `opponentLogoUrl` na listagem, fluxo listagem/detalhe/resgate, isolamento entre usuários, resgate inválido em `Reserved`.
+- **API:** `PartC4TorcedorGamesTicketsTests` — auth, jogos ativos vs inativos, fluxo listagem/detalhe/resgate, isolamento entre usuários, resgate inválido em `Reserved`.
 - **Frontend:** `torcedorGamesTicketsApi.test.ts` — chamadas Axios.
 
 ## Referências

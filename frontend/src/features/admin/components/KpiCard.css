@@ -2,7 +2,7 @@
   border: 1px solid var(--admin-border-strong);
   border-radius: 14px;
   min-width: 220px;
-  background: linear-gradient(135deg, rgba(14, 19, 26, 0.56), rgba(14, 19, 26, 0.72));
+  background: linear-gradient(135deg, rgba(40, 81, 58, 0.56), rgba(24, 56, 39, 0.72));
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   padding: 1.25rem 1.4rem;
   transition: transform 160ms ease, box-shadow 160ms ease;
@@ -39,7 +39,7 @@
 
 /* Variant: success */
 .admin-kpi-card--success .admin-kpi-card__icon-wrap {
-  background: rgba(140, 211, 146, 0.15);
+  background: rgba(129, 229, 146, 0.15);
   color: var(--admin-accent);
 }
 .admin-kpi-card--success .admin-kpi-card__value {

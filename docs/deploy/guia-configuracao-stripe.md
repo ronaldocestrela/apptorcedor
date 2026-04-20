@@ -87,17 +87,6 @@ A API expõe **apenas** este endpoint para o Stripe:
 3. **400** costuma indicar assinatura inválida (`whsec` não coincide com o endpoint) ou corpo alterado pelo proxy.
 4. **500** na AppTorcedor com segredo Stripe vazio: falta `Payments__Stripe__WebhookSecret`.
 
-**Diagnóstico rápido (homologação / produção):** em toda resposta do `POST /api/webhooks/stripe`, a API envia o cabeçalho **`X-Stripe-Webhook-Result`** com um destes valores:
-
-| Valor do cabeçalho | Significado | Ação típica |
-|--------------------|-------------|-------------|
-| `BadSignature` | Assinatura inválida ou cabeçalho `Stripe-Signature` ausente | Conferir `whsec` do **mesmo** endpoint no Dashboard (modo Test vs Live), proxy que remove o header ou altera o corpo JSON |
-| `InvalidPayload` | Evento válido, mas regras de negócio falharam | Ver **logs** da API (avisos com `payment_id`, totais BRL, `ConfirmPaymentAfterProviderSuccess`, etc.) |
-| `ConfigurationError` | `Payments__Stripe__WebhookSecret` vazio | Definir segredo e reiniciar a API |
-| `Ok` / `IgnoredEventType` | Processado ou evento ignorado (não é `checkout.session.completed` pago) | Normal |
-
-Os logs JSON da API incluem mensagens explícitas, por exemplo: `Stripe webhook signature validation failed`, `missing Stripe-Signature header`, `payment_id … not found in database`, `session totals mismatch`.
-
 ### 3.6. Testar o webhook (opcional)
 
 - Com a API a correr localmente, pode usar o **Stripe CLI** (`stripe listen --forward-to localhost:5031/api/webhooks/stripe`) para receber eventos de teste; o CLI mostra um `whsec_` temporário para colocar em `Payments__Stripe__WebhookSecret` **só nesse ambiente**.
@@ -185,17 +174,6 @@ O proxy (Nginx, Caddy, etc.) deve:
 
 - Encaminhar tráfego HTTPS para a API.
 - Não descartar o corpo bruto nem o cabeçalho **`Stripe-Signature`** no `POST /api/webhooks/stripe`.
-- Evitar reescrever ou “embelezar” o JSON do body (isso invalida a assinatura HMAC).
-- Garantir que regras WAF / mod_security não bloqueiem ou alterem o POST do Stripe.
-
-**Nginx (referência):** o encaminhamento padrão `proxy_pass` já repassa o corpo e os cabeçalhos do cliente; não use `sub_filter` ou compressão que mude o payload **antes** da API. Se usar `proxy_set_header`, mantenha o fluxo do body intacto (`proxy_request_buffering on` é o padrão; evite buffers que truncam o corpo).
-
-**Checklist homologação (runtime):**
-
-1. `Payments__Provider=Stripe` na API que recebe o webhook.
-2. `Payments__Stripe__ApiKey` = `sk_test_…` e webhook criado no Dashboard em **modo Test** (o `whsec_` é por endpoint e por modo).
-3. `Payments__Stripe__WebhookSecret` = signing secret **desse** endpoint (copiar de novo após recriar o endpoint).
-4. Base de dados da homolog é a mesma onde o checkout criou o pagamento (senão `payment_id` não existe → `InvalidPayload`).
 
 ---
 

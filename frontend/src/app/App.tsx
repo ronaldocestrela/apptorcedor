@@ -27,7 +27,6 @@ import { PermissionRoute } from '../features/auth/PermissionRoute'
 import { ProtectedRoute } from '../features/auth/ProtectedRoute'
 import { AcceptStaffInvitePage } from '../pages/AcceptStaffInvitePage'
 import { AccountPage } from '../pages/AccountPage'
-import { BenefitOfferDetailPage } from '../pages/BenefitOfferDetailPage'
 import { BenefitsEligiblePage } from '../pages/BenefitsEligiblePage'
 import { DigitalCardPage } from '../pages/DigitalCardPage'
 import { GamesPage } from '../pages/GamesPage'
@@ -57,7 +56,6 @@ export function App() {
           <Route path="account" element={<AccountPage />} />
           <Route path="news" element={<NewsFeedPage />} />
           <Route path="news/:newsId" element={<NewsDetailPage />} />
-          <Route path="benefits/:offerId" element={<BenefitOfferDetailPage />} />
           <Route path="benefits" element={<BenefitsEligiblePage />} />
           <Route path="plans" element={<PlansPage />} />
           <Route path="plans/:planId" element={<PlanDetailsPage />} />

@@ -2,7 +2,6 @@ using AppTorcedor.Api.Authorization;
 using AppTorcedor.Api.Contracts;
 using AppTorcedor.Application.Modules.Administration.Commands.UpsertAppConfiguration;
 using AppTorcedor.Application.Modules.Administration.Queries.ListAppConfigurations;
-using AppTorcedor.Application.Modules.Branding.Commands.UploadTeamShield;
 using AppTorcedor.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -29,23 +28,5 @@ public sealed class AdminConfigurationsController(IMediator mediator) : Controll
     {
         var dto = await mediator.Send(new UpsertAppConfigurationCommand(key, body.Value), cancellationToken).ConfigureAwait(false);
         return Ok(dto);
-    }
-
-    [HttpPost("team-shield")]
-    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.ConfiguracoesEditar)]
-    [RequestSizeLimit(6 * 1024 * 1024)]
-    public async Task<ActionResult<TeamShieldUploadResponse>> UploadTeamShield(IFormFile file, CancellationToken cancellationToken)
-    {
-        if (file is null || file.Length == 0)
-            return BadRequest();
-
-        await using var stream = file.OpenReadStream();
-        var result = await mediator
-            .Send(new UploadTeamShieldCommand(stream, file.FileName, file.ContentType), cancellationToken)
-            .ConfigureAwait(false);
-        if (result is null)
-            return BadRequest();
-
-        return Ok(new TeamShieldUploadResponse { TeamShieldUrl = result.TeamShieldUrl });
     }
 }

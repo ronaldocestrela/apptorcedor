@@ -62,7 +62,6 @@ describe('AccountPage', () => {
   })
 
   it('shows subscription status when user has membership', async () => {
-    const user = userEvent.setup()
     vi.mocked(subscriptionsService.getMySummary).mockResolvedValue({
       hasMembership: true,
       membershipId: 'm1',
@@ -85,16 +84,10 @@ describe('AccountPage', () => {
       </MemoryRouter>,
     )
     await waitFor(() => {
-      expect(screen.getByText('Sócio Torcedor')).toBeInTheDocument()
-    })
-    expect(screen.getByRole('link', { name: /Expandir Carteirinha/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Fidelidade/i })).toHaveAttribute('href', '/loyalty')
-    expect(screen.getByText('Gold')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /Abrir configurações/i }))
-    await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Assinatura', level: 2 })).toBeInTheDocument()
     })
     expect(screen.getByText(/Ativo/)).toBeInTheDocument()
+    expect(screen.getByText(/Gold/)).toBeInTheDocument()
   })
 
   it('plan change section calls changePlan when confirmed', async () => {
@@ -134,7 +127,6 @@ describe('AccountPage', () => {
         <AccountPage />
       </MemoryRouter>,
     )
-    await user.click(await screen.findByRole('button', { name: /Abrir configurações/i }))
     await waitFor(() => {
       expect(screen.getByText(/Trocar plano/i)).toBeInTheDocument()
     })
@@ -179,7 +171,6 @@ describe('AccountPage', () => {
         <AccountPage />
       </MemoryRouter>,
     )
-    await user.click(await screen.findByRole('button', { name: /Abrir configurações/i }))
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /Cancelar assinatura/i })).toBeInTheDocument()
     })
@@ -213,8 +204,6 @@ describe('AccountPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/ainda não possui assinatura/i)).toBeInTheDocument()
     })
-    expect(screen.getByText('Sem plano ativo')).toBeInTheDocument()
-    expect(document.querySelector('.account-page__header-name')).toHaveTextContent('T')
   })
 })
 

@@ -28,7 +28,6 @@ import {
 import { ApplicationPermissions } from '../../../shared/auth/applicationPermissions'
 import { hasPermission } from '../../../shared/auth/permissionUtils'
 import { useAuth } from '../../auth/AuthContext'
-import { TeamShieldLogo } from '../../../shared/branding/TeamShieldLogo'
 import './AdminLayout.css'
 
 const ICON_SIZE = 18
@@ -102,7 +101,11 @@ export function AdminLayout() {
     <div className="admin-shell">
       <aside className="admin-shell__sidebar">
         <div className="admin-shell__brand">
-          <TeamShieldLogo className="admin-shell__brand-logo" alt="Escudo do clube" />
+          <img
+            className="admin-shell__brand-logo"
+            src="/logos/ESCUDO_FFC_PNG.png"
+            alt="AFC"
+          />
         </div>
         <nav className="admin-shell__nav" aria-label="Menu administrativo">
 

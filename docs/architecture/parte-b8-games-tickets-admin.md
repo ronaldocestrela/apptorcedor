@@ -6,18 +6,16 @@ Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B
 
 | Tabela | Descrição |
 |--------|-----------|
-| `Games` | `Opponent`, `Competition`, `OpponentLogoUrl` (opcional; URL pública da logo do adversário), `GameDate`, `IsActive`, `CreatedAt`. Desativação lógica (`IsActive =0`) em vez de exclusão física quando há histórico de ingressos. |
-| `OpponentLogoAssets` | Biblioteca de logos enviadas pelo admin: `PublicUrl` (único), `CreatedAt`. Só URLs registradas aqui podem ser associadas a um jogo (`OpponentLogoUrl`). |
+| `Games` | `Opponent`, `Competition`, `GameDate`, `IsActive`, `CreatedAt`. Desativação lógica (`IsActive =0`) em vez de exclusão física quando há histórico de ingressos. |
 | `Tickets` | `UserId`, `GameId`, `ExternalTicketId`, `QrCode`, `Status` (`Reserved` / `Purchased` / `Redeemed`), `CreatedAt`, `UpdatedAt`, `RedeemedAt`. |
 
-Migrações EF: `PartB8GamesTicketsAdmin` e `OpponentLogoGameLibrary` em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
+Migração EF: `PartB8GamesTicketsAdmin` em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
 
 ## Permissões
 
-- `Jogos.Visualizar` — `GET /api/admin/games`, `GET /api/admin/games/{id}`, `GET /api/admin/games/opponent-logos` (biblioteca de logos).
+- `Jogos.Visualizar` — `GET /api/admin/games`, `GET /api/admin/games/{id}`.
 - `Jogos.Criar` — `POST /api/admin/games`.
 - `Jogos.Editar` — `PUT /api/admin/games/{id}`, `DELETE /api/admin/games/{id}` (desativa).
-- **Upload de logo do adversário:** `POST /api/admin/games/opponent-logos` — política `GamesOpponentLogosUpload` (**`Jogos.Criar` ou `Jogos.Editar`**).
 - `Ingressos.Visualizar` — `GET /api/admin/tickets`, `GET /api/admin/tickets/{id}`.
 - `Ingressos.Gerenciar` — `POST /api/admin/tickets/reserve`, `POST /api/admin/tickets/{id}/purchase`, `POST /api/admin/tickets/{id}/sync`, `POST /api/admin/tickets/{id}/redeem`.
 
@@ -33,13 +31,11 @@ Base: `api/admin/games` e `api/admin/tickets` (JWT + política por permissão). 
 |--------|------|-----------|
 | GET | `/api/admin/games?search=&isActive=&page=&pageSize=` | Lista paginada. |
 | GET | `/api/admin/games/{gameId}` | Detalhe. |
-| GET | `/api/admin/games/opponent-logos?page=&pageSize=` | Lista logos já enviadas (reutilização no formulário). |
-| POST | `/api/admin/games/opponent-logos` | `multipart/form-data` campo `file` — registra na biblioteca e retorna `{ "url" }`. |
-| POST | `/api/admin/games` | Cria jogo. Corpo JSON pode incluir `opponentLogoUrl` opcional (deve existir em `OpponentLogoAssets`). |
-| PUT | `/api/admin/games/{gameId}` | Atualiza jogo (incl. `opponentLogoUrl` ou `null` para limpar). |
+| POST | `/api/admin/games` | Cria jogo. |
+| PUT | `/api/admin/games/{gameId}` | Atualiza jogo. |
 | DELETE | `/api/admin/games/{gameId}` | Desativa (`IsActive = false`). |
 
-Respostas de criação: `201` com `{ "gameId" }`; mutações: `204`; `404` não encontrado; `400` validação (ex.: `opponentLogoUrl` não registrado na biblioteca).
+Respostas de criação: `201` com `{ "gameId" }`; mutações: `204`; `404` não encontrado; `400` validação.
 
 ### Ingressos
 
@@ -60,7 +56,6 @@ Interface em `AppTorcedor.Application.Abstractions`; **`MockTicketProvider`** re
 
 ## Regras de negócio (resumo)
 
-- `opponentLogoUrl` em create/update: se informado, deve ser **exatamente** uma `PublicUrl` existente na tabela `OpponentLogoAssets` (fluxo: upload em `POST .../opponent-logos` ou reutilizar URL listada em `GET .../opponent-logos`).
 - Reserva exige **jogo ativo** e **usuário** existente.
 - Compra exige ingresso em **`Reserved`** com `ExternalTicketId` preenchido.
 - Sincronização consulta o provedor e atualiza **QR**; promove **`Reserved` → `Purchased`** se o snapshot do provedor indicar compra confirmada; não rebaixa status local.
@@ -78,9 +73,7 @@ Mutações em `GameRecord` e `TicketRecord` geram entradas em `AuditLogs` (inter
 ## Testes
 
 - `AppTorcedor.Application.Tests` — `GameAdminHandlersTests`, `TicketAdminHandlersTests`: delegação aos ports.
-- `AppTorcedor.Api.Tests` — `PartB8GamesTicketsAdminTests`: autorização, CRUD de jogos, biblioteca/upload de logo do adversário, fluxo reserva → compra → sync → resgate.
-- `AppTorcedor.Infrastructure.Tests` — `GameAdministrationServiceOpponentLogoTests`: validação de `opponentLogoUrl` vs biblioteca.
-- `AppTorcedor.Application.Tests` — `UploadOpponentLogoCommandHandlerTests`.
+- `AppTorcedor.Api.Tests` — `PartB8GamesTicketsAdminTests`: autorização, CRUD de jogos, fluxo reserva → compra → sync → resgate.
 
 ## Relação com outras partes
 

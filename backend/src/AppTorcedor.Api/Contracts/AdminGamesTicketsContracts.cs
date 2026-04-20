@@ -16,16 +16,7 @@ public sealed class UpsertGameRequest
     public DateTimeOffset GameDate { get; set; }
 
     public bool IsActive { get; set; } = true;
-
-    [MaxLength(2048)]
-    public string? OpponentLogoUrl { get; set; }
 }
-
-public sealed record OpponentLogoUploadResponse(string Url);
-
-public sealed record OpponentLogoAssetListItemResponse(Guid Id, string Url, DateTimeOffset CreatedAt);
-
-public sealed record OpponentLogoAssetListPageResponse(int TotalCount, IReadOnlyList<OpponentLogoAssetListItemResponse> Items);
 
 public sealed class ReserveTicketRequest
 {

@@ -4,7 +4,6 @@ public sealed record TorcedorGameListItemDto(
     Guid GameId,
     string Opponent,
     string Competition,
-    string? OpponentLogoUrl,
     DateTimeOffset GameDate,
     DateTimeOffset CreatedAt);
 

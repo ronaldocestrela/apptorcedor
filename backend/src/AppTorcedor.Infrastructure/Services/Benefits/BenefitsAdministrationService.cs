@@ -6,8 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AppTorcedor.Infrastructure.Services.Benefits;
 
-public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOfferBannerStorage bannerStorage)
-    : IBenefitsAdministrationPort
+public sealed class BenefitsAdministrationService(AppDbContext db) : IBenefitsAdministrationPort
 {
     public async Task<BenefitPartnerListPageDto> ListPartnersAsync(
         string? search,
@@ -130,8 +129,7 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
                 x.o.IsActive,
                 x.o.StartAt,
                 x.o.EndAt,
-                x.o.CreatedAt,
-                x.o.BannerUrl))
+                x.o.CreatedAt))
             .ToList();
 
         return new BenefitOfferListPageDto(total, items);
@@ -166,8 +164,7 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
             o.CreatedAt,
             o.UpdatedAt,
             planIds,
-            statuses,
-            o.BannerUrl);
+            statuses);
     }
 
     public async Task<BenefitCreateResult> CreateOfferAsync(BenefitOfferWriteDto dto, CancellationToken cancellationToken = default)
@@ -193,7 +190,6 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
                 IsActive = dto.IsActive,
                 StartAt = dto.StartAt,
                 EndAt = dto.EndAt,
-                BannerUrl = null,
                 CreatedAt = now,
                 UpdatedAt = now,
             });
@@ -237,46 +233,6 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
 
         ReplaceEligibilities(offerId, dto.EligiblePlanIds, dto.EligibleMembershipStatuses);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return BenefitMutationResult.Success();
-    }
-
-    public async Task<BenefitBannerUploadResult> UploadOfferBannerAsync(
-        Guid offerId,
-        Stream content,
-        string fileName,
-        string contentType,
-        CancellationToken cancellationToken = default)
-    {
-        var o = await db.BenefitOffers.FirstOrDefaultAsync(x => x.Id == offerId, cancellationToken).ConfigureAwait(false);
-        if (o is null)
-            return BenefitBannerUploadResult.Fail(BenefitMutationError.NotFound);
-
-        var url = await bannerStorage.SaveBannerAsync(content, fileName, contentType, cancellationToken).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(url))
-            return BenefitBannerUploadResult.Fail(BenefitMutationError.Validation);
-
-        var previous = o.BannerUrl;
-        var now = DateTimeOffset.UtcNow;
-        o.BannerUrl = url;
-        o.UpdatedAt = now;
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        await bannerStorage.TryDeleteBannerAsync(previous, cancellationToken).ConfigureAwait(false);
-        return BenefitBannerUploadResult.Success(url);
-    }
-
-    public async Task<BenefitMutationResult> RemoveOfferBannerAsync(Guid offerId, CancellationToken cancellationToken = default)
-    {
-        var o = await db.BenefitOffers.FirstOrDefaultAsync(x => x.Id == offerId, cancellationToken).ConfigureAwait(false);
-        if (o is null)
-            return BenefitMutationResult.Fail(BenefitMutationError.NotFound);
-
-        var previous = o.BannerUrl;
-        o.BannerUrl = null;
-        o.UpdatedAt = DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        await bannerStorage.TryDeleteBannerAsync(previous, cancellationToken).ConfigureAwait(false);
         return BenefitMutationResult.Success();
     }
 

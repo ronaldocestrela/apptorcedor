@@ -9,9 +9,6 @@ namespace AppTorcedor.Api.Tests;
 
 public sealed class PartB8GamesTicketsAdminTests(AppWebApplicationFactory factory) : IClassFixture<AppWebApplicationFactory>
 {
-    private static readonly byte[] MinimalPng = Convert.FromBase64String(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
-
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
@@ -32,84 +29,6 @@ public sealed class PartB8GamesTicketsAdminTests(AppWebApplicationFactory factor
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         var res = await _client.SendAsync(req);
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
-    }
-
-    [Fact]
-    public async Task List_opponent_logos_requires_jogos_visualizar()
-    {
-        var token = await LoginTorcedorAsync();
-        using var req = new HttpRequestMessage(HttpMethod.Get, "/api/admin/games/opponent-logos");
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        var res = await _client.SendAsync(req);
-        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
-    }
-
-    [Fact]
-    public async Task Opponent_logo_upload_list_and_game_roundtrip()
-    {
-        var token = await LoginAdminAsync();
-        string logoUrl;
-        using (var mp = new MultipartFormDataContent())
-        {
-            var fileContent = new ByteArrayContent(MinimalPng);
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
-            mp.Add(fileContent, "file", "logo.png");
-            using var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/games/opponent-logos")
-            {
-                Content = mp,
-            };
-            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var res = await _client.SendAsync(post);
-            Assert.Equal(HttpStatusCode.OK, res.StatusCode);
-            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
-            logoUrl = body.GetProperty("url").GetString()!;
-            Assert.False(string.IsNullOrWhiteSpace(logoUrl));
-        }
-
-        using (var list = new HttpRequestMessage(HttpMethod.Get, "/api/admin/games/opponent-logos?pageSize=20"))
-        {
-            list.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var res = await _client.SendAsync(list);
-            res.EnsureSuccessStatusCode();
-            var page = await res.Content.ReadFromJsonAsync<JsonElement>();
-            Assert.True(page.GetProperty("totalCount").GetInt32() >= 1);
-            var found = false;
-            foreach (var item in page.GetProperty("items").EnumerateArray())
-            {
-                if (item.GetProperty("url").GetString() == logoUrl)
-                    found = true;
-            }
-            Assert.True(found);
-        }
-
-        var opponent = $"Lg-{Guid.NewGuid():N}"[..8];
-        Guid gameId;
-        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/games"))
-        {
-            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            post.Content = JsonContent.Create(
-                new
-                {
-                    opponent,
-                    competition = "Brasileirão",
-                    gameDate = DateTimeOffset.UtcNow.AddDays(7),
-                    isActive = true,
-                    opponentLogoUrl = logoUrl,
-                });
-            var res = await _client.SendAsync(post);
-            Assert.Equal(HttpStatusCode.Created, res.StatusCode);
-            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
-            gameId = Guid.Parse(body.GetProperty("gameId").GetString()!);
-        }
-
-        using (var get = new HttpRequestMessage(HttpMethod.Get, $"/api/admin/games/{gameId}"))
-        {
-            get.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var res = await _client.SendAsync(get);
-            res.EnsureSuccessStatusCode();
-            var d = await res.Content.ReadFromJsonAsync<JsonElement>();
-            Assert.Equal(logoUrl, d.GetProperty("opponentLogoUrl").GetString());
-        }
     }
 
     [Fact]

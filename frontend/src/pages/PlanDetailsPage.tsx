@@ -1,74 +1,38 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
-import { ArrowLeft, Settings } from 'lucide-react'
+import { Link, useParams } from 'react-router-dom'
 import { isAxiosError } from 'axios'
 import { plansService, type TorcedorPublishedPlanDetail } from '../features/plans/plansService'
-import { subscriptionsService } from '../features/plans/subscriptionsService'
-import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
-import './AppShell.css'
 
-function formatPriceNumber(value: number): string {
-  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
-function billingCyclePeriodLabel(cycle: string): string {
+function billingCycleLabel(cycle: string): string {
   switch (cycle) {
     case 'Monthly':
-      return 'mês'
+      return 'Mensal'
     case 'Yearly':
-      return 'ano'
+      return 'Anual'
     case 'Quarterly':
-      return 'trimestre'
+      return 'Trimestral'
     default:
       return cycle
   }
 }
 
+function formatPrice(value: number): string {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
 export function PlanDetailsPage() {
   const { planId } = useParams<{ planId: string }>()
-  const location = useLocation()
-  const isFeatured = (location.state as { featured?: boolean } | null)?.featured === true
   const [plan, setPlan] = useState<TorcedorPublishedPlanDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [subscribing, setSubscribing] = useState(false)
-  const [subscribeError, setSubscribeError] = useState<string | null>(null)
 
-  async function handleSubscribe() {
-    if (!planId || subscribing)
-      return
-    try {
-      setSubscribing(true)
-      setSubscribeError(null)
-      const res = await subscriptionsService.subscribe(planId, 'Card')
-      const url = res.card?.checkoutUrl
-      if (url) {
-        window.location.href = url
-        return
-      }
-      setSubscribeError('Não foi possível obter o link de pagamento. Tente novamente.')
-      setSubscribing(false)
-    }
-    catch (e) {
-      if (isAxiosError(e)) {
-        if (e.response?.status === 409)
-          setSubscribeError('Você já possui uma assinatura ativa.')
-        else if (e.response?.status === 400)
-          setSubscribeError('Este plano não está mais disponível.')
-        else
-          setSubscribeError(e.message ?? 'Erro ao iniciar o checkout.')
-      }
-      else {
-        setSubscribeError(e instanceof Error ? e.message : 'Erro ao iniciar o checkout.')
-      }
-      setSubscribing(false)
-    }
-  }
-
-  const sortedBenefits = useMemo(() => {
+  const discountedPrice = useMemo(() => {
     if (!plan)
-      return []
-    return [...plan.benefits].sort((a, b) => a.sortOrder - b.sortOrder)
+      return null
+    const pct = plan.discountPercentage
+    if (pct <= 0)
+      return plan.price
+    return Math.round(plan.price * (1 - pct / 100) * 100) / 100
   }, [plan])
 
   useEffect(() => {
@@ -112,65 +76,106 @@ export function PlanDetailsPage() {
   }, [planId])
 
   return (
-    <div className="plans-root">
-      <header className="subpage-header">
-        <Link to="/plans" className="subpage-header__back" aria-label="Voltar">
-          <ArrowLeft size={18} />
-        </Link>
-        <h1 className="subpage-header__title plans-page__header-title">Planos</h1>
-        <Link to="/account" className="plans-page__settings-btn" aria-label="Configurações">
-          <Settings size={20} stroke="currentColor" />
-        </Link>
-      </header>
+    <main style={{ maxWidth: 720, margin: '2rem auto', fontFamily: 'system-ui' }}>
+      <p>
+        <Link to="/plans">← Voltar aos planos</Link>
+      </p>
+      <h1>Detalhe do plano</h1>
 
-      <main className="subpage-content plan-detail">
-        {loading ? <p className="app-muted">Carregando…</p> : null}
-        {error ? <p role="alert" className="plan-detail__error">{error}</p> : null}
+      {loading ? <p>Carregando…</p> : null}
+      {error ? <p style={{ color: '#721c24' }}>{error}</p> : null}
 
-        {!loading && !error && plan ? (
-          <div className="plan-detail__card">
-            {isFeatured ? (
-              <span className="plans-page__badge">Mais Popular</span>
-            ) : null}
-            <p className="plan-detail__name">{plan.name}</p>
-            {plan.summary ? (
-              <p className="plan-detail__summary">{plan.summary}</p>
-            ) : null}
-            <p className="plans-page__price">
-              <span className="plans-page__price-currency">R$</span>
-              <span className="plans-page__price-value">{formatPriceNumber(plan.price)}</span>
-              <span className="plans-page__price-cycle">
-                {`/ ${billingCyclePeriodLabel(plan.billingCycle)}`}
-              </span>
-            </p>
-            {sortedBenefits.length > 0 ? (
-              <ul className="plan-detail__benefits">
-                {sortedBenefits.map(b => (
-                  <li key={b.benefitId} className="plan-detail__benefit-item">
-                    {b.title}
-                    {b.description ? ` — ${b.description}` : ''}
+      {!loading && !error && plan ? (
+        <article
+          style={{
+            border: '1px solid #ddd',
+            borderRadius: 8,
+            padding: '1.25rem',
+            background: '#fafafa',
+            marginTop: '1rem',
+          }}
+        >
+          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.25rem' }}>{plan.name}</h2>
+          <p style={{ margin: 0, fontSize: '1.35rem', fontWeight: 600 }}>
+            {formatPrice(plan.price)}
+            <span style={{ fontSize: '0.85rem', fontWeight: 400, color: '#555' }}>
+              {' '}
+              /
+              {' '}
+              {billingCycleLabel(plan.billingCycle)}
+            </span>
+          </p>
+          {plan.discountPercentage > 0 && discountedPrice !== null ? (
+            <div style={{ marginTop: '0.75rem' }}>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#2a6' }}>
+                Desconto de
+                {' '}
+                {plan.discountPercentage}
+                %
+                {' '}
+                — valor simulado:
+                {' '}
+                <strong>{formatPrice(discountedPrice)}</strong>
+                {' '}
+                por ciclo (após desconto).
+              </p>
+            </div>
+          ) : null}
+          {plan.summary ? (
+            <p style={{ margin: '1rem 0 0', color: '#444' }}>{plan.summary}</p>
+          ) : null}
+          {plan.rulesNotes ? (
+            <section style={{ marginTop: '1.25rem' }}>
+              <h3 style={{ margin: '0 0 0.35rem', fontSize: '1rem' }}>Regras e condições</h3>
+              <p style={{ margin: 0, whiteSpace: 'pre-wrap', color: '#333', fontSize: '0.95rem' }}>
+                {plan.rulesNotes}
+              </p>
+            </section>
+          ) : null}
+          {plan.benefits.length > 0 ? (
+            <section style={{ marginTop: '1.25rem' }}>
+              <h3 style={{ margin: '0 0 0.35rem', fontSize: '1rem' }}>Benefícios inclusos</h3>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#333' }}>
+                {plan.benefits.map(b => (
+                  <li key={b.benefitId} style={{ marginBottom: '0.35rem' }}>
+                    <strong>{b.title}</strong>
+                    {b.description ? (
+                      <>
+                        {' '}
+                        —
+                        {' '}
+                        {b.description}
+                      </>
+                    ) : null}
                   </li>
                 ))}
               </ul>
-            ) : null}
-            {subscribeError ? (
-              <p role="alert" className="plan-detail__error">{subscribeError}</p>
-            ) : null}
-            <button
-              type="button"
-              className="plan-detail__cta"
-              onClick={() => void handleSubscribe()}
-              disabled={subscribing}
+            </section>
+          ) : null}
+          <p style={{ margin: '1.5rem 0 0' }}>
+            <Link
+              to={`/plans/${plan.planId}/checkout`}
+              style={{
+                display: 'block',
+                textAlign: 'center',
+                padding: '0.5rem 1rem',
+                borderRadius: 6,
+                border: '1px solid #1976d2',
+                background: '#1976d2',
+                color: '#fff',
+                textDecoration: 'none',
+                width: '100%',
+                boxSizing: 'border-box',
+              }}
             >
-              {subscribing ? 'Aguarde…' : 'Assinar agora'}
-            </button>
-            <p className="plan-detail__note">
-              Você será direcionado ao checkout em uma plataforma externa.*
-            </p>
-          </div>
-        ) : null}
-      </main>
-      <TorcedorBottomNav />
-    </div>
+              Contratar
+            </Link>
+          </p>
+          <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#666' }}>
+            Você será direcionado ao checkout para escolher PIX ou cartão.
+          </p>
+        </article>
+      ) : null}
+    </main>
   )
 }

@@ -237,10 +237,6 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("BannerUrl")
-                        .HasMaxLength(2048)
-                        .HasColumnType("nvarchar(2048)");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -415,10 +411,6 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("OpponentLogoUrl")
-                        .HasMaxLength(2048)
-                        .HasColumnType("nvarchar(2048)");
 
                     b.HasKey("Id");
 
@@ -842,30 +834,6 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.HasIndex("UpdatedAt");
 
                     b.ToTable("NewsArticles", (string)null);
-                });
-
-            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.OpponentLogoAssetRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("PublicUrl")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("nvarchar(2048)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("PublicUrl")
-                        .IsUnique();
-
-                    b.ToTable("OpponentLogoAssets", (string)null);
                 });
 
             modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.PaymentRecord", b =>
