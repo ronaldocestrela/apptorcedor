@@ -83,10 +83,23 @@ Mutações nas novas entidades geram entradas em `AuditLogs` via interceptor exi
 - Serviços: `frontend/src/features/admin/services/adminApi.ts`.
 - `Fidelidade.*` e `Beneficios.*` incluídas em `ADMIN_AREA_PERMISSIONS`.
 
+### Administração de benefícios (UI) — `/admin/benefits`
+
+Implementação em `frontend/src/features/admin/pages/BenefitsAdminPage.tsx` + helpers `benefitsAdminHelpers.ts`.
+
+- **Parceiros:** listagem com filtro (nome + aplicar; ativo/todos/inativos), criar/editar (`GET /api/admin/benefits/partners/{id}` ao editar), ativar/desativar (via `PUT` preservando nome/descrição carregados do detalhe).
+- **Ofertas (`BenefitOffers`):** formulário com parceiro (select), título, descrição, **início/fim de vigência** (`datetime-local` → ISO UTC na API), checkbox **oferta ativa**, elegibilidade opcional (GUIDs de planos separados por vírgula; checkboxes de status de membership alinhados ao enum do backend).
+- **Status exibido (derivado no cliente, não persistido):** `Inativa` (`!isActive`); senão `Expirada` se `now > endAt`; senão `Programada` se `now < startAt`; senão `Vigente` se `isActive && startAt ≤ now ≤ endAt`.
+- **Filtros:** parceiro na lista de ofertas; status derivado (Vigente / Programada / Expirada / Inativa).
+- **Ações por linha:** Editar (carrega `GET /offers/{id}` no formulário), Ativar/Desativar e **Excluir (soft)** — ambos atualizam via `PUT /api/admin/benefits/offers/{id}` com `isActive` adequado, **preservando** `eligiblePlanIds` / `eligibleMembershipStatuses` retornados do GET antes do PUT.
+- **Validação client-side:** data final ≥ data inicial; título e parceiro obrigatórios.
+- **Resgates administrativos** e listagem de últimos resgates permanecem na mesma página.
+
 ## Testes
 
 - `AppTorcedor.Application.Tests` — `LoyaltyAdminHandlersTests`, `BenefitsAdminHandlersTests`.
 - `AppTorcedor.Api.Tests` — `PartB10LoyaltyBenefitsAdminTests` (autorização, pontos por conciliação, fluxo parceiro/oferta/resgate).
+- `frontend` — `benefitsAdminHelpers.test.ts` (regras de status derivado), `BenefitsAdminPage.test.tsx` (lista com badges, criação com vigência, validação de datas, desativar com PUT preservando elegibilidade, edição).
 
 ## Relação com outras partes
 
