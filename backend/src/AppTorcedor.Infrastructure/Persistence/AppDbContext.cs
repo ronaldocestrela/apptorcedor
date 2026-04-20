@@ -451,6 +451,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Title).HasMaxLength(256).IsRequired();
             entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.Property(x => x.BannerUrl).HasMaxLength(2048);
             entity.HasIndex(x => x.PartnerId);
             entity.HasIndex(x => new { x.IsActive, x.StartAt, x.EndAt });
             entity

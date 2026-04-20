@@ -1,5 +1,12 @@
 import { api } from '../../../shared/api/http'
 
+/** Axios default is application/json; for FormData the browser must set multipart boundary. */
+function formDataMultipartTransform(body: unknown, headers: Record<string, string>) {
+  if (body instanceof FormData)
+    delete headers['Content-Type']
+  return body
+}
+
 export type DiagnosticsResult = {
   ok: boolean
   databaseConnected: boolean
@@ -86,11 +93,7 @@ export async function uploadTeamShield(file: File): Promise<string> {
   const fd = new FormData()
   fd.append('file', file)
   const { data } = await api.post<{ teamShieldUrl: string }>('/api/admin/config/team-shield', fd, {
-    transformRequest: (body, headers) => {
-      if (body instanceof FormData)
-        delete headers['Content-Type']
-      return body
-    },
+    transformRequest: formDataMultipartTransform,
   })
   return data.teamShieldUrl
 }
@@ -618,11 +621,7 @@ export async function uploadAdminOpponentLogo(file: File): Promise<string> {
   const fd = new FormData()
   fd.append('file', file)
   const { data } = await api.post<{ url: string }>('/api/admin/games/opponent-logos', fd, {
-    transformRequest: (body, headers) => {
-      if (body instanceof FormData)
-        delete headers['Content-Type']
-      return body
-    },
+    transformRequest: formDataMultipartTransform,
   })
   return data.url
 }
@@ -1044,6 +1043,7 @@ export type BenefitOfferListItem = {
   startAt: string
   endAt: string
   createdAt: string
+  bannerUrl: string | null
 }
 
 export type BenefitOfferListPage = {
@@ -1063,6 +1063,7 @@ export type BenefitOfferDetail = {
   updatedAt: string
   eligiblePlanIds: string[]
   eligibleMembershipStatuses: string[]
+  bannerUrl: string | null
 }
 
 export type UpsertBenefitOfferBody = {
@@ -1105,6 +1106,21 @@ export async function createBenefitOffer(body: UpsertBenefitOfferBody): Promise<
 
 export async function updateBenefitOffer(offerId: string, body: UpsertBenefitOfferBody): Promise<void> {
   await api.put(`/api/admin/benefits/offers/${encodeURIComponent(offerId)}`, body)
+}
+
+export async function uploadBenefitOfferBanner(offerId: string, file: File): Promise<{ bannerUrl: string }> {
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await api.post<{ bannerUrl: string }>(
+    `/api/admin/benefits/offers/${encodeURIComponent(offerId)}/banner`,
+    form,
+    { transformRequest: formDataMultipartTransform },
+  )
+  return data
+}
+
+export async function deleteBenefitOfferBanner(offerId: string): Promise<void> {
+  await api.delete(`/api/admin/benefits/offers/${encodeURIComponent(offerId)}/banner`)
 }
 
 export async function redeemBenefitOffer(offerId: string, body: { userId: string; notes?: string | null }): Promise<{ redemptionId: string }> {

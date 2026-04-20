@@ -36,7 +36,8 @@ public sealed class TorcedorBenefitsController(IMediator mediator) : ControllerB
                 i.Title,
                 i.Description,
                 i.StartAt,
-                i.EndAt))
+                i.EndAt,
+                i.BannerUrl))
             .ToList();
         return Ok(new TorcedorEligibleBenefitOffersPageResponse(pageDto.TotalCount, items));
     }
@@ -66,7 +67,8 @@ public sealed class TorcedorBenefitsController(IMediator mediator) : ControllerB
                 dto.StartAt,
                 dto.EndAt,
                 dto.AlreadyRedeemed,
-                dto.RedemptionDateUtc));
+                dto.RedemptionDateUtc,
+                dto.BannerUrl));
     }
 
     [HttpPost("offers/{offerId:guid}/redeem")]

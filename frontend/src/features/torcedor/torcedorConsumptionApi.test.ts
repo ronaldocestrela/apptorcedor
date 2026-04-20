@@ -69,6 +69,7 @@ describe('torcedor C.2 APIs', () => {
         endAt: '2026-12-31T00:00:00Z',
         alreadyRedeemed: false,
         redemptionDateUtc: null,
+        bannerUrl: null,
       },
     })
     const d = await getEligibleBenefitOfferDetail('o1')

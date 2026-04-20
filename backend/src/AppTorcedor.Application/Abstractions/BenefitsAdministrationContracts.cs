@@ -24,7 +24,8 @@ public sealed record BenefitOfferListItemDto(
     bool IsActive,
     DateTimeOffset StartAt,
     DateTimeOffset EndAt,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string? BannerUrl);
 
 public sealed record BenefitOfferListPageDto(int TotalCount, IReadOnlyList<BenefitOfferListItemDto> Items);
 
@@ -39,7 +40,8 @@ public sealed record BenefitOfferDetailDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     IReadOnlyList<Guid> EligiblePlanIds,
-    IReadOnlyList<MembershipStatus> EligibleMembershipStatuses);
+    IReadOnlyList<MembershipStatus> EligibleMembershipStatuses,
+    string? BannerUrl);
 
 public sealed record BenefitOfferWriteDto(
     Guid PartnerId,
@@ -87,6 +89,12 @@ public sealed record BenefitRedeemResult(bool Ok, Guid? RedemptionId, BenefitMut
     public static BenefitRedeemResult Fail(BenefitMutationError error) => new(false, null, error);
 }
 
+public sealed record BenefitBannerUploadResult(bool Ok, string? BannerUrl, BenefitMutationError? Error)
+{
+    public static BenefitBannerUploadResult Success(string bannerUrl) => new(true, bannerUrl, null);
+    public static BenefitBannerUploadResult Fail(BenefitMutationError error) => new(false, null, error);
+}
+
 public interface IBenefitsAdministrationPort
 {
     Task<BenefitPartnerListPageDto> ListPartnersAsync(
@@ -120,6 +128,15 @@ public interface IBenefitsAdministrationPort
         Guid offerId,
         BenefitOfferWriteDto dto,
         CancellationToken cancellationToken = default);
+
+    Task<BenefitBannerUploadResult> UploadOfferBannerAsync(
+        Guid offerId,
+        Stream content,
+        string fileName,
+        string contentType,
+        CancellationToken cancellationToken = default);
+
+    Task<BenefitMutationResult> RemoveOfferBannerAsync(Guid offerId, CancellationToken cancellationToken = default);
 
     Task<BenefitRedeemResult> RedeemOfferAsync(
         Guid offerId,

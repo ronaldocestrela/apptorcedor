@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.Configure<ProfilePhotoStorageOptions>(configuration.GetSection(ProfilePhotoStorageOptions.SectionName));
         services.Configure<TeamShieldStorageOptions>(configuration.GetSection(TeamShieldStorageOptions.SectionName));
         services.Configure<OpponentLogoStorageOptions>(configuration.GetSection(OpponentLogoStorageOptions.SectionName));
+        services.Configure<BenefitOfferBannerStorageOptions>(configuration.GetSection(BenefitOfferBannerStorageOptions.SectionName));
         services.Configure<CloudinaryOptions>(configuration.GetSection(CloudinaryOptions.SectionName));
         services.Configure<PaymentsOptions>(configuration.GetSection(PaymentsOptions.SectionName));
 
@@ -124,6 +125,16 @@ public static class DependencyInjection
             });
         services.AddScoped<LocalOpponentLogoStorage>();
         services.AddScoped<CloudinaryOpponentLogoStorage>();
+        services.AddScoped<IBenefitOfferBannerStorage>(
+            sp =>
+            {
+                var bannerOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<BenefitOfferBannerStorageOptions>>().Value;
+                if (bannerOptions.Provider.Equals("Cloudinary", StringComparison.OrdinalIgnoreCase))
+                    return sp.GetRequiredService<CloudinaryBenefitOfferBannerStorage>();
+                return sp.GetRequiredService<LocalBenefitOfferBannerStorage>();
+            });
+        services.AddScoped<LocalBenefitOfferBannerStorage>();
+        services.AddScoped<CloudinaryBenefitOfferBannerStorage>();
         services.AddScoped<IOpponentLogoLibraryAdminPort, OpponentLogoLibraryAdminService>();
         services.AddScoped<ISupportTicketAttachmentStorage>(
             sp =>
