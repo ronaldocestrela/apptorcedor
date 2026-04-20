@@ -26,7 +26,8 @@ public sealed record TorcedorEligibleBenefitOfferItemDto(
     string Title,
     string? Description,
     DateTimeOffset StartAt,
-    DateTimeOffset EndAt);
+    DateTimeOffset EndAt,
+    string? BannerUrl);
 
 public sealed record TorcedorEligibleBenefitOffersPageDto(
     int TotalCount,
@@ -41,7 +42,8 @@ public sealed record TorcedorEligibleBenefitOfferDetailDto(
     DateTimeOffset StartAt,
     DateTimeOffset EndAt,
     bool AlreadyRedeemed,
-    DateTimeOffset? RedemptionDateUtc);
+    DateTimeOffset? RedemptionDateUtc,
+    string? BannerUrl);
 
 public enum TorcedorRedemptionError
 {

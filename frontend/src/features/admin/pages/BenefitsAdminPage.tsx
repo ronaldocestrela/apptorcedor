@@ -3,9 +3,11 @@ import { ApplicationPermissions } from '../../../shared/auth/applicationPermissi
 import { hasPermission } from '../../../shared/auth/permissionUtils'
 import { useAuth } from '../../auth/AuthContext'
 import { PermissionGate } from '../../auth/PermissionGate'
+import { resolvePublicAssetUrl } from '../../account/accountApi'
 import {
   createBenefitOffer,
   createBenefitPartner,
+  deleteBenefitOfferBanner,
   getBenefitOffer,
   getBenefitPartner,
   listBenefitOffers,
@@ -14,6 +16,7 @@ import {
   redeemBenefitOffer,
   updateBenefitOffer,
   updateBenefitPartner,
+  uploadBenefitOfferBanner,
   type BenefitOfferDetail,
   type BenefitOfferListItem,
 } from '../services/adminApi'
@@ -53,6 +56,7 @@ type OfferFormState = {
   isActive: boolean
   eligiblePlanIdsRaw: string
   eligibleMembershipStatuses: Set<string>
+  bannerUrl: string | null
 }
 
 function emptyPartnerForm(): PartnerFormState {
@@ -70,6 +74,7 @@ function emptyOfferForm(partnerId = ''): OfferFormState {
     isActive: true,
     eligiblePlanIdsRaw: '',
     eligibleMembershipStatuses: new Set(),
+    bannerUrl: null,
   }
 }
 
@@ -84,6 +89,7 @@ function detailToOfferForm(d: BenefitOfferDetail): OfferFormState {
     isActive: d.isActive,
     eligiblePlanIdsRaw: d.eligiblePlanIds.join(', '),
     eligibleMembershipStatuses: new Set(d.eligibleMembershipStatuses),
+    bannerUrl: d.bannerUrl,
   }
 }
 
@@ -109,7 +115,16 @@ export function BenefitsAdminPage() {
   const [savingPartner, setSavingPartner] = useState(false)
 
   const [offerForm, setOfferForm] = useState<OfferFormState>(() => emptyOfferForm())
+  /** Banner escolhido antes da oferta existir (create); enviado após POST retornar offerId */
+  const [pendingBanner, setPendingBanner] = useState<{ file: File; objectUrl: string } | null>(null)
   const [savingOffer, setSavingOffer] = useState(false)
+
+  function clearPendingBanner() {
+    setPendingBanner((prev) => {
+      if (prev) URL.revokeObjectURL(prev.objectUrl)
+      return null
+    })
+  }
 
   const [redeemOfferId, setRedeemOfferId] = useState('')
   const [redeemUserId, setRedeemUserId] = useState('')
@@ -259,11 +274,32 @@ export function BenefitsAdminPage() {
     try {
       if (offerForm.offerId) {
         await updateBenefitOffer(offerForm.offerId, body)
+        setOfferForm(emptyOfferForm(offerForm.partnerId))
+        await load()
       } else {
-        await createBenefitOffer(body)
+        const bannerFile = pendingBanner?.file
+        const { offerId } = await createBenefitOffer(body)
+        if (pendingBanner) clearPendingBanner()
+        if (bannerFile) {
+          try {
+            await uploadBenefitOfferBanner(offerId, bannerFile)
+          } catch {
+            setFormError(
+              'Oferta criada, mas o banner não foi enviado. Use “Editar” nesta oferta para enviar ou remover a imagem.',
+            )
+            try {
+              const d = await getBenefitOffer(offerId)
+              setOfferForm(detailToOfferForm(d))
+            } catch {
+              setOfferForm(emptyOfferForm(offerForm.partnerId))
+            }
+            await load()
+            return
+          }
+        }
+        setOfferForm(emptyOfferForm(offerForm.partnerId))
+        await load()
       }
-      setOfferForm(emptyOfferForm(offerForm.partnerId))
-      await load()
     } catch {
       setFormError('Falha ao salvar oferta.')
     } finally {
@@ -273,6 +309,7 @@ export function BenefitsAdminPage() {
 
   function startEditOffer(offerId: string) {
     setFormError(null)
+    clearPendingBanner()
     void (async () => {
       try {
         const d = await getBenefitOffer(offerId)
@@ -285,6 +322,7 @@ export function BenefitsAdminPage() {
 
   function cancelOfferForm() {
     setFormError(null)
+    clearPendingBanner()
     setOfferForm(emptyOfferForm())
   }
 
@@ -315,6 +353,38 @@ export function BenefitsAdminPage() {
     const ok = window.confirm('Desativar esta oferta? (soft delete — histórico de resgates permanece.)')
     if (!ok) return
     await setOfferActiveFlag(offerId, false)
+  }
+
+  async function onBannerFileSelected(file: File) {
+    setFormError(null)
+    if (!offerForm.offerId) {
+      clearPendingBanner()
+      const objectUrl = URL.createObjectURL(file)
+      setPendingBanner({ file, objectUrl })
+      return
+    }
+    try {
+      const { bannerUrl } = await uploadBenefitOfferBanner(offerForm.offerId, file)
+      setOfferForm((f) => ({ ...f, bannerUrl }))
+      await load()
+    } catch {
+      setFormError('Falha ao enviar banner.')
+    }
+  }
+
+  async function removeOfferBanner() {
+    setFormError(null)
+    if (!offerForm.offerId) {
+      clearPendingBanner()
+      return
+    }
+    try {
+      await deleteBenefitOfferBanner(offerForm.offerId)
+      setOfferForm((f) => ({ ...f, bannerUrl: null }))
+      await load()
+    } catch {
+      setFormError('Falha ao remover banner.')
+    }
   }
 
   function toggleMembershipStatus(st: string) {
@@ -544,6 +614,50 @@ export function BenefitsAdminPage() {
                       ))}
                     </div>
                   </div>
+                  {canManage ? (
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 10 }}>
+                      <p style={{ margin: '0 0 8px', fontSize: '0.88rem' }}>
+                        Banner da oferta (proporção recomendada 300×148 px; JPG, PNG ou WebP
+                        {offerForm.offerId ? '' : '; será enviado ao criar a oferta'})
+                      </p>
+                      {offerForm.bannerUrl ? (
+                        <img
+                          src={resolvePublicAssetUrl(offerForm.bannerUrl) ?? ''}
+                          alt=""
+                          data-testid="offer-banner-preview"
+                          style={{ maxWidth: 280, borderRadius: 8, display: 'block', marginBottom: 8 }}
+                        />
+                      ) : pendingBanner ? (
+                        <img
+                          src={pendingBanner.objectUrl}
+                          alt=""
+                          data-testid="offer-banner-preview"
+                          style={{ maxWidth: 280, borderRadius: 8, display: 'block', marginBottom: 8 }}
+                        />
+                      ) : null}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                        <label style={{ fontSize: '0.85rem' }}>
+                          Enviar imagem
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            data-testid="offer-banner-input"
+                            style={{ display: 'block', marginTop: 4 }}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0]
+                              if (f) void onBannerFileSelected(f)
+                              e.target.value = ''
+                            }}
+                          />
+                        </label>
+                        {offerForm.bannerUrl || pendingBanner ? (
+                          <button type="button" data-testid="offer-banner-remove" onClick={() => void removeOfferBanner()}>
+                            Remover banner
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button type="submit" disabled={savingOffer || !canManage} data-testid="offer-submit">
                       {offerForm.offerId ? 'Salvar oferta' : 'Criar oferta'}

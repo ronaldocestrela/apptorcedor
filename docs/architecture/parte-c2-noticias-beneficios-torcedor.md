@@ -40,8 +40,8 @@ Registro DI: `ITorcedorNewsReadPort`, `ITorcedorBenefitsReadPort`, `ITorcedorBen
 |--------|------|------|-----------|
 | GET | `/api/news?search=&page=&pageSize=` | JWT | Feed paginado; apenas artigos **publicados**. Ordenação: `PublishedAt` (fallback `UpdatedAt`). |
 | GET | `/api/news/{newsId}` | JWT | Detalhe; `404` se não existir ou não estiver publicado. |
-| GET | `/api/benefits/eligible?page=&pageSize=` | JWT | Ofertas elegíveis ao **usuário do token** (plano/status + vigência + ativo). |
-| GET | `/api/benefits/offers/{offerId}` | JWT | Detalhe da oferta **se** elegível ao usuário; `404` caso contrário. Corpo inclui `alreadyRedeemed`, `redemptionDateUtc`. |
+| GET | `/api/benefits/eligible?page=&pageSize=` | JWT | Ofertas elegíveis ao **usuário do token** (plano/status + vigência + ativo). Itens incluem `bannerUrl` (nullable). |
+| GET | `/api/benefits/offers/{offerId}` | JWT | Detalhe da oferta **se** elegível ao usuário; `404` caso contrário. Corpo inclui `alreadyRedeemed`, `redemptionDateUtc`, `bannerUrl` (nullable). |
 | POST | `/api/benefits/offers/{offerId}/redeem` | JWT | Resgate self-service; `201` + `{ redemptionId }`; `404` oferta inexistente; `400` com `{ error: "not_eligible" \| "already_redeemed" }`. |
 
 Contratos JSON espelham `AppTorcedor.Api.Contracts` (`TorcedorNewsFeedPageResponse`, `TorcedorEligibleBenefitOfferDetailResponse`, etc.).
@@ -50,7 +50,8 @@ Contratos JSON espelham `AppTorcedor.Api.Contracts` (`TorcedorNewsFeedPageRespon
 
 - Rotas: `/news`, `/news/:newsId`, `/benefits`, `/benefits/:offerId` (dentro de `ProtectedRoute`, fora de `/admin`).
 - Serviços: `frontend/src/features/torcedor/torcedorNewsApi.ts`, `torcedorBenefitsApi.ts` (`listEligibleBenefitOffers`, `getEligibleBenefitOfferDetail`, `redeemBenefitOffer`).
-- Páginas: `NewsFeedPage`, `NewsDetailPage`, `BenefitsEligiblePage`, `BenefitOfferDetailPage`; **home** (`DashboardPage`) com carrossel horizontal (scroll-snap) de banners de benefícios elegíveis que levam ao detalhe/resgate.
+- Páginas: `NewsFeedPage`, `NewsDetailPage`, `BenefitsEligiblePage`, `BenefitOfferDetailPage`; **home** (`DashboardPage`) com carrossel horizontal (scroll-snap) de benefícios elegíveis que levam ao detalhe/resgate.
+- **Layout com `bannerUrl`:** área da imagem com `aspect-ratio: 300 / 148` e `object-fit: cover`. Texto no cartão/lista: somente **descrição** (se houver) e **intervalo de vigência**; título, parceiro, eyebrow e CTA “Ver detalhes” ficam ocultos no carrossel e na lista. Na página de detalhe, com banner: imagem no topo; descrição + datas; bloco de resgate inalterado. URLs relativas de upload são resolvidas com `resolvePublicAssetUrl` (`VITE_API_URL`).
 
 ## Testes (TDD)
 

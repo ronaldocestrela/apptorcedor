@@ -16,6 +16,8 @@ const createBenefitPartner = vi.fn()
 const getBenefitPartner = vi.fn()
 const updateBenefitPartner = vi.fn()
 const redeemBenefitOffer = vi.fn()
+const uploadBenefitOfferBanner = vi.fn()
+const deleteBenefitOfferBanner = vi.fn()
 
 vi.mock('../../auth/PermissionGate', () => ({
   PermissionGate: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -40,6 +42,13 @@ vi.mock('../services/adminApi', () => ({
   getBenefitPartner: (...a: unknown[]) => getBenefitPartner(...a),
   updateBenefitPartner: (...a: unknown[]) => updateBenefitPartner(...a),
   redeemBenefitOffer: (...a: unknown[]) => redeemBenefitOffer(...a),
+  uploadBenefitOfferBanner: (...a: unknown[]) => uploadBenefitOfferBanner(...a),
+  deleteBenefitOfferBanner: (...a: unknown[]) => deleteBenefitOfferBanner(...a),
+}))
+
+vi.mock('../../account/accountApi', () => ({
+  resolvePublicAssetUrl: (path: string | null | undefined) =>
+    path ? `https://resolved.test${path.startsWith('/') ? path : `/${path}`}` : undefined,
 }))
 
 const partnerA = { partnerId: '11111111-1111-1111-1111-111111111111', name: 'Parceiro A', isActive: true, createdAt: '' }
@@ -81,6 +90,7 @@ describe('BenefitsAdminPage', () => {
           startAt: '2025-01-01T00:00:00.000Z',
           endAt: '2025-12-31T00:00:00.000Z',
           createdAt: '',
+          bannerUrl: null,
         },
         {
           offerId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
@@ -91,6 +101,7 @@ describe('BenefitsAdminPage', () => {
           startAt: '2025-07-01T00:00:00.000Z',
           endAt: '2025-12-31T00:00:00.000Z',
           createdAt: '',
+          bannerUrl: null,
         },
         {
           offerId: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
@@ -101,6 +112,7 @@ describe('BenefitsAdminPage', () => {
           startAt: '2025-06-01T00:00:00.000Z',
           endAt: '2025-06-30T00:00:00.000Z',
           createdAt: '',
+          bannerUrl: null,
         },
         {
           offerId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
@@ -111,6 +123,7 @@ describe('BenefitsAdminPage', () => {
           startAt: '2025-01-01T00:00:00.000Z',
           endAt: '2025-05-01T00:00:00.000Z',
           createdAt: '',
+          bannerUrl: null,
         },
       ],
     })
@@ -161,6 +174,41 @@ describe('BenefitsAdminPage', () => {
     expect(call.endAt).toMatch(/2026-06-10/)
   })
 
+  it('on create with banner file uploads banner after offer is created', async () => {
+    const user = userEvent.setup()
+    listBenefitOffers.mockResolvedValue({ totalCount: 0, items: [] })
+    createBenefitOffer.mockResolvedValue({ offerId: 'new-offer-id' })
+    uploadBenefitOfferBanner.mockResolvedValue({ bannerUrl: '/uploads/benefit-offer-banners/b.png' })
+
+    renderPage()
+
+    await waitFor(() => expect(screen.queryByTestId('benefits-admin-loading')).not.toBeInTheDocument())
+
+    await user.selectOptions(screen.getByTestId('offer-partner-select'), partnerA.partnerId)
+    await user.type(screen.getByTestId('offer-title-input'), 'Com banner create')
+
+    const startInput = screen.getByTestId('offer-start-input') as HTMLInputElement
+    const endInput = screen.getByTestId('offer-end-input') as HTMLInputElement
+    await user.clear(startInput)
+    await user.type(startInput, '2026-01-10T08:00')
+    await user.clear(endInput)
+    await user.type(endInput, '2026-06-10T08:00')
+
+    const file = new File(['x'], 'ban.png', { type: 'image/png' })
+    await user.upload(screen.getByTestId('offer-banner-input'), file)
+    expect(await screen.findByTestId('offer-banner-preview')).toBeInTheDocument()
+
+    await user.click(screen.getByTestId('offer-submit'))
+
+    await waitFor(() => {
+      expect(createBenefitOffer).toHaveBeenCalled()
+      expect(uploadBenefitOfferBanner).toHaveBeenCalledWith('new-offer-id', expect.any(File))
+    })
+    expect(uploadBenefitOfferBanner.mock.invocationCallOrder[0] > createBenefitOffer.mock.invocationCallOrder[0]).toBe(
+      true,
+    )
+  })
+
   it('shows validation error when end is before start', async () => {
     const user = userEvent.setup()
     listBenefitOffers.mockResolvedValue({ totalCount: 0, items: [] })
@@ -202,6 +250,7 @@ describe('BenefitsAdminPage', () => {
           startAt: '2025-06-01T00:00:00.000Z',
           endAt: '2026-06-30T00:00:00.000Z',
           createdAt: '',
+          bannerUrl: null,
         },
       ],
     })
@@ -218,6 +267,7 @@ describe('BenefitsAdminPage', () => {
       updatedAt: '',
       eligiblePlanIds: ['plan-1'],
       eligibleMembershipStatuses: ['Ativo'],
+      bannerUrl: null,
     })
     updateBenefitOffer.mockResolvedValue(undefined)
 
@@ -254,6 +304,7 @@ describe('BenefitsAdminPage', () => {
           startAt: '2025-06-01T00:00:00.000Z',
           endAt: '2026-06-30T00:00:00.000Z',
           createdAt: '',
+          bannerUrl: null,
         },
       ],
     })
@@ -270,6 +321,7 @@ describe('BenefitsAdminPage', () => {
       updatedAt: '',
       eligiblePlanIds: ['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'],
       eligibleMembershipStatuses: ['Ativo', 'PendingPayment'],
+      bannerUrl: null,
     }
     getBenefitOffer.mockResolvedValue(detail)
     updateBenefitOffer.mockResolvedValue(undefined)
@@ -301,5 +353,65 @@ describe('BenefitsAdminPage', () => {
         eligibleMembershipStatuses: expect.arrayContaining(['Ativo', 'PendingPayment']),
       }),
     )
+  })
+
+  it('when editing offer with bannerUrl shows preview and calls deleteBenefitOfferBanner on remove', async () => {
+    const user = userEvent.setup()
+    const offerId = '11111111-2222-3333-4444-555555555555'
+    listBenefitOffers.mockResolvedValue({
+      totalCount: 1,
+      items: [
+        {
+          offerId,
+          partnerId: partnerA.partnerId,
+          partnerName: 'Parceiro A',
+          title: 'Com banner',
+          isActive: true,
+          startAt: '2025-06-01T00:00:00.000Z',
+          endAt: '2026-06-30T00:00:00.000Z',
+          createdAt: '',
+          bannerUrl: '/uploads/benefit-offer-banners/x.webp',
+        },
+      ],
+    })
+
+    getBenefitOffer.mockResolvedValue({
+      offerId,
+      partnerId: partnerA.partnerId,
+      title: 'Com banner',
+      description: 'Detalhe',
+      isActive: true,
+      startAt: '2025-06-01T00:00:00.000Z',
+      endAt: '2026-06-30T00:00:00.000Z',
+      createdAt: '',
+      updatedAt: '',
+      eligiblePlanIds: [],
+      eligibleMembershipStatuses: ['Ativo'],
+      bannerUrl: '/uploads/benefit-offer-banners/x.webp',
+    })
+    deleteBenefitOfferBanner.mockResolvedValue(undefined)
+
+    renderPage()
+
+    await waitFor(() => expect(screen.queryByTestId('benefits-admin-loading')).not.toBeInTheDocument())
+
+    const row = screen.getByTestId(`offer-row-${offerId}`)
+    await user.click(within(row).getByRole('button', { name: 'Editar' }))
+
+    await waitFor(() => {
+      expect(getBenefitOffer).toHaveBeenCalledWith(offerId)
+    })
+
+    expect(await screen.findByTestId('offer-banner-preview')).toHaveAttribute(
+      'src',
+      'https://resolved.test/uploads/benefit-offer-banners/x.webp',
+    )
+
+    await user.click(screen.getByTestId('offer-banner-remove'))
+
+    await waitFor(() => {
+      expect(deleteBenefitOfferBanner).toHaveBeenCalledWith(offerId)
+    })
+    expect(screen.queryByTestId('offer-banner-preview')).not.toBeInTheDocument()
   })
 })

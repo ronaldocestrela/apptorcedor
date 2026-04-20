@@ -73,7 +73,8 @@ public sealed class TorcedorBenefitsReadService(AppDbContext db) : ITorcedorBene
                 x.Offer.Title,
                 x.Offer.Description,
                 x.Offer.StartAt,
-                x.Offer.EndAt))
+                x.Offer.EndAt,
+                x.Offer.BannerUrl))
             .ToList();
 
         return new TorcedorEligibleBenefitOffersPageDto(total, pageItems);
@@ -136,6 +137,7 @@ public sealed class TorcedorBenefitsReadService(AppDbContext db) : ITorcedorBene
             row.Offer.StartAt,
             row.Offer.EndAt,
             redemption is not null,
-            redemption?.CreatedAt);
+            redemption?.CreatedAt,
+            row.Offer.BannerUrl);
     }
 }

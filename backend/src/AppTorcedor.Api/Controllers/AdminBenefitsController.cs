@@ -4,9 +4,11 @@ using AppTorcedor.Api.Contracts;
 using AppTorcedor.Application.Abstractions;
 using AppTorcedor.Application.Modules.Administration.Commands.CreateBenefitOffer;
 using AppTorcedor.Application.Modules.Administration.Commands.CreateBenefitPartner;
+using AppTorcedor.Application.Modules.Administration.Commands.RemoveBenefitOfferBanner;
 using AppTorcedor.Application.Modules.Administration.Commands.RedeemBenefitOffer;
 using AppTorcedor.Application.Modules.Administration.Commands.UpdateBenefitOffer;
 using AppTorcedor.Application.Modules.Administration.Commands.UpdateBenefitPartner;
+using AppTorcedor.Application.Modules.Administration.Commands.UploadBenefitOfferBanner;
 using AppTorcedor.Application.Modules.Administration.Queries.GetBenefitOffer;
 using AppTorcedor.Application.Modules.Administration.Queries.GetBenefitPartner;
 using AppTorcedor.Application.Modules.Administration.Queries.ListBenefitOffers;
@@ -128,6 +130,43 @@ public sealed class AdminBenefitsController(IMediator mediator) : ControllerBase
 
         var result = await mediator
             .Send(new UpdateBenefitOfferCommand(offerId, MapOffer(body)), cancellationToken)
+            .ConfigureAwait(false);
+        return MapBenefitMutation(result);
+    }
+
+    [HttpPost("offers/{offerId:guid}/banner")]
+    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.BeneficiosGerenciar)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    public async Task<ActionResult<object>> UploadOfferBanner(
+        Guid offerId,
+        IFormFile? file,
+        CancellationToken cancellationToken = default)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { error = "File is required." });
+
+        await using var stream = file.OpenReadStream();
+        var result = await mediator
+            .Send(new UploadBenefitOfferBannerCommand(offerId, stream, file.FileName, file.ContentType ?? string.Empty), cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!result.Ok)
+            return result.Error switch
+            {
+                BenefitMutationError.NotFound => NotFound(),
+                _ => BadRequest(new { error = "Unable to upload banner." }),
+            };
+
+        return Ok(new { bannerUrl = result.BannerUrl });
+    }
+
+    [HttpDelete("offers/{offerId:guid}/banner")]
+    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.BeneficiosGerenciar)]
+    public async Task<IActionResult> RemoveOfferBanner(Guid offerId, CancellationToken cancellationToken = default)
+    {
+        var result = await mediator
+            .Send(new RemoveBenefitOfferBannerCommand(offerId), cancellationToken)
             .ConfigureAwait(false);
         return MapBenefitMutation(result);
     }

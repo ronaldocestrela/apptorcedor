@@ -18,11 +18,16 @@ import { ADMIN_AREA_PERMISSIONS } from '../shared/auth/applicationPermissions'
 import { canAccessAdminArea } from '../shared/auth/permissionUtils'
 import { useAuth } from '../features/auth/AuthContext'
 import { TeamShieldLogo } from '../shared/branding/TeamShieldLogo'
+import { resolvePublicAssetUrl } from '../features/account/accountApi'
 import {
   listEligibleBenefitOffers,
   type TorcedorEligibleBenefitOffer,
 } from '../features/torcedor/torcedorBenefitsApi'
 import './AppShell.css'
+
+function formatBenefitPeriod(startAt: string, endAt: string) {
+  return `Válido de ${new Date(startAt).toLocaleDateString('pt-BR')} até ${new Date(endAt).toLocaleDateString('pt-BR')}`
+}
 
 const QUICK_LINKS = [
   { to: '/news', label: 'Notícias', icon: <Newspaper size={20} /> },
@@ -117,29 +122,47 @@ export function DashboardPage() {
           <section className="dash-benefits-section" aria-label="Benefícios em destaque">
             <p className="dash-section-title">Benefícios</p>
             <div className="dash-benefits-carousel">
-              {benefitBanners.map(item => (
-                <Link
-                  key={item.offerId}
-                  to={`/benefits/${item.offerId}`}
-                  className="dash-benefit-banner"
-                >
-                  <span className="dash-benefit-banner__eyebrow">
-                    <Gift size={16} />
-                    Resgatar
-                  </span>
-                  <span className="dash-benefit-banner__title">{item.title}</span>
-                  <span className="dash-benefit-banner__partner">{item.partnerName}</span>
-                  <span className="dash-benefit-banner__dates">
-                    Até
-                    {' '}
-                    {new Date(item.endAt).toLocaleDateString('pt-BR')}
-                  </span>
-                  <span className="dash-benefit-banner__cta">
-                    Ver detalhes
-                    <ChevronRight size={16} />
-                  </span>
-                </Link>
-              ))}
+              {benefitBanners.map((item) => {
+                const hasBanner = Boolean(item.bannerUrl?.trim())
+                const bannerSrc = resolvePublicAssetUrl(item.bannerUrl)
+                return (
+                  <Link
+                    key={item.offerId}
+                    to={`/benefits/${item.offerId}`}
+                    className={hasBanner ? 'dash-benefit-banner dash-benefit-banner--visual' : 'dash-benefit-banner'}
+                  >
+                    {hasBanner && bannerSrc ? (
+                      <>
+                        <div className="dash-benefit-banner__media">
+                          <img src={bannerSrc} alt="" loading="lazy" />
+                        </div>
+                        {item.description ? (
+                          <p className="dash-benefit-banner__description">{item.description}</p>
+                        ) : null}
+                        <span className="dash-benefit-banner__dates">{formatBenefitPeriod(item.startAt, item.endAt)}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="dash-benefit-banner__eyebrow">
+                          <Gift size={16} />
+                          Resgatar
+                        </span>
+                        <span className="dash-benefit-banner__title">{item.title}</span>
+                        <span className="dash-benefit-banner__partner">{item.partnerName}</span>
+                        <span className="dash-benefit-banner__dates">
+                          Até
+                          {' '}
+                          {new Date(item.endAt).toLocaleDateString('pt-BR')}
+                        </span>
+                        <span className="dash-benefit-banner__cta">
+                          Ver detalhes
+                          <ChevronRight size={16} />
+                        </span>
+                      </>
+                    )}
+                  </Link>
+                )
+              })}
             </div>
           </section>
         ) : null}

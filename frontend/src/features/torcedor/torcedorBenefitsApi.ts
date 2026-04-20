@@ -8,6 +8,7 @@ export type TorcedorEligibleBenefitOffer = {
   description: string | null
   startAt: string
   endAt: string
+  bannerUrl: string | null
 }
 
 export type TorcedorEligibleBenefitsPage = {
@@ -38,6 +39,7 @@ export type TorcedorEligibleBenefitOfferDetail = {
   endAt: string
   alreadyRedeemed: boolean
   redemptionDateUtc: string | null
+  bannerUrl: string | null
 }
 
 export async function getEligibleBenefitOfferDetail(offerId: string): Promise<TorcedorEligibleBenefitOfferDetail> {

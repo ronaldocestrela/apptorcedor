@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Gift } from 'lucide-react'
+import { resolvePublicAssetUrl } from '../features/account/accountApi'
 import {
   getEligibleBenefitOfferDetail,
   redeemBenefitOffer,
@@ -106,11 +107,19 @@ export function BenefitOfferDetailPage() {
         ) : null}
         {!loading && detail ? (
           <article className="benefit-detail-card">
-            <div className="benefit-detail-card__icon-wrap" aria-hidden>
-              <Gift size={28} />
-            </div>
-            <h2 className="benefit-detail-card__title">{detail.title}</h2>
-            <span className="benefit-detail-card__partner">{detail.partnerName}</span>
+            {detail.bannerUrl?.trim() && resolvePublicAssetUrl(detail.bannerUrl) ? (
+              <div className="benefit-detail-card__media">
+                <img src={resolvePublicAssetUrl(detail.bannerUrl) ?? ''} alt="" loading="lazy" />
+              </div>
+            ) : (
+              <>
+                <div className="benefit-detail-card__icon-wrap" aria-hidden>
+                  <Gift size={28} />
+                </div>
+                <h2 className="benefit-detail-card__title">{detail.title}</h2>
+                <span className="benefit-detail-card__partner">{detail.partnerName}</span>
+              </>
+            )}
             {detail.description ? (
               <p className="benefit-detail-card__description">{detail.description}</p>
             ) : null}
