@@ -22,6 +22,10 @@ vi.mock('../features/account/loadGoogleScript', () => ({
   loadGoogleScript: vi.fn(),
 }))
 
+vi.mock('../shared/branding/brandingApi', () => ({
+  getPublicBranding: vi.fn().mockResolvedValue({ teamShieldUrl: null }),
+}))
+
 describe('LoginPage', () => {
   beforeEach(() => {
     authMock.user = null
@@ -36,7 +40,8 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByRole('img', { name: /FFC/i })).toHaveAttribute('src', '/logos/ESCUDO_FFC_VERDE.png')
+    const logo = screen.getByRole('img', { name: /Escudo do clube/i })
+    expect(logo).toHaveAttribute('src', expect.stringMatching(/^data:image\/svg\+xml/))
     expect(screen.getByRole('heading', { level: 1, name: /Acesse a sua Conta/i })).toBeInTheDocument()
     expect(screen.getByText(/Insira seu e-mail e senha para prosseguir/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Esqueceu sua senha/i })).toBeInTheDocument()

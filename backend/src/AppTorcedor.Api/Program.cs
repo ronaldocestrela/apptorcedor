@@ -74,6 +74,12 @@ builder.Services.AddAuthorization(options =>
             policy.RequireAssertion(ctx =>
                 ctx.User.HasClaim(AppClaimTypes.Permission, ApplicationPermissions.UsuariosVisualizar)
                 || ctx.User.HasClaim(AppClaimTypes.Permission, ApplicationPermissions.ConfiguracoesVisualizar)));
+    options.AddPolicy(
+        Policies.GamesOpponentLogosUpload,
+        policy =>
+            policy.RequireAssertion(ctx =>
+                ctx.User.HasClaim(AppClaimTypes.Permission, ApplicationPermissions.JogosCriar)
+                || ctx.User.HasClaim(AppClaimTypes.Permission, ApplicationPermissions.JogosEditar)));
 });
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();

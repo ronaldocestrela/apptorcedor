@@ -18,12 +18,18 @@ public interface IGameAdministrationPort
     Task<GameMutationResult> DeactivateGameAsync(Guid gameId, CancellationToken cancellationToken = default);
 }
 
-public sealed record AdminGameWriteDto(string Opponent, string Competition, DateTimeOffset GameDate, bool IsActive);
+public sealed record AdminGameWriteDto(
+    string Opponent,
+    string Competition,
+    DateTimeOffset GameDate,
+    bool IsActive,
+    string? OpponentLogoUrl = null);
 
 public sealed record AdminGameListItemDto(
     Guid GameId,
     string Opponent,
     string Competition,
+    string? OpponentLogoUrl,
     DateTimeOffset GameDate,
     bool IsActive,
     DateTimeOffset CreatedAt);
@@ -34,6 +40,7 @@ public sealed record AdminGameDetailDto(
     Guid GameId,
     string Opponent,
     string Competition,
+    string? OpponentLogoUrl,
     DateTimeOffset GameDate,
     bool IsActive,
     DateTimeOffset CreatedAt);

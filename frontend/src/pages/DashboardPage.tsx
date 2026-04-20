@@ -1,4 +1,5 @@
-import { Link, NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Newspaper,
   Calendar,
@@ -10,13 +11,23 @@ import {
   LogOut,
   ShieldCheck,
   AlertTriangle,
-  Home,
-  User,
+  ChevronRight,
 } from 'lucide-react'
+import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import { ADMIN_AREA_PERMISSIONS } from '../shared/auth/applicationPermissions'
 import { canAccessAdminArea } from '../shared/auth/permissionUtils'
 import { useAuth } from '../features/auth/AuthContext'
+import { TeamShieldLogo } from '../shared/branding/TeamShieldLogo'
+import { resolvePublicAssetUrl } from '../features/account/accountApi'
+import {
+  listEligibleBenefitOffers,
+  type TorcedorEligibleBenefitOffer,
+} from '../features/torcedor/torcedorBenefitsApi'
 import './AppShell.css'
+
+function formatBenefitPeriod(startAt: string, endAt: string) {
+  return `Válido de ${new Date(startAt).toLocaleDateString('pt-BR')} até ${new Date(endAt).toLocaleDateString('pt-BR')}`
+}
 
 const QUICK_LINKS = [
   { to: '/news', label: 'Notícias', icon: <Newspaper size={20} /> },
@@ -29,35 +40,44 @@ const QUICK_LINKS = [
   { to: '/support', label: 'Chamados', icon: <Headphones size={20} /> },
 ]
 
-const BOTTOM_NAV = [
-  { to: '/', label: 'Início', icon: <Home size={22} /> },
-  { to: '/news', label: 'Notícias', icon: <Newspaper size={22} /> },
-  { to: '/games', label: 'Jogos', icon: <Calendar size={22} /> },
-  { to: '/digital-card', label: 'Carteirinha', icon: <CreditCard size={22} /> },
-  { to: '/account', label: 'Conta', icon: <User size={22} /> },
-]
-
-function UserAvatar({ name }: { name: string }) {
-  const initials = name
-    .split(' ')
-    .slice(0, 2)
-    .map(p => p[0])
-    .join('')
-    .toUpperCase()
-  return <span className="dash-avatar">{initials}</span>
-}
-
 export function DashboardPage() {
   const { user, logout } = useAuth()
   const showAdmin = canAccessAdminArea(user, ADMIN_AREA_PERMISSIONS)
   const firstName = user?.name?.split(' ')[0] ?? ''
+  const [benefitBanners, setBenefitBanners] = useState<TorcedorEligibleBenefitOffer[]>([])
+  const [benefitsLoading, setBenefitsLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        setBenefitsLoading(true)
+        const page = await listEligibleBenefitOffers({ page: 1, pageSize: 10 })
+        if (!cancelled)
+          setBenefitBanners(page.items)
+      }
+      catch {
+        if (!cancelled)
+          setBenefitBanners([])
+      }
+      finally {
+        if (!cancelled)
+          setBenefitsLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className="dash-root">
       <header className="dash-header">
-        <span className="dash-header__logo-text">AppTorcedor</span>
+        <div className="dash-header__brand">
+          <TeamShieldLogo className="dash-header__logo" alt="Escudo do clube" width={36} height={36} />
+          <span className="dash-header__logo-text">AppTorcedor</span>
+        </div>
         <div className="dash-header__right">
-          {user?.name ? <UserAvatar name={user.name} /> : null}
           <button
             type="button"
             className="dash-header__logout"
@@ -89,6 +109,64 @@ export function DashboardPage() {
           </Link>
         ) : null}
 
+        {benefitsLoading ? (
+          <section className="dash-benefits-section" aria-label="Benefícios em destaque">
+            <p className="dash-section-title">Benefícios</p>
+            <div className="dash-benefits-carousel" role="presentation">
+              <div className="dash-benefit-banner-skeleton" />
+              <div className="dash-benefit-banner-skeleton" />
+            </div>
+          </section>
+        ) : null}
+        {!benefitsLoading && benefitBanners.length > 0 ? (
+          <section className="dash-benefits-section" aria-label="Benefícios em destaque">
+            <p className="dash-section-title">Benefícios</p>
+            <div className="dash-benefits-carousel">
+              {benefitBanners.map((item) => {
+                const hasBanner = Boolean(item.bannerUrl?.trim())
+                const bannerSrc = resolvePublicAssetUrl(item.bannerUrl)
+                return (
+                  <Link
+                    key={item.offerId}
+                    to={`/benefits/${item.offerId}`}
+                    className={hasBanner ? 'dash-benefit-banner dash-benefit-banner--visual' : 'dash-benefit-banner'}
+                  >
+                    {hasBanner && bannerSrc ? (
+                      <>
+                        <div className="dash-benefit-banner__media">
+                          <img src={bannerSrc} alt="" loading="lazy" />
+                        </div>
+                        {item.description ? (
+                          <p className="dash-benefit-banner__description">{item.description}</p>
+                        ) : null}
+                        <span className="dash-benefit-banner__dates">{formatBenefitPeriod(item.startAt, item.endAt)}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="dash-benefit-banner__eyebrow">
+                          <Gift size={16} />
+                          Resgatar
+                        </span>
+                        <span className="dash-benefit-banner__title">{item.title}</span>
+                        <span className="dash-benefit-banner__partner">{item.partnerName}</span>
+                        <span className="dash-benefit-banner__dates">
+                          Até
+                          {' '}
+                          {new Date(item.endAt).toLocaleDateString('pt-BR')}
+                        </span>
+                        <span className="dash-benefit-banner__cta">
+                          Ver detalhes
+                          <ChevronRight size={16} />
+                        </span>
+                      </>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
+        ) : null}
+
         <p className="dash-section-title">Acessos rápidos</p>
         <nav className="dash-quick-grid" aria-label="Acessos rápidos">
           {QUICK_LINKS.map(link => (
@@ -100,20 +178,7 @@ export function DashboardPage() {
         </nav>
       </main>
 
-      <nav className="dash-bottom-nav" aria-label="Navegação principal">
-        {BOTTOM_NAV.map(item => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `dash-bottom-nav__item${isActive ? ' active' : ''}`
-            }
-          >
-            {item.icon}
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
+      <TorcedorBottomNav />
     </div>
   )
 }

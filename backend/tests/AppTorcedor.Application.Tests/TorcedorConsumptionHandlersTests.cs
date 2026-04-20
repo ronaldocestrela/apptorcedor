@@ -1,4 +1,6 @@
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.Modules.Torcedor.Commands.RedeemBenefitOfferByTorcedor;
+using AppTorcedor.Application.Modules.Torcedor.Queries.GetEligibleBenefitOfferDetail;
 using AppTorcedor.Application.Modules.Torcedor.Queries.GetNewsFeed;
 using AppTorcedor.Application.Modules.Torcedor.Queries.GetPublishedNewsDetail;
 using AppTorcedor.Application.Modules.Torcedor.Queries.ListEligibleBenefitOffers;
@@ -42,6 +44,30 @@ public sealed class TorcedorConsumptionHandlersTests
         await handler.Handle(new ListEligibleBenefitOffersQuery(uid, 1, 10), CancellationToken.None);
         Assert.Single(fake.ListEligibleCalls);
         Assert.Equal(uid, fake.ListEligibleCalls[0].UserId);
+    }
+
+    [Fact]
+    public async Task GetEligibleBenefitOfferDetail_delegates_to_port()
+    {
+        var uid = Guid.NewGuid();
+        var oid = Guid.NewGuid();
+        var fake = new FakeTorcedorBenefitsPort();
+        var handler = new GetEligibleBenefitOfferDetailQueryHandler(fake);
+        await handler.Handle(new GetEligibleBenefitOfferDetailQuery(uid, oid), CancellationToken.None);
+        Assert.Single(fake.GetDetailCalls);
+        Assert.Equal((uid, oid), fake.GetDetailCalls[0]);
+    }
+
+    [Fact]
+    public async Task RedeemBenefitOfferByTorcedor_delegates_to_port()
+    {
+        var uid = Guid.NewGuid();
+        var oid = Guid.NewGuid();
+        var fake = new FakeTorcedorBenefitRedemptionPort();
+        var handler = new RedeemBenefitOfferByTorcedorCommandHandler(fake);
+        await handler.Handle(new RedeemBenefitOfferByTorcedorCommand(uid, oid), CancellationToken.None);
+        Assert.Single(fake.RedeemCalls);
+        Assert.Equal((oid, uid), fake.RedeemCalls[0]);
     }
 
     [Fact]
@@ -90,6 +116,7 @@ public sealed class TorcedorConsumptionHandlersTests
     private sealed class FakeTorcedorBenefitsPort : ITorcedorBenefitsReadPort
     {
         public List<(Guid UserId, int Page, int PageSize)> ListEligibleCalls { get; } = [];
+        public List<(Guid UserId, Guid OfferId)> GetDetailCalls { get; } = [];
 
         public Task<TorcedorEligibleBenefitOffersPageDto> ListEligibleForUserAsync(
             Guid userId,
@@ -99,6 +126,29 @@ public sealed class TorcedorConsumptionHandlersTests
         {
             ListEligibleCalls.Add((userId, page, pageSize));
             return Task.FromResult(new TorcedorEligibleBenefitOffersPageDto(0, []));
+        }
+
+        public Task<TorcedorEligibleBenefitOfferDetailDto?> GetEligibleOfferDetailAsync(
+            Guid userId,
+            Guid offerId,
+            CancellationToken cancellationToken = default)
+        {
+            GetDetailCalls.Add((userId, offerId));
+            return Task.FromResult<TorcedorEligibleBenefitOfferDetailDto?>(null);
+        }
+    }
+
+    private sealed class FakeTorcedorBenefitRedemptionPort : ITorcedorBenefitRedemptionPort
+    {
+        public List<(Guid OfferId, Guid UserId)> RedeemCalls { get; } = [];
+
+        public Task<TorcedorRedemptionResult> RedeemOfferAsync(
+            Guid offerId,
+            Guid userId,
+            CancellationToken cancellationToken = default)
+        {
+            RedeemCalls.Add((offerId, userId));
+            return Task.FromResult(TorcedorRedemptionResult.Success(Guid.NewGuid()));
         }
     }
 

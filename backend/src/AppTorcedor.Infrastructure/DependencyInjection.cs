@@ -17,6 +17,7 @@ using AppTorcedor.Infrastructure.Services.Plans;
 using AppTorcedor.Infrastructure.Services.Support;
 using AppTorcedor.Infrastructure.Options;
 using AppTorcedor.Infrastructure.Services.Account;
+using AppTorcedor.Infrastructure.Services.Branding;
 using AppTorcedor.Infrastructure.Services.Cloudinary;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +31,9 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ProfilePhotoStorageOptions>(configuration.GetSection(ProfilePhotoStorageOptions.SectionName));
+        services.Configure<TeamShieldStorageOptions>(configuration.GetSection(TeamShieldStorageOptions.SectionName));
+        services.Configure<OpponentLogoStorageOptions>(configuration.GetSection(OpponentLogoStorageOptions.SectionName));
+        services.Configure<BenefitOfferBannerStorageOptions>(configuration.GetSection(BenefitOfferBannerStorageOptions.SectionName));
         services.Configure<CloudinaryOptions>(configuration.GetSection(CloudinaryOptions.SectionName));
         services.Configure<PaymentsOptions>(configuration.GetSection(PaymentsOptions.SectionName));
 
@@ -101,6 +105,37 @@ public static class DependencyInjection
             });
         services.AddScoped<LocalProfilePhotoStorage>();
         services.AddScoped<CloudinaryProfilePhotoStorage>();
+        services.AddScoped<ITeamShieldStorage>(
+            sp =>
+            {
+                var shieldOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<TeamShieldStorageOptions>>().Value;
+                if (shieldOptions.Provider.Equals("Cloudinary", StringComparison.OrdinalIgnoreCase))
+                    return sp.GetRequiredService<CloudinaryTeamShieldStorage>();
+                return sp.GetRequiredService<LocalTeamShieldStorage>();
+            });
+        services.AddScoped<LocalTeamShieldStorage>();
+        services.AddScoped<CloudinaryTeamShieldStorage>();
+        services.AddScoped<IOpponentLogoStorage>(
+            sp =>
+            {
+                var logoOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpponentLogoStorageOptions>>().Value;
+                if (logoOptions.Provider.Equals("Cloudinary", StringComparison.OrdinalIgnoreCase))
+                    return sp.GetRequiredService<CloudinaryOpponentLogoStorage>();
+                return sp.GetRequiredService<LocalOpponentLogoStorage>();
+            });
+        services.AddScoped<LocalOpponentLogoStorage>();
+        services.AddScoped<CloudinaryOpponentLogoStorage>();
+        services.AddScoped<IBenefitOfferBannerStorage>(
+            sp =>
+            {
+                var bannerOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<BenefitOfferBannerStorageOptions>>().Value;
+                if (bannerOptions.Provider.Equals("Cloudinary", StringComparison.OrdinalIgnoreCase))
+                    return sp.GetRequiredService<CloudinaryBenefitOfferBannerStorage>();
+                return sp.GetRequiredService<LocalBenefitOfferBannerStorage>();
+            });
+        services.AddScoped<LocalBenefitOfferBannerStorage>();
+        services.AddScoped<CloudinaryBenefitOfferBannerStorage>();
+        services.AddScoped<IOpponentLogoLibraryAdminPort, OpponentLogoLibraryAdminService>();
         services.AddScoped<ISupportTicketAttachmentStorage>(
             sp =>
             {
@@ -128,6 +163,7 @@ public static class DependencyInjection
         services.AddScoped<ITorcedorPublishedPlansReadPort, TorcedorPublishedPlansReadService>();
         services.AddScoped<ITorcedorMembershipSubscriptionPort, TorcedorMembershipSubscriptionService>();
         services.AddScoped<ITorcedorBenefitsReadPort, TorcedorBenefitsReadService>();
+        services.AddScoped<ITorcedorBenefitRedemptionPort, TorcedorBenefitRedemptionService>();
         services.AddScoped<ISupportAdministrationPort, SupportAdministrationService>();
         services.AddScoped<ISupportTorcedorPort, SupportTorcedorService>();
         services.AddScoped<LoyaltyAdministrationService>();

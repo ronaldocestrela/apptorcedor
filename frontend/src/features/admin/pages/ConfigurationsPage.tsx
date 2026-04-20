@@ -3,7 +3,14 @@ import { ApplicationPermissions } from '../../../shared/auth/applicationPermissi
 import { hasPermission } from '../../../shared/auth/permissionUtils'
 import { useAuth } from '../../auth/AuthContext'
 import { PermissionGate } from '../../auth/PermissionGate'
-import { listConfigurations, updateConfiguration, type AppConfigurationEntry } from '../services/adminApi'
+import {
+  listConfigurations,
+  updateConfiguration,
+  uploadTeamShield,
+  type AppConfigurationEntry,
+} from '../services/adminApi'
+import { TeamShieldLogo } from '../../../shared/branding/TeamShieldLogo'
+import { resolvePublicAssetUrl } from '../../account/accountApi'
 
 export function ConfigurationsPage() {
   const { user } = useAuth()
@@ -13,6 +20,10 @@ export function ConfigurationsPage() {
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [draftValue, setDraftValue] = useState('')
   const [saving, setSaving] = useState(false)
+  const [shieldFile, setShieldFile] = useState<File | null>(null)
+  const [shieldBusy, setShieldBusy] = useState(false)
+  const [shieldMessage, setShieldMessage] = useState<string | null>(null)
+  const [shieldPreviewUrl, setShieldPreviewUrl] = useState<string | null>(null)
   const canEdit = hasPermission(user, ApplicationPermissions.ConfiguracoesEditar)
 
   const load = async () => {
@@ -31,6 +42,38 @@ export function ConfigurationsPage() {
     void load()
   }, [])
 
+  useEffect(() => {
+    if (!shieldFile) {
+      setShieldPreviewUrl(null)
+      return
+    }
+    const url = URL.createObjectURL(shieldFile)
+    setShieldPreviewUrl(url)
+    return () => {
+      URL.revokeObjectURL(url)
+    }
+  }, [shieldFile])
+
+  async function submitShieldUpload() {
+    if (!shieldFile)
+      return
+    setShieldBusy(true)
+    setShieldMessage(null)
+    setError(null)
+    try {
+      await uploadTeamShield(shieldFile)
+      setShieldFile(null)
+      setShieldMessage('Escudo atualizado. As telas do app passam a usar a nova imagem.')
+      await load()
+    }
+    catch {
+      setShieldMessage('Falha ao enviar o escudo. Verifique formato (JPEG, PNG ou WebP) e tamanho.')
+    }
+    finally {
+      setShieldBusy(false)
+    }
+  }
+
   async function save(key: string) {
     setSaving(true)
     setError(null)
@@ -45,9 +88,67 @@ export function ConfigurationsPage() {
     }
   }
 
+  const shieldRow = rows.find((r) => r.key === 'Brand.TeamShieldUrl')
+
   return (
     <PermissionGate anyOf={[ApplicationPermissions.ConfiguracoesVisualizar]}>
       <h1>Configurações</h1>
+      <section style={{ marginBottom: '2rem', maxWidth: 560 }}>
+        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Identidade — escudo do clube</h2>
+        <p style={{ color: '#666', fontSize: '0.9rem', marginTop: 0 }}>
+          Imagem exibida no app (login, área do torcedor, admin). Se não houver upload, é usado um placeholder.
+          A URL fica em{' '}
+          <code>Brand.TeamShieldUrl</code>
+          {' '}
+          (somente leitura aqui; use o arquivo abaixo para alterar).
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-start' }}>
+          <div>
+            <p style={{ margin: '0 0 0.35rem', fontSize: '0.85rem', color: '#555' }}>Preview ao vivo</p>
+            <div style={{ width: 72, height: 72, border: '1px solid #ddd', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f8f8' }}>
+              <TeamShieldLogo key={shieldRow?.version ?? 'preview'} alt="Preview do escudo" width={64} height={64} />
+            </div>
+          </div>
+          {shieldRow ? (
+            <div style={{ flex: '1 1 200px', fontSize: '0.85rem', wordBreak: 'break-all' }}>
+              <strong>URL atual</strong>
+              <div>{shieldRow.value || '(placeholder até primeiro upload)'}</div>
+              {shieldRow.value ? (
+                <img
+                  src={resolvePublicAssetUrl(shieldRow.value) ?? ''}
+                  alt=""
+                  width={64}
+                  height={64}
+                  style={{ marginTop: 8, objectFit: 'contain', display: 'block' }}
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+        {canEdit ? (
+          <div style={{ marginTop: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: 8 }}>
+              Novo arquivo (JPEG, PNG ou WebP, até 5 MB)
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'block', marginTop: 6 }}
+                onChange={(e) => {
+                  setShieldMessage(null)
+                  setShieldFile(e.target.files?.[0] ?? null)
+                }}
+              />
+            </label>
+            {shieldPreviewUrl ? (
+              <img src={shieldPreviewUrl} alt="" width={56} height={56} style={{ objectFit: 'contain', display: 'block', marginBottom: 8 }} />
+            ) : null}
+            <button type="button" disabled={shieldBusy || !shieldFile} onClick={() => void submitShieldUpload()}>
+              {shieldBusy ? 'Enviando...' : 'Enviar escudo'}
+            </button>
+          </div>
+        ) : null}
+        {shieldMessage ? <p role="status" style={{ marginTop: '0.75rem', color: '#0a5' }}>{shieldMessage}</p> : null}
+      </section>
       {error ? <p role="alert" style={{ color: 'crimson' }}>{error}</p> : null}
       {loading ? <p>Carregando...</p> : null}
       {!loading && rows.length === 0 ? <p>Nenhuma entrada.</p> : null}

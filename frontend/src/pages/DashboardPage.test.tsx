@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DashboardPage } from './DashboardPage'
@@ -19,6 +19,10 @@ vi.mock('../features/auth/AuthContext', () => ({
   useAuth: () => authMock,
 }))
 
+vi.mock('../shared/branding/brandingApi', () => ({
+  getPublicBranding: vi.fn().mockResolvedValue({ teamShieldUrl: null }),
+}))
+
 describe('DashboardPage', () => {
   beforeEach(() => {
     authMock.logout.mockReset()
@@ -26,7 +30,7 @@ describe('DashboardPage', () => {
     authMock.user.permissions = [ApplicationPermissions.UsuariosVisualizar]
   })
 
-  it('renders mobile-first shell with greeting, quick grid and bottom nav', () => {
+  it('renders mobile-first shell with greeting, quick grid and bottom nav', async () => {
     const { container } = render(
       <MemoryRouter>
         <DashboardPage />
@@ -37,6 +41,12 @@ describe('DashboardPage', () => {
     expect(container.querySelector('.dash-hero')).toBeInTheDocument()
     expect(container.querySelector('.dash-quick-grid')).toBeInTheDocument()
     expect(screen.getByText('Ronaldo')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByRole('img', { name: /Escudo do clube/i })).toHaveAttribute(
+        'src',
+        expect.stringMatching(/^data:image\/svg\+xml/),
+      )
+    })
     const bottomNav = container.querySelector('.dash-bottom-nav')
     expect(bottomNav).toBeInTheDocument()
     expect(bottomNav!.querySelectorAll('.dash-bottom-nav__item')).toHaveLength(5)

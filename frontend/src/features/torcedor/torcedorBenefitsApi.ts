@@ -8,6 +8,7 @@ export type TorcedorEligibleBenefitOffer = {
   description: string | null
   startAt: string
   endAt: string
+  bannerUrl: string | null
 }
 
 export type TorcedorEligibleBenefitsPage = {
@@ -25,5 +26,32 @@ export async function listEligibleBenefitOffers(params?: {
       pageSize: params?.pageSize ?? 20,
     },
   })
+  return data
+}
+
+export type TorcedorEligibleBenefitOfferDetail = {
+  offerId: string
+  partnerId: string
+  partnerName: string
+  title: string
+  description: string | null
+  startAt: string
+  endAt: string
+  alreadyRedeemed: boolean
+  redemptionDateUtc: string | null
+  bannerUrl: string | null
+}
+
+export async function getEligibleBenefitOfferDetail(offerId: string): Promise<TorcedorEligibleBenefitOfferDetail> {
+  const { data } = await api.get<TorcedorEligibleBenefitOfferDetail>(`/api/benefits/offers/${offerId}`)
+  return data
+}
+
+export type TorcedorBenefitRedeemResponse = {
+  redemptionId: string
+}
+
+export async function redeemBenefitOffer(offerId: string): Promise<TorcedorBenefitRedeemResponse> {
+  const { data } = await api.post<TorcedorBenefitRedeemResponse>(`/api/benefits/offers/${offerId}/redeem`)
   return data
 }

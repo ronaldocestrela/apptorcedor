@@ -37,7 +37,14 @@ public sealed class GameAdministrationService(AppDbContext db) : IGameAdministra
             .ConfigureAwait(false);
 
         var items = rows
-            .Select(g => new AdminGameListItemDto(g.Id, g.Opponent, g.Competition, g.GameDate, g.IsActive, g.CreatedAt))
+            .Select(g => new AdminGameListItemDto(
+                g.Id,
+                g.Opponent,
+                g.Competition,
+                g.OpponentLogoUrl,
+                g.GameDate,
+                g.IsActive,
+                g.CreatedAt))
             .ToList();
 
         return new AdminGameListPageDto(total, items);
@@ -48,12 +55,19 @@ public sealed class GameAdministrationService(AppDbContext db) : IGameAdministra
         var g = await db.Games.AsNoTracking().FirstOrDefaultAsync(x => x.Id == gameId, cancellationToken).ConfigureAwait(false);
         if (g is null)
             return null;
-        return new AdminGameDetailDto(g.Id, g.Opponent, g.Competition, g.GameDate, g.IsActive, g.CreatedAt);
+        return new AdminGameDetailDto(
+            g.Id,
+            g.Opponent,
+            g.Competition,
+            g.OpponentLogoUrl,
+            g.GameDate,
+            g.IsActive,
+            g.CreatedAt);
     }
 
     public async Task<GameCreateResult> CreateGameAsync(AdminGameWriteDto dto, CancellationToken cancellationToken = default)
     {
-        var err = Validate(dto);
+        var err = await ValidateAsync(dto, cancellationToken).ConfigureAwait(false);
         if (err is not null)
             return new GameCreateResult(null, GameMutationError.Validation);
 
@@ -63,6 +77,7 @@ public sealed class GameAdministrationService(AppDbContext db) : IGameAdministra
             Id = Guid.NewGuid(),
             Opponent = dto.Opponent.Trim(),
             Competition = dto.Competition.Trim(),
+            OpponentLogoUrl = NormalizeLogoUrl(dto.OpponentLogoUrl),
             GameDate = dto.GameDate,
             IsActive = dto.IsActive,
             CreatedAt = now,
@@ -77,7 +92,7 @@ public sealed class GameAdministrationService(AppDbContext db) : IGameAdministra
         AdminGameWriteDto dto,
         CancellationToken cancellationToken = default)
     {
-        var err = Validate(dto);
+        var err = await ValidateAsync(dto, cancellationToken).ConfigureAwait(false);
         if (err is not null)
             return GameMutationResult.Fail(GameMutationError.Validation);
 
@@ -87,6 +102,7 @@ public sealed class GameAdministrationService(AppDbContext db) : IGameAdministra
 
         row.Opponent = dto.Opponent.Trim();
         row.Competition = dto.Competition.Trim();
+        row.OpponentLogoUrl = NormalizeLogoUrl(dto.OpponentLogoUrl);
         row.GameDate = dto.GameDate;
         row.IsActive = dto.IsActive;
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -104,12 +120,29 @@ public sealed class GameAdministrationService(AppDbContext db) : IGameAdministra
         return GameMutationResult.Success();
     }
 
-    private static string? Validate(AdminGameWriteDto dto)
+    private static string? NormalizeLogoUrl(string? url) =>
+        string.IsNullOrWhiteSpace(url) ? null : url.Trim();
+
+    private async Task<string?> ValidateAsync(AdminGameWriteDto dto, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(dto.Opponent) || dto.Opponent.Trim().Length > 256)
             return "Opponent is required (max 256).";
         if (string.IsNullOrWhiteSpace(dto.Competition) || dto.Competition.Trim().Length > 256)
             return "Competition is required (max 256).";
+
+        var logo = NormalizeLogoUrl(dto.OpponentLogoUrl);
+        if (logo is null)
+            return null;
+        if (logo.Length > 2048)
+            return "Opponent logo URL is too long (max 2048).";
+
+        var registered = await db.OpponentLogoAssets
+            .AsNoTracking()
+            .AnyAsync(x => x.PublicUrl == logo, cancellationToken)
+            .ConfigureAwait(false);
+        if (!registered)
+            return "Opponent logo must be uploaded to the library first.";
+
         return null;
     }
 }

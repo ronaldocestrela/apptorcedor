@@ -16,14 +16,14 @@ Rotas do **torcedor** fora do `/admin`: **C.1** — `/register` (cadastro públi
 | `/admin/users` | `Usuarios.Visualizar` — listagem e busca de **todas** as contas (torcedores, não associados e staff); edição de perfil e ativar/inativar conta exige `Usuarios.Editar` |
 | `/admin/users/:userId` | `Usuarios.Visualizar` (detalhe, histórico de auditoria da conta/perfil); mutações como em `/admin/users` |
 | `/admin/diagnostics` | `Administracao.Diagnostics` |
-| `/admin/configurations` | `Configuracoes.Visualizar` (edição exige `Configuracoes.Editar`) |
+| `/admin/configurations` | `Configuracoes.Visualizar` (edição exige `Configuracoes.Editar`); inclui **upload do escudo do clube** (`POST /api/admin/config/team-shield`) e preview via `GET /api/branding` |
 | `/admin/audit-logs` | `Configuracoes.Visualizar` |
 | `/admin/role-permissions` | `Configuracoes.Visualizar` (edição exige `Configuracoes.Editar`) |
 | `/admin/membership` | `Socios.Gerenciar` (filtros `?userId=` / `?membershipId=`; ver [parte-b4-membership-admin.md](../architecture/parte-b4-membership-admin.md)) |
 | `/admin/plans` | `Planos.Visualizar` (criação `Planos.Criar`, edição/publicação `Planos.Editar`; ver [parte-b5-plans-admin.md](../architecture/parte-b5-plans-admin.md)) |
 | `/admin/payments` | `Pagamentos.Visualizar` para listar/detalhar; `Pagamentos.Gerenciar` para conciliar/cancelar; `Pagamentos.Estornar` para estorno (ver [parte-b6-payments-admin.md](../architecture/parte-b6-payments-admin.md)) |
 | `/admin/digital-cards` | `Carteirinha.Visualizar` para listar/detalhar; `Carteirinha.Gerenciar` para emitir/regenerar/invalidar (ver [parte-b7-digital-card-admin.md](../architecture/parte-b7-digital-card-admin.md)) |
-| `/admin/games` | `Jogos.Visualizar` para listar/detalhar; `Jogos.Criar` / `Jogos.Editar` para criar, editar e desativar (ver [parte-b8-games-tickets-admin.md](../architecture/parte-b8-games-tickets-admin.md)) |
+| `/admin/games` | `Jogos.Visualizar` para listar/detalhar e ver biblioteca de logos; `Jogos.Criar` / `Jogos.Editar` para criar, editar, desativar e enviar logos do adversário (`opponentLogoUrl` no payload; upload/listagem via `adminApi`) (ver [parte-b8-games-tickets-admin.md](../architecture/parte-b8-games-tickets-admin.md)) |
 | `/admin/tickets` | `Ingressos.Visualizar` para listar/detalhar; `Ingressos.Gerenciar` para reservar, comprar, sincronizar e resgatar (ver [parte-b8-games-tickets-admin.md](../architecture/parte-b8-games-tickets-admin.md)) |
 | `/admin/news` | `Noticias.Publicar` — editoria, publicação/despublicação e notificações in-app (ver [parte-b9-news-admin.md](../architecture/parte-b9-news-admin.md)) |
 | `/admin/loyalty` | `Fidelidade.Visualizar` / `Fidelidade.Gerenciar` (ver [parte-b10-loyalty-benefits-admin.md](../architecture/parte-b10-loyalty-benefits-admin.md)) |
@@ -48,7 +48,7 @@ Rotas do **torcedor** fora do `/admin`: **C.1** — `/register` (cadastro públi
 
 ## Integração HTTP
 
-Serviços em [`frontend/src/features/admin/services/adminApi.ts`](../../frontend/src/features/admin/services/adminApi.ts) centralizam chamadas aos endpoints administrativos (incluindo **usuários** em `/api/admin/users`) e ao aceite de convite (`/api/auth/accept-staff-invite`).
+Serviços em [`frontend/src/features/admin/services/adminApi.ts`](../../frontend/src/features/admin/services/adminApi.ts) centralizam chamadas aos endpoints administrativos (incluindo **usuários** em `/api/admin/users`), **upload do escudo** (`uploadTeamShield` → `POST /api/admin/config/team-shield`) e ao aceite de convite (`/api/auth/accept-staff-invite`). A leitura pública da marca para a SPA está em [`frontend/src/shared/branding/brandingApi.ts`](../../frontend/src/shared/branding/brandingApi.ts) (`GET /api/branding`), usada pelo componente [`TeamShieldLogo.tsx`](../../frontend/src/shared/branding/TeamShieldLogo.tsx) no login, cadastro, sidebar admin e dashboard do torcedor.
 
 LGPD: [`frontend/src/features/admin/services/lgpdApi.ts`](../../frontend/src/features/admin/services/lgpdApi.ts) → `GET/POST /api/admin/lgpd/...` (ver [parte-b2-lgpd.md](../architecture/parte-b2-lgpd.md)).
 

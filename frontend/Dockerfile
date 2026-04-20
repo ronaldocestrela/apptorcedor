@@ -3,6 +3,8 @@ ARG VITE_API_URL=http://localhost:5031
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
+# postinstall corre node ./scripts/ensure-rolldown-native.mjs — precisa existir antes de npm ci
+COPY scripts ./scripts
 RUN npm ci
 COPY . .
 ARG VITE_API_URL

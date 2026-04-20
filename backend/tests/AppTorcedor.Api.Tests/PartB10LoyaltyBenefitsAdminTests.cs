@@ -172,6 +172,95 @@ public sealed class PartB10LoyaltyBenefitsAdminTests(AppWebApplicationFactory fa
         }
     }
 
+    [Fact]
+    public async Task Benefits_offer_banner_upload_get_delete_roundtrip()
+    {
+        var token = await LoginAdminAsync();
+        Guid partnerId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/benefits/partners"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            post.Content = JsonContent.Create(new { name = "Parceiro Banner", description = "d", isActive = true });
+            var res = await _client.SendAsync(post);
+            Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            partnerId = Guid.Parse(body.GetProperty("partnerId").GetString()!);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        Guid offerId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/benefits/offers"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            post.Content = JsonContent.Create(
+                new
+                {
+                    partnerId,
+                    title = "Oferta com banner",
+                    description = "Texto detalhe",
+                    isActive = true,
+                    startAt = now.AddDays(-1),
+                    endAt = now.AddDays(30),
+                    eligiblePlanIds = (Guid[]?)null,
+                    eligibleMembershipStatuses = (string[]?)null,
+                });
+            var res = await _client.SendAsync(post);
+            Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            offerId = Guid.Parse(body.GetProperty("offerId").GetString()!);
+        }
+
+        // 1x1 PNG
+        var png = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==");
+        using (var upload = new HttpRequestMessage(HttpMethod.Post, $"/api/admin/benefits/offers/{offerId}/banner"))
+        {
+            upload.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var mp = new MultipartFormDataContent();
+            var fileContent = new ByteArrayContent(png);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+            mp.Add(fileContent, "file", "banner.png");
+            upload.Content = mp;
+            var res = await _client.SendAsync(upload);
+            Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.True(body.GetProperty("bannerUrl").GetString()?.Length > 0);
+        }
+
+        using (var get = new HttpRequestMessage(HttpMethod.Get, $"/api/admin/benefits/offers/{offerId}"))
+        {
+            get.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await _client.SendAsync(get);
+            res.EnsureSuccessStatusCode();
+            var detail = await res.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.False(string.IsNullOrWhiteSpace(detail.GetProperty("bannerUrl").GetString()));
+        }
+
+        using (var del = new HttpRequestMessage(HttpMethod.Delete, $"/api/admin/benefits/offers/{offerId}/banner"))
+        {
+            del.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await _client.SendAsync(del);
+            Assert.Equal(HttpStatusCode.NoContent, res.StatusCode);
+        }
+
+        using (var get = new HttpRequestMessage(HttpMethod.Get, $"/api/admin/benefits/offers/{offerId}"))
+        {
+            get.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await _client.SendAsync(get);
+            res.EnsureSuccessStatusCode();
+            var detail = await res.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.True(detail.GetProperty("bannerUrl").ValueKind == JsonValueKind.Null);
+        }
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.BenefitOffers.Remove(await db.BenefitOffers.SingleAsync(o => o.Id == offerId));
+            db.BenefitPartners.Remove(await db.BenefitPartners.SingleAsync(p => p.Id == partnerId));
+            await db.SaveChangesAsync();
+        }
+    }
+
     private async Task<string> LoginTorcedorAsync()
     {
         using var login = new HttpRequestMessage(HttpMethod.Post, "/api/auth/login")

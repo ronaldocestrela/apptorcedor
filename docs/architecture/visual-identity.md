@@ -15,6 +15,13 @@ O sistema possui **dois contextos visuais distintos** que compartilham a mesma p
 
 Ambos os contextos usam um **tema escuro único** — não há modo claro. O sistema é inspirado em cores de campo de futebol: verde escuro profundo como base, verde limão brilhante como acento.
 
+### 1.1 Escudo do clube (marca dinâmica)
+
+- O **escudo exibido** no login (`/login`), cadastro (`/register`), sidebar do admin e cabeçalho do dashboard do torcedor vem da API: `GET /api/branding` → `teamShieldUrl` (pode ser `null`).
+- **Sem URL configurada:** o frontend usa um **placeholder SVG** embutido (tons `#1a2229` / `#8cd392`, escudo genérico) — não depende de arquivos em `/public/logos/` para essas telas.
+- **Com URL configurada:** o admin envia imagem em `/admin/configurations` (JPEG/PNG/WebP); a API grava em storage (`TeamShield:Provider` Local ou Cloudinary) e persiste a URL na entrada `Brand.TeamShieldUrl`.
+- O **favicon** em `frontend/index.html` continua apontando para um asset estático em `/logos/` até eventual evolução dedicada.
+
 ---
 
 ## 2. Paleta de Cores
@@ -23,18 +30,18 @@ Ambos os contextos usam um **tema escuro único** — não há modo claro. O sis
 
 | Nome semântico | Valor hex / rgba | Uso |
 |---|---|---|
-| `bg-deepest` | `#0a1810` | Fundo mais escuro; gradiente final torcedor |
-| `bg-deep` | `#0d1f17` | Fundo base da tela torcedor |
-| `bg-main` | `#152d24` (var `--admin-bg-main`) | Fundo principal do admin |
-| `bg-sidebar` | `#1d4c33` (var `--admin-bg-sidebar`) | Fundo sidebar admin |
-| `bg-sidebar-end` | `#133626` | Gradiente final da sidebar |
-| `bg-card` | `rgba(20, 46, 32, 0.6)` | Cards de acesso rápido (torcedor) |
-| `bg-card-hover` | `rgba(30, 62, 44, 0.75)` | Estado hover dos cards |
-| `bg-surface` | `rgba(40, 81, 58, 0.56)` a `rgba(24, 56, 39, 0.72)` | KPI cards admin (gradiente diagonal) |
-| `bg-header-torcedor` | `rgba(13, 31, 23, 0.9)` | Header sticky torcedor (com blur) |
-| `bg-header-admin` | `rgba(21, 45, 36, 0.6)` | Header sticky admin (com blur) |
-| `bg-bottom-nav` | `rgba(13, 27, 20, 0.95)` | Bottom nav fixa (com blur) |
-| `bg-modal-overlay` | `rgba(2, 7, 5, 0.65)` | Overlay de modais |
+| `bg-deepest` | `#0b0f14` | Fundo mais escuro; gradiente final torcedor |
+| `bg-deep` | `#0e131a` | Fundo base da tela torcedor |
+| `bg-main` | `#0e131a` (var `--admin-bg-main`) | Fundo principal do admin |
+| `bg-sidebar` | `#0f2a1f` (var `--admin-bg-sidebar`) | Fundo sidebar admin |
+| `bg-sidebar-end` | `#0e131a` | Gradiente final da sidebar |
+| `bg-card` | `rgba(14, 19, 26, 0.82)` | Cards de acesso rápido (torcedor) |
+| `bg-card-hover` | `rgba(15, 42, 31, 0.9)` | Estado hover dos cards |
+| `bg-surface` | `rgba(15, 42, 31, 0.56)` a `rgba(11, 15, 20, 0.86)` | KPI cards admin (gradiente diagonal) |
+| `bg-header-torcedor` | `rgba(14, 19, 26, 0.9)` | Header sticky torcedor (com blur) |
+| `bg-header-admin` | `rgba(14, 19, 26, 0.72)` | Header sticky admin (com blur) |
+| `bg-bottom-nav` | `rgba(11, 15, 20, 0.95)` | Bottom nav fixa (com blur) |
+| `bg-modal-overlay` | `rgba(11, 15, 20, 0.72)` | Overlay de modais |
 
 ### 2.2 Cor de Acento — Verde Limão
 
@@ -42,23 +49,20 @@ O acento primário é um **verde limão vibrante**, usado para CTAs, links ativo
 
 | Token CSS | Valor hex | Uso |
 |---|---|---|
-| `--admin-accent` | `#81e592` | Acento principal (light mode) |
-| `--admin-accent` dark | `#73d88a` | Acento em prefers-color-scheme: dark |
-| `--admin-accent-soft` | `#63b97a` | Variante suavizada para gradientes de avatar |
+| `--admin-accent` | `#8cd392` | Acento principal |
+| `--admin-accent-soft` | `rgba(140, 211, 146, 0.2)` | Variante suavizada para fundos e gradientes de destaque |
 
 ### 2.3 Cores de Texto
 
 | Token CSS / Nome | Valor | Uso |
 |---|---|---|
-| `--admin-text-primary` | `#e8f7e9` | Texto principal admin |
-| `--admin-text-primary` dark | `#ddf2e1` | Texto principal admin (dark) |
-| `--admin-text-muted` | `#a7cbb1` | Texto secundário / labels / subtítulos admin |
-| `--admin-text-muted` dark | `#94bba0` | |
-| `text-primary-torcedor` | `#e9f7ee` | Texto principal torcedor |
-| `text-muted-torcedor` | `#9db7a7` | Texto secundário torcedor (saudação, hints) |
-| `text-muted-nav` | `#6a9c78` | Ícones/labels inativos do bottom nav |
-| `text-card-label` | `#dff7e6` | Labels nos quick-cards |
-| `text-card-body` | `#d9f3df` | Texto genérico em cards |
+| `--admin-text-primary` | `#f5f7fa` | Texto principal admin |
+| `--admin-text-muted` | `#a6b0bf` | Texto secundário / labels / subtítulos admin |
+| `text-primary-torcedor` | `#f5f7fa` | Texto principal torcedor |
+| `text-muted-torcedor` | `#a6b0bf` | Texto secundário torcedor (saudação, hints) |
+| `text-muted-nav` | `#7b8794` | Ícones/labels inativos do bottom nav |
+| `text-card-label` | `#f5f7fa` | Labels nos quick-cards |
+| `text-card-body` | `#a6b0bf` | Texto genérico em cards |
 
 ### 2.4 Cores Semânticas (KPI Cards)
 
@@ -66,7 +70,7 @@ Usadas nos KPI cards do admin para codificação de significado:
 
 | Variante | Cor do ícone / valor | Background do ícone |
 |---|---|---|
-| `success` | `#81e592` (verde — usa `--admin-accent`) | `rgba(129, 229, 146, 0.15)` |
+| `success` | `#8cd392` (verde — usa `--admin-accent`) | `rgba(140, 211, 146, 0.2)` |
 | `warning` | `#f59e0b` (âmbar) | `rgba(245, 158, 11, 0.15)` |
 | `info` | `#60a5fa` (azul) | `rgba(96, 165, 250, 0.15)` |
 | `danger` | `#f87171` (vermelho) | `rgba(248, 113, 113, 0.15)` |
@@ -81,20 +85,20 @@ Usadas nos KPI cards do admin para codificação de significado:
 
 | Token CSS | Valor | Uso |
 |---|---|---|
-| `--admin-border-soft` | `rgba(119, 177, 137, 0.18)` | Bordas sutis (cabeçalhos, separadores) |
-| `--admin-border-strong` | `rgba(123, 210, 149, 0.42)` | Bordas visíveis (cards, sidebar) |
-| `border-card-torcedor` | `rgba(119, 177, 137, 0.22)` | Bordas dos quick-cards |
-| `border-card-torcedor-hover` | `rgba(147, 220, 167, 0.5)` | Hover dos quick-cards |
-| `border-bottom-nav` | `rgba(119, 177, 137, 0.18)` | Separador bottom nav |
-| `border-header-torcedor` | `rgba(119, 177, 137, 0.15)` | Separador header torcedor |
+| `--admin-border-soft` | `rgba(255, 255, 255, 0.08)` | Bordas sutis (cabeçalhos, separadores) |
+| `--admin-border-strong` | `rgba(140, 211, 146, 0.42)` | Bordas visíveis (cards, sidebar) |
+| `border-card-torcedor` | `rgba(255, 255, 255, 0.08)` | Bordas dos quick-cards |
+| `border-card-torcedor-hover` | `rgba(140, 211, 146, 0.42)` | Hover dos quick-cards |
+| `border-bottom-nav` | `rgba(255, 255, 255, 0.08)` | Separador bottom nav |
+| `border-header-torcedor` | `rgba(255, 255, 255, 0.08)` | Separador header torcedor |
 | `border-link-active` | cor `--admin-accent`, espessura `2px` no lado esquerdo | Link ativo na sidebar |
 
 ### 2.7 Botões
 
 | Classe | Background | Cor do texto | Borda |
 |---|---|---|---|
-| `.btn-primary` | `#35a754` | `#f3fff7` | `#43ba63` |
-| `.btn-secondary` | `rgba(86, 131, 100, 0.2)` | `#d9f3df` | `rgba(119, 177, 137, 0.38)` |
+| `.btn-primary` | `transparent` | `#8cd392` | `#8cd392` |
+| `.btn-secondary` | `rgba(140, 211, 146, 0.2)` | `#f5f7fa` | `rgba(140, 211, 146, 0.42)` |
 | `.btn-danger` | `#8d2c34` | `#fff4f4` | `#bb4f58` |
 
 Todos os botões: `border-radius: 10px`, `padding: 0.6rem 1rem`, `font-size: 0.92rem`. Disabled: `opacity: 0.7`.
@@ -127,12 +131,12 @@ A fonte **Outfit** deve ser carregada via Google Fonts ou bundled. É humanista,
 | Hint KPI card | `0.8rem` | 400 | `--admin-text-muted` | |
 | Título "quick actions" | `0.75rem` | 600 | `--admin-text-muted` | uppercase, letter-spacing: 0.1em |
 | Card quick action | `0.88rem` | 500 | `--admin-text-primary` | |
-| Saudação torcedor pequena | `0.95rem` | 400 | `#9db7a7` | "Olá," |
-| Nome torcedor | `1.6rem` | 700 | `#e9f7ee` | line-height: 1.1 |
-| Label quick-card torcedor | `0.9rem` | 600 | `#dff7e6` | |
-| Label bottom nav | `0.65rem` | 600 | `#6a9c78` → ativo: `#81e592` | |
-| Title seção torcedor | `0.82rem` | 600 | `#6a9c78` | uppercase, letter-spacing: 0.08em |
-| Logo do app no header | `1.1rem` | 700 | `#81e592` | letter-spacing: 0.03em |
+| Saudação torcedor pequena | `0.95rem` | 400 | `#a6b0bf` | "Olá," |
+| Nome torcedor | `1.6rem` | 700 | `#f5f7fa` | line-height: 1.1 |
+| Label quick-card torcedor | `0.9rem` | 600 | `#f5f7fa` | |
+| Label bottom nav | `0.65rem` | 600 | `#7b8794` → ativo: `#8cd392` | |
+| Title seção torcedor | `0.82rem` | 600 | `#7b8794` | uppercase, letter-spacing: 0.08em |
+| Logo do app no header | `1.1rem` | 700 | `#8cd392` | letter-spacing: 0.03em |
 
 ---
 
@@ -215,9 +219,9 @@ A fonte **Outfit** deve ser carregada via Google Fonts ou bundled. É humanista,
 
 ## 5. Avatares de Usuário
 
-Ambos os contextos usam um **avatar com iniciais** gerado dinamicamente a partir do nome do usuário.
+O **painel admin** usa avatar com iniciais no header. O **header do dashboard** (`.dash-header`) e o **cabeçalho da caixa de perfil em Conta** (`/account`, `.account-page__header`) não exibem círculo de usuário — só nome (Conta) e ações. Foto ou iniciais do torcedor em `/account` ficam no **quadrado 64px** do card (sócio ou sem plano).
 
-### Lógica de Iniciais
+### Lógica de Iniciais (onde aplicável)
 
 ```
 initials = nome.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
@@ -225,18 +229,11 @@ initials = nome.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
 // "João" → "J"
 ```
 
-### Avatar Torcedor (`.dash-avatar`)
-
-- **Tamanho:** `34×34px`
-- **Background:** `linear-gradient(135deg, #2e7d4e, #4eb87a)`
-- **Cor do texto:** `#f0fff5`, peso 700, tamanho 0.85rem
-- **Borda:** `2px solid rgba(129, 229, 146, 0.4)`
-
 ### Avatar Admin (`.admin-shell__user-avatar`)
 
 - **Tamanho:** `36×36px`
-- **Background:** `linear-gradient(135deg, var(--admin-accent-soft), var(--admin-accent))`
-- **Cor do texto:** `#0d2118` (escuro — legível sobre fundo verde)
+- **Background:** `linear-gradient(135deg, rgba(140, 211, 146, 0.2), #8cd392)`
+- **Cor do texto:** `#0b0f14` (escuro — legível sobre fundo verde)
 - **Peso:** 700, tamanho 0.78rem, letter-spacing: 0.04em
 
 ---
@@ -340,26 +337,26 @@ Em mobile (≤900px), o accordion é sempre forçado aberto:
 
 ### Torcedor Home
 ```css
-background: linear-gradient(160deg, #0d1f17 0%, #0a1810 100%);
+background: linear-gradient(160deg, #0e131a 0%, #0b0f14 100%);
 ```
 
 ### Admin Shell
 ```css
 background:
-  radial-gradient(circle at 12% 88%, rgba(4, 96, 58, 0.32), transparent 42%),
-  radial-gradient(circle at 80% 0%, rgba(97, 166, 122, 0.22), transparent 38%),
+  radial-gradient(circle at 12% 88%, rgba(140, 211, 146, 0.2), transparent 42%),
+  radial-gradient(circle at 80% 0%, rgba(140, 211, 146, 0.12), transparent 38%),
   var(--admin-bg-main);
 ```
 Dois gradientes radiais sobrepostos criam um efeito de "luz" nos cantos inferior-esquerdo e superior-direito.
 
 ### Admin Sidebar
 ```css
-background: linear-gradient(180deg, var(--admin-bg-sidebar), #133626);
+background: linear-gradient(180deg, var(--admin-bg-sidebar), #0e131a);
 ```
 
 ### `app-surface` (surfaces genéricas)
 ```css
-background: linear-gradient(180deg, rgba(20, 36, 30, 0.8), rgba(10, 20, 16, 0.96));
+background: linear-gradient(180deg, rgba(15, 42, 31, 0.58), rgba(11, 15, 20, 0.96));
 ```
 
 ---
@@ -369,13 +366,13 @@ background: linear-gradient(180deg, rgba(20, 36, 30, 0.8), rgba(10, 20, 16, 0.96
 ```css
 /* .app-input, .app-select, .app-textarea */
 border-radius: 10px;
-border: 1px solid rgba(119, 177, 137, 0.38);
-background: rgba(13, 27, 20, 0.82);
-color: #dff7e6;
+border: 1px solid rgba(255, 255, 255, 0.08);
+background: rgba(14, 19, 26, 0.82);
+color: #f5f7fa;
 padding: 0.58rem 0.72rem;
 
 /* Focus */
-outline: 2px solid rgba(129, 229, 146, 0.4);
+outline: 2px solid rgba(140, 211, 146, 0.42);
 outline-offset: 1px;
 ```
 
@@ -394,6 +391,7 @@ A biblioteca utilizada é **`lucide-react`**. Não usar outras bibliotecas de í
 | Carteirinha | `CreditCard` |
 | Planos | `ShieldCheck` |
 | Fidelidade | `Trophy` |
+| Fidelidade — atalho na Conta (`/account`) | `ListChecks` |
 | Benefícios | `Gift` |
 | Ingressos | `Ticket` |
 | Suporte / Chamados | `Headphones` |
@@ -452,16 +450,7 @@ Estrutura HTML:
 
 Elemento `div.admin-kpi-skeleton` com `height: 128px` e animação shimmer. Exibido enquanto dados carregam.
 
-### 10.3 `UserAvatar` (helper interno em DashboardPage)
-
-```tsx
-function UserAvatar({ name }: { name: string }) {
-  const initials = name.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
-  return <span className="dash-avatar">{initials}</span>
-}
-```
-
-### 10.4 `<SidebarSection>` (Admin Accordion)
+### 10.3 `<SidebarSection>` (Admin Accordion)
 
 Props:
 ```tsx
@@ -475,7 +464,7 @@ interface SidebarSectionProps {
 
 Comportamento: usa `useLocation().pathname` para detectar se alguma rota do array `routes` está ativa. Se sim, adiciona `has-active` no botão e abre automaticamente via `useEffect`.
 
-### 10.5 `<NavItem>` (Admin Sidebar Link)
+### 10.4 `<NavItem>` (Admin Sidebar Link)
 
 ```tsx
 interface NavItemProps {
@@ -486,6 +475,29 @@ interface NavItemProps {
 ```
 
 Usa `<NavLink>` do react-router com classe `is-active` aplicada automaticamente.
+
+### 10.5 Página de Jogos (`/games`) — cartão de partida
+
+Implementação em `frontend/src/pages/GamesPage.tsx` + estilos em `frontend/src/pages/AppShell.css`.
+
+**Layout**
+
+- Raiz: `.games-root` (full-viewport, mesmo padrão das outras subpáginas torcedor).
+- Conteúdo: `.games-page` dentro de `.subpage-content`.
+- Agenda agrupada por dia local: `.games-schedule` → seções `.games-day`.
+- Cabeçalho do dia: `.games-day__header` com `.games-day__date` (título `h2`, data `dd/mm/aaaa`) e, quando o dia contém o jogo em destaque, selo `.games-day__badge` (“Evento Próximo”).
+- Lista do dia: `.games-day__list`.
+
+**Cartão (`.game-card-ev`)**
+
+- Estados: `.game-card-ev--active` (próximo jogo futuro na ordenação global, ou o primeiro da lista se todos forem passados) e `.game-card-ev--muted` (demais jogos — opacidade reduzida, CTA visualmente desabilitado).
+- Corpo: `.game-card-ev__body` — título do confronto `.game-card-ev__title` (`{sigla} x {adversário}`; sigla via `VITE_CLUB_SHORT_NAME`, padrão `FFC`), subtítulo `.game-card-ev__subtitle` (`{competition} - {horário}` a partir da API).
+- Logos: `.game-card-ev__logos` com escudo da casa (imagem resolvida uma vez via `GET /api/branding` + `resolvePublicAssetUrl`, fallback ao placeholder SVG), separador `.game-card-ev__vs`, logo do adversário ou `.game-card-ev__opponent-fallback` com iniciais.
+- CTA somente visual: `button.game-card-ev__cta` (“Ingresso disponível”; `disabled` quando `.game-card-ev--muted`) — no estado ativo, fundo mint `#96d696` e texto escuro; no muted, estilos definidos em `.game-card-ev--muted .game-card-ev__cta`.
+
+**Toast de sucesso (referência)**
+
+- Classe `.game-card-ev__toast` (+ `.game-card-ev__toast-sub`) definida para alinhar a mockups / fluxos futuros; não é obrigatório renderizar na listagem estática.
 
 ---
 
@@ -505,9 +517,11 @@ O projeto usa **Plain CSS com BEM-like naming**. Sem CSS Modules, sem Tailwind.
 | `.app-surface` | Card/container com fundo translúcido verde |
 | `.btn-*` | Botões globais |
 | `.app-input`, `.app-select`, `.app-textarea` | Formulários globais |
-| `.plans-page__*` | Página de planos |
-| `.account-page__*` | Página de conta |
+| `.plans-root`, `.plans-page__*` | Catálogo de planos (`/plans`) — full-viewport, cards verticais, CTA outline |
+| `.account-root`, `.account-page__*` | Página de conta (`/account`) — wrapper full-viewport + conteúdo |
 | `.news-*` | Páginas de notícias do torcedor (`/news` e `/news/:id`) |
+| `.games-page__*`, `.games-schedule`, `.games-day__*`, `.game-card-ev*` | Página de jogos (`/games`) — cartões de partida por dia |
+| `.support-root`, `.support-detail-root`, `.support-ticket-card`, `.support-empty`, `.support-new-btn`, `.support-form*`, `.support-msg-card`, `.support-status-badge*` | Chamados do torcedor (`/support`, `/support/:ticketId`) — mesmo gradiente full-viewport que `.tickets-root`, header `.subpage-header`, estado vazio com CTA outline mint (`#66bb6a`), lista em cards escuros, formulário em `.support-form-panel`; botão de ação no header: `.subpage-header__badge-btn` (ícone engrenagem) |
 
 ---
 
@@ -541,16 +555,18 @@ O `#root` padrão tem `width: 1126px` para páginas públicas. Páginas que deve
   border-inline: none;
   padding: 0;
 }
+
+/* Conta (`/account`): `.account-root`; planos (`/plans`): `.plans-root`; chamados (`/support`): `.support-root` e `.support-detail-root` — ver `src/index.css` (mesmo bloco `:has()` das subpáginas torcedor). */
 ```
 
-**Regra:** toda nova tela que precisar de full-viewport deve adicionar a classe raiz correspondente como seletor `:has()` aqui.
+**Regra:** toda nova tela que precisar de full-viewport deve adicionar a classe raiz correspondente como seletor `:has()` em `src/index.css` (ex.: `.account-root`, `.plans-root`, `.support-root`).
 
 ---
 
 ## 13. Bottom Navigation — Comportamento
 
 - Visível apenas em mobile (`< 640px`)
-- 5 itens fixos: Início (`/dashboard`), Notícias (`/news`), Jogos (`/games`), Carteirinha (`/digital-card`), Conta (`/account`)
+- 5 itens fixos: Início (`/`), Notícias (`/news`), Jogos (`/games`), Carteirinha (`/digital-card`), Conta (`/account`); **Benefícios** não entram na barra — acesso em Conta (`/account`) pelo botão “Meus benefícios” (`/benefits`); **Fidelidade** na mesma tela — botão “Fidelidade” para `/loyalty` (mesmo estilo de cartão que “Meus benefícios”, ícone `ListChecks`); cabeçalho da Conta (`.account-page__header`) com nome e configurações
 - Usa `<NavLink>` com classe `active` aplicada via callback
 - Altura 64px + `env(safe-area-inset-bottom)` para iPhone X+
 - O `.dash-root` tem `padding-bottom: 68px` para não ficar atrás da barra
@@ -571,25 +587,23 @@ Auto-abertura de seção: baseada em `useLocation().pathname` + lista de `routes
 ## 15. Paleta Resumida — Referência Rápida
 
 ```
-VERDE MAIS ESCURO (fundos)     #0a1810
-VERDE ESCURO BASE              #0d1f17 / #152d24
-VERDE ESCURO SIDEBAR           #1d4c33
-VERDE ACENTO LIMÃO             #81e592
-VERDE ACENTO SUAVE             #63b97a
-VERDE CARD HOVER               rgba(30, 62, 44, 0.75)
+VERDE MAIS ESCURO (fundos)     #0b0f14
+VERDE ESCURO BASE              #0e131a
+VERDE ESCURO SIDEBAR           #0f2a1f
+VERDE ACENTO LIMÃO             #8cd392
+VERDE ACENTO SUAVE             rgba(140,211,146,0.2)
 
-TEXTO PRINCIPAL                #e9f7ee / #e8f7e9
-TEXTO SECUNDÁRIO               #9db7a7 / #a7cbb1
-TEXTO INATIVO (nav)            #6a9c78
+TEXTO PRINCIPAL                #f5f7fa
+TEXTO SECUNDÁRIO               #a6b0bf
+TEXTO INATIVO                  #7b8794
 
-BORDA SUAVE                    rgba(119, 177, 137, 0.18)
-BORDA FORTE                    rgba(123, 210, 149, 0.42)
+BORDA SUAVE                    rgba(255,255,255,0.08)
+BORDA FORTE                    rgba(140,211,146,0.42)
 
-AVISO / ALERT                  #ffe9a8 (texto) / rgba(164,130,44,0.18) (fundo)
 WARNING KPI                    #f59e0b
 INFO KPI                       #60a5fa
 DANGER KPI                     #f87171
 
-BTN PRIMARY                    #35a754
+BTN PRIMARY                    transparent + #8cd392
 BTN DANGER                     #8d2c34
 ```

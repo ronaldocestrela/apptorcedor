@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { Link, NavLink } from 'react-router-dom'
-import { Home, Newspaper, Calendar, CreditCard, User, Camera } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Camera, Gift, ListChecks, Settings } from 'lucide-react'
 import axios from 'axios'
 import Cropper from 'react-easy-crop'
 import type { Area } from 'react-easy-crop'
@@ -15,15 +15,19 @@ import {
   type SubscriptionPaymentMethod,
 } from '../features/plans/subscriptionsService'
 import { useAuth } from '../features/auth/AuthContext'
+import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
-const BOTTOM_NAV = [
-  { to: '/', label: 'Início', icon: <Home size={22} /> },
-  { to: '/news', label: 'Notícias', icon: <Newspaper size={22} /> },
-  { to: '/games', label: 'Jogos', icon: <Calendar size={22} /> },
-  { to: '/digital-card', label: 'Carteirinha', icon: <CreditCard size={22} /> },
-  { to: '/account', label: 'Conta', icon: <User size={22} /> },
-]
+function getInitials(name: string | undefined | null): string {
+  if (!name?.trim())
+    return '?'
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0)
+    return '?'
+  if (parts.length === 1)
+    return parts[0]!.slice(0, 2).toUpperCase()
+  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase()
+}
 
 export function AccountPage() {
   const { user, refreshProfile } = useAuth()
@@ -47,6 +51,7 @@ export function AccountPage() {
   const [cancelBusy, setCancelBusy] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
   const [cancelResult, setCancelResult] = useState<CancelMembershipResponse | null>(null)
+  const [showSettings, setShowSettings] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -83,6 +88,21 @@ export function AccountPage() {
       return []
     return publishedPlans.filter(p => p.planId !== subscription.plan!.planId)
   }, [publishedPlans, subscription?.plan])
+
+  const membershipFacts = useMemo(() => {
+    if (!subscription?.startDate)
+      return { years: null as number | null, joined: null as string | null }
+    const start = new Date(subscription.startDate)
+    if (Number.isNaN(start.getTime()))
+      return { years: null, joined: null }
+    const now = new Date()
+    const msPerYear = 365.25 * 24 * 60 * 60 * 1000
+    const years = Math.floor((now.getTime() - start.getTime()) / msPerYear)
+    const joined = start.toLocaleDateString('pt-BR')
+    return { years, joined }
+  }, [subscription?.startDate])
+
+  const displayInitials = useMemo(() => getInitials(user?.name), [user?.name])
 
   useEffect(() => {
     let cancelled = false
@@ -282,310 +302,352 @@ export function AccountPage() {
     }
   }
 
+  const photoEditSquare = (
+    <button
+      type="button"
+      className="account-page__member-photo-btn"
+      onClick={() => !busy && fileInputRef.current?.click()}
+      disabled={busy}
+      title="Clique para alterar a foto"
+      aria-label="Alterar foto de perfil"
+    >
+      {photoUrl ? (
+        <img
+          src={resolvePublicAssetUrl(photoUrl)}
+          alt=""
+          className="account-page__member-photo-img"
+        />
+      ) : (
+        <span className="account-page__member-initials-sq">{displayInitials}</span>
+      )}
+      <span className="account-page__member-photo-camera" aria-hidden="true">
+        <Camera size={16} stroke="#ffffff" strokeWidth={2} />
+      </span>
+    </button>
+  )
+
+  const accountPageHeader = (
+    <header className="account-page__header">
+      <span className="account-page__header-name">{user?.name ?? '—'}</span>
+      <button
+        type="button"
+        className="account-page__settings-btn"
+        aria-expanded={showSettings}
+        aria-label={showSettings ? 'Fechar configurações' : 'Abrir configurações'}
+        onClick={() => setShowSettings(s => !s)}
+      >
+        <Settings size={22} stroke="#f5f7fa" aria-hidden="true" />
+      </button>
+    </header>
+  )
+
   return (
-    <>
-    <main className="app-shell app-shell--narrow account-page" style={{ paddingBottom: '5rem' }}>
-      <section className="app-surface">
-        <h1 className="app-title">Minha conta</h1>
-        <p className="app-muted">
-          <strong>{user?.name}</strong>
-          {' '}
-          ({user?.email})
-        </p>
-      </section>
+    <div className="account-root">
+    <main className="app-shell app-shell--narrow account-page">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        onChange={(ev) => onPhoto(ev)}
+        disabled={busy}
+        style={{ display: 'none' }}
+      />
       {user?.requiresProfileCompletion ? (
         <p className="account-page__alert-warning">
           Complete seu perfil (documento obrigatório para seguir).
         </p>
       ) : null}
-      {subscriptionError ? <p style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>{subscriptionError}</p> : null}
-      {subscription?.hasMembership ? (
-        <section className="app-surface account-page__subscription">
-          <h2 className="account-page__section-title" style={{ fontSize: '1.05rem' }}>Assinatura</h2>
-          <p style={{ margin: '0.25rem 0' }}>
-            <strong>Status:</strong>
-            {' '}
-            {subscription.membershipStatus ?? '—'}
-          </p>
-          <p style={{ margin: '0.25rem 0' }}>
-            <strong>Próximo vencimento:</strong>
-            {' '}
-            {subscription.nextDueDate
-              ? new Date(subscription.nextDueDate).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
-              : '—'}
-          </p>
-          {subscription.plan ? (
-            <p className="app-muted" style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
-              Plano:
-              {' '}
-              {subscription.plan.name}
-            </p>
-          ) : null}
-          <p style={{ margin: '0.75rem 0 0' }}>
-            <Link to="/digital-card" className="app-back-link">Carteirinha digital</Link>
-            {' · '}
-            <Link to="/plans" className="app-back-link">Planos</Link>
-          </p>
-          {subscription.membershipStatus === 'Cancelado' ? (
-            <p className="app-muted" style={{ margin: '0.75rem 0 0', fontSize: '0.9rem' }}>
-              Assinatura cancelada.
-            </p>
-          ) : null}
-          {scheduledCancellation ? (
-            <p className="app-muted" style={{ margin: '0.75rem 0 0', fontSize: '0.9rem' }}>
-              Cancelamento agendado. Acesso até
-              {' '}
-              {subscription.endDate
-                ? new Date(subscription.endDate).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
-                : '—'}
-            </p>
-          ) : null}
-          {canRequestCancellation ? (
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(119, 177, 137, 0.28)' }}>
-              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Cancelar assinatura</h3>
-              <p className="app-muted" style={{ margin: '0 0 0.5rem', fontSize: '0.85rem' }}>
-                O clube pode oferecer prazo de arrependimento (configurável). Dentro desse prazo o cancelamento é imediato;
-                depois dele, o acesso segue até a data do fim do ciclo atual.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setCancelError(null)
-                  setShowCancelModal(true)
-                }}
-                className="btn-secondary"
-              >
-                Cancelar assinatura
-              </button>
-              {cancelResult ? (
-                <div style={{ marginTop: 12, fontSize: '0.9rem', background: 'rgba(14, 29, 22, 0.6)', padding: 8, borderRadius: 6 }}>
-                  <p style={{ margin: 0 }}>{cancelResult.message}</p>
-                  {cancelResult.mode === 'ScheduledEndOfCycle' && cancelResult.accessValidUntilUtc ? (
-                    <p style={{ margin: '0.5rem 0 0' }}>
-                      Acesso até
-                      {' '}
-                      {new Date(cancelResult.accessValidUntilUtc).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
+      <div
+        className={
+          subscription?.hasMembership
+            ? 'account-page__profile-box'
+            : 'account-page__profile-box account-page__profile-box--stacked'
+        }
+      >
+        {accountPageHeader}
+        {subscription === null ? (
+          <div className="account-page__no-plan-body">
+            {subscriptionError ? (
+              <p className="account-page__empty-copy" role="alert" style={{ color: '#ffc6c6' }}>{subscriptionError}</p>
+            ) : (
+              <p className="account-page__empty-copy app-muted">Carregando informações da conta…</p>
+            )}
+          </div>
+        ) : null}
+        {subscription && !subscription.hasMembership ? (
+          <div className="account-page__no-plan-body">
+            <div className="account-page__member-card-top">
+              <div>
+                <p className="account-page__plan-label">Sem plano ativo</p>
+                <p className="account-page__empty-copy app-muted">
+                  Você ainda não possui assinatura de sócio.
+                  {' '}
+                  <Link to="/plans" className="app-back-link">Ver planos</Link>
+                </p>
+              </div>
+              {photoEditSquare}
             </div>
-          ) : null}
-          {subscription.membershipStatus === 'Ativo' && subscription.plan ? (
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(119, 177, 137, 0.28)' }}>
-              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Trocar plano</h3>
-              {plansLoadError ? <p style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>{plansLoadError}</p> : null}
-              {!plansLoadError && publishedPlans === null ? (
-                <p className="app-muted" style={{ fontSize: '0.9rem' }}>Carregando planos…</p>
+          </div>
+        ) : null}
+      </div>
+      {subscription?.hasMembership ? (
+        <div className="account-page__member-card">
+          <div className="account-page__member-card-top">
+            <div>
+              <p className="account-page__plan-label">Sócio Torcedor</p>
+              <p className="account-page__plan-name">{subscription.plan?.name ?? '—'}</p>
+            </div>
+            {photoEditSquare}
+          </div>
+          {membershipFacts.joined ? (
+            <ul className="account-page__member-facts">
+              <li>
+                {membershipFacts.years !== null && membershipFacts.years > 0
+                  ? `Sócio há ${membershipFacts.years} ${membershipFacts.years === 1 ? 'ano' : 'anos'}.`
+                  : 'Sócio há menos de 1 ano.'}
+              </li>
+              <li>
+                Ingressou
+                {' '}
+                {membershipFacts.joined}
+                .
+              </li>
+            </ul>
+          ) : (
+            <ul className="account-page__member-facts">
+              <li>Data de ingresso indisponível.</li>
+            </ul>
+          )}
+          <Link to="/digital-card" className="account-page__expand-btn">
+            Expandir Carteirinha
+          </Link>
+        </div>
+      ) : null}
+      <Link to="/benefits" className="account-page__benefits-btn">
+        Meus benefícios
+        <Gift size={22} stroke="currentColor" aria-hidden="true" />
+      </Link>
+      <Link to="/loyalty" className="account-page__benefits-btn">
+        Fidelidade
+        <ListChecks size={22} stroke="currentColor" aria-hidden="true" />
+      </Link>
+      {loadError ? <p role="alert" style={{ color: '#ffc6c6' }}>{loadError}</p> : null}
+      {showSettings ? (
+        <>
+          {subscription?.hasMembership ? (
+            <section className="app-surface account-page__subscription">
+              <h2 className="account-page__section-title" style={{ fontSize: '1.05rem' }}>Assinatura</h2>
+              <p style={{ margin: '0.25rem 0' }}>
+                <strong>Status:</strong>
+                {' '}
+                {subscription.membershipStatus ?? '—'}
+              </p>
+              <p style={{ margin: '0.25rem 0' }}>
+                <strong>Próximo vencimento:</strong>
+                {' '}
+                {subscription.nextDueDate
+                  ? new Date(subscription.nextDueDate).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+                  : '—'}
+              </p>
+              {subscription.plan ? (
+                <p className="app-muted" style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
+                  Plano:
+                  {' '}
+                  {subscription.plan.name}
+                </p>
               ) : null}
-              {!plansLoadError && publishedPlans && otherPlans.length === 0 ? (
-                <p className="app-muted" style={{ fontSize: '0.9rem' }}>Não há outros planos publicados para troca.</p>
+              <p style={{ margin: '0.75rem 0 0' }}>
+                <Link to="/digital-card" className="app-back-link">Carteirinha digital</Link>
+                {' · '}
+                <Link to="/plans" className="app-back-link">Planos</Link>
+              </p>
+              {subscription.membershipStatus === 'Cancelado' ? (
+                <p className="app-muted" style={{ margin: '0.75rem 0 0', fontSize: '0.9rem' }}>
+                  Assinatura cancelada.
+                </p>
               ) : null}
-              {!plansLoadError && otherPlans.length > 0 ? (
-                <>
-                  <label className="account-page__field" style={{ display: 'block', marginBottom: 8, fontSize: '0.9rem' }}>
-                    Outro plano
-                    <select
-                      value={selectedPlanId}
-                      onChange={(ev) => {
-                        setSelectedPlanId(ev.target.value)
-                        setChangeResult(null)
-                      }}
-                      className="app-select"
-                    >
-                      <option value="">Selecione…</option>
-                      {otherPlans.map(p => (
-                        <option key={p.planId} value={p.planId}>
-                          {p.name}
-                          {' '}
-                          —
-                          {' '}
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price)}
-                          {' '}
-                          (
-                          {p.billingCycle}
-                          )
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <fieldset style={{ border: 'none', padding: 0, margin: '0 0 8px' }}>
-                    <legend style={{ fontSize: '0.85rem', marginBottom: 4 }}>Pagamento do proporcional</legend>
-                    <label style={{ marginRight: 12, fontSize: '0.9rem' }}>
-                      <input
-                        type="radio"
-                        name="changePlanPm"
-                        checked={changePaymentMethod === 'Pix'}
-                        onChange={() => setChangePaymentMethod('Pix')}
-                      />
-                      {' '}
-                      Pix
-                    </label>
-                    <label style={{ fontSize: '0.9rem' }}>
-                      <input
-                        type="radio"
-                        name="changePlanPm"
-                        checked={changePaymentMethod === 'Card'}
-                        onChange={() => setChangePaymentMethod('Card')}
-                      />
-                      {' '}
-                      Cartão
-                    </label>
-                  </fieldset>
+              {scheduledCancellation ? (
+                <p className="app-muted" style={{ margin: '0.75rem 0 0', fontSize: '0.9rem' }}>
+                  Cancelamento agendado. Acesso até
+                  {' '}
+                  {subscription.endDate
+                    ? new Date(subscription.endDate).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+                    : '—'}
+                </p>
+              ) : null}
+              {canRequestCancellation ? (
+                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(119, 177, 137, 0.28)' }}>
+                  <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Cancelar assinatura</h3>
+                  <p className="app-muted" style={{ margin: '0 0 0.5rem', fontSize: '0.85rem' }}>
+                    O clube pode oferecer prazo de arrependimento (configurável). Dentro desse prazo o cancelamento é imediato;
+                    depois dele, o acesso segue até a data do fim do ciclo atual.
+                  </p>
                   <button
                     type="button"
-                    disabled={!selectedPlanId || changeBusy}
-                    onClick={() => void onConfirmPlanChange()}
-                    className="btn-primary"
+                    onClick={() => {
+                      setCancelError(null)
+                      setShowCancelModal(true)
+                    }}
+                    className="btn-secondary"
                   >
-                    {changeBusy ? 'Processando…' : 'Confirmar troca'}
+                    Cancelar assinatura
                   </button>
-                </>
-              ) : null}
-              {changeError ? <p role="alert" style={{ color: '#ffc6c6', fontSize: '0.9rem', marginTop: 8 }}>{changeError}</p> : null}
-              {changeResult ? (
-                <div style={{ marginTop: 12, fontSize: '0.9rem', background: 'rgba(14, 29, 22, 0.6)', padding: 8, borderRadius: 6 }}>
-                  <p style={{ margin: '0 0 0.5rem' }}>
-                    <strong>Troca registrada.</strong>
-                    {' '}
-                    Proporcional:
-                    {' '}
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: changeResult.currency || 'BRL' }).format(changeResult.prorationAmount)}
-                  </p>
-                  {changeResult.prorationAmount > 0 && changeResult.pix ? (
-                    <div>
-                      <p style={{ margin: '0.25rem 0' }}>PIX — copia e cola:</p>
-                      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.75rem' }}>
-                        {changeResult.pix.copyPasteKey ?? changeResult.pix.qrCodePayload}
-                      </pre>
+                  {cancelResult ? (
+                    <div style={{ marginTop: 12, fontSize: '0.9rem', background: 'rgba(14, 29, 22, 0.6)', padding: 8, borderRadius: 6 }}>
+                      <p style={{ margin: 0 }}>{cancelResult.message}</p>
+                      {cancelResult.mode === 'ScheduledEndOfCycle' && cancelResult.accessValidUntilUtc ? (
+                        <p style={{ margin: '0.5rem 0 0' }}>
+                          Acesso até
+                          {' '}
+                          {new Date(cancelResult.accessValidUntilUtc).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                        </p>
+                      ) : null}
                     </div>
-                  ) : null}
-                  {changeResult.prorationAmount > 0 && changeResult.card ? (
-                    <p style={{ margin: '0.5rem 0 0' }}>
-                      <a href={changeResult.card.checkoutUrl} target="_blank" rel="noreferrer" className="app-back-link">
-                        Abrir checkout do cartão
-                      </a>
-                    </p>
-                  ) : null}
-                  {changeResult.prorationAmount === 0 ? (
-                    <p className="app-muted" style={{ margin: 0 }}>Sem cobrança proporcional. Seu plano já foi atualizado.</p>
                   ) : null}
                 </div>
               ) : null}
-            </div>
+              {subscription.membershipStatus === 'Ativo' && subscription.plan ? (
+                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(119, 177, 137, 0.28)' }}>
+                  <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Trocar plano</h3>
+                  {plansLoadError ? <p style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>{plansLoadError}</p> : null}
+                  {!plansLoadError && publishedPlans === null ? (
+                    <p className="app-muted" style={{ fontSize: '0.9rem' }}>Carregando planos…</p>
+                  ) : null}
+                  {!plansLoadError && publishedPlans && otherPlans.length === 0 ? (
+                    <p className="app-muted" style={{ fontSize: '0.9rem' }}>Não há outros planos publicados para troca.</p>
+                  ) : null}
+                  {!plansLoadError && otherPlans.length > 0 ? (
+                    <>
+                      <label className="account-page__field" style={{ display: 'block', marginBottom: 8, fontSize: '0.9rem' }}>
+                        Outro plano
+                        <select
+                          value={selectedPlanId}
+                          onChange={(ev) => {
+                            setSelectedPlanId(ev.target.value)
+                            setChangeResult(null)
+                          }}
+                          className="app-select"
+                        >
+                          <option value="">Selecione…</option>
+                          {otherPlans.map(p => (
+                            <option key={p.planId} value={p.planId}>
+                              {p.name}
+                              {' '}
+                              —
+                              {' '}
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price)}
+                              {' '}
+                              (
+                              {p.billingCycle}
+                              )
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <fieldset style={{ border: 'none', padding: 0, margin: '0 0 8px' }}>
+                        <legend style={{ fontSize: '0.85rem', marginBottom: 4 }}>Pagamento do proporcional</legend>
+                        <label style={{ marginRight: 12, fontSize: '0.9rem' }}>
+                          <input
+                            type="radio"
+                            name="changePlanPm"
+                            checked={changePaymentMethod === 'Pix'}
+                            onChange={() => setChangePaymentMethod('Pix')}
+                          />
+                          {' '}
+                          Pix
+                        </label>
+                        <label style={{ fontSize: '0.9rem' }}>
+                          <input
+                            type="radio"
+                            name="changePlanPm"
+                            checked={changePaymentMethod === 'Card'}
+                            onChange={() => setChangePaymentMethod('Card')}
+                          />
+                          {' '}
+                          Cartão
+                        </label>
+                      </fieldset>
+                      <button
+                        type="button"
+                        disabled={!selectedPlanId || changeBusy}
+                        onClick={() => void onConfirmPlanChange()}
+                        className="btn-primary"
+                      >
+                        {changeBusy ? 'Processando…' : 'Confirmar troca'}
+                      </button>
+                    </>
+                  ) : null}
+                  {changeError ? <p role="alert" style={{ color: '#ffc6c6', fontSize: '0.9rem', marginTop: 8 }}>{changeError}</p> : null}
+                  {changeResult ? (
+                    <div style={{ marginTop: 12, fontSize: '0.9rem', background: 'rgba(14, 29, 22, 0.6)', padding: 8, borderRadius: 6 }}>
+                      <p style={{ margin: '0 0 0.5rem' }}>
+                        <strong>Troca registrada.</strong>
+                        {' '}
+                        Proporcional:
+                        {' '}
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: changeResult.currency || 'BRL' }).format(changeResult.prorationAmount)}
+                      </p>
+                      {changeResult.prorationAmount > 0 && changeResult.pix ? (
+                        <div>
+                          <p style={{ margin: '0.25rem 0' }}>PIX — copia e cola:</p>
+                          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.75rem' }}>
+                            {changeResult.pix.copyPasteKey ?? changeResult.pix.qrCodePayload}
+                          </pre>
+                        </div>
+                      ) : null}
+                      {changeResult.prorationAmount > 0 && changeResult.card ? (
+                        <p style={{ margin: '0.5rem 0 0' }}>
+                          <a href={changeResult.card.checkoutUrl} target="_blank" rel="noreferrer" className="app-back-link">
+                            Abrir checkout do cartão
+                          </a>
+                        </p>
+                      ) : null}
+                      {changeResult.prorationAmount === 0 ? (
+                        <p className="app-muted" style={{ margin: 0 }}>Sem cobrança proporcional. Seu plano já foi atualizado.</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </section>
           ) : null}
-        </section>
-      ) : !subscriptionError && subscription && !subscription.hasMembership ? (
-        <p className="app-muted" style={{ fontSize: '0.95rem' }}>
-          Você ainda não possui assinatura de sócio.
-          {' '}
-          <Link to="/plans" className="app-back-link">Ver planos</Link>
-        </p>
+          <form onSubmit={onSubmit} className="app-surface account-page__form">
+            <p className="app-muted" style={{ margin: '0 0 0.25rem', fontSize: '0.88rem' }}>
+              {user?.email}
+            </p>
+            <label className="account-page__field">
+              Documento (CPF ou equivalente)
+              <input
+                value={document}
+                onChange={(ev) => setDocument(ev.target.value)}
+                className="app-input"
+              />
+            </label>
+            <label className="account-page__field">
+              Data de nascimento
+              <input
+                type="date"
+                value={birthDate}
+                onChange={(ev) => setBirthDate(ev.target.value)}
+                className="app-input"
+              />
+            </label>
+            <label className="account-page__field">
+              Endereço
+              <textarea
+                value={address}
+                onChange={(ev) => setAddress(ev.target.value)}
+                rows={3}
+                className="app-textarea"
+              />
+            </label>
+            {saveError ? <p role="alert" style={{ color: '#ffc6c6' }}>{saveError}</p> : null}
+            <button type="submit" disabled={busy} className="btn-primary">
+              {busy ? 'Salvando...' : 'Salvar perfil'}
+            </button>
+          </form>
+        </>
       ) : null}
-      {loadError ? <p role="alert" style={{ color: '#ffc6c6' }}>{loadError}</p> : null}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0' }}>
-        <button
-          type="button"
-          onClick={() => !busy && fileInputRef.current?.click()}
-          disabled={busy}
-          title="Clique para alterar a foto"
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: busy ? 'default' : 'pointer',
-            padding: 0,
-            borderRadius: '50%',
-            position: 'relative',
-            display: 'inline-block',
-          }}
-        >
-          {photoUrl ? (
-            <img
-              src={resolvePublicAssetUrl(photoUrl)}
-              alt="Foto de perfil"
-              style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', display: 'block' }}
-            />
-          ) : (
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 120,
-                height: 120,
-                borderRadius: '50%',
-                background: 'rgba(119,177,137,0.15)',
-                border: '2px dashed rgba(119,177,137,0.5)',
-                color: 'rgba(220,246,227,0.6)',
-                fontSize: '0.8rem',
-                textAlign: 'center',
-                lineHeight: 1.3,
-                padding: '0 12px',
-              }}
-            >
-              Adicionar foto
-            </span>
-          )}
-          <span
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              bottom: 4,
-              right: 4,
-              background: 'transparent',
-              borderRadius: '50%',
-              width: 28,
-              height: 28,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Camera size={20} stroke="#ffffff" fill="none" strokeWidth={2} />
-          </span>
-        </button>
-        <span className="app-muted" style={{ fontSize: '0.8rem' }}>Clique para alterar</span>
-      </div>
-      <form onSubmit={onSubmit} className="app-surface account-page__form">
-        <label className="account-page__field">
-          Documento (CPF ou equivalente)
-          <input
-            value={document}
-            onChange={(ev) => setDocument(ev.target.value)}
-            className="app-input"
-          />
-        </label>
-        <label className="account-page__field">
-          Data de nascimento
-          <input
-            type="date"
-            value={birthDate}
-            onChange={(ev) => setBirthDate(ev.target.value)}
-            className="app-input"
-          />
-        </label>
-        <label className="account-page__field">
-          Endereço
-          <textarea
-            value={address}
-            onChange={(ev) => setAddress(ev.target.value)}
-            rows={3}
-            className="app-textarea"
-          />
-        </label>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={(ev) => onPhoto(ev)}
-          disabled={busy}
-          style={{ display: 'none' }}
-        />
-        {saveError ? <p role="alert" style={{ color: '#ffc6c6' }}>{saveError}</p> : null}
-        <button type="submit" disabled={busy} className="btn-primary">
-          {busy ? 'Salvando...' : 'Salvar perfil'}
-        </button>
-      </form>
       {showCancelModal ? (
         <div
           role="presentation"
@@ -696,21 +758,7 @@ export function AccountPage() {
         </div>
       ) : null}
     </main>
-    <nav className="dash-bottom-nav" aria-label="Navegação principal">
-      {BOTTOM_NAV.map(item => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.to === '/'}
-          className={({ isActive }) =>
-            `dash-bottom-nav__item${isActive ? ' active' : ''}`
-          }
-        >
-          {item.icon}
-          {item.label}
-        </NavLink>
-      ))}
-    </nav>
-    </>
+    <TorcedorBottomNav />
+    </div>
   )
 }

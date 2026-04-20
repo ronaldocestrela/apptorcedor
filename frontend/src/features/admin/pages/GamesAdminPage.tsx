@@ -3,13 +3,17 @@ import { ApplicationPermissions } from '../../../shared/auth/applicationPermissi
 import { hasPermission } from '../../../shared/auth/permissionUtils'
 import { useAuth } from '../../auth/AuthContext'
 import { PermissionGate } from '../../auth/PermissionGate'
+import { resolvePublicAssetUrl } from '../../account/accountApi'
 import {
   createAdminGame,
   deactivateAdminGame,
   getAdminGame,
   listAdminGames,
+  listAdminOpponentLogos,
   updateAdminGame,
+  uploadAdminOpponentLogo,
   type AdminGameListItem,
+  type AdminOpponentLogoItem,
   type UpsertGameBody,
 } from '../services/adminApi'
 
@@ -27,6 +31,7 @@ function emptyForm(): {
   competition: string
   gameDateLocal: string
   isActive: boolean
+  opponentLogoUrl: string | null
 } {
   const now = new Date()
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
@@ -36,6 +41,7 @@ function emptyForm(): {
     competition: '',
     gameDateLocal: toLocalInputValue(now.toISOString()),
     isActive: true,
+    opponentLogoUrl: null,
   }
 }
 
@@ -50,6 +56,8 @@ export function GamesAdminPage() {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState(() => emptyForm())
+  const [logoLibrary, setLogoLibrary] = useState<AdminOpponentLogoItem[]>([])
+  const [logoUploading, setLogoUploading] = useState(false)
 
   const loadList = useCallback(async () => {
     setLoading(true)
@@ -65,9 +73,22 @@ export function GamesAdminPage() {
     }
   }, [])
 
+  const loadLogoLibrary = useCallback(async () => {
+    try {
+      const page = await listAdminOpponentLogos({ pageSize: 100 })
+      setLogoLibrary(page.items)
+    } catch {
+      /* non-fatal */
+    }
+  }, [])
+
   useEffect(() => {
     void loadList()
   }, [loadList])
+
+  useEffect(() => {
+    void loadLogoLibrary()
+  }, [loadLogoLibrary])
 
   async function selectGame(gameId: string) {
     setError(null)
@@ -79,6 +100,7 @@ export function GamesAdminPage() {
         competition: d.competition,
         gameDateLocal: toLocalInputValue(d.gameDate),
         isActive: d.isActive,
+        opponentLogoUrl: d.opponentLogoUrl ?? null,
       })
     } catch {
       setError('Falha ao carregar jogo.')
@@ -92,6 +114,23 @@ export function GamesAdminPage() {
       competition: form.competition.trim(),
       gameDate: iso,
       isActive: form.isActive,
+      opponentLogoUrl: form.opponentLogoUrl?.trim() || null,
+    }
+  }
+
+  async function onLogoFileChange(file: File | null) {
+    if (!file || !(canCreate || canEdit))
+      return
+    setLogoUploading(true)
+    setError(null)
+    try {
+      const url = await uploadAdminOpponentLogo(file)
+      setForm(f => ({ ...f, opponentLogoUrl: url }))
+      await loadLogoLibrary()
+    } catch {
+      setError('Falha ao enviar logo do adversário.')
+    } finally {
+      setLogoUploading(false)
     }
   }
 
@@ -152,9 +191,20 @@ export function GamesAdminPage() {
           <ul style={{ listStyle: 'none', padding: 0, maxHeight: 420, overflow: 'auto' }}>
             {items.map((g) => (
               <li key={g.gameId} style={{ borderBottom: '1px solid #eee', padding: '8px 0' }}>
-                <button type="button" onClick={() => void selectGame(g.gameId)} style={{ fontWeight: 600 }}>
-                  {g.opponent}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {g.opponentLogoUrl
+                    ? (
+                        <img
+                          src={resolvePublicAssetUrl(g.opponentLogoUrl) ?? ''}
+                          alt=""
+                          style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 6, border: '1px solid #ddd' }}
+                        />
+                      )
+                    : null}
+                  <button type="button" onClick={() => void selectGame(g.gameId)} style={{ fontWeight: 600 }}>
+                    {g.opponent}
+                  </button>
+                </div>
                 <div style={{ fontSize: 12, color: '#666' }}>
                   {g.competition} · {new Date(g.gameDate).toLocaleString()} · {g.isActive ? 'ativo' : 'inativo'}
                 </div>
@@ -185,6 +235,81 @@ export function GamesAdminPage() {
                   required
                 />
               </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 14, fontWeight: 600 }}>Logo do adversário</span>
+                {form.opponentLogoUrl
+                  ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <img
+                          src={resolvePublicAssetUrl(form.opponentLogoUrl) ?? ''}
+                          alt="Logo adversário"
+                          style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 8, border: '1px solid #ccc' }}
+                        />
+                        <button type="button" onClick={() => setForm(f => ({ ...f, opponentLogoUrl: null }))}>
+                          Remover logo
+                        </button>
+                      </div>
+                    )
+                  : (
+                      <span style={{ fontSize: 13, color: '#666' }}>Nenhuma logo selecionada.</span>
+                    )}
+                {canCreate || canEdit
+                  ? (
+                      <label style={{ fontSize: 13 }}>
+                        Enviar nova imagem (PNG/JPEG/WebP, até 6 MB)
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          disabled={logoUploading || saving}
+                          onChange={(e) => void onLogoFileChange(e.target.files?.[0] ?? null)}
+                          style={{ display: 'block', marginTop: 4 }}
+                        />
+                      </label>
+                    )
+                  : null}
+                {logoLibrary.length > 0
+                  ? (
+                      <div>
+                        <div style={{ fontSize: 13, marginBottom: 4 }}>Ou escolha uma logo já enviada:</div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 8,
+                            maxHeight: 160,
+                            overflow: 'auto',
+                            padding: 4,
+                            border: '1px solid #eee',
+                            borderRadius: 8,
+                          }}
+                        >
+                          {logoLibrary.map(logo => (
+                            <button
+                              key={logo.id}
+                              type="button"
+                              title={logo.url}
+                              onClick={() => setForm(f => ({ ...f, opponentLogoUrl: logo.url }))}
+                              style={{
+                                padding: 0,
+                                border:
+                                  form.opponentLogoUrl === logo.url ? '2px solid #0f6f48' : '1px solid #ddd',
+                                borderRadius: 8,
+                                background: '#fafafa',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <img
+                                src={resolvePublicAssetUrl(logo.url) ?? ''}
+                                alt=""
+                                style={{ width: 44, height: 44, objectFit: 'contain', display: 'block' }}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  : null}
+              </div>
               <label>
                 Data do jogo
                 <input
