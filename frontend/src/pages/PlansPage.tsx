@@ -55,17 +55,18 @@ export function PlansPage() {
 
   return (
     <div className="plans-root">
-      <header className="subpage-header">
+      <div className="plans-figma-starfield" aria-hidden="true" />
+      <header className="subpage-header subpage-header--tri plans-page__header">
         <Link to="/" className="subpage-header__back" aria-label="Voltar">
-          <ArrowLeft size={18} />
+          <ArrowLeft size={24} strokeWidth={2} />
         </Link>
-        <h1 className="subpage-header__title plans-page__header-title">Planos</h1>
+        <h1 className="subpage-header__title">Planos</h1>
         <Link to="/account" className="plans-page__settings-btn" aria-label="Configurações">
-          <Settings size={20} stroke="currentColor" />
+          <Settings size={24} strokeWidth={2} />
         </Link>
       </header>
 
-      <main className="subpage-content plans-page">
+      <main className="subpage-content plans-page plans-page--figma">
         {loading ? <p className="app-muted">Carregando…</p> : null}
         {error ? <p role="alert" style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>{error}</p> : null}
         {!loading && !error && plans.length === 0 ? (
@@ -73,48 +74,55 @@ export function PlansPage() {
         ) : null}
 
         {!loading && !error && plans.length > 0 ? (
-          <ul className="plans-page__list" aria-label="Lista de planos">
-            {plans.map((plan, index) => (
-              <li key={plan.planId} className="plans-page__item">
-                {index === 0 ? (
-                  <span className="plans-page__badge">Mais Popular</span>
-                ) : null}
-                <div
-                  className={
-                    index === 0
-                      ? 'plans-page__card plans-page__card--featured'
-                      : 'plans-page__card'
-                  }
-                >
-                  <p className="plans-page__name">{plan.name}</p>
-                  {plan.summary ? (
-                    <p className="plans-page__summary">{plan.summary}</p>
+          <ul className="plans-figma-list" aria-label="Lista de planos">
+            {plans.map((plan, index) => {
+              const featured = index === 0
+              return (
+                <li key={plan.planId} className="plans-figma-stack">
+                  {featured ? (
+                    <div className="plans-figma-chip-wrap">
+                      <span className="plans-figma-chip">Mais Popular</span>
+                    </div>
                   ) : null}
-                  <p className="plans-page__price">
-                    <span className="plans-page__price-currency">R$</span>
-                    <span className="plans-page__price-value">{formatPriceNumber(plan.price)}</span>
-                    <span className="plans-page__price-cycle">
-                      {`/ ${billingCyclePeriodLabel(plan.billingCycle)}`}
-                    </span>
-                  </p>
-                  {plan.discountPercentage > 0 ? (
-                    <p className="plans-page__discount">
-                      Desconto
-                      {' '}
-                      {plan.discountPercentage}
-                      %
-                    </p>
-                  ) : null}
-                  <Link
-                    to={`/plans/${plan.planId}`}
-                    state={{ featured: index === 0 }}
-                    className="plans-page__cta"
+                  <div
+                    className={
+                      featured
+                        ? 'plans-figma-card plans-figma-card--featured'
+                        : 'plans-figma-card'
+                    }
                   >
-                    Mais detalhes
-                  </Link>
-                </div>
-              </li>
-            ))}
+                    <p className="plans-figma-card__title">{plan.name}</p>
+                    {plan.summary ? (
+                      <p className="plans-figma-card__summary">{plan.summary}</p>
+                    ) : null}
+                    <p className="plans-figma-card__price">
+                      <span className="plans-figma-card__price-currency">R$</span>
+                      <span className="plans-figma-card__price-gap" aria-hidden="true" />
+                      <span className="plans-figma-card__price-value">{formatPriceNumber(plan.price)}</span>
+                      <span className="plans-figma-card__price-gap" aria-hidden="true" />
+                      <span className="plans-figma-card__cycle">
+                        {`/ ${billingCyclePeriodLabel(plan.billingCycle)}`}
+                      </span>
+                    </p>
+                    {plan.discountPercentage > 0 ? (
+                      <p className="plans-figma-card__discount">
+                        Desconto
+                        {' '}
+                        {plan.discountPercentage}
+                        %
+                      </p>
+                    ) : null}
+                    <Link
+                      to={`/plans/${plan.planId}`}
+                      state={{ featured }}
+                      className="plans-figma-card__cta"
+                    >
+                      MAIS DETALHES
+                    </Link>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         ) : null}
       </main>

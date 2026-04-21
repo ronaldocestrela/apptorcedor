@@ -1907,6 +1907,257 @@
   font-family: 'Outfit', 'Segoe UI', sans-serif;
   color: #f5f7fa;
   padding-bottom: 68px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Figma 392:624 — Planos (seleção): starfield + header + cards */
+.plans-root .plans-figma-starfield {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(38.25rem, 125vw);
+  height: clamp(15rem, 88vw, 24.625rem);
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 85% 55% at 50% -5%, rgba(0, 191, 103, 0.14) 0%, transparent 58%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 46px,
+      rgba(140, 211, 146, 0.07) 46px,
+      rgba(140, 211, 146, 0.07) 47px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 46px,
+      rgba(140, 211, 146, 0.05) 46px,
+      rgba(140, 211, 146, 0.05) 47px
+    ),
+    radial-gradient(circle at 18% 22%, rgba(153, 227, 158, 0.35) 0, transparent 1.5px),
+    radial-gradient(circle at 42% 18%, rgba(153, 227, 158, 0.28) 0, transparent 1px),
+    radial-gradient(circle at 68% 28%, rgba(153, 227, 158, 0.32) 0, transparent 1.2px),
+    radial-gradient(circle at 82% 14%, rgba(153, 227, 158, 0.22) 0, transparent 1px),
+    radial-gradient(circle at 55% 40%, rgba(153, 227, 158, 0.18) 0, transparent 1px);
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    120% 120%,
+    120% 120%,
+    120% 120%,
+    120% 120%,
+    120% 120%;
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 92%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 92%);
+}
+
+.plans-root .plans-page__header.subpage-header {
+  position: relative;
+  z-index: 50;
+  background: rgba(18, 18, 18, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.plans-root .plans-page__header .subpage-header__back {
+  color: #ffffff;
+  width: 40px;
+  height: 40px;
+}
+
+.plans-root .plans-page__header .subpage-header__back:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.plans-root .plans-page__header.subpage-header--tri .subpage-header__title {
+  font-family: 'Poppins', 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5rem;
+  letter-spacing: 0;
+  color: #ffffff;
+}
+
+.plans-root .plans-page__header .plans-page__settings-btn {
+  width: 40px;
+  height: 40px;
+  color: #ffffff;
+}
+
+.plans-root .plans-page__header .plans-page__settings-btn:hover {
+  color: #99e39e;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.plans-root main.subpage-content.plans-page--figma {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding-top: 1rem;
+  padding-left: max(1rem, calc((100% - 19.375rem) / 2));
+  padding-right: max(1rem, calc((100% - 19.375rem) / 2));
+  padding-bottom: 1.5rem;
+}
+
+.plans-page--figma.plans-page {
+  padding: 0;
+}
+
+.plans-figma-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.plans-figma-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 19.375rem;
+}
+
+.plans-figma-chip-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.plans-figma-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(153, 227, 158, 0.1);
+  color: #99e39e;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.5;
+}
+
+.plans-figma-card {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #403f41;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  min-height: 12.8125rem;
+}
+
+.plans-figma-card--featured {
+  border-color: #8cd392;
+}
+
+.plans-figma-card__title {
+  margin: 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+  text-align: center;
+}
+
+.plans-figma-card__summary {
+  margin: 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-variation-settings: 'opsz' 9;
+  line-height: 1.4;
+  color: #ffffff;
+  text-align: center;
+}
+
+.plans-figma-card__price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: nowrap;
+  margin: 0;
+  color: #8cd392;
+}
+
+.plans-figma-card__price-currency,
+.plans-figma-card__cycle {
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1;
+  color: #8cd392;
+}
+
+.plans-figma-card__price-gap {
+  display: inline-block;
+  width: 1.25rem;
+  flex-shrink: 0;
+}
+
+.plans-figma-card__price-value {
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #8cd392;
+}
+
+.plans-figma-card__discount {
+  margin: -0.5rem 0 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(153, 227, 158, 0.85);
+  text-align: center;
+}
+
+.plans-figma-card__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 14.125rem;
+  max-width: 100%;
+  height: 2.375rem;
+  margin-top: auto;
+  border-radius: 16px;
+  border: 1px solid #8cd392;
+  background: rgba(153, 227, 158, 0.1);
+  color: #8cd392;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.225rem;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.plans-figma-card__cta:hover {
+  background: rgba(153, 227, 158, 0.18);
+  border-color: #99e39e;
+  color: #99e39e;
 }
 
 /* Cabeçalho alinhado ao frame Partidas (fundo sólido escuro, ícones brancos) */
