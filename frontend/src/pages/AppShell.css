@@ -1213,9 +1213,36 @@
   text-decoration: underline;
 }
 
-/* ── Plan Detail (`/plans/:id`) ── */
+/* ── Plan Detail (`/plans/:id`) — Figma 392:758 planos detalhe ── */
 .plan-detail {
   padding: 0 1rem 1.5rem;
+}
+
+.plans-root main.subpage-content.plan-detail--figma {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding-top: 1rem;
+  padding-left: max(1rem, calc((100% - 19.375rem) / 2));
+  padding-right: max(1rem, calc((100% - 19.375rem) / 2));
+  padding-bottom: 1.5rem;
+}
+
+.plan-detail--figma.plan-detail {
+  padding: 0;
+}
+
+.plan-detail__status {
+  text-align: center;
+}
+
+.plan-detail__figma-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 19.375rem;
+  margin: 0 auto;
 }
 
 .plan-detail__error {
@@ -1225,75 +1252,186 @@
   text-align: center;
 }
 
+.plan-detail__error--inline {
+  margin: 0;
+  width: 100%;
+}
+
 .plan-detail__card {
-  border: 1px solid rgba(140, 211, 146, 0.7);
-  border-radius: 18px;
-  padding: 1.5rem 1.25rem 1.25rem;
-  background: rgba(14, 19, 26, 0.82);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.26);
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #403f41;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
+}
+
+.plan-detail__card--featured {
+  border-color: #8cd392;
+}
+
+.plan-detail__hero-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  width: 100%;
+  text-align: center;
+  padding-bottom: 0.25rem;
 }
 
 .plan-detail__name {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #f5f7fa;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: #ffffff;
   text-align: center;
 }
 
 .plan-detail__summary {
   margin: 0;
-  font-size: 0.88rem;
-  color: #a6b0bf;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-variation-settings: 'opsz' 9;
+  line-height: 1.4;
+  color: #ffffff;
   text-align: center;
+  max-width: 16rem;
+}
+
+.plan-detail__price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: nowrap;
+  margin: 0.35rem 0 0;
+  color: #8cd392;
+}
+
+.plan-detail__price-currency,
+.plan-detail__price-cycle {
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1;
+  color: #8cd392;
+}
+
+.plan-detail__price-gap {
+  display: inline-block;
+  width: 1.25rem;
+  flex-shrink: 0;
+}
+
+.plan-detail__price-value {
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #8cd392;
 }
 
 .plan-detail__benefits {
   list-style: none;
-  margin: 0.5rem 0 0;
+  margin: 0;
   padding: 0;
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  align-items: center;
 }
 
 .plan-detail__benefit-item {
-  font-size: 0.88rem;
-  color: #a6b0bf;
+  width: 100%;
   text-align: center;
-  padding: 0.65rem 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.plan-detail__benefit-item--lead .plan-detail__benefit-title,
+.plan-detail__benefit-item--lead .plan-detail__benefit-desc {
+  font-size: 0.6875rem;
+  letter-spacing: -0.015em;
+}
+
+.plan-detail__benefit-rule {
+  width: 15.5rem;
+  max-width: 100%;
+  height: 1px;
+  margin: 0 auto 0.625rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+}
+
+.plan-detail__benefit-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  align-items: center;
+}
+
+.plan-detail__benefit-title {
+  margin: 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 14;
+  color: #ffffff;
+}
+
+.plan-detail__benefit-desc {
+  margin: 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 14;
+  color: #ffffff;
+}
+
+.plan-detail__benefit-item:not(.plan-detail__benefit-item--lead) .plan-detail__benefit-title,
+.plan-detail__benefit-item:not(.plan-detail__benefit-item--lead) .plan-detail__benefit-desc {
+  font-size: 0.75rem;
 }
 
 .plan-detail__cta {
-  display: block;
-  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
-  margin-top: 1rem;
-  padding: 0.72rem 1rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(140, 211, 146, 0.55);
-  background: transparent;
+  width: 14.125rem;
+  max-width: 100%;
+  height: 2.375rem;
+  margin-top: 0.25rem;
+  padding: 0 1rem;
+  border-radius: 16px;
+  border: 1px solid #8cd392;
+  background: rgba(153, 227, 158, 0.1);
   color: #8cd392;
-  font-size: 0.85rem;
-  font-weight: 700;
-  font-family: inherit;
-  letter-spacing: 0.1em;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.225rem;
   text-align: center;
-  text-decoration: none;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
 .plan-detail__cta:hover:not(:disabled) {
-  background: rgba(140, 211, 146, 0.1);
-  border-color: rgba(140, 211, 146, 0.8);
+  background: rgba(153, 227, 158, 0.18);
+  border-color: #99e39e;
+  color: #99e39e;
 }
 
 .plan-detail__cta:disabled {
@@ -1302,9 +1440,15 @@
 }
 
 .plan-detail__note {
-  margin: 0.75rem 0 0;
-  font-size: 0.78rem;
-  color: #7b8794;
+  margin: 1rem 0 0;
+  max-width: 19.375rem;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 14;
+  color: #ffffff;
   text-align: center;
 }
 

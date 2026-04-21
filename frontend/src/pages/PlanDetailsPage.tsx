@@ -113,57 +113,84 @@ export function PlanDetailsPage() {
 
   return (
     <div className="plans-root">
-      <header className="subpage-header">
+      <div className="plans-figma-starfield" aria-hidden="true" />
+      <header className="subpage-header subpage-header--tri plans-page__header">
         <Link to="/plans" className="subpage-header__back" aria-label="Voltar">
-          <ArrowLeft size={18} />
+          <ArrowLeft size={24} strokeWidth={2} />
         </Link>
-        <h1 className="subpage-header__title plans-page__header-title">Planos</h1>
+        <h1 className="subpage-header__title">Planos</h1>
         <Link to="/account" className="plans-page__settings-btn" aria-label="Configurações">
-          <Settings size={20} stroke="currentColor" />
+          <Settings size={24} strokeWidth={2} />
         </Link>
       </header>
 
-      <main className="subpage-content plan-detail">
-        {loading ? <p className="app-muted">Carregando…</p> : null}
+      <main className="subpage-content plan-detail plan-detail--figma">
+        {loading ? <p className="app-muted plan-detail__status">Carregando…</p> : null}
         {error ? <p role="alert" className="plan-detail__error">{error}</p> : null}
 
         {!loading && !error && plan ? (
-          <div className="plan-detail__card">
+          <div className="plan-detail__figma-stack">
             {isFeatured ? (
-              <span className="plans-page__badge">Mais Popular</span>
+              <div className="plans-figma-chip-wrap">
+                <span className="plans-figma-chip">Mais Popular</span>
+              </div>
             ) : null}
-            <p className="plan-detail__name">{plan.name}</p>
-            {plan.summary ? (
-              <p className="plan-detail__summary">{plan.summary}</p>
-            ) : null}
-            <p className="plans-page__price">
-              <span className="plans-page__price-currency">R$</span>
-              <span className="plans-page__price-value">{formatPriceNumber(plan.price)}</span>
-              <span className="plans-page__price-cycle">
-                {`/ ${billingCyclePeriodLabel(plan.billingCycle)}`}
-              </span>
-            </p>
-            {sortedBenefits.length > 0 ? (
-              <ul className="plan-detail__benefits">
-                {sortedBenefits.map(b => (
-                  <li key={b.benefitId} className="plan-detail__benefit-item">
-                    {b.title}
-                    {b.description ? ` — ${b.description}` : ''}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {subscribeError ? (
-              <p role="alert" className="plan-detail__error">{subscribeError}</p>
-            ) : null}
-            <button
-              type="button"
-              className="plan-detail__cta"
-              onClick={() => void handleSubscribe()}
-              disabled={subscribing}
+            <div
+              className={
+                isFeatured
+                  ? 'plan-detail__card plan-detail__card--featured'
+                  : 'plan-detail__card'
+              }
             >
-              {subscribing ? 'Aguarde…' : 'Assinar agora'}
-            </button>
+              <div className="plan-detail__hero-block">
+                <p className="plan-detail__name">{plan.name}</p>
+                {plan.summary ? (
+                  <p className="plan-detail__summary">{plan.summary}</p>
+                ) : null}
+                <p className="plan-detail__price">
+                  <span className="plan-detail__price-currency">R$</span>
+                  <span className="plan-detail__price-gap" aria-hidden="true" />
+                  <span className="plan-detail__price-value">{formatPriceNumber(plan.price)}</span>
+                  <span className="plan-detail__price-gap" aria-hidden="true" />
+                  <span className="plan-detail__price-cycle">
+                    {`/ ${billingCyclePeriodLabel(plan.billingCycle)}`}
+                  </span>
+                </p>
+              </div>
+              {sortedBenefits.length > 0 ? (
+                <ul className="plan-detail__benefits">
+                  {sortedBenefits.map((b, i) => (
+                    <li
+                      key={b.benefitId}
+                      className={
+                        i === 0
+                          ? 'plan-detail__benefit-item plan-detail__benefit-item--lead'
+                          : 'plan-detail__benefit-item'
+                      }
+                    >
+                      {i > 0 ? <div className="plan-detail__benefit-rule" aria-hidden="true" /> : null}
+                      <div className="plan-detail__benefit-copy">
+                        <p className="plan-detail__benefit-title">{b.title}</p>
+                        {b.description ? (
+                          <p className="plan-detail__benefit-desc">{b.description}</p>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {subscribeError ? (
+                <p role="alert" className="plan-detail__error plan-detail__error--inline">{subscribeError}</p>
+              ) : null}
+              <button
+                type="button"
+                className="plan-detail__cta"
+                onClick={() => void handleSubscribe()}
+                disabled={subscribing}
+              >
+                {subscribing ? 'AGUARDE…' : 'ASSINAR AGORA'}
+              </button>
+            </div>
             <p className="plan-detail__note">
               Você será direcionado ao checkout em uma plataforma externa.*
             </p>

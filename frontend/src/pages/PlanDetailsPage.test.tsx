@@ -69,10 +69,12 @@ describe('PlanDetailsPage', () => {
     expect(screen.getByText(/Resumo/)).toBeInTheDocument()
     expect(screen.queryByText(/Regra 1/)).not.toBeInTheDocument()
     const card = document.querySelector('.plan-detail__card')!
-    expect(within(card as HTMLElement).getByText(/B1 — D1/)).toBeInTheDocument()
-    expect(within(card as HTMLElement).getByText(/B2 — D2/)).toBeInTheDocument()
-    expect(document.querySelector('.plans-page__price-value')).toHaveTextContent('100,00')
-    const cta = screen.getByRole('button', { name: /Assinar agora/i })
+    expect(within(card as HTMLElement).getByText('B1')).toBeInTheDocument()
+    expect(within(card as HTMLElement).getByText('D1')).toBeInTheDocument()
+    expect(within(card as HTMLElement).getByText('B2')).toBeInTheDocument()
+    expect(within(card as HTMLElement).getByText('D2')).toBeInTheDocument()
+    expect(document.querySelector('.plan-detail__price-value')).toHaveTextContent('100,00')
+    const cta = screen.getByRole('button', { name: /ASSINAR AGORA/i })
     expect(cta).toBeEnabled()
     expect(screen.getByText(/checkout em uma plataforma externa/i)).toBeInTheDocument()
   })
@@ -94,7 +96,7 @@ describe('PlanDetailsPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Plano Gold')).toBeInTheDocument()
     })
-    await user.click(screen.getByRole('button', { name: /Assinar agora/i }))
+    await user.click(screen.getByRole('button', { name: /ASSINAR AGORA/i }))
     await waitFor(() => {
       expect(subscriptionsService.subscribe).toHaveBeenCalledWith('p1', 'Card')
     })
@@ -111,11 +113,11 @@ describe('PlanDetailsPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Plano Gold')).toBeInTheDocument()
     })
-    await user.click(screen.getByRole('button', { name: /Assinar agora/i }))
+    await user.click(screen.getByRole('button', { name: /ASSINAR AGORA/i }))
     await waitFor(() => {
       expect(screen.getByText(/já possui uma assinatura ativa/i)).toBeInTheDocument()
     })
-    expect(screen.getByRole('button', { name: /Assinar agora/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /ASSINAR AGORA/i })).toBeEnabled()
   })
 
   it('shows Aguarde and disables button while subscribe is in flight', async () => {
@@ -130,7 +132,7 @@ describe('PlanDetailsPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Plano Gold')).toBeInTheDocument()
     })
-    void user.click(screen.getByRole('button', { name: /Assinar agora/i }))
+    void user.click(screen.getByRole('button', { name: /ASSINAR AGORA/i }))
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /Aguarde/i })).toBeDisabled()
     })
