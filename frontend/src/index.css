@@ -1,4 +1,7 @@
 :root {
+  /* FanSpot torcedor — mesmo fundo radial dos frames Figma (AppShell) */
+  --fanspot-figma-bg-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 956' preserveAspectRatio='none'%3E%3Cdefs%3E%3CradialGradient id='g' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(-0.0000013938 122.91 -22 -0.000023096 220 -349.96)'%3E%3Cstop stop-color='rgba(0,191,103,0.27)' offset='0'/%3E%3Cstop stop-color='rgba(97,54,144,0)' offset='1'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3C/svg%3E");
+
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
@@ -120,7 +123,11 @@
 #root:has(.account-root),
 #root:has(.plans-root),
 #root:has(.support-root),
-#root:has(.support-detail-root) {
+#root:has(.support-detail-root),
+#root:has(.login-page),
+#root:has(.register-page),
+#root:has(.subscription-checkout-root),
+#root:has(.accept-staff-invite-root) {
   width: 100vw;
   max-width: 100vw;
   margin: 0;

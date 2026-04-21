@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { isAxiosError } from 'axios'
 import { plansService, type TorcedorPublishedPlanDetail } from '../features/plans/plansService'
 import { subscriptionsService, type SubscriptionPaymentMethod } from '../features/plans/subscriptionsService'
+import './AppShell.css'
 
 function billingCycleLabel(cycle: string): string {
   switch (cycle) {
@@ -116,87 +117,72 @@ export function SubscriptionCheckoutPage() {
   }
 
   return (
-    <main style={{ maxWidth: 720, margin: '2rem auto', fontFamily: 'system-ui' }}>
-      <p>
-        <Link to={planId ? `/plans/${planId}` : '/plans'}>← Voltar ao plano</Link>
-      </p>
-      <h1>Checkout</h1>
+    <div className="subscription-checkout-root">
+      <main className="subscription-checkout-page">
+        <Link className="subscription-checkout-page__back" to={planId ? `/plans/${planId}` : '/plans'}>
+          ← Voltar ao plano
+        </Link>
+        <h1 className="subscription-checkout-page__title">Checkout</h1>
 
-      {loadingPlan ? <p>Carregando…</p> : null}
-      {planError ? <p style={{ color: '#721c24' }}>{planError}</p> : null}
+        {loadingPlan ? <p className="subscription-checkout-page__muted">Carregando…</p> : null}
+        {planError ? <p className="subscription-checkout-page__error" role="alert">{planError}</p> : null}
 
-      {!loadingPlan && !planError && plan ? (
-        <section
-          style={{
-            border: '1px solid #ddd',
-            borderRadius: 8,
-            padding: '1.25rem',
-            background: '#fafafa',
-            marginTop: '1rem',
-          }}
-        >
-          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.15rem' }}>{plan.name}</h2>
-          <p style={{ margin: 0, fontSize: '1.1rem' }}>
-            {formatPrice(plan.price)}
-            <span style={{ fontSize: '0.85rem', color: '#555' }}>
-              {' '}
-              /
-              {' '}
-              {billingCycleLabel(plan.billingCycle)}
-            </span>
-          </p>
-          {plan.discountPercentage > 0 && discountedPrice !== null ? (
-            <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem', color: '#2a6' }}>
-              Valor com desconto (cobrança inicial):
-              {' '}
-              <strong>{formatPrice(discountedPrice)}</strong>
+        {!loadingPlan && !planError && plan ? (
+          <section className="subscription-checkout-page__card">
+            <h2 className="subscription-checkout-page__plan-name">{plan.name}</h2>
+            <p className="subscription-checkout-page__price">
+              {formatPrice(plan.price)}
+              <span className="subscription-checkout-page__price-cycle">
+                {' '}
+                /
+                {' '}
+                {billingCycleLabel(plan.billingCycle)}
+              </span>
             </p>
-          ) : null}
+            {plan.discountPercentage > 0 && discountedPrice !== null ? (
+              <p className="subscription-checkout-page__discount">
+                Valor com desconto (cobrança inicial):
+                {' '}
+                <strong>{formatPrice(discountedPrice)}</strong>
+              </p>
+            ) : null}
 
-          <form onSubmit={e => void onConfirm(e)} style={{ marginTop: '1.25rem' }}>
-            <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
-              <legend style={{ fontWeight: 600, marginBottom: 8 }}>Forma de pagamento</legend>
-              <label style={{ display: 'block', marginBottom: 8 }}>
-                <input
-                  type="radio"
-                  name="pay"
-                  checked={method === 'Pix'}
-                  onChange={() => setMethod('Pix')}
-                />
-                {' '}
-                PIX
-              </label>
-              <label style={{ display: 'block', marginBottom: 8 }}>
-                <input
-                  type="radio"
-                  name="pay"
-                  checked={method === 'Card'}
-                  onChange={() => setMethod('Card')}
-                />
-                {' '}
-                Cartão (checkout externo)
-              </label>
-            </fieldset>
-            {submitError ? <p style={{ color: '#721c24' }}>{submitError}</p> : null}
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                marginTop: '1rem',
-                padding: '0.5rem 1rem',
-                borderRadius: 6,
-                border: '1px solid #1976d2',
-                background: '#1976d2',
-                color: '#fff',
-                cursor: submitting ? 'wait' : 'pointer',
-                width: '100%',
-              }}
-            >
-              {submitting ? 'Confirmando…' : 'Confirmar contratação'}
-            </button>
-          </form>
-        </section>
-      ) : null}
-    </main>
+            <form onSubmit={e => void onConfirm(e)}>
+              <fieldset className="subscription-checkout-page__fieldset">
+                <legend className="subscription-checkout-page__legend">Forma de pagamento</legend>
+                <label className="subscription-checkout-page__radio">
+                  <input
+                    type="radio"
+                    name="pay"
+                    checked={method === 'Pix'}
+                    onChange={() => setMethod('Pix')}
+                  />
+                  {' '}
+                  PIX
+                </label>
+                <label className="subscription-checkout-page__radio">
+                  <input
+                    type="radio"
+                    name="pay"
+                    checked={method === 'Card'}
+                    onChange={() => setMethod('Card')}
+                  />
+                  {' '}
+                  Cartão (checkout externo)
+                </label>
+              </fieldset>
+              {submitError ? <p className="subscription-checkout-page__submit-error" role="alert">{submitError}</p> : null}
+              <button
+                type="submit"
+                className="subscription-checkout-page__submit"
+                disabled={submitting}
+              >
+                {submitting ? 'Confirmando…' : 'Confirmar contratação'}
+              </button>
+            </form>
+          </section>
+        ) : null}
+      </main>
+    </div>
   )
 }

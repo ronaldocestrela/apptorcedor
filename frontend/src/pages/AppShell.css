@@ -1,10 +1,6 @@
 /*
- * FanSpot (Figma): mesmo fundo dos frames mobile (perfil, benefícios, partidas…)
- * SVG viewBox 440×956 — radialGradient com matrix e stops do arquivo.
+ * FanSpot (Figma): fundo radial em --fanspot-figma-bg-svg (definido em index.css :root).
  */
-:root {
-  --fanspot-figma-bg-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 956' preserveAspectRatio='none'%3E%3Cdefs%3E%3CradialGradient id='g' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(-0.0000013938 122.91 -22 -0.000023096 220 -349.96)'%3E%3Cstop stop-color='rgba(0,191,103,0.27)' offset='0'/%3E%3Cstop stop-color='rgba(97,54,144,0)' offset='1'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3C/svg%3E");
-}
 
 .app-shell {
   width: min(1120px, calc(100% - 2rem));
@@ -110,16 +106,7 @@
   outline-offset: 1px;
 }
 
-/* ── Torcedor Home (mobile-first) ── */
-.dash-root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-  background: linear-gradient(160deg, #0e131a 0%, #080808 100%);
-  font-family: 'Outfit', 'Segoe UI', sans-serif;
-  color: #f5f7fa;
-  padding-bottom: 68px;
-}
+/* ── Torcedor Home (mobile-first) — shell: ver grupo .dash-root em “Torcedor subpages” ── */
 
 .dash-header {
   position: sticky;
@@ -476,16 +463,7 @@
   background: rgba(140, 211, 146, 0.1);
 }
 
-/* ── News pages (mobile-first) ── */
-.news-root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-  background: linear-gradient(160deg, #0e131a 0%, #080808 100%);
-  font-family: 'Outfit', 'Segoe UI', sans-serif;
-  color: #f5f7fa;
-  padding-bottom: 68px;
-}
+/* ── News pages (mobile-first) — shell: ver grupo .news-root em “Torcedor subpages” ── */
 
 .news-header {
   position: sticky;
@@ -1331,18 +1309,7 @@
 }
 
 .account-root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
   box-sizing: border-box;
-  background-color: #121212;
-  background-image: var(--fanspot-figma-bg-svg);
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  background-position: center top;
-  font-family: 'Outfit', 'Segoe UI', sans-serif;
-  color: #f5f7fa;
-  padding-bottom: 68px;
 }
 
 .account-page {
@@ -1895,7 +1862,13 @@
 .digital-card-root,
 .loyalty-root,
 .benefits-root,
-.plans-root {
+.plans-root,
+.account-root,
+.benefit-detail-root,
+.dash-root,
+.news-root,
+.subscription-checkout-root,
+.accept-staff-invite-root {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
@@ -1909,6 +1882,216 @@
   padding-bottom: 68px;
   position: relative;
   overflow-x: hidden;
+}
+
+.subscription-checkout-root,
+.accept-staff-invite-root {
+  padding-bottom: 1.5rem;
+}
+
+.subscription-checkout-page {
+  flex: 1;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: min(720px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+}
+
+.subscription-checkout-page__back {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  color: #8cd392;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.subscription-checkout-page__back:hover {
+  text-decoration: underline;
+}
+
+.subscription-checkout-page__title {
+  margin: 0 0 1rem;
+  font-family: 'Poppins', 'Outfit', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #f5f7fa;
+}
+
+.subscription-checkout-page__muted {
+  margin: 0;
+  color: #a6b0bf;
+  font-size: 0.95rem;
+}
+
+.subscription-checkout-page__error {
+  color: #ffb4ba;
+  font-size: 0.9rem;
+}
+
+.subscription-checkout-page__card {
+  border: 1px solid rgba(140, 211, 146, 0.22);
+  border-radius: 16px;
+  background: rgba(14, 19, 26, 0.72);
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+.subscription-checkout-page__plan-name {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f5f7fa;
+}
+
+.subscription-checkout-page__price {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #8cd392;
+}
+
+.subscription-checkout-page__price-cycle {
+  font-size: 0.85rem;
+  color: #a6b0bf;
+}
+
+.subscription-checkout-page__discount {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: #99e39e;
+}
+
+.subscription-checkout-page__fieldset {
+  border: none;
+  padding: 0;
+  margin: 1.25rem 0 0;
+}
+
+.subscription-checkout-page__legend {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #f5f7fa;
+}
+
+.subscription-checkout-page__radio {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #e8eaed;
+}
+
+.subscription-checkout-page__submit-error {
+  color: #ffb4ba;
+  font-size: 0.88rem;
+}
+
+.subscription-checkout-page__submit {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #8cd392;
+  background: rgba(140, 211, 146, 0.15);
+  color: #8cd392;
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.subscription-checkout-page__submit:hover:not(:disabled) {
+  background: rgba(140, 211, 146, 0.25);
+}
+
+.subscription-checkout-page__submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.accept-staff-invite-page {
+  flex: 1;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: min(420px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+}
+
+.accept-staff-invite-page__title {
+  margin: 0 0 0.5rem;
+  font-family: 'Poppins', 'Outfit', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #f5f7fa;
+}
+
+.accept-staff-invite-page__lead {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: #a6b0bf;
+}
+
+.accept-staff-invite-page__error {
+  color: #ffb4ba;
+  font-size: 0.9rem;
+}
+
+.accept-staff-invite-page__form label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 0.78rem;
+  color: #a6b0bf;
+}
+
+.accept-staff-invite-page__form input {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(14, 19, 26, 0.85);
+  color: #f5f7fa;
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  font-size: 0.9rem;
+}
+
+.accept-staff-invite-page__form input:focus {
+  outline: none;
+  border-color: rgba(140, 211, 146, 0.55);
+  box-shadow: 0 0 0 3px rgba(140, 211, 146, 0.12);
+}
+
+.accept-staff-invite-page__warning {
+  margin: 0;
+  color: #ffb4ba;
+  font-size: 0.85rem;
+}
+
+.accept-staff-invite-page__submit {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #8cd392;
+  background: rgba(140, 211, 146, 0.15);
+  color: #8cd392;
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.accept-staff-invite-page__submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.accept-staff-invite-page__footer {
+  margin-top: 1.5rem;
+}
+
+.accept-staff-invite-page__footer a {
+  color: #8cd392;
 }
 
 /* Figma 392:624 — Planos (seleção): starfield + header + cards */
@@ -3169,20 +3352,7 @@ a.benefit-offer-card--link:hover {
   color: #7b8794;
 }
 
-/* ── Benefit offer detail (torcedor self-service redeem) ── */
-.benefit-detail-root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-  background-color: #121212;
-  background-image: var(--fanspot-figma-bg-svg);
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  background-position: center top;
-  font-family: 'Outfit', 'Segoe UI', sans-serif;
-  color: #f5f7fa;
-  padding-bottom: 68px;
-}
+/* ── Benefit offer detail (torcedor self-service redeem); shell no grupo “Torcedor subpages” ── */
 
 .benefit-detail-card {
   border-radius: 16px;
