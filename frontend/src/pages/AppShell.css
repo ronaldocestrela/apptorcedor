@@ -4059,9 +4059,9 @@ a.benefit-offer-card--link:hover {
 
 /* ul dentro do wrap: 217px de largura, rotate(90deg) → ocupa os 60px de altura do wrap */
 .digital-card-figma__facts {
-  list-style: disc;
+  list-style: disc outside;
   margin: 0;
-  padding: 0 0 0 21px;
+  padding: 0;
   font-family: 'Poppins', 'Outfit', sans-serif;
   font-size: 14px;
   font-weight: 500;
@@ -4074,7 +4074,11 @@ a.benefit-offer-card--link:hover {
 }
 
 .digital-card-figma__facts li {
-  margin: 0 0 0.1rem;
+  /* ms-[21px] do Figma: margem esquerda uniform em todos os itens */
+  margin: 0;
+  padding: 0;
+  margin-left: 21px;
+  text-align: left;
 }
 
 .digital-card-figma__facts li:last-child {
@@ -4146,6 +4150,7 @@ a.benefit-offer-card--link:hover {
   object-fit: cover;
   object-position: center;
   display: block;
+  transform: rotate(90deg);
 }
 
 .digital-card-figma__badge-initials {
