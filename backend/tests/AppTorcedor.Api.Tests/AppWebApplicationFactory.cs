@@ -25,5 +25,6 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("TeamShield:Provider", "Local");
         builder.UseSetting("OpponentLogos:Provider", "Local");
         builder.UseSetting("SupportTicketAttachments:Provider", "Local");
+        builder.UseSetting("BenefitOfferBanner:Provider", "Local");
     }
 }
