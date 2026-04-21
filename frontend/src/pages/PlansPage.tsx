@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Settings } from 'lucide-react'
 import { plansService, type TorcedorPublishedPlan } from '../features/plans/plansService'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -50,6 +51,13 @@ export function PlansPage() {
     })()
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    document.title = 'Planos de Sócio | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
     }
   }, [])
 

@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { getRegistrationRequirements, type RegistrationRequirements } from '../features/account/accountApi'
 import { TeamShieldLogo } from '../shared/branding/TeamShieldLogo'
 import { useAuth } from '../features/auth/AuthContext'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import './RegisterPage.css'
 
 export function RegisterPage() {
@@ -32,6 +33,13 @@ export function RegisterPage() {
     })()
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    document.title = 'Cadastro | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
     }
   }, [])
 

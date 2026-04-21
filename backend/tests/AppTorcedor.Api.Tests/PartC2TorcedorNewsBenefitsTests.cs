@@ -15,10 +15,10 @@ public sealed class PartC2TorcedorNewsBenefitsTests(AppWebApplicationFactory fac
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task News_feed_requires_auth()
+    public async Task News_feed_allows_anonymous()
     {
         var res = await _client.GetAsync("/api/news");
-        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
     }
 
     [Fact]

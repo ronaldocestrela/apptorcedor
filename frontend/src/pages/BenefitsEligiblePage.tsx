@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Gift, Settings } from 'lucide-react'
 import { listEligibleBenefitOffers, type TorcedorEligibleBenefitOffer } from '../features/torcedor/torcedorBenefitsApi'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -36,6 +37,13 @@ export function BenefitsEligiblePage() {
     })()
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    document.title = 'Benefícios | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
     }
   }, [])
 

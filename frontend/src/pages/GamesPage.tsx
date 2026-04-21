@@ -6,6 +6,7 @@ import { listTorcedorGames, type TorcedorGameListItem } from '../features/torced
 import { getPublicBranding } from '../shared/branding/brandingApi'
 import { getTeamShieldPlaceholderDataUrl } from '../shared/branding/teamShieldPlaceholder'
 import { TORCEDOR_INGRESSO_REDEEM_TOAST_KEY } from '../shared/torcedorIngressoToast'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -71,6 +72,13 @@ export function GamesPage() {
   const [error, setError] = useState<string | null>(null)
   const [clubShieldSrc, setClubShieldSrc] = useState(() => getTeamShieldPlaceholderDataUrl())
   const [ingressoToast, setIngressoToast] = useState(false)
+
+  useEffect(() => {
+    document.title = 'Partidas | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false

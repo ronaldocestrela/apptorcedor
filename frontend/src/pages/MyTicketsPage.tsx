@@ -6,6 +6,7 @@ import {
   redeemMyTicket,
   type TorcedorTicketListItem,
 } from '../features/torcedor/torcedorTicketsApi'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import { TORCEDOR_INGRESSO_REDEEM_TOAST_KEY } from '../shared/torcedorIngressoToast'
 import './AppShell.css'
@@ -46,6 +47,13 @@ export function MyTicketsPage() {
       cancelled = true
     }
   }, [reload])
+
+  useEffect(() => {
+    document.title = 'Meus Ingressos | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
+    }
+  }, [])
 
   async function onRedeem(ticketId: string) {
     setActionError(null)

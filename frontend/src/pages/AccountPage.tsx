@@ -15,6 +15,7 @@ import {
   type SubscriptionPaymentMethod,
 } from '../features/plans/subscriptionsService'
 import { useAuth } from '../features/auth/AuthContext'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -103,6 +104,13 @@ export function AccountPage() {
   }, [subscription?.startDate])
 
   const displayInitials = useMemo(() => getInitials(user?.name), [user?.name])
+
+  useEffect(() => {
+    window.document.title = 'Minha Conta | FFC'
+    return () => {
+      window.document.title = DEFAULT_DOCUMENT_TITLE
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false

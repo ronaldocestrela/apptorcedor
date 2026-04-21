@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LoginPage } from './LoginPage'
 
@@ -66,5 +66,25 @@ describe('LoginPage', () => {
     await waitFor(() => {
       expect(authMock.login).toHaveBeenCalledWith('fulano@test.local', '123456')
     })
+  })
+
+  it('redirects to path from query when already authenticated', async () => {
+    authMock.user = {
+      id: 'u1',
+      email: 'e@test',
+      name: 'User',
+      roles: [],
+      permissions: [],
+      requiresProfileCompletion: false,
+    }
+    render(
+      <MemoryRouter initialEntries={['/login?redirect=/plans/p1']}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/plans/:planId" element={<div>Plan detail</div>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    expect(await screen.findByText('Plan detail')).toBeInTheDocument()
   })
 })

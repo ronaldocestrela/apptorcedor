@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Newspaper } from 'lucide-react'
 import { getTorcedorNewsDetail, type TorcedorNewsDetail } from '../features/torcedor/torcedorNewsApi'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -50,6 +51,13 @@ export function NewsDetailPage() {
     })()
     return () => { cancelled = true }
   }, [newsId])
+
+  useEffect(() => {
+    document.title = detail ? `${detail.title} | FFC` : 'Notícias | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
+    }
+  }, [detail])
 
   return (
     <div className="news-root">

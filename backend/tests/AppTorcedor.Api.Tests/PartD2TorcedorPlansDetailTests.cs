@@ -15,11 +15,11 @@ public sealed class PartD2TorcedorPlansDetailTests(AppWebApplicationFactory fact
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task Plan_detail_requires_auth()
+    public async Task Plan_detail_allows_anonymous_and_returns_not_found_for_unknown_id()
     {
         var id = Guid.NewGuid();
         var res = await _client.GetAsync($"/api/plans/{id}");
-        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
     [Fact]

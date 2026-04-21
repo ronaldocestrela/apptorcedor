@@ -9,10 +9,10 @@ namespace AppTorcedor.Api.Controllers;
 
 [ApiController]
 [Route("api/news")]
-[Authorize]
 public sealed class TorcedorNewsController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<TorcedorNewsFeedPageResponse>> List(
         [FromQuery] string? search,
         [FromQuery] int page = 1,
@@ -34,6 +34,7 @@ public sealed class TorcedorNewsController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("{newsId:guid}")]
+    [AllowAnonymous]
     public async Task<ActionResult<TorcedorNewsDetailResponse>> GetById(Guid newsId, CancellationToken cancellationToken)
     {
         var d = await mediator.Send(new GetPublishedNewsDetailQuery(newsId), cancellationToken).ConfigureAwait(false);

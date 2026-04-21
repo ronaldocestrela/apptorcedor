@@ -15,10 +15,10 @@ public sealed class PartD1TorcedorPlansCatalogTests(AppWebApplicationFactory fac
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task Plans_catalog_requires_auth()
+    public async Task Plans_catalog_allows_anonymous()
     {
         var res = await _client.GetAsync("/api/plans");
-        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
     }
 
     [Fact]

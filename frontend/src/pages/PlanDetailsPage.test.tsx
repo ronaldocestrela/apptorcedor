@@ -3,7 +3,31 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AxiosError } from 'axios'
+import type { Me } from '../features/auth/AuthContext'
 import { PlanDetailsPage } from './PlanDetailsPage'
+
+const planDetailsAuthState: { user: Me | null } = {
+  user: {
+    id: 'u1',
+    email: 'torcedor@test.local',
+    name: 'Torcedor',
+    roles: [],
+    permissions: [],
+    requiresProfileCompletion: false,
+  },
+}
+
+vi.mock('../features/auth/AuthContext', () => ({
+  useAuth: () => ({
+    user: planDetailsAuthState.user,
+    loading: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    googleSignIn: vi.fn(),
+    logout: vi.fn(),
+    refreshProfile: vi.fn(),
+  }),
+}))
 
 vi.mock('../features/plans/plansService', () => ({
   plansService: {
@@ -39,6 +63,7 @@ function renderAtPlanRoute(planId: string, state?: { featured?: boolean }) {
     <MemoryRouter initialEntries={[{ pathname: `/plans/${planId}`, state }]}>
       <Routes>
         <Route path="plans/:planId" element={<PlanDetailsPage />} />
+        <Route path="login" element={<div data-testid="login-redirect">Login</div>} />
       </Routes>
     </MemoryRouter>,
   )
@@ -46,6 +71,14 @@ function renderAtPlanRoute(planId: string, state?: { featured?: boolean }) {
 
 describe('PlanDetailsPage', () => {
   beforeEach(() => {
+    planDetailsAuthState.user = {
+      id: 'u1',
+      email: 'torcedor@test.local',
+      name: 'Torcedor',
+      roles: [],
+      permissions: [],
+      requiresProfileCompletion: false,
+    }
     vi.mocked(plansService.getById).mockReset()
     vi.mocked(subscriptionsService.subscribe).mockReset()
     vi.stubGlobal('location', { href: '' } as Location)
@@ -77,6 +110,21 @@ describe('PlanDetailsPage', () => {
     const cta = screen.getByRole('button', { name: /ASSINAR AGORA/i })
     expect(cta).toBeEnabled()
     expect(screen.getByText(/checkout em uma plataforma externa/i)).toBeInTheDocument()
+  })
+
+  it('navigates to login with redirect when Assinar agora is clicked without auth', async () => {
+    const u = userEvent.setup()
+    planDetailsAuthState.user = null
+    vi.mocked(plansService.getById).mockResolvedValue(defaultPlan)
+    renderAtPlanRoute('p1')
+    await waitFor(() => {
+      expect(screen.getByText('Plano Gold')).toBeInTheDocument()
+    })
+    await u.click(screen.getByRole('button', { name: /ASSINAR AGORA/i }))
+    await waitFor(() => {
+      expect(screen.getByTestId('login-redirect')).toBeInTheDocument()
+    })
+    expect(subscriptionsService.subscribe).not.toHaveBeenCalled()
   })
 
   it('redirects to card checkout URL when Assinar agora is clicked', async () => {

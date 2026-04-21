@@ -6,6 +6,7 @@ import {
   listMySupportTickets,
   type TorcedorSupportListItem,
 } from '../features/torcedor/torcedorSupportApi'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -63,6 +64,13 @@ export function SupportTicketsPage() {
       cancelled = true
     }
   }, [reload])
+
+  useEffect(() => {
+    document.title = 'Suporte | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
+    }
+  }, [])
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault()

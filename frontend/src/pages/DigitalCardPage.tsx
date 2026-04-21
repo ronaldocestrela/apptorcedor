@@ -8,6 +8,7 @@ import {
 } from '../features/torcedor/torcedorDigitalCardApi'
 import { getMyProfile, resolvePublicAssetUrl } from '../features/account/accountApi'
 import { useAuth } from '../features/auth/AuthContext'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -127,6 +128,13 @@ export function DigitalCardPage() {
     })()
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    document.title = 'Carteirinha Digital | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
     }
   }, [])
 

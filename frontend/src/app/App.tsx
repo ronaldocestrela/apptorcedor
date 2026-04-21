@@ -52,15 +52,15 @@ export function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/accept-staff-invite" element={<AcceptStaffInvitePage />} />
+        <Route path="/news" element={<NewsFeedPage />} />
+        <Route path="/news/:newsId" element={<NewsDetailPage />} />
+        <Route path="/plans" element={<PlansPage />} />
+        <Route path="/plans/:planId" element={<PlanDetailsPage />} />
         <Route element={<ProtectedRoute />}>
           <Route index element={<DashboardPage />} />
           <Route path="account" element={<AccountPage />} />
-          <Route path="news" element={<NewsFeedPage />} />
-          <Route path="news/:newsId" element={<NewsDetailPage />} />
           <Route path="benefits/:offerId" element={<BenefitOfferDetailPage />} />
           <Route path="benefits" element={<BenefitsEligiblePage />} />
-          <Route path="plans" element={<PlansPage />} />
-          <Route path="plans/:planId" element={<PlanDetailsPage />} />
           <Route path="plans/:planId/checkout" element={<SubscriptionCheckoutPage />} />
           <Route path="subscription/confirmation" element={<SubscriptionConfirmationPage />} />
           <Route path="digital-card" element={<DigitalCardPage />} />

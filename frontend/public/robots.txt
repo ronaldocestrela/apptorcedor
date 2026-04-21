@@ -1,0 +1,15 @@
+User-agent: *
+Disallow: /admin
+Disallow: /account
+Disallow: /digital-card
+Disallow: /tickets
+Disallow: /loyalty
+Disallow: /support
+Disallow: /subscription
+
+Allow: /news
+Allow: /plans
+Allow: /login
+Allow: /register
+
+Sitemap: https://seudominio.com.br/sitemap.xml

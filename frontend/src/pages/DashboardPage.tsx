@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ChevronRight,
 } from 'lucide-react'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import { ADMIN_AREA_PERMISSIONS } from '../shared/auth/applicationPermissions'
 import { canAccessAdminArea } from '../shared/auth/permissionUtils'
@@ -67,6 +68,13 @@ export function DashboardPage() {
     })()
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    document.title = 'Início | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
     }
   }, [])
 

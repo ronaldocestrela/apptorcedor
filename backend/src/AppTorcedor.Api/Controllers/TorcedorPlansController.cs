@@ -9,10 +9,10 @@ namespace AppTorcedor.Api.Controllers;
 
 [ApiController]
 [Route("api/plans")]
-[Authorize]
 public sealed class TorcedorPlansController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<TorcedorPublishedPlansCatalogResponse>> List(CancellationToken cancellationToken)
     {
         var dto = await mediator.Send(new ListPublishedPlansQuery(), cancellationToken).ConfigureAwait(false);
@@ -32,6 +32,7 @@ public sealed class TorcedorPlansController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("{planId:guid}")]
+    [AllowAnonymous]
     public async Task<ActionResult<TorcedorPublishedPlanDetailResponse>> GetById(Guid planId, CancellationToken cancellationToken)
     {
         var dto = await mediator.Send(new GetPlanDetailsQuery(planId), cancellationToken).ConfigureAwait(false);

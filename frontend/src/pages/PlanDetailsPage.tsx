@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Settings } from 'lucide-react'
 import { isAxiosError } from 'axios'
+import { useAuth } from '../features/auth/AuthContext'
 import { plansService, type TorcedorPublishedPlanDetail } from '../features/plans/plansService'
 import { subscriptionsService } from '../features/plans/subscriptionsService'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -27,6 +29,8 @@ function billingCyclePeriodLabel(cycle: string): string {
 export function PlanDetailsPage() {
   const { planId } = useParams<{ planId: string }>()
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const isFeatured = (location.state as { featured?: boolean } | null)?.featured === true
   const [plan, setPlan] = useState<TorcedorPublishedPlanDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -37,6 +41,10 @@ export function PlanDetailsPage() {
   async function handleSubscribe() {
     if (!planId || subscribing)
       return
+    if (!user) {
+      navigate(`/login?redirect=${encodeURIComponent(`/plans/${planId}`)}`)
+      return
+    }
     try {
       setSubscribing(true)
       setSubscribeError(null)
@@ -110,6 +118,13 @@ export function PlanDetailsPage() {
       cancelled = true
     }
   }, [planId])
+
+  useEffect(() => {
+    document.title = plan ? `${plan.name} | FFC` : 'Planos de Sócio | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
+    }
+  }, [plan])
 
   return (
     <div className="plans-root">

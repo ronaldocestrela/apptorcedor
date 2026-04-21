@@ -9,6 +9,7 @@ import {
   type TorcedorLoyaltyRankingRow,
   type TorcedorLoyaltySummary,
 } from '../features/torcedor/torcedorLoyaltyApi'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -85,6 +86,13 @@ export function LoyaltyPage() {
     })()
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    document.title = 'Fidelidade | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
     }
   }, [])
 

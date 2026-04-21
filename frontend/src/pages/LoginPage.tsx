@@ -1,12 +1,21 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { getRegistrationRequirements, type RegistrationRequirements } from '../features/account/accountApi'
 import { TeamShieldLogo } from '../shared/branding/TeamShieldLogo'
 import { loadGoogleScript } from '../features/account/loadGoogleScript'
 import { useAuth } from '../features/auth/AuthContext'
+import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import './LoginPage.css'
 
+function safePostLoginPath(searchParams: URLSearchParams): string {
+  const r = searchParams.get('redirect')
+  if (r && r.startsWith('/') && !r.startsWith('//'))
+    return r
+  return '/'
+}
+
 export function LoginPage() {
+  const [searchParams] = useSearchParams()
   const { user, login, googleSignIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -79,8 +88,15 @@ export function LoginPage() {
     }
   }, [clientId, legal, acceptTerms, acceptPrivacy, googleSignIn])
 
+  useEffect(() => {
+    document.title = 'Entrar | FFC'
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE
+    }
+  }, [])
+
   if (user)
-    return <Navigate to="/" replace />
+    return <Navigate to={safePostLoginPath(searchParams)} replace />
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()

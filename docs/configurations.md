@@ -314,4 +314,17 @@ Cloudinary__ApiSecret=...
 
 ---
 
+## Frontend — SEO (arquivos estáticos)
+
+Ajustes manuais por ambiente de produção (não usam `appsettings`):
+
+| Arquivo | O que revisar |
+|---------|----------------|
+| [`frontend/index.html`](../frontend/index.html) | `og:url` aponta para placeholder `https://seudominio.com.br/` — substituir pela URL pública real da SPA. Para compartilhamento social, prefira URL **absoluta** também em `og:image` (ex.: `https://app.seudominio.com.br/logos/ESCUDO_FFC_PNG.png`). |
+| [`frontend/public/robots.txt`](../frontend/public/robots.txt) | Diretiva `Sitemap:` usa o mesmo placeholder — alinhar ao domínio real. |
+| Rotas públicas | `/news`, `/news/:newsId`, `/plans`, `/plans/:planId` são acessíveis sem login na SPA; `GET /api/news` e `GET /api/plans` (listagem e detalhe) são **anônimos** na API. O fluxo **Assinar agora** exige login e redireciona para `/login?redirect=/plans/{planId}`. |
+| Títulos de página | Valor padrão alinhado ao `<title>` do `index.html` em [`frontend/src/shared/seo.ts`](../frontend/src/shared/seo.ts) (`DEFAULT_DOCUMENT_TITLE`). |
+
+---
+
 *Documento gerado em 16/04/2026. Atualizar sempre que novas configurações forem adicionadas ao sistema.*
