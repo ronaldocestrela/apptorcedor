@@ -76,6 +76,76 @@ public sealed class CloudinaryProfilePhotoStorageTests
         Assert.Equal(CloudinaryAssetResourceType.Image, call.ResourceType);
     }
 
+    [Fact]
+    public void ShouldDeletePreviousAfterReplace_same_public_id_different_version_returns_false()
+    {
+        var sut = new CloudinaryProfilePhotoStorage(
+            new FakeCloudinaryGateway(),
+            Microsoft.Extensions.Options.Options.Create(
+                new ProfilePhotoStorageOptions
+                {
+                    Cloudinary = new ProfilePhotoCloudinaryOptions { Folder = "profile-photos" },
+                }));
+
+        const string prev =
+            "https://res.cloudinary.com/demo/image/upload/v1/profile-photos/11111111111111111111111111111111.jpg";
+        const string next =
+            "https://res.cloudinary.com/demo/image/upload/v99/profile-photos/11111111111111111111111111111111.jpg";
+
+        Assert.False(sut.ShouldDeletePreviousAfterReplace(prev, next));
+    }
+
+    [Fact]
+    public void ShouldDeletePreviousAfterReplace_different_public_id_returns_true()
+    {
+        var sut = new CloudinaryProfilePhotoStorage(
+            new FakeCloudinaryGateway(),
+            Microsoft.Extensions.Options.Options.Create(
+                new ProfilePhotoStorageOptions
+                {
+                    Cloudinary = new ProfilePhotoCloudinaryOptions { Folder = "profile-photos" },
+                }));
+
+        var prev =
+            "https://res.cloudinary.com/demo/image/upload/v1/profile-photos/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg";
+        var next =
+            "https://res.cloudinary.com/demo/image/upload/v1/profile-photos/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.jpg";
+
+        Assert.True(sut.ShouldDeletePreviousAfterReplace(prev, next));
+    }
+
+    [Fact]
+    public void ShouldDeletePreviousAfterReplace_equal_urls_returns_false()
+    {
+        var sut = new CloudinaryProfilePhotoStorage(
+            new FakeCloudinaryGateway(),
+            Microsoft.Extensions.Options.Options.Create(
+                new ProfilePhotoStorageOptions
+                {
+                    Cloudinary = new ProfilePhotoCloudinaryOptions { Folder = "profile-photos" },
+                }));
+
+        const string url = "https://res.cloudinary.com/x/image/upload/v1/profile-photos/aaa.jpg";
+        Assert.False(sut.ShouldDeletePreviousAfterReplace(url, url));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void ShouldDeletePreviousAfterReplace_with_empty_previous_returns_false(string? previous)
+    {
+        var sut = new CloudinaryProfilePhotoStorage(
+            new FakeCloudinaryGateway(),
+            Microsoft.Extensions.Options.Options.Create(
+                new ProfilePhotoStorageOptions
+                {
+                    Cloudinary = new ProfilePhotoCloudinaryOptions { Folder = "profile-photos" },
+                }));
+
+        Assert.False(sut.ShouldDeletePreviousAfterReplace(previous, "https://res.cloudinary.com/x/y.jpg"));
+    }
+
     private sealed class FakeCloudinaryGateway : ICloudinaryAssetGateway
     {
         public CloudinaryUploadResult? NextUploadResult { get; set; }

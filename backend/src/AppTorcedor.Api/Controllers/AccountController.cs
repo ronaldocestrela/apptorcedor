@@ -239,8 +239,7 @@ public sealed class AccountController(
         if (!ok)
             return NotFound();
 
-        if (!string.IsNullOrWhiteSpace(previousPhotoUrl)
-            && !string.Equals(previousPhotoUrl, url, StringComparison.OrdinalIgnoreCase))
+        if (photoStorage.ShouldDeletePreviousAfterReplace(previousPhotoUrl, url))
         {
             try
             {

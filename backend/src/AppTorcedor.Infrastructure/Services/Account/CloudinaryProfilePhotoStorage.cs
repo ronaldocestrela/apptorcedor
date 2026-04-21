@@ -63,6 +63,24 @@ public sealed class CloudinaryProfilePhotoStorage(
             .ConfigureAwait(false);
     }
 
+    public bool ShouldDeletePreviousAfterReplace(string? previousUrl, string newUrl)
+    {
+        if (string.IsNullOrWhiteSpace(newUrl))
+            return false;
+        if (string.IsNullOrWhiteSpace(previousUrl))
+            return false;
+        if (string.Equals(previousUrl, newUrl, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var prevId = ExtractPublicId(previousUrl);
+        var newId = ExtractPublicId(newUrl);
+        if (prevId is not null && newId is not null)
+            return !string.Equals(prevId, newId, StringComparison.Ordinal);
+
+        // Mixed or unparseable URLs: fall back to string inequality (e.g. local path → cloud URL).
+        return !string.Equals(previousUrl, newUrl, StringComparison.OrdinalIgnoreCase);
+    }
+
     private string? ExtractPublicId(string photoUrl)
     {
         if (string.IsNullOrWhiteSpace(photoUrl))

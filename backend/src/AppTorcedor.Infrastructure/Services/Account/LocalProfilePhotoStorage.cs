@@ -105,6 +105,18 @@ public sealed class LocalProfilePhotoStorage(
         }
     }
 
+    public bool ShouldDeletePreviousAfterReplace(string? previousUrl, string newUrl)
+    {
+        if (string.IsNullOrWhiteSpace(newUrl))
+            return false;
+        if (string.IsNullOrWhiteSpace(previousUrl))
+            return false;
+        if (string.Equals(previousUrl, newUrl, StringComparison.OrdinalIgnoreCase))
+            return false;
+        // Each local upload is a new file name; a replace always targets a different path.
+        return true;
+    }
+
     private static string ExtensionForContentType(string contentType) =>
         contentType.Trim().ToLowerInvariant() switch
         {

@@ -14,7 +14,7 @@ Expor fluxos **self-service** para o torcedor: cadastro público com LGPD, perfi
 | POST | `/api/account/register` | Anônimo | Cadastro público; retorna o mesmo contrato de sessão que o login (`AuthResponse`). |
 | GET | `/api/account/profile` | JWT | Lê o próprio `UserProfile` (sem `AdministrativeNote`). |
 | PUT | `/api/account/profile` | JWT | Atualiza perfil (merge de campos não nulos). |
-| POST | `/api/account/profile/photo` | JWT | `multipart/form-data` campo `file` (jpeg/png/webp); persiste foto no provider configurado, atualiza `PhotoUrl` e tenta remover a foto anterior (best effort). |
+| POST | `/api/account/profile/photo` | JWT | `multipart/form-data` campo `file` (jpeg/png/webp); persiste foto no provider configurado, atualiza `PhotoUrl` e, quando fizer sentido, tenta remover a foto **anterior e distinta** (best effort; ver abaixo). |
 | POST | `/api/auth/google` | Anônimo | Corpo `{ idToken, acceptedLegalDocumentVersionIds? }`. Novos usuários **devem** enviar os IDs das versões publicadas (mesmo conjunto do cadastro). |
 | GET | `/api/auth/me` | JWT | Inclui `requiresProfileCompletion` (perfil ausente ou documento vazio). |
 
@@ -24,7 +24,7 @@ Expor fluxos **self-service** para o torcedor: cadastro público com LGPD, perfi
 - **Portas:** `ITorcedorAccountPort`, `IRegistrationLegalReadPort`, `IProfilePhotoStorage`.
 - **Armazenamento de fotos (provider):**
 	- `ProfilePhotos:Provider=Local` usa `LocalProfilePhotoStorage` (disco em `wwwroot/uploads/profile-photos/{userId}/` e URL relativa `/uploads/...` via `UseStaticFiles`).
-	- `ProfilePhotos:Provider=Cloudinary` usa `CloudinaryProfilePhotoStorage` (URL absoluta `https://res.cloudinary.com/...`).
+	- `ProfilePhotos:Provider=Cloudinary` usa `CloudinaryProfilePhotoStorage` (URL absoluta `https://res.cloudinary.com/...`). O upload usa `public_id` **estável** por usuário (GUID em formato `N`) e `Overwrite: true` na mesma pasta (`ProfilePhotos:Cloudinary:Folder`). Cada troca de foto pode devolver outra `SecureUrl` (ex.: segmento de versão `v…` no path), ainda apontando para o **mesmo** asset lógico. Após persistir a nova `PhotoUrl`, a API só chama delete no storage da URL anterior se `IProfilePhotoStorage.ShouldDeletePreviousAfterReplace` indicar que é outro media (p.ex. outro `public_id` no Cloudinary, ou outro ficheiro local). Assim evita-se apagar o asset recém carregado ao confundir “URL antiga” com “foto substituída com overwrite”.
 	- O frontend mantém compatibilidade entre URL relativa e absoluta via `resolvePublicAssetUrl`.
 - **Configuração Cloudinary:** `Cloudinary:CloudName`, `Cloudinary:ApiKey`, `Cloudinary:ApiSecret`, `ProfilePhotos:Cloudinary:Folder`.
 - **LGPD:** cadastro e primeiro login Google gravam consentimentos via `ILgpdAdministrationPort.RecordConsentAsync` para as versões publicadas atuais.
@@ -45,6 +45,7 @@ Expor fluxos **self-service** para o torcedor: cadastro público com LGPD, perfi
 ## Testes (TDD)
 
 - **Application:** `RegisterTorcedorCommandHandlerTests` (normalização de entrada).
-- **API:** `PartC1TorcedorAccountTests` (requisitos, cadastro, perfil, `me`, foto, Google com fake validator).
+- **API:** `PartC1TorcedorAccountTests` (requisitos, cadastro, perfil, `me`, foto local, Google com fake validator); `PartC1CloudinaryProfilePhotoUploadTests` (foto com provider Cloudinary em memória: não apaga no Cloudinary quando a URL anterior e a nova partilham o mesmo `public_id`; ainda apaga quando o `public_id` antigo é distinto, ex. migração/URL alheia).
+- **Infrastructure:** `CloudinaryProfilePhotoStorageTests` e `LocalProfilePhotoStorageTests` — `ShouldDeletePreviousAfterReplace` (mesmo `public_id` e versão diferente no URL vs. paths distintos).
 - **Frontend — unitário:** `src/shared/cropImage.test.ts` — cobre `getCroppedImg`: retorno de Blob, coordenadas de corte, parâmetros de `toBlob` (jpeg/0.9), indisponibilidade do contexto Canvas, e falha de `toBlob`.
 - **Frontend — componente:** `src/pages/AccountPage.test.tsx` — `AccountPage — photo crop flow`: botão de foto clicável, abertura do modal de crop ao selecionar arquivo, cancelamento sem upload e presença do botão Confirmar no modal.

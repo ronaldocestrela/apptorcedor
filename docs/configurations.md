@@ -91,6 +91,8 @@ Este documento descreve **todas as configurações disponíveis** no sistema, or
 | `ProfilePhotos:MaxBytes` | `ProfilePhotos__MaxBytes` | `5242880` (5 MB) | Tamanho máximo em bytes para upload de foto de perfil. |
 | `ProfilePhotos:Cloudinary:Folder` | `ProfilePhotos__Cloudinary__Folder` | `profile-photos` | Nome da pasta dentro do Cloudinary onde as fotos são salvas. |
 
+**Foto de perfil no Cloudinary (overwrite):** cada utilizador reutiliza um `public_id` fixo; novos uploads **substituem** o ficheiro. A `SecureUrl` devolvida pode mudar (ex.: `v1` → `v2` no path) sem ser um ficheiro diferente. O cleanup pós-substituição da API **não** chama `destroy` na URL “antiga” quando ela e a nova se referem ao mesmo `public_id` lógico (evita apagar a imagem recém carregada).
+
 **Impacto:** trocar de `Local` para `Cloudinary` exige que as credenciais Cloudinary estejam configuradas. Fotos antigas salvas localmente não são migradas automaticamente.
 
 ---
