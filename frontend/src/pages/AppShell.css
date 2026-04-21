@@ -999,6 +999,187 @@
   margin-bottom: 1.35rem;
 }
 
+/* Figma 392:1683 — planos confirmação / recibo */
+.plans-root main.subpage-content.sub-confirm--figma {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding-top: 1rem;
+  padding-left: max(1rem, calc((100% - 19.375rem) / 2));
+  padding-right: max(1rem, calc((100% - 19.375rem) / 2));
+  padding-bottom: 1rem;
+}
+
+.sub-confirm.sub-confirm--figma {
+  padding-bottom: 0;
+}
+
+.sub-confirm--figma .sub-confirm__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4375rem;
+  width: 100%;
+  max-width: 19.375rem;
+  margin-bottom: 1.25rem;
+}
+
+.sub-confirm--figma .sub-confirm__hero .plans-figma-chip-wrap {
+  margin-bottom: 0;
+}
+
+.sub-confirm--figma .sub-confirm__eyebrow {
+  margin: 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  font-variation-settings: 'opsz' 14;
+  color: #ffffff;
+}
+
+.sub-confirm--figma .sub-confirm__alert {
+  max-width: 19.375rem;
+}
+
+.sub-confirm--figma .sub-confirm__card {
+  max-width: 19.375rem;
+  border: 1px solid #8cd392;
+  border-radius: 16px;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+  gap: 1rem;
+}
+
+.sub-confirm--figma .sub-confirm__card-title {
+  margin: 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  font-variation-settings: 'opsz' 14;
+  color: #ffffff;
+}
+
+.sub-confirm--figma .sub-confirm__holder {
+  margin: 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 14;
+  color: #ffffff;
+}
+
+.sub-confirm--figma .sub-confirm__rows {
+  gap: 0;
+  width: 100%;
+}
+
+.sub-confirm--figma .sub-confirm__row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.sub-confirm--figma .sub-confirm__row-rule {
+  width: 15.5rem;
+  max-width: 100%;
+  height: 1px;
+  margin: 0 auto 0.625rem;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.sub-confirm--figma .sub-confirm__row-line {
+  margin: 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 14;
+  text-align: center;
+  color: #ffffff;
+}
+
+.sub-confirm--figma .sub-confirm__label {
+  color: #ffffff;
+}
+
+.sub-confirm--figma .sub-confirm__value {
+  color: #8cd392;
+  font-weight: 500;
+}
+
+.sub-confirm--figma .sub-confirm__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14.125rem;
+  max-width: 100%;
+  height: 2.375rem;
+  margin-top: 0.25rem;
+  padding: 0 1rem;
+  border-radius: 16px;
+  border: 1px solid #8cd392;
+  background: rgba(153, 227, 158, 0.1);
+  color: #8cd392;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.225rem;
+  text-transform: uppercase;
+}
+
+.sub-confirm--figma .sub-confirm__cta:hover {
+  background: rgba(153, 227, 158, 0.18);
+  border-color: #99e39e;
+  color: #99e39e;
+}
+
+.sub-confirm--figma .sub-confirm__return {
+  margin: 1rem 0 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 14;
+  color: #ffffff;
+}
+
+.sub-confirm--figma .sub-confirm__return-link {
+  color: #80bf86;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.sub-confirm--figma .sub-confirm__return-link:hover {
+  text-decoration: underline;
+}
+
+.sub-confirm--figma .sub-confirm__pending {
+  max-width: 19.375rem;
+}
+
+.sub-confirm--figma .sub-confirm__hint {
+  max-width: 19.375rem;
+}
+
+.plans-root main.subpage-content.sub-confirm-empty--figma {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding-left: max(1rem, calc((100% - 23.4375rem) / 2));
+  padding-right: max(1rem, calc((100% - 23.4375rem) / 2));
+}
+
 .sub-confirm__card {
   width: 100%;
   max-width: 420px;

@@ -8,6 +8,7 @@ import {
   type TorcedorSubscriptionCheckoutResponse,
 } from '../features/plans/subscriptionsService'
 import { useAuth } from '../features/auth/AuthContext'
+import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
 export type SubscriptionConfirmationLocationState = {
@@ -44,19 +45,42 @@ function formatDueShort(iso: string | null | undefined): string {
   return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 
+function membershipStatusDisplay(status: string | null | undefined): string {
+  if (!status)
+    return '—'
+  switch (status) {
+    case 'PendingPayment':
+      return 'Aguardando pagamento'
+    case 'Ativo':
+      return 'Ativo'
+    case 'Cancelado':
+      return 'Cancelado'
+    case 'Inadimplente':
+      return 'Inadimplente'
+    case 'Suspenso':
+      return 'Suspenso'
+    case 'NaoAssociado':
+      return 'Não associado'
+    default:
+      return status
+  }
+}
+
 function ConfirmationShell({ children }: { children: ReactNode }) {
   return (
     <div className="plans-root">
-      <header className="subpage-header">
+      <div className="plans-figma-starfield" aria-hidden="true" />
+      <header className="subpage-header subpage-header--tri plans-page__header">
         <Link to="/plans" className="subpage-header__back" aria-label="Voltar">
-          <ArrowLeft size={18} />
+          <ArrowLeft size={24} strokeWidth={2} />
         </Link>
-        <h1 className="subpage-header__title plans-page__header-title">Planos</h1>
+        <h1 className="subpage-header__title">Planos</h1>
         <Link to="/account" className="plans-page__settings-btn" aria-label="Configurações">
-          <Settings size={20} stroke="currentColor" />
+          <Settings size={24} strokeWidth={2} />
         </Link>
       </header>
       {children}
+      <TorcedorBottomNav />
     </div>
   )
 }
@@ -108,7 +132,7 @@ export function SubscriptionConfirmationPage() {
   if (!checkout && summary && !summary.hasMembership) {
     return (
       <ConfirmationShell>
-        <main className="subpage-content sub-confirm-empty">
+        <main className="subpage-content sub-confirm-empty sub-confirm-empty--figma">
           <h1 className="sub-confirm-empty__title">Confirmação</h1>
           <p className="sub-confirm-empty__text">
             Não encontramos uma assinatura recente. Se você acabou de contratar, tente voltar pelo fluxo de checkout.
@@ -125,9 +149,13 @@ export function SubscriptionConfirmationPage() {
 
   return (
     <ConfirmationShell>
-      <main className="subpage-content sub-confirm">
-        <p className="sub-confirm__eyebrow">Você acabou de se tornar</p>
-        <span className="plans-page__badge sub-confirm__plan-pill">{planName ?? '—'}</span>
+      <main className="subpage-content sub-confirm sub-confirm--figma">
+        <div className="sub-confirm__hero">
+          <p className="sub-confirm__eyebrow">Você acabou de se tornar</p>
+          <div className="plans-figma-chip-wrap">
+            <span className="plans-figma-chip">{planName ?? '—'}</span>
+          </div>
+        </div>
 
         {loadError ? <p role="alert" className="sub-confirm__alert">{loadError}</p> : null}
 
@@ -135,28 +163,36 @@ export function SubscriptionConfirmationPage() {
           <h2 id="sub-confirm-receipt-title" className="sub-confirm__card-title">Recibo</h2>
           <p className="sub-confirm__holder">{holderName}</p>
           <ul className="sub-confirm__rows">
-            <li>
-              Plano:
-              {' '}
-              <strong>{planName ?? '—'}</strong>
+            <li className="sub-confirm__row">
+              <hr className="sub-confirm__row-rule" aria-hidden="true" />
+              <p className="sub-confirm__row-line">
+                <span className="sub-confirm__label">Plano: </span>
+                <span className="sub-confirm__value">{planName ?? '—'}</span>
+              </p>
             </li>
-            <li>
-              Valor:
-              {' '}
-              <strong>{valueLine}</strong>
+            <li className="sub-confirm__row">
+              <hr className="sub-confirm__row-rule" aria-hidden="true" />
+              <p className="sub-confirm__row-line">
+                <span className="sub-confirm__label">Valor: </span>
+                <span className="sub-confirm__value">{valueLine}</span>
+              </p>
             </li>
-            <li>
-              Status da Associação:
-              {' '}
-              <strong>{membershipStatus ?? '—'}</strong>
+            <li className="sub-confirm__row">
+              <hr className="sub-confirm__row-rule" aria-hidden="true" />
+              <p className="sub-confirm__row-line">
+                <span className="sub-confirm__label">Status da Associação: </span>
+                <span className="sub-confirm__value">{membershipStatusDisplay(membershipStatus)}</span>
+              </p>
             </li>
-            <li>
-              Data de vencimento:
-              {' '}
-              <strong>
-                {formatDueShort(nextDue)}
-                {showPendingPayment ? ' (após confirmação do pagamento)' : null}
-              </strong>
+            <li className="sub-confirm__row">
+              <hr className="sub-confirm__row-rule" aria-hidden="true" />
+              <p className="sub-confirm__row-line">
+                <span className="sub-confirm__label">Data de vencimento: </span>
+                <span className="sub-confirm__value">
+                  {formatDueShort(nextDue)}
+                  {showPendingPayment ? ' (após confirmação do pagamento)' : null}
+                </span>
+              </p>
             </li>
           </ul>
           <Link to="/digital-card" className="sub-confirm__cta">
@@ -200,10 +236,8 @@ export function SubscriptionConfirmationPage() {
         ) : null}
 
         <p className="sub-confirm__return">
-          Retornar a
-          {' '}
-          <Link to="/">página inicial</Link>
-          .
+          Retornar a{' '}
+          <Link to="/" className="sub-confirm__return-link">página inicial.</Link>
         </p>
       </main>
     </ConfirmationShell>
