@@ -219,7 +219,7 @@ A fonte **Outfit** deve ser carregada via Google Fonts ou bundled. É humanista,
 
 ## 5. Avatares de Usuário
 
-O **painel admin** usa avatar com iniciais no header. O **header do dashboard** (`.dash-header`) e o **cabeçalho da caixa de perfil em Conta** (`/account`, `.account-page__header`) não exibem círculo de usuário — só nome (Conta) e ações. Foto ou iniciais do torcedor em `/account` ficam no **quadrado 64px** do card (sócio ou sem plano).
+O **painel admin** usa avatar com iniciais no header. O **header do dashboard** (`.dash-header`) não exibe círculo de usuário. Em **Conta** (`/account`, layout Figma *perfil* / node `54:387`): barra superior `.account-page__figma-top` com **avatar circular 50px** (foto ou iniciais + ícone de câmera), **nome** (`.account-page__figma-top-name`) e **configurações**. No **cartão de sócio** (`.account-page__figma-member-card`), além do texto do plano e fatos, há um **bloco de iniciais** quadrado verde `.account-page__figma-initials-block` (~105×105px, cantos 16px) espelhando o mock; botões “Meus benefícios” / “Fidelidade” usam `.account-page__benefits-btn--figma`.
 
 ### Lógica de Iniciais (onde aplicável)
 
@@ -476,28 +476,31 @@ interface NavItemProps {
 
 Usa `<NavLink>` do react-router com classe `is-active` aplicada automaticamente.
 
-### 10.5 Página de Jogos (`/games`) — cartão de partida
+### 10.5 Página de Jogos (`/games`) — Partidas (FanSpot / Figma)
 
-Implementação em `frontend/src/pages/GamesPage.tsx` + estilos em `frontend/src/pages/AppShell.css`.
+Implementação em `frontend/src/pages/GamesPage.tsx` + estilos em `frontend/src/pages/AppShell.css`. Alinhamento visual ao frame **partidas** (arquivo FanSpot — App Web).
 
 **Layout**
 
-- Raiz: `.games-root` (full-viewport, mesmo padrão das outras subpáginas torcedor).
+- Raiz: `.games-root` — gradiente base torcedor + **radial** verde no topo (paridade com o mock).
+- Cabeçalho: `.subpage-header.subpage-header--tri` — voltar, título **“Partidas”** centralizado, link para `/account` com ícone de configurações (`.subpage-header__badge-btn`).
 - Conteúdo: `.games-page` dentro de `.subpage-content`.
 - Agenda agrupada por dia local: `.games-schedule` → seções `.games-day`.
-- Cabeçalho do dia: `.games-day__header` com `.games-day__date` (título `h2`, data `dd/mm/aaaa`) e, quando o dia contém o jogo em destaque, selo `.games-day__badge` (“Evento Próximo”).
-- Lista do dia: `.games-day__list`.
+- Cabeçalho do dia: `.games-day__header` com `.games-day__date` (`h2`, `dd/mm/aaaa`) e, quando o dia contém o jogo em destaque, chip `.games-day__badge.games-day__badge--proximo` (“Evento Próximo”: fundo `rgba(153,227,158,0.1)`, borda suave, texto `#99e39e`).
+- Lista do dia: `.games-day__list` → itens `.games-day__match`; jogos não destacados usam `.games-day__match--muted` (**opacidade 0.3** no bloco cartão + CTA, como no Figma).
 
 **Cartão (`.game-card-ev`)**
 
-- Estados: `.game-card-ev--active` (próximo jogo futuro na ordenação global, ou o primeiro da lista se todos forem passados) e `.game-card-ev--muted` (demais jogos — opacidade reduzida, CTA visualmente desabilitado).
-- Corpo: `.game-card-ev__body` — título do confronto `.game-card-ev__title` (`{sigla} x {adversário}`; sigla via `VITE_CLUB_SHORT_NAME`, padrão `FFC`), subtítulo `.game-card-ev__subtitle` (`{competition} - {horário}` a partir da API).
-- Logos: `.game-card-ev__logos` com escudo da casa (imagem resolvida uma vez via `GET /api/branding` + `resolvePublicAssetUrl`, fallback ao placeholder SVG), separador `.game-card-ev__vs`, logo do adversário ou `.game-card-ev__opponent-fallback` com iniciais.
-- CTA somente visual: `button.game-card-ev__cta` (“Ingresso disponível”; `disabled` quando `.game-card-ev--muted`) — no estado ativo, fundo mint `#96d696` e texto escuro; no muted, estilos definidos em `.game-card-ev--muted .game-card-ev__cta`.
+- Fundo do cartão: `rgba(255,255,255,0.05)`, borda `rgba(255,255,255,0.1)`, cantos `16px`, largura máx. ~310px centralizada.
+- Estados: `.game-card-ev--active` (jogo “próximo” — primeiro futuro na ordenação global, ou o primeiro se todos forem passados) e `.game-card-ev--muted` (demais; escurecimento vem do wrapper).
+- Corpo: `.game-card-ev__body` — confronto `.game-card-ev__title` (`{sigla} x {adversário}`; sigla via `VITE_CLUB_SHORT_NAME`, padrão `FFC`), subtítulo `.game-card-ev__subtitle` (`{competition} - {horário}`).
+- Logos: `.game-card-ev__logos` — casa `.game-card-ev__logo-slot--home` (~73px), separador “X” `.game-card-ev__vs`, visitante `.game-card-ev__logo-slot--away` (~69×111), fallback `.game-card-ev__opponent-fallback`.
+- CTA **dentro** do cartão (rodapé do `.game-card-ev`): `.game-card-ev__cta-footer` → `button.game-card-ev__cta` com `.game-card-ev__cta--available` (“Ingresso disponível”, fundo `#8cd392`, texto `#080808`, tipografia ~20px) e `.game-card-ev__cta--unavailable` (“Ingresso indisponível”, fundo `#6c7074`, texto branco). CTA **somente visual** na listagem (sem navegação).
 
-**Toast de sucesso (referência)**
+**Toast pós-resgate de ingresso**
 
-- Classe `.game-card-ev__toast` (+ `.game-card-ev__toast-sub`) definida para alinhar a mockups / fluxos futuros; não é obrigatório renderizar na listagem estática.
+- Após resgate em `MyTicketsPage`, flag em `sessionStorage` (`torcedorIngressoToast.ts`). Em `GamesPage`, `.games-page__ingresso-toast` é **fixo** acima da bottom nav (`position: fixed`, sombra), como overlay no mock Figma.
+- Classe legada `.game-card-ev__toast` permanece no CSS para referência; o fluxo ativo usa o banner acima.
 
 ---
 
@@ -566,7 +569,7 @@ O `#root` padrão tem `width: 1126px` para páginas públicas. Páginas que deve
 ## 13. Bottom Navigation — Comportamento
 
 - Visível apenas em mobile (`< 640px`)
-- 5 itens fixos: Início (`/`), Notícias (`/news`), Jogos (`/games`), Carteirinha (`/digital-card`), Conta (`/account`); **Benefícios** não entram na barra — acesso em Conta (`/account`) pelo botão “Meus benefícios” (`/benefits`); **Fidelidade** na mesma tela — botão “Fidelidade” para `/loyalty` (mesmo estilo de cartão que “Meus benefícios”, ícone `ListChecks`); cabeçalho da Conta (`.account-page__header`) com nome e configurações
+- 5 itens fixos: Início (`/`), Notícias (`/news`), Jogos (`/games`), Carteirinha (`/digital-card`), Conta (`/account`); **Benefícios** não entram na barra — acesso em Conta pelo botão “Meus benefícios” (`/benefits`); **Fidelidade** — botão para `/loyalty` (`.account-page__benefits-btn--figma`, ícones `Gift` / `ListChecks`); topo da Conta `.account-page__figma-top` (avatar + nome + engrenagem)
 - Usa `<NavLink>` com classe `active` aplicada via callback
 - Altura 64px + `env(safe-area-inset-bottom)` para iPhone X+
 - O `.dash-root` tem `padding-bottom: 68px` para não ficar atrás da barra

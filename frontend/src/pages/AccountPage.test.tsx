@@ -214,7 +214,7 @@ describe('AccountPage', () => {
       expect(screen.getByText(/ainda não possui assinatura/i)).toBeInTheDocument()
     })
     expect(screen.getByText('Sem plano ativo')).toBeInTheDocument()
-    expect(document.querySelector('.account-page__header-name')).toHaveTextContent('T')
+    expect(document.querySelector('.account-page__perfil-top-name')).toHaveTextContent('T')
   })
 })
 

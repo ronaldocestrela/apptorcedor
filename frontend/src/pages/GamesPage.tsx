@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Settings } from 'lucide-react'
 import { resolvePublicAssetUrl } from '../features/account/accountApi'
 import { listTorcedorGames, type TorcedorGameListItem } from '../features/torcedor/torcedorGamesApi'
 import { getPublicBranding } from '../shared/branding/brandingApi'
 import { getTeamShieldPlaceholderDataUrl } from '../shared/branding/teamShieldPlaceholder'
+import { TORCEDOR_INGRESSO_REDEEM_TOAST_KEY } from '../shared/torcedorIngressoToast'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -66,10 +67,10 @@ function pickFeaturedGameId(sorted: TorcedorGameListItem[]): string | null {
 
 export function GamesPage() {
   const [items, setItems] = useState<TorcedorGameListItem[]>([])
-  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [clubShieldSrc, setClubShieldSrc] = useState(() => getTeamShieldPlaceholderDataUrl())
+  const [ingressoToast, setIngressoToast] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -90,6 +91,21 @@ export function GamesPage() {
   }, [])
 
   useEffect(() => {
+    try {
+      if (sessionStorage.getItem(TORCEDOR_INGRESSO_REDEEM_TOAST_KEY) === '1') {
+        sessionStorage.removeItem(TORCEDOR_INGRESSO_REDEEM_TOAST_KEY)
+        setIngressoToast(true)
+        const t = window.setTimeout(() => setIngressoToast(false), 10_000)
+        return () => window.clearTimeout(t)
+      }
+    }
+    catch {
+      /* ignore */
+    }
+    return undefined
+  }, [])
+
+  useEffect(() => {
     let cancelled = false
     void (async () => {
       try {
@@ -97,7 +113,6 @@ export function GamesPage() {
         const page = await listTorcedorGames({ pageSize: 50 })
         if (!cancelled) {
           setItems(page.items)
-          setTotal(page.totalCount)
           setError(null)
         }
       }
@@ -128,14 +143,18 @@ export function GamesPage() {
 
   return (
     <div className="games-root">
-      <header className="subpage-header">
+      <header className="subpage-header subpage-header--tri games-page__header">
         <Link to="/" className="subpage-header__back" aria-label="Voltar">
           <ArrowLeft size={18} />
         </Link>
-        <h1 className="subpage-header__title">Jogos</h1>
-        {!loading && !error ? (
-          <span className="subpage-header__badge">{total}</span>
-        ) : null}
+        <h1 className="subpage-header__title">Partidas</h1>
+        <Link
+          to="/account"
+          className="subpage-header__badge-btn"
+          aria-label="Conta e configurações"
+        >
+          <Settings size={18} />
+        </Link>
       </header>
 
       <main className="subpage-content games-page">
@@ -147,6 +166,26 @@ export function GamesPage() {
         ) : null}
         {!loading && items.length === 0 && !error ? (
           <p className="app-muted">Nenhum jogo disponível no momento.</p>
+        ) : null}
+
+        {ingressoToast ? (
+          <div
+            className="games-page__ingresso-toast"
+            role="status"
+          >
+            <p className="games-page__ingresso-toast-line">Sucesso!</p>
+            <p className="games-page__ingresso-toast-line games-page__ingresso-toast-line--sub">
+              Verifique seu ingresso na aba de perfil
+            </p>
+            <button
+              type="button"
+              className="games-page__ingresso-toast-dismiss"
+              aria-label="Fechar aviso"
+              onClick={() => setIngressoToast(false)}
+            >
+              ×
+            </button>
+          </div>
         ) : null}
 
         <div className="games-schedule">
@@ -163,7 +202,7 @@ export function GamesPage() {
                     {group.label}
                   </h2>
                   {showNextBadge ? (
-                    <span className="games-day__badge">Evento Próximo</span>
+                    <span className="games-day__badge games-day__badge--proximo">Evento Próximo</span>
                   ) : null}
                 </div>
                 <ul className="games-day__list">
@@ -174,52 +213,58 @@ export function GamesPage() {
                     return (
                       <li
                         key={g.gameId}
-                        className={`game-card-ev${isActive ? ' game-card-ev--active' : ' game-card-ev--muted'}`}
+                        className={`games-day__match${isActive ? '' : ' games-day__match--muted'}`}
                       >
-                        <div className="game-card-ev__body">
-                          <p className="game-card-ev__title">
-                            {CLUB_SHORT}
-                            {' '}
-                            <span className="game-card-ev__title-sep">x</span>
-                            {' '}
-                            {g.opponent}
-                          </p>
-                          <p className="game-card-ev__subtitle">{subtitle}</p>
-                          <div className="game-card-ev__logos" aria-hidden="true">
-                            <div className="game-card-ev__logo-slot game-card-ev__logo-slot--home">
-                              <img
-                                className="game-card-ev__shield"
-                                src={clubShieldSrc}
-                                alt=""
-                              />
-                            </div>
-                            <span className="game-card-ev__vs">x</span>
-                            <div className="game-card-ev__logo-slot game-card-ev__logo-slot--away">
-                              {opponentSrc
-                                ? (
-                                    <img
-                                      className="game-card-ev__opponent-logo"
-                                      src={opponentSrc}
-                                      alt=""
-                                    />
-                                  )
-                                : (
-                                    <span className="game-card-ev__opponent-fallback">
-                                      {g.opponent.slice(0, 3).toUpperCase()}
-                                    </span>
-                                  )}
+                        <article
+                          className={`game-card-ev${isActive ? ' game-card-ev--active' : ' game-card-ev--muted'}`}
+                        >
+                          <div className="game-card-ev__body">
+                            <p className="game-card-ev__title">
+                              {CLUB_SHORT}
+                              <span className="game-card-ev__title-sep"> x </span>
+                              {g.opponent}
+                            </p>
+                            <p className="game-card-ev__subtitle">{subtitle}</p>
+                            <div className="game-card-ev__logos" aria-hidden="true">
+                              <div className="game-card-ev__logo-slot game-card-ev__logo-slot--home">
+                                <img
+                                  className="game-card-ev__shield"
+                                  src={clubShieldSrc}
+                                  alt=""
+                                />
+                              </div>
+                              <span className="game-card-ev__vs">X</span>
+                              <div className="game-card-ev__logo-slot game-card-ev__logo-slot--away">
+                                {opponentSrc
+                                  ? (
+                                      <img
+                                        className="game-card-ev__opponent-logo"
+                                        src={opponentSrc}
+                                        alt=""
+                                      />
+                                    )
+                                  : (
+                                      <span className="game-card-ev__opponent-fallback">
+                                        {g.opponent.slice(0, 3).toUpperCase()}
+                                      </span>
+                                    )}
+                              </div>
                             </div>
                           </div>
-                          <div className="game-card-ev__cta-wrap">
+                          <div className="game-card-ev__cta-footer">
                             <button
                               type="button"
-                              className="game-card-ev__cta"
+                              className={
+                                isActive
+                                  ? 'game-card-ev__cta game-card-ev__cta--available'
+                                  : 'game-card-ev__cta game-card-ev__cta--unavailable'
+                              }
                               disabled={!isActive}
                             >
-                              Ingresso disponível
+                              {isActive ? 'Ingresso disponível' : 'Ingresso indisponível'}
                             </button>
                           </div>
-                        </div>
+                        </article>
                       </li>
                     )
                   })}

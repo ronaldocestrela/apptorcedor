@@ -54,9 +54,10 @@ describe('GamesPage', () => {
       expect(screen.queryByText(/Carregando/i)).not.toBeInTheDocument()
     })
 
-    expect(screen.getByRole('heading', { name: /Jogos/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Partidas/i })).toBeInTheDocument()
     expect(screen.getByText('Evento Próximo')).toBeInTheDocument()
-    expect(screen.getAllByText('Ingresso disponível')).toHaveLength(2)
+    expect(screen.getByText('Ingresso disponível')).toBeInTheDocument()
+    expect(screen.getByText('Ingresso indisponível')).toBeInTheDocument()
 
     const active = container.querySelector('.game-card-ev--active')
     const muted = container.querySelectorAll('.game-card-ev--muted')

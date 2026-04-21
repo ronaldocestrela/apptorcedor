@@ -7,6 +7,7 @@ import {
   type TorcedorTicketListItem,
 } from '../features/torcedor/torcedorTicketsApi'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
+import { TORCEDOR_INGRESSO_REDEEM_TOAST_KEY } from '../shared/torcedorIngressoToast'
 import './AppShell.css'
 
 export function MyTicketsPage() {
@@ -52,6 +53,12 @@ export function MyTicketsPage() {
     try {
       await redeemMyTicket(ticketId)
       await reload()
+      try {
+        sessionStorage.setItem(TORCEDOR_INGRESSO_REDEEM_TOAST_KEY, '1')
+      }
+      catch {
+        /* ignore private mode / quota */
+      }
     }
     catch (e) {
       setActionError(e instanceof Error ? e.message : 'Não foi possível resgatar')

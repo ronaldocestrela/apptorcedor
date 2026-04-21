@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Camera, Gift, ListChecks, Settings } from 'lucide-react'
+import { Gift, Handshake, Settings } from 'lucide-react'
 import axios from 'axios'
 import Cropper from 'react-easy-crop'
 import type { Area } from 'react-easy-crop'
@@ -302,10 +302,10 @@ export function AccountPage() {
     }
   }
 
-  const photoEditSquare = (
+  const perfilAvatarBtn = (
     <button
       type="button"
-      className="account-page__member-photo-btn"
+      className="account-page__perfil-avatar-btn"
       onClick={() => !busy && fileInputRef.current?.click()}
       disabled={busy}
       title="Clique para alterar a foto"
@@ -315,35 +315,33 @@ export function AccountPage() {
         <img
           src={resolvePublicAssetUrl(photoUrl)}
           alt=""
-          className="account-page__member-photo-img"
+          className="account-page__perfil-avatar-img"
         />
       ) : (
-        <span className="account-page__member-initials-sq">{displayInitials}</span>
+        <span className="account-page__perfil-avatar-fallback">{displayInitials}</span>
       )}
-      <span className="account-page__member-photo-camera" aria-hidden="true">
-        <Camera size={16} stroke="#ffffff" strokeWidth={2} />
-      </span>
     </button>
   )
 
-  const accountPageHeader = (
-    <header className="account-page__header">
-      <span className="account-page__header-name">{user?.name ?? '—'}</span>
+  const perfilTopBar = (
+    <div className="account-page__perfil-top">
+      {perfilAvatarBtn}
+      <span className="account-page__perfil-top-name">{user?.name ?? '—'}</span>
       <button
         type="button"
-        className="account-page__settings-btn"
+        className="account-page__settings-btn account-page__perfil-settings"
         aria-expanded={showSettings}
         aria-label={showSettings ? 'Fechar configurações' : 'Abrir configurações'}
         onClick={() => setShowSettings(s => !s)}
       >
-        <Settings size={22} stroke="#f5f7fa" aria-hidden="true" />
+        <Settings size={24} stroke="#ffffff" strokeWidth={2} aria-hidden="true" />
       </button>
-    </header>
+    </div>
   )
 
   return (
     <div className="account-root">
-    <main className="app-shell app-shell--narrow account-page">
+    <main className="app-shell app-shell--narrow account-page account-page--perfil">
       <input
         ref={fileInputRef}
         type="file"
@@ -352,84 +350,79 @@ export function AccountPage() {
         disabled={busy}
         style={{ display: 'none' }}
       />
+      {perfilTopBar}
       {user?.requiresProfileCompletion ? (
         <p className="account-page__alert-warning">
           Complete seu perfil (documento obrigatório para seguir).
         </p>
       ) : null}
-      <div
-        className={
-          subscription?.hasMembership
-            ? 'account-page__profile-box'
-            : 'account-page__profile-box account-page__profile-box--stacked'
-        }
-      >
-        {accountPageHeader}
-        {subscription === null ? (
-          <div className="account-page__no-plan-body">
-            {subscriptionError ? (
-              <p className="account-page__empty-copy" role="alert" style={{ color: '#ffc6c6' }}>{subscriptionError}</p>
-            ) : (
-              <p className="account-page__empty-copy app-muted">Carregando informações da conta…</p>
-            )}
-          </div>
-        ) : null}
-        {subscription && !subscription.hasMembership ? (
-          <div className="account-page__no-plan-body">
-            <div className="account-page__member-card-top">
-              <div>
-                <p className="account-page__plan-label">Sem plano ativo</p>
-                <p className="account-page__empty-copy app-muted">
-                  Você ainda não possui assinatura de sócio.
-                  {' '}
-                  <Link to="/plans" className="app-back-link">Ver planos</Link>
-                </p>
-              </div>
-              {photoEditSquare}
-            </div>
-          </div>
-        ) : null}
-      </div>
-      {subscription?.hasMembership ? (
-        <div className="account-page__member-card">
-          <div className="account-page__member-card-top">
-            <div>
-              <p className="account-page__plan-label">Sócio Torcedor</p>
-              <p className="account-page__plan-name">{subscription.plan?.name ?? '—'}</p>
-            </div>
-            {photoEditSquare}
-          </div>
-          {membershipFacts.joined ? (
-            <ul className="account-page__member-facts">
-              <li>
-                {membershipFacts.years !== null && membershipFacts.years > 0
-                  ? `Sócio há ${membershipFacts.years} ${membershipFacts.years === 1 ? 'ano' : 'anos'}.`
-                  : 'Sócio há menos de 1 ano.'}
-              </li>
-              <li>
-                Ingressou
-                {' '}
-                {membershipFacts.joined}
-                .
-              </li>
-            </ul>
+      {subscription === null ? (
+        <div className="account-page__perfil-card account-page__perfil-card--empty">
+          {subscriptionError ? (
+            <p className="account-page__perfil-empty-copy" role="alert" style={{ color: '#ffc6c6' }}>{subscriptionError}</p>
           ) : (
-            <ul className="account-page__member-facts">
-              <li>Data de ingresso indisponível.</li>
-            </ul>
+            <p className="account-page__perfil-empty-copy app-muted">Carregando informações da conta…</p>
           )}
-          <Link to="/digital-card" className="account-page__expand-btn">
+        </div>
+      ) : null}
+      {subscription && !subscription.hasMembership ? (
+        <div className="account-page__perfil-card account-page__perfil-card--empty">
+          <p className="account-page__perfil-empty-eyebrow">Sem plano ativo</p>
+          <p className="account-page__perfil-empty-copy app-muted">
+            Você ainda não possui assinatura de sócio.
+            {' '}
+            <Link to="/plans" className="app-back-link">Ver planos</Link>
+          </p>
+        </div>
+      ) : null}
+      {subscription?.hasMembership ? (
+        <div className="account-page__perfil-card">
+          <div className="account-page__perfil-card-body">
+            <div className="account-page__perfil-main">
+              <p className="account-page__perfil-plan-stack">
+                <span className="account-page__perfil-eyebrow">Sócio Torcedor</span>
+                <span className="account-page__perfil-plan-name">{subscription.plan?.name ?? '—'}</span>
+              </p>
+              {membershipFacts.joined ? (
+                <ul className="account-page__perfil-facts">
+                  <li>
+                    <span>
+                      {membershipFacts.years !== null && membershipFacts.years > 0
+                        ? `Sócio há ${membershipFacts.years} ${membershipFacts.years === 1 ? 'ano' : 'anos'}.`
+                        : 'Sócio há menos de 1 ano.'}
+                    </span>
+                  </li>
+                  <li>
+                    <span>
+                      Ingressou
+                      {' '}
+                      {membershipFacts.joined}
+                      .
+                    </span>
+                  </li>
+                </ul>
+              ) : (
+                <ul className="account-page__perfil-facts">
+                  <li><span>Data de ingresso indisponível.</span></li>
+                </ul>
+              )}
+            </div>
+            <div className="account-page__perfil-initials" aria-hidden="true">
+              {displayInitials}
+            </div>
+          </div>
+          <Link to="/digital-card" className="account-page__perfil-expand">
             Expandir Carteirinha
           </Link>
         </div>
       ) : null}
-      <Link to="/benefits" className="account-page__benefits-btn">
+      <Link to="/benefits" className="account-page__benefits-btn account-page__benefits-btn--perfil">
         Meus benefícios
-        <Gift size={22} stroke="currentColor" aria-hidden="true" />
+        <Gift size={35} stroke="currentColor" strokeWidth={2} aria-hidden="true" />
       </Link>
-      <Link to="/loyalty" className="account-page__benefits-btn">
+      <Link to="/loyalty" className="account-page__benefits-btn account-page__benefits-btn--perfil">
         Fidelidade
-        <ListChecks size={22} stroke="currentColor" aria-hidden="true" />
+        <Handshake size={37} stroke="currentColor" strokeWidth={2} aria-hidden="true" />
       </Link>
       {loadError ? <p role="alert" style={{ color: '#ffc6c6' }}>{loadError}</p> : null}
       {showSettings ? (

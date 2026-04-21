@@ -47,7 +47,7 @@ Controladores: `TorcedorGamesController`, `TorcedorTicketsController`.
 
 - Rotas: `/games` (`GamesPage`), `/tickets` (`MyTicketsPage`), registradas em `frontend/src/app/App.tsx`; links no `DashboardPage`.
 - Clientes: `frontend/src/features/torcedor/torcedorGamesApi.ts`, `torcedorTicketsApi.ts`.
-- UI `/games`: listagem em cartões de partida agrupados por dia (`.game-card-ev`, `.games-day__*`), jogo “próximo” em destaque (`.game-card-ev--active`) e demais em estado visual muted; sigla da casa configurável por `VITE_CLUB_SHORT_NAME` (padrão `FFC`). Ver `docs/architecture/visual-identity.md` §10.6.
+- UI `/games` (**Partidas**): listagem alinhada ao Figma FanSpot (frame *partidas*) — cabeçalho escuro com título central e atalho à conta; cartões por dia com chip “Evento Próximo”; CTA “Ingresso disponível” / “Ingresso indisponível” no rodapé **dentro** do cartão (`.game-card-ev__cta-footer`); toast fixo após resgate (flag em `sessionStorage` em `MyTicketsPage`). Classes: `.games-day__match*`, `.game-card-ev*`, `.games-page__ingresso-toast`. Sigla da casa: `VITE_CLUB_SHORT_NAME` (padrão `FFC`). Ver `docs/architecture/visual-identity.md` §10.5.
 
 ## Testes
 
