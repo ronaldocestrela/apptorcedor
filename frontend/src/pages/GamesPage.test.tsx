@@ -30,7 +30,7 @@ describe('GamesPage', () => {
           opponent: 'SSA',
           competition: 'Arena Cajueiro',
           opponentLogoUrl: null,
-          gameDate: '2026-04-18T15:00:00.000Z',
+          gameDate: '2099-04-18T15:00:00.000Z',
           createdAt: '2026-01-01T00:00:00.000Z',
         },
         {
@@ -38,7 +38,7 @@ describe('GamesPage', () => {
           opponent: 'FLU',
           competition: 'Maracanã',
           opponentLogoUrl: null,
-          gameDate: '2026-05-01T18:00:00.000Z',
+          gameDate: '2099-05-01T18:00:00.000Z',
           createdAt: '2026-01-01T00:00:00.000Z',
         },
       ],
