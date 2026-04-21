@@ -7,6 +7,38 @@ vi.mock('../features/torcedor/torcedorDigitalCardApi', () => ({
   getMyDigitalCardWithSource: vi.fn(),
 }))
 
+vi.mock('../features/auth/AuthContext', () => ({
+  useAuth: () => ({
+    user: {
+      id: '1',
+      name: 'Teste User',
+      email: 't@test.local',
+      roles: [],
+      permissions: [],
+      requiresProfileCompletion: false,
+    },
+    loading: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    googleSignIn: vi.fn(),
+    logout: vi.fn(),
+    refreshProfile: vi.fn(),
+  }),
+}))
+
+vi.mock('../features/account/accountApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../features/account/accountApi')>()
+  return {
+    ...actual,
+    getMyProfile: vi.fn().mockResolvedValue({
+      document: null,
+      birthDate: null,
+      photoUrl: null,
+      address: null,
+    }),
+  }
+})
+
 import { getMyDigitalCardWithSource } from '../features/torcedor/torcedorDigitalCardApi'
 
 describe('DigitalCardPage', () => {
@@ -31,7 +63,7 @@ describe('DigitalCardPage', () => {
         cardStatus: 'Active',
         issuedAt: '2026-01-01T00:00:00Z',
         verificationToken: 'ABC123',
-        templatePreviewLines: ['Titular: Teste'],
+        templatePreviewLines: ['Titular: Teste', 'Plano: Gold'],
         cacheValidUntilUtc: new Date(Date.now() + 60_000).toISOString(),
       },
     })
@@ -44,7 +76,9 @@ describe('DigitalCardPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/Carteirinha ativa/i)).toBeInTheDocument()
     })
-    expect(screen.getByText(/Titular: Teste/i)).toBeInTheDocument()
+    expect(screen.getByText('Teste User')).toBeInTheDocument()
+    expect(screen.getByText('Teste')).toBeInTheDocument()
+    expect(screen.getByText('Gold')).toBeInTheDocument()
     expect(screen.getByText(/ABC123/)).toBeInTheDocument()
   })
 
