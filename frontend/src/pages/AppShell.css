@@ -1343,7 +1343,12 @@
   padding-right: max(0.75rem, calc((100% - 23.4375rem) / 2));
 }
 
-/* ── Conta / Perfil — pixel match Figma node 54:387 ── */
+/* ── Conta / Perfil — Figma FanSpot 54:387 (perfil) ── */
+.account-root > main.app-shell.account-page--perfil {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
 .account-page--perfil {
   font-family: 'Poppins', 'Outfit', sans-serif;
 }
@@ -1472,17 +1477,19 @@
 
 .account-page__perfil-facts {
   margin: 0.75rem 0 0;
-  padding: 0 0 0 1.3125rem;
+  padding: 0;
+  padding-inline-start: 1.3125rem;
   font-family: 'Poppins', 'Outfit', sans-serif;
   font-weight: 500;
   font-size: 0.875rem;
   color: #6c7278;
   list-style: disc;
+  list-style-position: outside;
 }
 
 .account-page__perfil-facts li {
   margin: 0;
-  padding-inline-start: 0.2rem;
+  padding-inline-start: 0;
 }
 
 .account-page__perfil-facts li span {
@@ -1521,8 +1528,9 @@
   font-size: 1.25rem;
   text-align: center;
   text-decoration: none;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.4px;
   line-height: 1.2;
+  font-variation-settings: 'opsz' 14;
   transition: filter 160ms ease, transform 120ms ease;
 }
 
@@ -2286,8 +2294,10 @@
 /* CTA dentro do cartão (paridade Figma partidas) */
 .game-card-ev__cta-footer {
   width: 100%;
+  box-sizing: border-box;
   display: flex;
   justify-content: center;
+  align-items: center;
   padding: 0 1.25rem 1.25rem;
   margin-top: auto;
 }
@@ -2295,8 +2305,10 @@
 .game-card-ev__cta {
   display: block;
   box-sizing: border-box;
-  width: 100%;
+  width: min(100%, 12.8125rem);
   max-width: 12.8125rem;
+  margin-inline: auto;
+  flex-shrink: 0;
   border-radius: 16px;
   padding: 1rem 1.5rem;
   font-size: 1.25rem;
