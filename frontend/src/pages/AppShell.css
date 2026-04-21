@@ -1995,6 +1995,267 @@
   color: #6c7278;
 }
 
+/* Figma 385:312 — Fidelidade */
+.loyalty-root .loyalty-page__header.subpage-header {
+  background: rgba(18, 18, 18, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.loyalty-root .loyalty-page__header .subpage-header__back {
+  color: #ffffff;
+}
+
+.loyalty-root .loyalty-page__header .subpage-header__back:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.loyalty-root .loyalty-page__header .subpage-header__badge-btn {
+  color: #ffffff;
+}
+
+.loyalty-root .loyalty-page__header .subpage-header__badge-btn:hover {
+  color: #99e39e;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.loyalty-root .loyalty-page__header.subpage-header--tri .subpage-header__title {
+  font-family: 'Poppins', 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: #ffffff;
+}
+
+.loyalty-root main.subpage-content.loyalty-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding-top: 1rem;
+  padding-left: max(1rem, calc((100% - 23.4375rem) / 2));
+  padding-right: max(1rem, calc((100% - 23.4375rem) / 2));
+}
+
+.loyalty-page__error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(141, 44, 52, 0.55);
+  background: rgba(141, 44, 52, 0.16);
+  color: #ffb4ba;
+  font-size: 0.9rem;
+}
+
+.loyalty-figma-panel {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 20.5rem;
+  margin: 0 auto;
+  padding: 0.5rem 0 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.loyalty-figma-stat-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 19.375rem;
+  margin: 0 auto;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.loyalty-figma-stat-row--last {
+  border-bottom: none;
+}
+
+.loyalty-figma-stat-label {
+  flex-shrink: 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  font-variation-settings: 'opsz' 14;
+}
+
+.loyalty-figma-stat-value {
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  text-align: right;
+  font-variation-settings: 'opsz' 14;
+}
+
+.loyalty-figma-stat-value--accent {
+  color: #8cd392;
+}
+
+.loyalty-figma-ranking {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 20.5rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.loyalty-figma-ranking__trophy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6875rem;
+  height: 1.6875rem;
+  line-height: 0;
+}
+
+.loyalty-figma-ranking__title {
+  margin: 0.35rem 0 0;
+  font-family: 'Poppins', 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  color: #ffffff;
+  text-align: center;
+}
+
+.loyalty-figma-rank-list {
+  width: 100%;
+  max-width: 19.375rem;
+  margin-top: 0.85rem;
+}
+
+.loyalty-figma-rank-empty {
+  margin: 0;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.loyalty-figma-rank-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  max-width: 19.375rem;
+  margin: 0 auto;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.loyalty-figma-rank-row:last-child {
+  border-bottom: none;
+}
+
+.loyalty-figma-rank-row__name {
+  flex: 1;
+  min-width: 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  font-variation-settings: 'opsz' 14;
+}
+
+.loyalty-figma-rank-row__pts {
+  flex-shrink: 0;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  text-align: right;
+  font-variation-settings: 'opsz' 14;
+}
+
+.loyalty-figma-rank-row__pts--accent {
+  color: #8cd392;
+}
+
+.loyalty-figma-rank-row--fade30 {
+  opacity: 0.3;
+}
+
+.loyalty-figma-rank-row--fade15 {
+  opacity: 0.15;
+}
+
+.loyalty-figma-rank-row--fade05 {
+  opacity: 0.05;
+}
+
+.loyalty-figma-switch-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: 2.5rem;
+  padding-bottom: 0.25rem;
+}
+
+.loyalty-figma-switch {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 15rem;
+  max-width: 100%;
+  min-height: 3.75rem;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.loyalty-figma-switch__divider {
+  width: 1px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.15);
+  align-self: stretch;
+  min-height: 3.75rem;
+}
+
+.loyalty-figma-switch__btn {
+  flex: 1;
+  margin: 0;
+  padding: 0.65rem 1rem;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 14;
+  transition: background 160ms ease, color 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.loyalty-figma-switch__btn--active {
+  background: #8cd392;
+  color: #080808;
+}
+
+.loyalty-figma-switch__btn--idle {
+  background: transparent;
+  color: #ffffff;
+}
+
+.loyalty-figma-switch__btn--idle:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 /* Figma 375:330 — cartões de benefício */
 .benefits-figma-list {
   list-style: none;

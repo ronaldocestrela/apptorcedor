@@ -1,75 +1,58 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Trophy } from 'lucide-react'
-import { useAuth } from '../features/auth/AuthContext'
+import { ArrowLeft, Settings, Trophy } from 'lucide-react'
 import {
   getAllTimeLoyaltyRanking,
   getMonthlyLoyaltyRanking,
   getMyLoyaltySummary,
   type TorcedorLoyaltyRankingPage,
+  type TorcedorLoyaltyRankingRow,
   type TorcedorLoyaltySummary,
 } from '../features/torcedor/torcedorLoyaltyApi'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
-function RankingBlock(props: {
-  title: string
-  page: TorcedorLoyaltyRankingPage | null
-  currentUserId: string | undefined
-}) {
-  const { title, page, currentUserId } = props
-  if (!page)
-    return null
+function formatStatPoints(pts: number): string {
+  return `${pts} pts`
+}
 
-  return (
-    <div className="loyalty-ranking">
-      <p className="loyalty-ranking__title">{title}</p>
-      {page.totalCount === 0 ? (
-        <p className="loyalty-ranking__empty">Nenhum ponto registrado neste período.</p>
-      ) : (
-        <ol className="loyalty-ranking__list">
-          {page.items.map((row) => {
-            const isMe = !!(currentUserId && row.userId === currentUserId)
-            return (
-              <li
-                key={`${row.rank}-${row.userId}`}
-                className={`loyalty-ranking__row${isMe ? ' loyalty-ranking__row--me' : ''}`}
-              >
-                <span className="loyalty-ranking__rank">#{row.rank}</span>
-                <span className="loyalty-ranking__name">{row.userName || '(sem nome)'}{isMe ? ' (você)' : null}</span>
-                <span className="loyalty-ranking__pts">{row.totalPoints} pts</span>
-              </li>
-            )
-          })}
-        </ol>
-      )}
-      {page.me ? (
-        <p className="loyalty-ranking__me-pos">
-          Sua posição: <strong>#{page.me.rank}</strong> — {page.me.totalPoints} pts
-        </p>
-      ) : (
-        <p className="loyalty-ranking__me-pos">
-          Você ainda não aparece no ranking deste período.
-        </p>
-      )}
-    </div>
-  )
+function formatRankPoints(pts: number): string {
+  if (pts === 0)
+    return '—'
+  return `${pts} pts`
+}
+
+function formatStanding(rank: number | null): string {
+  if (rank == null)
+    return '-'
+  return `#${rank}`
+}
+
+function rankRowFadeClass(index: number): string {
+  if (index === 4)
+    return 'loyalty-figma-rank-row--fade30'
+  if (index === 5)
+    return 'loyalty-figma-rank-row--fade15'
+  if (index >= 6)
+    return 'loyalty-figma-rank-row--fade05'
+  return ''
 }
 
 export function LoyaltyPage() {
-  const { user } = useAuth()
   const [summary, setSummary] = useState<TorcedorLoyaltySummary | null>(null)
   const [monthly, setMonthly] = useState<TorcedorLoyaltyRankingPage | null>(null)
   const [allTime, setAllTime] = useState<TorcedorLoyaltyRankingPage | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [rankingTab, setRankingTab] = useState<'month' | 'all'>('month')
 
-  const periodLabel = useMemo(() => {
-    const now = new Date()
-    const y = now.getUTCFullYear()
-    const m = now.getUTCMonth() + 1
-    return `${String(m).padStart(2, '0')}/${y} (UTC)`
-  }, [])
+  const rankingPage: TorcedorLoyaltyRankingPage | null = rankingTab === 'month' ? monthly : allTime
+
+  const rankingRows = useMemo((): TorcedorLoyaltyRankingRow[] => {
+    if (!rankingPage?.items?.length)
+      return []
+    return rankingPage.items.slice(0, 7)
+  }, [rankingPage])
 
   useEffect(() => {
     let cancelled = false
@@ -105,55 +88,111 @@ export function LoyaltyPage() {
     }
   }, [])
 
+  const rankingTitle = rankingTab === 'month' ? 'Ranking do Mês' : 'Ranking Geral'
+
   return (
     <div className="loyalty-root">
-      <header className="subpage-header">
+      <header className="subpage-header subpage-header--tri loyalty-page__header">
         <Link to="/" className="subpage-header__back" aria-label="Voltar">
-          <ArrowLeft size={18} />
+          <ArrowLeft size={24} strokeWidth={2} aria-hidden="true" />
         </Link>
-        <h1 className="subpage-header__title">
-          <Trophy size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} />
-          Fidelidade
-        </h1>
+        <h1 className="subpage-header__title">Fidelidade</h1>
+        <Link
+          to="/account"
+          className="subpage-header__badge-btn"
+          aria-label="Conta e configurações"
+        >
+          <Settings size={24} strokeWidth={2} aria-hidden="true" />
+        </Link>
       </header>
 
-      <main className="subpage-content">
+      <main className="subpage-content loyalty-page">
         {loading ? <p className="app-muted">Carregando…</p> : null}
         {error ? (
-          <p role="alert" style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>{error}</p>
+          <p role="alert" className="loyalty-page__error">{error}</p>
         ) : null}
         {!loading && !error && summary ? (
           <>
-            <div className="loyalty-summary">
-              <div className="loyalty-summary__row">
-                <span className="loyalty-summary__label">Saldo total:</span>
-                <span className="loyalty-summary__value loyalty-summary__value--accent">
-                  {summary.totalPoints} pts
+            <section className="loyalty-figma-panel" aria-label="Resumo de fidelidade">
+              <div className="loyalty-figma-stat-row">
+                <span className="loyalty-figma-stat-label">Saldo total:</span>
+                <span className="loyalty-figma-stat-value loyalty-figma-stat-value--accent">
+                  {formatStatPoints(summary.totalPoints)}
                 </span>
               </div>
-              <div className="loyalty-summary__row">
-                <span className="loyalty-summary__label">Pontos no mês ({periodLabel}):</span>
-                <span className="loyalty-summary__value">{summary.monthlyPoints} pts</span>
+              <div className="loyalty-figma-stat-row">
+                <span className="loyalty-figma-stat-label">Pontos no mês:</span>
+                <span className="loyalty-figma-stat-value">{formatStatPoints(summary.monthlyPoints)}</span>
               </div>
-              <div className="loyalty-summary__row">
-                <span className="loyalty-summary__label">Posição no mês:</span>
-                <span className="loyalty-summary__value">
-                  {summary.monthlyRank != null ? `#${summary.monthlyRank}` : '—'}
-                </span>
+              <div className="loyalty-figma-stat-row">
+                <span className="loyalty-figma-stat-label">Posição geral:</span>
+                <span className="loyalty-figma-stat-value">{formatStanding(summary.allTimeRank)}</span>
               </div>
-              <div className="loyalty-summary__row">
-                <span className="loyalty-summary__label">Posição geral:</span>
-                <span className="loyalty-summary__value">
-                  {summary.allTimeRank != null ? `#${summary.allTimeRank}` : '—'}
-                </span>
+              <div className="loyalty-figma-stat-row loyalty-figma-stat-row--last">
+                <span className="loyalty-figma-stat-label">Posição no mês:</span>
+                <span className="loyalty-figma-stat-value">{formatStanding(summary.monthlyRank)}</span>
+              </div>
+            </section>
+
+            <section className="loyalty-figma-ranking" aria-labelledby="loyalty-ranking-title">
+              <div className="loyalty-figma-ranking__trophy" aria-hidden="true">
+                <Trophy size={27} stroke="#8cd392" strokeWidth={1.75} fill="none" />
+              </div>
+              <h2 id="loyalty-ranking-title" className="loyalty-figma-ranking__title">
+                {rankingTitle}
+              </h2>
+              <div className="loyalty-figma-rank-list">
+                {rankingRows.length === 0 ? (
+                  <p className="loyalty-figma-rank-empty app-muted">Nenhum ponto registrado neste período.</p>
+                ) : (
+                  rankingRows.map((row, idx) => (
+                    <div
+                      key={`${row.rank}-${row.userId}`}
+                      className={`loyalty-figma-rank-row ${rankRowFadeClass(idx)}`}
+                    >
+                      <span className="loyalty-figma-rank-row__name">{row.userName || '—'}</span>
+                      <span
+                        className={
+                          row.rank === 1
+                            ? 'loyalty-figma-rank-row__pts loyalty-figma-rank-row__pts--accent'
+                            : 'loyalty-figma-rank-row__pts'
+                        }
+                      >
+                        {formatRankPoints(row.totalPoints)}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+
+            <div className="loyalty-figma-switch-wrap">
+              <div className="loyalty-figma-switch" role="group" aria-label="Período do ranking">
+                <button
+                  type="button"
+                  className={
+                    rankingTab === 'month'
+                      ? 'loyalty-figma-switch__btn loyalty-figma-switch__btn--active'
+                      : 'loyalty-figma-switch__btn loyalty-figma-switch__btn--idle'
+                  }
+                  onClick={() => setRankingTab('month')}
+                >
+                  Mês
+                </button>
+                <span className="loyalty-figma-switch__divider" aria-hidden="true" />
+                <button
+                  type="button"
+                  className={
+                    rankingTab === 'all'
+                      ? 'loyalty-figma-switch__btn loyalty-figma-switch__btn--active'
+                      : 'loyalty-figma-switch__btn loyalty-figma-switch__btn--idle'
+                  }
+                  onClick={() => setRankingTab('all')}
+                >
+                  Geral
+                </button>
               </div>
             </div>
-            <RankingBlock
-              title={`Ranking do mês (${periodLabel})`}
-              page={monthly}
-              currentUserId={user?.id}
-            />
-            <RankingBlock title="Ranking geral (todos os tempos)" page={allTime} currentUserId={user?.id} />
           </>
         ) : null}
       </main>

@@ -70,8 +70,10 @@ describe('LoyaltyPage', () => {
       expect(screen.getByRole('main').textContent).toContain('42')
     })
     await waitFor(() => {
-      expect(screen.getAllByText(/\(você\)/i).length).toBeGreaterThanOrEqual(2)
+      expect(screen.getByRole('heading', { name: /Ranking do Mês/i })).toBeInTheDocument()
     })
+    expect(screen.getByRole('button', { name: 'Mês' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Geral' })).toBeInTheDocument()
   })
 
   it('shows error when load fails', async () => {
