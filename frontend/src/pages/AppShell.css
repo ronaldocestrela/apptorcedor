@@ -1,3 +1,11 @@
+/*
+ * FanSpot (Figma): mesmo fundo dos frames mobile (perfil, benefícios, partidas…)
+ * SVG viewBox 440×956 — radialGradient com matrix e stops do arquivo.
+ */
+:root {
+  --fanspot-figma-bg-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 956' preserveAspectRatio='none'%3E%3Cdefs%3E%3CradialGradient id='g' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(-0.0000013938 122.91 -22 -0.000023096 220 -349.96)'%3E%3Cstop stop-color='rgba(0,191,103,0.27)' offset='0'/%3E%3Cstop stop-color='rgba(97,54,144,0)' offset='1'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3C/svg%3E");
+}
+
 .app-shell {
   width: min(1120px, calc(100% - 2rem));
   margin: 1.5rem auto;
@@ -1327,10 +1335,11 @@
   flex-direction: column;
   min-height: 100dvh;
   box-sizing: border-box;
-  /* Figma perfil 54:387 — radial glow + base #121212 */
-  background:
-    radial-gradient(ellipse 125% 88% at 50% -36%, rgba(0, 191, 103, 0.27) 0%, rgba(97, 54, 144, 0) 52%),
-    #121212;
+  background-color: #121212;
+  background-image: var(--fanspot-figma-bg-svg);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center top;
   font-family: 'Outfit', 'Segoe UI', sans-serif;
   color: #f5f7fa;
   padding-bottom: 68px;
@@ -1890,17 +1899,14 @@
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  background: linear-gradient(160deg, #0e131a 0%, #080808 100%);
+  background-color: #121212;
+  background-image: var(--fanspot-figma-bg-svg);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center top;
   font-family: 'Outfit', 'Segoe UI', sans-serif;
   color: #f5f7fa;
   padding-bottom: 68px;
-}
-
-/* FanSpot / Figma “partidas”: brilho verde (mock radial) + base escura */
-.games-root {
-  background:
-    radial-gradient(ellipse 125% 70% at 50% -22%, rgba(0, 191, 103, 0.27) 0%, transparent 55%),
-    linear-gradient(168deg, #121212 0%, #080808 52%, #0a0a0a 100%);
 }
 
 /* Cabeçalho alinhado ao frame Partidas (fundo sólido escuro, ícones brancos) */
@@ -1933,6 +1939,179 @@
   font-weight: 500;
   letter-spacing: 0;
   color: #ffffff;
+}
+
+.benefits-root .benefits-page__header.subpage-header {
+  background: rgba(18, 18, 18, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.benefits-root .benefits-page__header .subpage-header__back {
+  color: #ffffff;
+}
+
+.benefits-root .benefits-page__header .subpage-header__back:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.benefits-root .benefits-page__header .subpage-header__badge-btn {
+  color: #ffffff;
+}
+
+.benefits-root .benefits-page__header .subpage-header__badge-btn:hover {
+  color: #99e39e;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.benefits-root .benefits-page__header.subpage-header--tri .subpage-header__title {
+  font-family: 'Poppins', 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: #ffffff;
+}
+
+.benefits-root main.subpage-content.benefits-page {
+  padding-top: 1rem;
+  padding-left: max(1rem, calc((100% - 23.4375rem) / 2));
+  padding-right: max(1rem, calc((100% - 23.4375rem) / 2));
+}
+
+.benefits-page__error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(141, 44, 52, 0.55);
+  background: rgba(141, 44, 52, 0.16);
+  color: #ffb4ba;
+  font-size: 0.9rem;
+}
+
+.benefits-page__empty {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  color: #6c7278;
+}
+
+/* Figma 375:330 — cartões de benefício */
+.benefits-figma-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.benefits-figma-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 12.375rem;
+  width: 100%;
+  max-width: 23.4375rem;
+  margin: 0 auto;
+  padding: 1.125rem 1.125rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid #8cd392;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.benefits-figma-card__top {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1.125rem;
+}
+
+.benefits-figma-card__icon-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.8125rem;
+  height: 2.8125rem;
+  border-radius: 16px;
+  border: 1px solid #8cd392;
+  background: rgba(255, 255, 255, 0.05);
+  line-height: 0;
+}
+
+.benefits-figma-card__copy {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.benefits-figma-card__eyebrow {
+  margin: 0;
+  font-family: 'Inter', 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  line-height: 1.07;
+  color: #eeeeee;
+}
+
+.benefits-figma-card__headline {
+  margin: 0.125rem 0 0;
+  font-family: 'Inter', 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.07;
+  letter-spacing: -0.02em;
+  color: #8cd392;
+}
+
+.benefits-figma-card__valid {
+  margin: 0.85rem 0 0;
+  text-align: left;
+  font-family: 'Poppins', 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  color: #6c7278;
+}
+
+.benefits-figma-card__cta-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.benefits-figma-card__cta {
+  display: block;
+  box-sizing: border-box;
+  width: 14.0625rem;
+  max-width: 100%;
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  border: none;
+  background: #8cd392;
+  color: #080808;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
+  font-variation-settings: 'opsz' 14;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 160ms ease, transform 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.benefits-figma-card__cta:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.benefits-figma-card__cta:active {
+  transform: scale(0.99);
 }
 
 /* ── Shared subpage header (back button + title) ── */
@@ -2483,7 +2662,11 @@ a.benefit-offer-card--link:hover {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  background: linear-gradient(160deg, #0e131a 0%, #080808 100%);
+  background-color: #121212;
+  background-image: var(--fanspot-figma-bg-svg);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center top;
   font-family: 'Outfit', 'Segoe UI', sans-serif;
   color: #f5f7fa;
   padding-bottom: 68px;

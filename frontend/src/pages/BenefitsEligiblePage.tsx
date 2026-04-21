@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
-import { resolvePublicAssetUrl } from '../features/account/accountApi'
+import { ArrowLeft, Gift, Settings } from 'lucide-react'
 import { listEligibleBenefitOffers, type TorcedorEligibleBenefitOffer } from '../features/torcedor/torcedorBenefitsApi'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
-function formatBenefitPeriod(startAt: string, endAt: string) {
-  return `Válido de ${new Date(startAt).toLocaleDateString('pt-BR')} até ${new Date(endAt).toLocaleDateString('pt-BR')}`
+function formatValidUntil(endAt: string) {
+  return `Válido até ${new Date(endAt).toLocaleDateString('pt-BR')}*`
 }
 
 export function BenefitsEligiblePage() {
   const [items, setItems] = useState<TorcedorEligibleBenefitOffer[]>([])
-  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -24,7 +22,6 @@ export function BenefitsEligiblePage() {
         const page = await listEligibleBenefitOffers({ pageSize: 50 })
         if (!cancelled) {
           setItems(page.items)
-          setTotal(page.totalCount)
           setError(null)
         }
       }
@@ -44,67 +41,55 @@ export function BenefitsEligiblePage() {
 
   return (
     <div className="benefits-root">
-      <header className="subpage-header">
+      <header className="subpage-header subpage-header--tri benefits-page__header">
         <Link to="/" className="subpage-header__back" aria-label="Voltar">
-          <ArrowLeft size={18} />
+          <ArrowLeft size={24} strokeWidth={2} aria-hidden="true" />
         </Link>
         <h1 className="subpage-header__title">Benefícios</h1>
-        {!loading && !error ? (
-          <span className="subpage-header__badge">{total}</span>
-        ) : null}
+        <Link
+          to="/account"
+          className="subpage-header__badge-btn"
+          aria-label="Conta e configurações"
+        >
+          <Settings size={24} strokeWidth={2} aria-hidden="true" />
+        </Link>
       </header>
 
-      <main className="subpage-content">
-        <p className="benefits-intro">
-          Ofertas ativas e vigentes alinhadas ao seu plano e status de sócio.
-        </p>
+      <main className="subpage-content benefits-page">
         {loading ? <p className="app-muted">Carregando…</p> : null}
         {error ? (
-          <p role="alert" style={{ color: '#ffc6c6', fontSize: '0.9rem' }}>
+          <p role="alert" className="benefits-page__error">
             {error}
           </p>
         ) : null}
         {!loading && items.length === 0 && !error ? (
-          <p className="benefits-empty">Nenhuma oferta elegível no momento.</p>
+          <p className="benefits-page__empty">Nenhuma oferta elegível no momento.</p>
         ) : null}
-        <ul className="benefit-offer-list">
-          {items.map((item) => {
-            const hasBanner = Boolean(item.bannerUrl?.trim())
-            const bannerSrc = resolvePublicAssetUrl(item.bannerUrl)
-            return (
-              <li key={item.offerId}>
-                <Link
-                  to={`/benefits/${item.offerId}`}
-                  className={
-                    hasBanner
-                      ? 'benefit-offer-card benefit-offer-card--link benefit-offer-card--visual'
-                      : 'benefit-offer-card benefit-offer-card--link'
-                  }
-                >
-                  {hasBanner && bannerSrc ? (
-                    <>
-                      <div className="benefit-offer-card__media">
-                        <img src={bannerSrc} alt="" loading="lazy" />
-                      </div>
-                      {item.description ? (
-                        <p className="benefit-offer-card__description">{item.description}</p>
-                      ) : null}
-                      <p className="benefit-offer-card__dates">{formatBenefitPeriod(item.startAt, item.endAt)}</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="benefit-offer-card__title">{item.title}</p>
-                      <span className="benefit-offer-card__partner">{item.partnerName}</span>
-                      {item.description ? (
-                        <p className="benefit-offer-card__description">{item.description}</p>
-                      ) : null}
-                      <p className="benefit-offer-card__dates">{formatBenefitPeriod(item.startAt, item.endAt)}</p>
-                    </>
-                  )}
-                </Link>
-              </li>
-            )
-          })}
+        <ul className="benefits-figma-list">
+          {items.map((item) => (
+            <li key={item.offerId}>
+              <article className="benefits-figma-card">
+                <div className="benefits-figma-card__top">
+                  <div className="benefits-figma-card__icon-wrap" aria-hidden="true">
+                    <Gift size={30} stroke="#8cd392" strokeWidth={2} />
+                  </div>
+                  <div className="benefits-figma-card__copy">
+                    <p className="benefits-figma-card__eyebrow">{item.partnerName}</p>
+                    <p className="benefits-figma-card__headline">{item.title}</p>
+                    <p className="benefits-figma-card__valid">{formatValidUntil(item.endAt)}</p>
+                  </div>
+                </div>
+                <div className="benefits-figma-card__cta-row">
+                  <Link
+                    to={`/benefits/${item.offerId}`}
+                    className="benefits-figma-card__cta"
+                  >
+                    Resgatar Benefício
+                  </Link>
+                </div>
+              </article>
+            </li>
+          ))}
         </ul>
       </main>
 
