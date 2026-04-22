@@ -244,13 +244,13 @@ export function DigitalCardPage() {
                 </div>
 
                 {/* Escudo — left:117 top:483  w:141 h:141 → rotate(90deg) + shadow */}
-                <div className="digital-card-figma__shield-wrap">
+                {/* <div className="digital-card-figma__shield-wrap">
                   <img
                     className="digital-card-figma__shield"
                     src="/logos/ESCUDO_FFC_PNG.png"
                     alt=""
                   />
-                </div>
+                </div> */}
               </div>
             </section>
 
