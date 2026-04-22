@@ -49,10 +49,10 @@ public sealed class PartC1CloudinaryProfilePhotoUploadTests : IClassFixture<AppW
         using (var put = new HttpRequestMessage(HttpMethod.Put, "/api/account/profile"))
         {
             put.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
+            // Sem document: merge não toca CPF; evita conflito com outros testes no mesmo banco.
             put.Content = JsonContent.Create(
                 new
                 {
-                    document = (string?)"00000000000",
                     birthDate = (DateOnly?)new DateOnly(1990, 1, 15),
                     photoUrl = previousUrl,
                     address = (string?)"Rua A",
@@ -106,10 +106,10 @@ public sealed class PartC1CloudinaryProfilePhotoUploadTests : IClassFixture<AppW
         using (var put = new HttpRequestMessage(HttpMethod.Put, "/api/account/profile"))
         {
             put.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
+            // Sem document: merge não toca CPF; evita conflito com outros testes no mesmo banco.
             put.Content = JsonContent.Create(
                 new
                 {
-                    document = (string?)"00000000000",
                     birthDate = (DateOnly?)new DateOnly(1990, 1, 15),
                     photoUrl = previousUrl,
                     address = (string?)"Rua A",

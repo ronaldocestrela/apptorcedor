@@ -1,3 +1,5 @@
+using AppTorcedor.Application.Modules.Account;
+
 namespace AppTorcedor.Application.Abstractions;
 
 public interface IUserAdministrationPort
@@ -14,7 +16,7 @@ public interface IUserAdministrationPort
     Task<bool> SetAccountActiveAsync(Guid userId, bool isActive, CancellationToken cancellationToken = default);
 
     /// <summary>Merges non-null fields; use empty string to clear a string field.</summary>
-    Task<bool> UpsertProfileAsync(Guid userId, AdminUserProfileUpsertDto patch, CancellationToken cancellationToken = default);
+    Task<ProfileUpsertResult> UpsertProfileAsync(Guid userId, AdminUserProfileUpsertDto patch, CancellationToken cancellationToken = default);
 }
 
 public sealed record AdminUserListPageDto(int TotalCount, IReadOnlyList<AdminUserListItemDto> Items);

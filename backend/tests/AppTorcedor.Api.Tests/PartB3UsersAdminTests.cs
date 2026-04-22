@@ -32,7 +32,7 @@ public sealed class PartB3UsersAdminTests(AppWebApplicationFactory factory) : IC
     {
         var adminToken = await LoginAdminAsync();
 
-        using (var listReq = new HttpRequestMessage(HttpMethod.Get, "/api/admin/users?search=12345678901"))
+        using (var listReq = new HttpRequestMessage(HttpMethod.Get, $"/api/admin/users?search={TestingSeedConstants.SampleMemberCpf}"))
         {
             listReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
             var listRes = await _client.SendAsync(listReq);
@@ -44,7 +44,7 @@ public sealed class PartB3UsersAdminTests(AppWebApplicationFactory factory) : IC
                 items.EnumerateArray(),
                 e =>
                     e.GetProperty("email").GetString() == TestingSeedConstants.MemberEmail
-                    && e.GetProperty("document").GetString() == "12345678901");
+                    && e.GetProperty("document").GetString() == TestingSeedConstants.SampleMemberCpf);
         }
 
         using (var detailReq = new HttpRequestMessage(HttpMethod.Get, $"/api/admin/users/{TestingSeedConstants.SampleMemberUserId}"))
@@ -55,7 +55,7 @@ public sealed class PartB3UsersAdminTests(AppWebApplicationFactory factory) : IC
             var detail = await detailRes.Content.ReadFromJsonAsync<JsonElement>();
             Assert.Equal(TestingSeedConstants.MemberEmail, detail.GetProperty("email").GetString());
             Assert.Equal(JsonValueKind.Object, detail.GetProperty("membership").ValueKind);
-            Assert.Equal("12345678901", detail.GetProperty("profile").GetProperty("document").GetString());
+            Assert.Equal(TestingSeedConstants.SampleMemberCpf, detail.GetProperty("profile").GetProperty("document").GetString());
         }
 
         using (var put = new HttpRequestMessage(HttpMethod.Put, $"/api/admin/users/{TestingSeedConstants.SampleMemberUserId}/profile"))
@@ -64,7 +64,7 @@ public sealed class PartB3UsersAdminTests(AppWebApplicationFactory factory) : IC
             put.Content = JsonContent.Create(
                 new
                 {
-                    document = "12345678901",
+                    document = TestingSeedConstants.SampleMemberCpf,
                     birthDate = (DateOnly?)new DateOnly(1995, 5, 15),
                     photoUrl = (string?)"https://example.com/photo.jpg",
                     address = "Novo endereço",

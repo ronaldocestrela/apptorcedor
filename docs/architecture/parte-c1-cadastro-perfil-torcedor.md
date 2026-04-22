@@ -13,7 +13,7 @@ Expor fluxos **self-service** para o torcedor: cadastro público com LGPD, perfi
 | GET | `/api/account/register/requirements` | Anônimo | Versões publicadas obrigatórias (termos + privacidade) para o formulário de cadastro. |
 | POST | `/api/account/register` | Anônimo | Cadastro público; retorna o mesmo contrato de sessão que o login (`AuthResponse`). |
 | GET | `/api/account/profile` | JWT | Lê o próprio `UserProfile` (sem `AdministrativeNote`). |
-| PUT | `/api/account/profile` | JWT | Atualiza perfil (merge de campos não nulos). |
+| PUT | `/api/account/profile` | JWT | Atualiza perfil (merge de campos não nulos). Quando o campo `document` é enviado e não vazio, deve ser um **CPF válido** (módulo 11) e fica **normalizado** (11 dígitos) em `UserProfiles.Document`. CPFs duplicados em outro usuário retornam **409** com `{ "error": "cpf_already_in_use" }`; CPF inválido retorna **400** com `{ "error": "cpf_invalid", "errors": ["CPF inválido."] }`. |
 | POST | `/api/account/profile/photo` | JWT | `multipart/form-data` campo `file` (jpeg/png/webp); persiste foto no provider configurado, atualiza `PhotoUrl` e, quando fizer sentido, tenta remover a foto **anterior e distinta** (best effort; ver abaixo). |
 | POST | `/api/auth/google` | Anônimo | Corpo `{ idToken, acceptedLegalDocumentVersionIds? }`. Novos usuários **devem** enviar os IDs das versões publicadas (mesmo conjunto do cadastro). |
 | GET | `/api/auth/me` | JWT | Inclui `requiresProfileCompletion` (perfil ausente ou documento vazio). |
@@ -21,7 +21,8 @@ Expor fluxos **self-service** para o torcedor: cadastro público com LGPD, perfi
 ### Arquitetura
 
 - **CQRS (Application):** `RegisterTorcedorCommand`, `GetRegistrationLegalRequirementsQuery`, `GetMyProfileQuery`, `UpsertMyProfileCommand`.
-- **Portas:** `ITorcedorAccountPort`, `IRegistrationLegalReadPort`, `IProfilePhotoStorage`.
+- **Portas:** `ITorcedorAccountPort` (`UpsertProfileAsync` retorna `ProfileUpsertResult` com validação/unicidade de CPF), `IRegistrationLegalReadPort`, `IProfilePhotoStorage`.
+- **CPF:** `AppTorcedor.Application.Validation.CpfNumber` valida dígitos e normaliza. Índice único filtrado `IX_UserProfiles_Document` em SQL Server (`[Document] IS NOT NULL`); múltiplas linhas com `NULL` seguem permitidas. Dados legados: antes de aplicar a migration, resolver CPFs duplicados (após normalização) ou a criação do índice falha.
 - **Armazenamento de fotos (provider):**
 	- `ProfilePhotos:Provider=Local` usa `LocalProfilePhotoStorage` (disco em `wwwroot/uploads/profile-photos/{userId}/` e URL relativa `/uploads/...` via `UseStaticFiles`).
 	- `ProfilePhotos:Provider=Cloudinary` usa `CloudinaryProfilePhotoStorage` (URL absoluta `https://res.cloudinary.com/...`). O upload usa `public_id` **estável** por usuário (GUID em formato `N`) e `Overwrite: true` na mesma pasta (`ProfilePhotos:Cloudinary:Folder`). Cada troca de foto pode devolver outra `SecureUrl` (ex.: segmento de versão `v…` no path), ainda apontando para o **mesmo** asset lógico. Após persistir a nova `PhotoUrl`, a API só chama delete no storage da URL anterior se `IProfilePhotoStorage.ShouldDeletePreviousAfterReplace` indicar que é outro media (p.ex. outro `public_id` no Cloudinary, ou outro ficheiro local). Assim evita-se apagar o asset recém carregado ao confundir “URL antiga” com “foto substituída com overwrite”.
@@ -44,8 +45,8 @@ Expor fluxos **self-service** para o torcedor: cadastro público com LGPD, perfi
 
 ## Testes (TDD)
 
-- **Application:** `RegisterTorcedorCommandHandlerTests` (normalização de entrada).
-- **API:** `PartC1TorcedorAccountTests` (requisitos, cadastro, perfil, `me`, foto local, Google com fake validator); `PartC1CloudinaryProfilePhotoUploadTests` (foto com provider Cloudinary em memória: não apaga no Cloudinary quando a URL anterior e a nova partilham o mesmo `public_id`; ainda apaga quando o `public_id` antigo é distinto, ex. migração/URL alheia).
-- **Infrastructure:** `CloudinaryProfilePhotoStorageTests` e `LocalProfilePhotoStorageTests` — `ShouldDeletePreviousAfterReplace` (mesmo `public_id` e versão diferente no URL vs. paths distintos).
+- **Application:** `RegisterTorcedorCommandHandlerTests` (normalização de entrada); `CpfNumberTests` (CPF com/sem máscara, inválido e repetição de dígitos).
+- **API:** `PartC1TorcedorAccountTests` (requisitos, cadastro, perfil, CPF inválido, conflito com CPF do seed, `me`, foto local, Google com fake validator); `PartC1CloudinaryProfilePhotoUploadTests` (foto com provider Cloudinary em memória: não apaga no Cloudinary quando a URL anterior e a nova partilham o mesmo `public_id`; ainda apaga quando o `public_id` antigo é distinto, ex. migração/URL alheia).
+- **Infrastructure:** `TorcedorAccountServiceCpfTests` (normalização e rejeição de duplicata in-memory; admin reutiliza a mesma regra em `UserAdministrationService`); `CloudinaryProfilePhotoStorageTests` e `LocalProfilePhotoStorageTests` — `ShouldDeletePreviousAfterReplace` (mesmo `public_id` e versão diferente no URL vs. paths distintos).
 - **Frontend — unitário:** `src/shared/cropImage.test.ts` — cobre `getCroppedImg`: retorno de Blob, coordenadas de corte, parâmetros de `toBlob` (jpeg/0.9), indisponibilidade do contexto Canvas, e falha de `toBlob`.
 - **Frontend — componente:** `src/pages/AccountPage.test.tsx` — `AccountPage — photo crop flow`: botão de foto clicável, abertura do modal de crop ao selecionar arquivo, cancelamento sem upload e presença do botão Confirmar no modal.

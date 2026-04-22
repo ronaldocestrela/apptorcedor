@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using AppTorcedor.Identity;
 using Xunit;
 
@@ -97,9 +98,17 @@ public sealed class PartC1TorcedorAccountTests
         {
             put.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
             put.Content = JsonContent.Create(
-                new { document = "12345678901", birthDate = (DateOnly?)new DateOnly(1990, 1, 15), photoUrl = (string?)null, address = "Rua A" });
+                new { document = "390.533.447-05", birthDate = (DateOnly?)new DateOnly(1990, 1, 15), photoUrl = (string?)null, address = "Rua A" });
             var putRes = await _client.SendAsync(put);
             Assert.Equal(HttpStatusCode.NoContent, putRes.StatusCode);
+        }
+
+        using (var profileGet2 = new HttpRequestMessage(HttpMethod.Get, "/api/account/profile"))
+        {
+            profileGet2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
+            var pr2 = await _client.SendAsync(profileGet2);
+            var prof2 = await pr2.Content.ReadFromJsonAsync<ProfileDto>();
+            Assert.Equal("39053344705", prof2?.Document);
         }
 
         using (var me2 = new HttpRequestMessage(HttpMethod.Get, "/api/auth/me"))
@@ -123,6 +132,81 @@ public sealed class PartC1TorcedorAccountTests
             var photoBody = await photoRes.Content.ReadFromJsonAsync<PhotoUploadDto>();
             Assert.False(string.IsNullOrEmpty(photoBody?.PhotoUrl));
         }
+    }
+
+    [Fact]
+    public async Task Profile_rejects_invalid_cpf()
+    {
+        var req = await _client.GetAsync("/api/account/register/requirements");
+        var legal = await req.Content.ReadFromJsonAsync<RequirementsDto>();
+        Assert.NotNull(legal);
+
+        var email = $"bad-cpf-{Guid.NewGuid():N}@test.local";
+        var register = await _client.PostAsJsonAsync(
+            "/api/account/register",
+            new
+            {
+                name = "Cpf",
+                email,
+                password = "RegisterPass123!",
+                phoneNumber = (string?)"11",
+                acceptedLegalDocumentVersionIds = new[] { legal!.TermsOfUseVersionId, legal.PrivacyPolicyVersionId },
+            });
+        register.EnsureSuccessStatusCode();
+        var auth = await register.Content.ReadFromJsonAsync<AuthResponseDto>();
+        Assert.NotNull(auth);
+
+        using var put = new HttpRequestMessage(HttpMethod.Put, "/api/account/profile");
+        put.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth!.AccessToken);
+        put.Content = JsonContent.Create(
+            new
+            {
+                document = (string?)"12345678901",
+                birthDate = (DateOnly?)new DateOnly(1990, 1, 15),
+                photoUrl = (string?)null,
+                address = (string?)"Rua A",
+            });
+        var putRes = await _client.SendAsync(put);
+        Assert.Equal(HttpStatusCode.BadRequest, putRes.StatusCode);
+        var err = await putRes.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("cpf_invalid", err.GetProperty("error").GetString());
+    }
+
+    [Fact]
+    public async Task Profile_rejects_cpf_when_already_held_by_another_account()
+    {
+        var req = await _client.GetAsync("/api/account/register/requirements");
+        var legal = await req.Content.ReadFromJsonAsync<RequirementsDto>();
+        Assert.NotNull(legal);
+
+        var email = $"dup-{Guid.NewGuid():N}@test.local";
+        var register = await _client.PostAsJsonAsync(
+            "/api/account/register",
+            new
+            {
+                name = "Duplicata",
+                email,
+                password = "RegisterPass123!",
+                phoneNumber = (string?)"11",
+                acceptedLegalDocumentVersionIds = new[] { legal!.TermsOfUseVersionId, legal.PrivacyPolicyVersionId },
+            });
+        register.EnsureSuccessStatusCode();
+        var auth = await register.Content.ReadFromJsonAsync<AuthResponseDto>();
+        using var put = new HttpRequestMessage(HttpMethod.Put, "/api/account/profile");
+        put.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth!.AccessToken);
+        // Mesmo CPF do usuário de seed (member) — deve conflitar.
+        put.Content = JsonContent.Create(
+            new
+            {
+                document = (string?)"111.444.777-35",
+                birthDate = (DateOnly?)new DateOnly(1992, 3, 3),
+                photoUrl = (string?)null,
+                address = (string?)"B",
+            });
+        var putRes = await _client.SendAsync(put);
+        Assert.Equal(HttpStatusCode.Conflict, putRes.StatusCode);
+        var err = await putRes.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("cpf_already_in_use", err.GetProperty("error").GetString());
     }
 
     [Fact]

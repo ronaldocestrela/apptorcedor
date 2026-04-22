@@ -36,3 +36,25 @@ public sealed record MyProfileUpsertDto(
     DateOnly? BirthDate,
     string? PhotoUrl,
     string? Address);
+
+public enum ProfileUpsertError
+{
+    UserNotFound,
+    InvalidDocument,
+    DocumentAlreadyInUse,
+}
+
+/// <summary>Resultado de criação/atualização de perfil (CPF e unicidade no <c>Document</c>).</summary>
+public sealed record ProfileUpsertResult(bool Succeeded, ProfileUpsertError? Error, IReadOnlyList<string> Messages)
+{
+    public static ProfileUpsertResult Ok() => new(true, null, []);
+
+    public static ProfileUpsertResult NotFound() =>
+        new(false, ProfileUpsertError.UserNotFound, ["Usuário não encontrado."]);
+
+    public static ProfileUpsertResult InvalidDocument(string message = "CPF inválido.") =>
+        new(false, ProfileUpsertError.InvalidDocument, [message]);
+
+    public static ProfileUpsertResult DocumentAlreadyInUse() =>
+        new(false, ProfileUpsertError.DocumentAlreadyInUse, ["Este CPF já está cadastrado."]);
+}

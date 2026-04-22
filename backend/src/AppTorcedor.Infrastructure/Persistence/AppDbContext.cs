@@ -262,6 +262,10 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             entity.Property(x => x.Address).HasMaxLength(2048);
             entity.Property(x => x.AdministrativeNote).HasMaxLength(2000);
             entity
+                .HasIndex(x => x.Document)
+                .IsUnique()
+                .HasFilter("[Document] IS NOT NULL");
+            entity
                 .HasOne<ApplicationUser>()
                 .WithOne()
                 .HasForeignKey<UserProfileRecord>(x => x.UserId)

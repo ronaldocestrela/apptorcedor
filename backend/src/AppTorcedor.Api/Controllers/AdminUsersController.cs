@@ -1,6 +1,7 @@
 using AppTorcedor.Api.Authorization;
 using AppTorcedor.Api.Contracts;
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.Modules.Account;
 using AppTorcedor.Application.Modules.Users.Commands.SetUserAccountActive;
 using AppTorcedor.Application.Modules.Users.Commands.UpsertAdminUserProfile;
 using AppTorcedor.Application.Modules.Users.Queries.GetAdminUserDetail;
@@ -80,9 +81,24 @@ public sealed class AdminUsersController(IMediator mediator) : ControllerBase
             body.PhotoUrl,
             body.Address,
             body.AdministrativeNote);
-        var ok = await mediator
+        var result = await mediator
             .Send(new UpsertAdminUserProfileCommand(userId, patch), cancellationToken)
             .ConfigureAwait(false);
-        return ok ? NoContent() : NotFound();
+        return MapProfileUpsert(result);
+    }
+
+    private static IActionResult MapProfileUpsert(ProfileUpsertResult result)
+    {
+        if (result.Succeeded)
+            return new NoContentResult();
+        return result.Error switch
+        {
+            ProfileUpsertError.UserNotFound => new NotFoundResult(),
+            ProfileUpsertError.InvalidDocument => new BadRequestObjectResult(
+                new { error = "cpf_invalid", errors = result.Messages }),
+            ProfileUpsertError.DocumentAlreadyInUse => new ConflictObjectResult(
+                new { error = "cpf_already_in_use" }),
+            _ => new BadRequestObjectResult(new { error = "profile_update_failed" }),
+        };
     }
 }

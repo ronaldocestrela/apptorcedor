@@ -198,16 +198,14 @@ public sealed class AccountController(
         var userId = GetUserIdOrDefault();
         if (userId is null)
             return Unauthorized();
-        var ok = await mediator
+        var result = await mediator
             .Send(
                 new UpsertMyProfileCommand(
                     userId.Value,
                     new MyProfileUpsertDto(request.Document, request.BirthDate, request.PhotoUrl, request.Address)),
                 cancellationToken)
             .ConfigureAwait(false);
-        if (!ok)
-            return NotFound();
-        return NoContent();
+        return MapProfileUpsert(result);
     }
 
     [HttpPost("profile/photo")]
@@ -231,13 +229,13 @@ public sealed class AccountController(
         if (url is null)
             return BadRequest();
 
-        var ok = await mediator
+        var profileResult = await mediator
             .Send(
                 new UpsertMyProfileCommand(userId.Value, new MyProfileUpsertDto(null, null, url, null)),
                 cancellationToken)
             .ConfigureAwait(false);
-        if (!ok)
-            return NotFound();
+        if (!profileResult.Succeeded)
+            return MapProfileUpsertForTypedResult<ProfilePhotoUploadResponse>(profileResult);
 
         if (photoStorage.ShouldDeletePreviousAfterReplace(previousPhotoUrl, url))
         {
@@ -252,6 +250,32 @@ public sealed class AccountController(
         }
 
         return Ok(new ProfilePhotoUploadResponse(url));
+    }
+
+    private IActionResult MapProfileUpsert(ProfileUpsertResult result)
+    {
+        if (result.Succeeded)
+            return new NoContentResult();
+        return result.Error switch
+        {
+            ProfileUpsertError.UserNotFound => NotFound(),
+            ProfileUpsertError.InvalidDocument => BadRequest(new { error = "cpf_invalid", errors = result.Messages }),
+            ProfileUpsertError.DocumentAlreadyInUse => Conflict(new { error = "cpf_already_in_use" }),
+            _ => BadRequest(new { error = "profile_update_failed" }),
+        };
+    }
+
+    private ActionResult<T> MapProfileUpsertForTypedResult<T>(ProfileUpsertResult result)
+    {
+        if (result.Succeeded)
+            throw new InvalidOperationException("Expected failed profile result.");
+        return result.Error switch
+        {
+            ProfileUpsertError.UserNotFound => NotFound(),
+            ProfileUpsertError.InvalidDocument => BadRequest(new { error = "cpf_invalid", errors = result.Messages }),
+            ProfileUpsertError.DocumentAlreadyInUse => Conflict(new { error = "cpf_already_in_use" }),
+            _ => BadRequest(new { error = "profile_update_failed" }),
+        };
     }
 
     private Guid? GetUserIdOrDefault()

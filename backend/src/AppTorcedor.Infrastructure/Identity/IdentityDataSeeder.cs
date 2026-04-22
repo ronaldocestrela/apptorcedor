@@ -333,7 +333,7 @@ public static class IdentityDataSeeder
                 new UserProfileRecord
                 {
                     UserId = TestingSeedConstants.SampleMemberUserId,
-                    Document = "12345678901",
+                    Document = TestingSeedConstants.SampleMemberCpf,
                     BirthDate = new DateOnly(1995, 5, 15),
                     PhotoUrl = null,
                     Address = "Rua do Estádio, 100",

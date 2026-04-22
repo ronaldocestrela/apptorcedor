@@ -1,4 +1,5 @@
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.Modules.Account;
 using AppTorcedor.Application.Modules.Users.Commands.SetUserAccountActive;
 using AppTorcedor.Application.Modules.Users.Commands.UpsertAdminUserProfile;
 using AppTorcedor.Application.Modules.Users.Queries.GetAdminUserDetail;
@@ -52,10 +53,10 @@ public sealed class AdminUsersHandlersTests
     {
         var id = Guid.NewGuid();
         var patch = new AdminUserProfileUpsertDto("123", new DateOnly(1990, 1, 2), null, "Rua A", "note");
-        var fake = new FakeUserAdministrationPort { UpsertResult = true };
+        var fake = new FakeUserAdministrationPort { UpsertResult = ProfileUpsertResult.Ok() };
         var handler = new UpsertAdminUserProfileCommandHandler(fake);
         var ok = await handler.Handle(new UpsertAdminUserProfileCommand(id, patch), CancellationToken.None);
-        Assert.True(ok);
+        Assert.True(ok.Succeeded);
         Assert.Single(fake.UpsertCalls);
         Assert.Equal(id, fake.UpsertCalls[0].UserId);
         Assert.Equal("123", fake.UpsertCalls[0].Patch.Document);
@@ -69,7 +70,7 @@ public sealed class AdminUsersHandlersTests
         public List<(Guid UserId, AdminUserProfileUpsertDto Patch)> UpsertCalls { get; } = [];
 
         public bool SetActiveResult { get; init; }
-        public bool UpsertResult { get; init; }
+        public ProfileUpsertResult UpsertResult { get; init; } = ProfileUpsertResult.Ok();
 
         public Task<AdminUserListPageDto> ListUsersAsync(
             string? search,
@@ -94,7 +95,10 @@ public sealed class AdminUsersHandlersTests
             return Task.FromResult(SetActiveResult);
         }
 
-        public Task<bool> UpsertProfileAsync(Guid userId, AdminUserProfileUpsertDto patch, CancellationToken cancellationToken = default)
+        public Task<ProfileUpsertResult> UpsertProfileAsync(
+            Guid userId,
+            AdminUserProfileUpsertDto patch,
+            CancellationToken cancellationToken = default)
         {
             UpsertCalls.Add((userId, patch));
             return Task.FromResult(UpsertResult);

@@ -1,4 +1,6 @@
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.Modules.Account;
+using AppTorcedor.Application.Validation;
 using AppTorcedor.Identity;
 using AppTorcedor.Infrastructure.Entities;
 using AppTorcedor.Infrastructure.Persistence;
@@ -134,10 +136,13 @@ public sealed class UserAdministrationService(
         return update.Succeeded;
     }
 
-    public async Task<bool> UpsertProfileAsync(Guid userId, AdminUserProfileUpsertDto patch, CancellationToken cancellationToken = default)
+    public async Task<ProfileUpsertResult> UpsertProfileAsync(
+        Guid userId,
+        AdminUserProfileUpsertDto patch,
+        CancellationToken cancellationToken = default)
     {
         if (!await db.Users.AnyAsync(u => u.Id == userId, cancellationToken).ConfigureAwait(false))
-            return false;
+            return ProfileUpsertResult.NotFound();
 
         var entity = await db.UserProfiles.FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken).ConfigureAwait(false);
         if (entity is null)
@@ -147,7 +152,23 @@ public sealed class UserAdministrationService(
         }
 
         if (patch.Document is not null)
-            entity.Document = string.IsNullOrWhiteSpace(patch.Document) ? null : patch.Document.Trim();
+        {
+            if (string.IsNullOrWhiteSpace(patch.Document))
+                entity.Document = null;
+            else if (!CpfNumber.TryParse(patch.Document, out var normalized))
+                return ProfileUpsertResult.InvalidDocument();
+            else
+            {
+                var taken = await db.UserProfiles
+                    .AsNoTracking()
+                    .AnyAsync(p => p.Document == normalized && p.UserId != userId, cancellationToken)
+                    .ConfigureAwait(false);
+                if (taken)
+                    return ProfileUpsertResult.DocumentAlreadyInUse();
+                entity.Document = normalized;
+            }
+        }
+
         if (patch.BirthDate is not null)
             entity.BirthDate = patch.BirthDate;
         if (patch.PhotoUrl is not null)
@@ -157,7 +178,15 @@ public sealed class UserAdministrationService(
         if (patch.AdministrativeNote is not null)
             entity.AdministrativeNote = string.IsNullOrWhiteSpace(patch.AdministrativeNote) ? null : patch.AdministrativeNote.Trim();
 
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return true;
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateException ex) when (SqlServerUniqueIndexViolation.IsUniqueConstraintOnSave(ex))
+        {
+            return ProfileUpsertResult.DocumentAlreadyInUse();
+        }
+
+        return ProfileUpsertResult.Ok();
     }
 }

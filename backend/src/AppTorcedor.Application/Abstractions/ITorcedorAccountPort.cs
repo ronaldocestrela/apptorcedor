@@ -9,7 +9,7 @@ public interface ITorcedorAccountPort
 
     Task<MyProfileDto?> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default);
 
-    Task<bool> UpsertProfileAsync(Guid userId, MyProfileUpsertDto patch, CancellationToken cancellationToken = default);
+    Task<ProfileUpsertResult> UpsertProfileAsync(Guid userId, MyProfileUpsertDto patch, CancellationToken cancellationToken = default);
 
     /// <summary>True when profile is missing or required onboarding fields (e.g. document) are empty.</summary>
     Task<bool> RequiresProfileCompletionAsync(Guid userId, CancellationToken cancellationToken = default);

@@ -20,7 +20,7 @@ public sealed class RegisterTorcedorCommandHandlerTests
         public Task<MyProfileDto?> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
-        public Task<bool> UpsertProfileAsync(Guid userId, MyProfileUpsertDto patch, CancellationToken cancellationToken = default) =>
+        public Task<ProfileUpsertResult> UpsertProfileAsync(Guid userId, MyProfileUpsertDto patch, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
         public Task<bool> RequiresProfileCompletionAsync(Guid userId, CancellationToken cancellationToken = default) =>

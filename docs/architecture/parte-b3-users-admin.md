@@ -6,7 +6,7 @@ Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B
 
 | Tabela | Descrição |
 |--------|-----------|
-| `UserProfiles` | 1:1 com `AspNetUsers` (`UserId` PK/FK): `Document`, `BirthDate`, `PhotoUrl`, `Address`, `AdministrativeNote`. |
+| `UserProfiles` | 1:1 com `AspNetUsers` (`UserId` PK/FK): `Document` (CPF normalizado, único quando não nulo; índice filtrado), `BirthDate`, `PhotoUrl`, `Address`, `AdministrativeNote`. |
 
 Migração EF: `PartB3UserProfiles` em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
 
@@ -27,7 +27,7 @@ Base: `api/admin/users` (JWT + política por permissão). Implementação: Media
 | PATCH | `/api/admin/users/{userId}/active` | `Usuarios.Editar` |
 | PUT | `/api/admin/users/{userId}/profile` | `Usuarios.Editar` |
 
-Corpo do PATCH: `{ "isActive": true }`. Corpo do PUT (campos opcionais; `null` ou omitido = não alterar; string vazia limpa o campo texto): `document`, `birthDate`, `photoUrl`, `address`, `administrativeNote`.
+Corpo do PATCH: `{ "isActive": true }`. Corpo do PUT (campos opcionais; `null` ou omitido = não alterar; string vazia limpa o campo texto): `document`, `birthDate`, `photoUrl`, `address`, `administrativeNote`. O campo `document` segue a mesma regra do torcedor: **só CPF** válido (módulo 11), **normalizado** a 11 dígitos, **único** na tabela (erros `cpf_invalid` / `cpf_already_in_use` como no C.1).
 
 ## Regras de negócio
 
