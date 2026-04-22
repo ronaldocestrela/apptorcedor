@@ -31,6 +31,16 @@ public sealed class RegisterTorcedorCommandHandlerTests
             IReadOnlyList<Guid> acceptedLegalDocumentVersionIds,
             CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
+
+        public Task<RegisterTorcedorResult> RegisterGoogleUserAsync(
+            Guid userId,
+            string email,
+            string name,
+            bool emailVerified,
+            string googleSubject,
+            IReadOnlyList<Guid> acceptedLegalDocumentVersionIds,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
     }
 
     [Fact]

@@ -7,6 +7,16 @@ public interface ITorcedorAccountPort
 {
     Task<RegisterTorcedorResult> RegisterAsync(RegisterTorcedorRequest request, CancellationToken cancellationToken = default);
 
+    /// <summary>Creates a torcedor account linked to Google with published legal consents (atomic; same rules as <see cref="RegisterAsync"/>).</summary>
+    Task<RegisterTorcedorResult> RegisterGoogleUserAsync(
+        Guid userId,
+        string email,
+        string name,
+        bool emailVerified,
+        string googleSubject,
+        IReadOnlyList<Guid> acceptedLegalDocumentVersionIds,
+        CancellationToken cancellationToken = default);
+
     Task<MyProfileDto?> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task<ProfileUpsertResult> UpsertProfileAsync(Guid userId, MyProfileUpsertDto patch, CancellationToken cancellationToken = default);

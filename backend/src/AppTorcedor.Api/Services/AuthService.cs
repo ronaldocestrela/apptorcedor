@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using System.Security.Cryptography;
 using AppTorcedor.Api.Contracts;
 using AppTorcedor.Api.Options;
 using AppTorcedor.Application.Abstractions;
@@ -120,42 +119,22 @@ public sealed class AuthService(
         if (consents.Count == 0)
             return null;
 
-        user = new ApplicationUser
-        {
-            Id = Guid.NewGuid(),
-            UserName = validated.Email,
-            Email = validated.Email,
-            EmailConfirmed = validated.EmailVerified,
-            Name = string.IsNullOrWhiteSpace(validated.Name) ? validated.Email.Split('@')[0] : validated.Name.Trim(),
-            IsActive = true,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
+        var displayName = string.IsNullOrWhiteSpace(validated.Name) ? validated.Email.Split('@')[0] : validated.Name.Trim();
+        var registered = await torcedorAccount.RegisterGoogleUserAsync(
+            Guid.NewGuid(),
+            validated.Email,
+            displayName,
+            validated.EmailVerified,
+            validated.Subject,
+            consents,
+            cancellationToken).ConfigureAwait(false);
 
-        var randomPassword = GenerateInternalPassword();
-        var create = await userManager.CreateAsync(user, randomPassword).ConfigureAwait(false);
-        if (!create.Succeeded)
+        if (!registered.Succeeded)
             return null;
 
-        var addRole = await userManager.AddToRoleAsync(user, SystemRoles.Torcedor).ConfigureAwait(false);
-        if (!addRole.Succeeded)
-        {
-            await userManager.DeleteAsync(user).ConfigureAwait(false);
+        user = await userManager.FindByIdAsync(registered.UserId!.Value.ToString()).ConfigureAwait(false);
+        if (user is null || !user.IsActive)
             return null;
-        }
-
-        if (!await torcedorAccount.RecordInitialConsentsAsync(user.Id, consents, cancellationToken).ConfigureAwait(false))
-        {
-            await userManager.DeleteAsync(user).ConfigureAwait(false);
-            return null;
-        }
-
-        var loginResult = await userManager.AddLoginAsync(user, new UserLoginInfo("Google", validated.Subject, "Google"))
-            .ConfigureAwait(false);
-        if (!loginResult.Succeeded)
-        {
-            await userManager.DeleteAsync(user).ConfigureAwait(false);
-            return null;
-        }
 
         return await IssueSessionAsync(user, cancellationToken).ConfigureAwait(false);
     }
@@ -173,12 +152,5 @@ public sealed class AuthService(
             ? existingRefreshPlain
             : (await refreshTokens.CreateAsync(user.Id, refreshLifetime, cancellationToken).ConfigureAwait(false));
         return new AuthResponse(access, refresh, expiresIn, roles.ToList());
-    }
-
-    private static string GenerateInternalPassword()
-    {
-        var bytes = RandomNumberGenerator.GetBytes(32);
-        var b64 = Convert.ToBase64String(bytes);
-        return $"{b64}Aa1!";
     }
 }

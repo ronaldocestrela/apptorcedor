@@ -22,6 +22,7 @@ using AppTorcedor.Infrastructure.Services.Branding;
 using AppTorcedor.Infrastructure.Services.Cloudinary;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -62,6 +63,9 @@ public static class DependencyInjection
                 {
                     var inMemoryName = configuration["Testing:InMemoryDatabaseName"] ?? "AppTorcedor";
                     options.UseInMemoryDatabase(inMemoryName);
+                    // InMemory não suporta transações; ignoramos o warning para permitir o mesmo fluxo atômico
+                    // usado em SQL Server (teste de rollback real fica em TorcedorAccountServiceRegisterTests com SQLite).
+                    options.ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning));
                 }
                 else
                 {
