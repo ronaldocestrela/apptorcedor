@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { listAdminSupportTickets } from './adminApi'
+import { fetchAdminSupportAttachmentBlob, listAdminSupportTickets } from './adminApi'
 
 vi.mock('../../../shared/api/http', () => ({
   api: {
@@ -37,5 +37,14 @@ describe('adminApi support (B.11)', () => {
         pageSize: 10,
       },
     })
+  })
+
+  it('fetchAdminSupportAttachmentBlob GETs path with blob response', async () => {
+    const { api } = await import('../../../shared/api/http')
+    const blob = new Blob(['y'], { type: 'application/pdf' })
+    vi.mocked(api.get).mockResolvedValue({ data: blob })
+    const out = await fetchAdminSupportAttachmentBlob('/api/admin/support/tickets/t1/attachments/x')
+    expect(api.get).toHaveBeenCalledWith('/api/admin/support/tickets/t1/attachments/x', { responseType: 'blob' })
+    expect(out).toBe(blob)
   })
 })

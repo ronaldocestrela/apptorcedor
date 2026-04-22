@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApplicationPermissions } from '../../../shared/auth/applicationPermissions'
 import { PermissionGate } from '../../auth/PermissionGate'
+import { SupportTicketAttachmentList } from '../../../shared/SupportTicketAttachmentList'
 import {
   assignAdminSupportTicket,
   changeAdminSupportTicketStatus,
   createAdminSupportTicket,
   downloadAdminSupportAttachment,
+  fetchAdminSupportAttachmentBlob,
   getAdminSupportTicket,
   listAdminSupportTickets,
   replyAdminSupportTicket,
@@ -354,28 +356,17 @@ export function SupportTicketsAdminPage() {
                     {m.isInternal ? '[interno] ' : ''}
                     {m.body}
                     {m.attachments?.length ? (
-                      <ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>
-                        {m.attachments.map((a) => (
-                          <li key={a.attachmentId}>
-                            <button
-                              type="button"
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#0645ad',
-                                cursor: 'pointer',
-                                textDecoration: 'underline',
-                                padding: 0,
-                                font: 'inherit',
-                              }}
-                              onClick={() =>
-                                void downloadAdminSupportAttachment(a.downloadPath, a.fileName).catch(() => {})}
-                            >
-                              {a.fileName}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
+                      <SupportTicketAttachmentList
+                        listClassName="support-attachment-list--light"
+                        fetchBlob={fetchAdminSupportAttachmentBlob}
+                        downloadFile={downloadAdminSupportAttachment}
+                        attachments={m.attachments.map(a => ({
+                          id: a.attachmentId,
+                          fileName: a.fileName,
+                          contentType: a.contentType,
+                          downloadPath: a.downloadPath,
+                        }))}
+                      />
                     ) : null}
                   </li>
                 ))}

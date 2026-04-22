@@ -4,11 +4,13 @@ import { ArrowLeft } from 'lucide-react'
 import {
   cancelMySupportTicket,
   downloadMySupportAttachment,
+  fetchMySupportAttachmentBlob,
   getMySupportTicket,
   reopenMySupportTicket,
   replyMySupportTicket,
   type TorcedorSupportDetail,
 } from '../features/torcedor/torcedorSupportApi'
+import { SupportTicketAttachmentList } from '../shared/SupportTicketAttachmentList'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
 import './AppShell.css'
 
@@ -201,25 +203,16 @@ export function SupportTicketDetailPage() {
                   {new Date(m.createdAtUtc).toLocaleString('pt-BR')}
                 </p>
                 {m.attachments.length > 0 ? (
-                  <ul className="support-msg-card__attachments">
-                    {m.attachments.map(a => (
-                      <li key={a.attachmentId}>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void downloadMySupportAttachment(a.downloadUrl, a.fileName).catch(() => {
-                              /* optional toast */
-                            })}
-                        >
-                          {a.fileName}
-                        </button>
-                        {' '}
-                        (
-                        {a.contentType}
-                        )
-                      </li>
-                    ))}
-                  </ul>
+                  <SupportTicketAttachmentList
+                    fetchBlob={fetchMySupportAttachmentBlob}
+                    downloadFile={downloadMySupportAttachment}
+                    attachments={m.attachments.map(a => ({
+                      id: a.attachmentId,
+                      fileName: a.fileName,
+                      contentType: a.contentType,
+                      downloadPath: a.downloadUrl,
+                    }))}
+                  />
                 ) : null}
               </li>
             ))}

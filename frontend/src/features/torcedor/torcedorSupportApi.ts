@@ -130,10 +130,16 @@ export async function reopenMySupportTicket(ticketId: string): Promise<void> {
   await api.post(`/api/support/tickets/${encodeURIComponent(ticketId)}/reopen`)
 }
 
+/** GET with JWT; response body as Blob (e.g. preview). Paths like /api/support/tickets/.../attachments/... */
+export async function fetchMySupportAttachmentBlob(downloadPath: string): Promise<Blob> {
+  const res = await api.get<Blob>(downloadPath, { responseType: 'blob' })
+  return res.data
+}
+
 /** GET with JWT; triggers browser download (paths from API are like /api/support/tickets/.../attachments/...). */
 export async function downloadMySupportAttachment(downloadPath: string, fileName: string): Promise<void> {
-  const res = await api.get(downloadPath, { responseType: 'blob' })
-  const blobUrl = URL.createObjectURL(res.data)
+  const blob = await fetchMySupportAttachmentBlob(downloadPath)
+  const blobUrl = URL.createObjectURL(blob)
   try {
     const a = document.createElement('a')
     a.href = blobUrl

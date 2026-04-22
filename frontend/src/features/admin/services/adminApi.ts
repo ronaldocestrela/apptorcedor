@@ -1291,9 +1291,14 @@ export async function changeAdminSupportTicketStatus(
   await api.post(`/api/admin/support/tickets/${encodeURIComponent(ticketId)}/status`, body)
 }
 
+export async function fetchAdminSupportAttachmentBlob(downloadPath: string): Promise<Blob> {
+  const res = await api.get<Blob>(downloadPath, { responseType: 'blob' })
+  return res.data
+}
+
 export async function downloadAdminSupportAttachment(downloadPath: string, fileName: string): Promise<void> {
-  const res = await api.get(downloadPath, { responseType: 'blob' })
-  const blobUrl = URL.createObjectURL(res.data)
+  const blob = await fetchAdminSupportAttachmentBlob(downloadPath)
+  const blobUrl = URL.createObjectURL(blob)
   try {
     const a = document.createElement('a')
     a.href = blobUrl

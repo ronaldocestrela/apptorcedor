@@ -53,14 +53,17 @@ Limite de corpo da requisição: 32 MB no controller. Tipos de anexo aceitos: `i
 ## Frontend (SPA)
 
 - Rotas: `/support`, `/support/:ticketId`.
-- Cliente: `frontend/src/features/torcedor/torcedorSupportApi.ts` (anexos via `FormData`; download via `blob` + JWT pelo Axios).
-- Backoffice: mensagens exibem anexos com `downloadAdminSupportAttachment` (`adminApi.ts`).
+- Cliente: `frontend/src/features/torcedor/torcedorSupportApi.ts` (anexos via `FormData`; download via `blob` + JWT pelo Axios; `fetchMySupportAttachmentBlob` para preview).
+- Visualização: anexos com `image/*` na mensagem exibem **miniatura**; clique abre **modal (lightbox)**; botão **Baixar** mantém o download. PDF e demais tipos continuam só com controle de download.
+- UI compartilhada: `frontend/src/shared/SupportTicketAttachmentList.tsx` + `supportTicketAttachments.css` (tema torcedor); no admin, `listClassName` com variante clara.
+- Backoffice: `frontend/src/features/admin/services/adminApi.ts` — `fetchAdminSupportAttachmentBlob` e `downloadAdminSupportAttachment` (`adminApi.ts`).
 
 ## Testes
 
 - `backend/tests/AppTorcedor.Application.Tests/SupportTorcedorHandlersTests.cs`
 - `backend/tests/AppTorcedor.Api.Tests/PartC6SupportTorcedorTests.cs`
-- `frontend/src/features/torcedor/torcedorSupportApi.test.ts`
+- `frontend/src/features/torcedor/torcedorSupportApi.test.ts` (incl. `fetchMySupportAttachmentBlob`)
+- `frontend/src/shared/supportTicketAttachmentContent.test.ts`, `frontend/src/shared/SupportTicketAttachmentList.test.tsx`
 
 ## Referências
 

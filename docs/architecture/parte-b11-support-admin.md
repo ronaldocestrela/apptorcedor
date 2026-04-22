@@ -48,13 +48,14 @@ Enums JSON em string (configuração global da API com `JsonStringEnumConverter`
 ## Frontend
 
 - Rota **`/admin/support`** — permissão `Chamados.Responder`; incluída em `ADMIN_AREA_PERMISSIONS` para liberar o shell admin a perfil só de atendimento.
-- Serviços em `frontend/src/features/admin/services/adminApi.ts` (funções `*AdminSupport*`).
+- Serviços em `frontend/src/features/admin/services/adminApi.ts` (funções `*AdminSupport*`, incluindo `fetchAdminSupportAttachmentBlob` para miniatura e modal de imagens no detalhe do chamado).
+- Nas mensagens do detalhe, anexos de imagem usam o mesmo componente de lista que o torcedor (`SupportTicketAttachmentList`), com pele clara no admin.
 
 ## Testes
 
 - `backend/tests/AppTorcedor.Application.Tests/SupportAdminHandlersTests.cs` — delegação aos ports.
 - `backend/tests/AppTorcedor.Api.Tests/PartB11SupportAdminTests.cs` — autorização, fluxo completo, conflito em resposta a fechado, transição inválida.
-- `frontend/src/features/admin/services/adminApi.support.test.ts` — chamada HTTP da listagem.
+- `frontend/src/features/admin/services/adminApi.support.test.ts` — chamada HTTP da listagem e `fetchAdminSupportAttachmentBlob`.
 
 ## Observações
 

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   cancelMySupportTicket,
+  fetchMySupportAttachmentBlob,
   getMySupportTicket,
   listMySupportTickets,
   reopenMySupportTicket,
@@ -40,5 +41,13 @@ describe('torcedorSupportApi', () => {
     vi.mocked(api.post).mockResolvedValue({ data: {} })
     await reopenMySupportTicket('tid')
     expect(api.post).toHaveBeenCalledWith('/api/support/tickets/tid/reopen')
+  })
+
+  it('fetchMySupportAttachmentBlob GETs path with blob response', async () => {
+    const blob = new Blob(['x'], { type: 'image/png' })
+    vi.mocked(api.get).mockResolvedValue({ data: blob })
+    const out = await fetchMySupportAttachmentBlob('/api/support/tickets/t/attachments/a1')
+    expect(api.get).toHaveBeenCalledWith('/api/support/tickets/t/attachments/a1', { responseType: 'blob' })
+    expect(out).toBe(blob)
   })
 })
