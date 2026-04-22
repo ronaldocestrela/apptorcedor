@@ -49,9 +49,14 @@ Este documento descreve **todas as configurações disponíveis** no sistema, or
 
 | Chave | Variável de Ambiente | Padrão | Descrição |
 |-------|----------------------|--------|-----------|
-| `Cors:AllowedOrigins` | `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, ... | `http://localhost:5173` | Lista de origens HTTP(S) permitidas para chamadas da SPA (React). Em produção, deve conter a URL pública do frontend. Múltiplas origens usam sufixo `__0`, `__1`, etc. |
+| `Cors:AllowedOrigins` | `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, ... | `http://localhost:5173` | Lista **base** de origens HTTP(S) permitidas (deploy). Em produção, deve conter a URL pública do frontend. Múltiplas origens usam sufixo `__0`, `__1`, etc. |
+| `Cors:DynamicOriginsCacheSeconds` | `Cors__DynamicOriginsCacheSeconds` | `60` | Intervalo em segundos para reutilizar em memória a leitura de `Cors.AllowedOriginsExtra` (Tipo B). Use `0` para forçar releitura a cada avaliação de CORS (útil em testes; evite em produção por pressão no banco). |
 
-**Impacto:** origens não listadas recebem erro CORS no browser e não conseguem chamar a API.
+**Comportamento híbrido:** a API **une** as origens do Tipo A (`Cors:AllowedOrigins`) com as origens extras administráveis no banco — chave **`Cors.AllowedOriginsExtra`** (ver §B.3). Se **ambas** as fontes estiverem vazias, o comportamento permanece o anterior: CORS permissivo (`AllowAnyOrigin`) para compatibilidade com ambientes sem SPA explícita.
+
+**Validação:** apenas URLs absolutas `http` ou `https` (scheme + host + porta); sem path, query ou fragmento.
+
+**Impacto:** origens de browser fora da união (Tipo A ∪ Tipo B) não recebem `Access-Control-Allow-Origin` para o preflight/chamadas CORS.
 
 ---
 
@@ -241,6 +246,30 @@ Define o **prazo de arrependimento** em dias que o torcedor tem para cancelar a 
 
 ---
 
+### B.3 — CORS — origens extras (sem redeploy)
+
+#### `Cors.AllowedOriginsExtra`
+
+| Atributo | Detalhe |
+|----------|---------|
+| **Tipo do valor** | String — preferencialmente JSON array de URLs, ex.: `["https://app.exemplo.com","https://www.exemplo.com"]`. Alternativas aceitas: lista separada por vírgulas, ponto e vírgula ou quebras de linha. |
+| **Padrão (fallback)** | *(ausente)* — nenhuma origem extra; só vale o Tipo A (`Cors:AllowedOrigins`). |
+| **Usado em** | Política CORS `"Spa"` na API (`SetIsOriginAllowed`), em conjunto com `Cors:AllowedOrigins`. |
+
+**O que faz:**
+
+Adiciona origens permitidas **além** das definidas em deploy (`Cors__AllowedOrigins__*`), útil para incluir `www` vs apex, homologação ou parceiros sem alterar `api.env`/Jenkins.
+
+**Precedência:** a origem do request é aceita se existir em **qualquer** das fontes (união). A alteração passa a valer após o próximo intervalo de cache (`Cors:DynamicOriginsCacheSeconds`, padrão 60s), salvo valor `0`.
+
+**Exemplos:**
+
+```
+"Cors.AllowedOriginsExtra" = '["https://sociofeirafc.com.br","https://www.sociofeirafc.com.br"]'
+```
+
+---
+
 ## Comportamentos Automáticos (não configuráveis pelo admin)
 
 Os itens abaixo são comportamentos fixos no código que operam de forma periódica sem configuração administrativa:
@@ -277,6 +306,8 @@ ASPNETCORE_URLS=http://127.0.0.1:5031
 
 # CORS (origem da SPA)
 Cors__AllowedOrigins__0=https://app.seudominio.com.br
+# Opcional: cache da leitura de Cors.AllowedOriginsExtra no banco (segundos)
+# Cors__DynamicOriginsCacheSeconds=60
 
 # Google Login (opcional)
 Google__Auth__ClientId=xxx.apps.googleusercontent.com

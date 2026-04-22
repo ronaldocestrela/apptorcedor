@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
 using AppTorcedor.Api.Authorization;
+using AppTorcedor.Api.Configuration;
 using AppTorcedor.Api.Middleware;
 using AppTorcedor.Api.Options;
 using AppTorcedor.Api.Services;
@@ -13,9 +14,11 @@ using AppTorcedor.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -89,19 +92,8 @@ builder.Services
     .AddDbContextCheck<AppDbContext>("database", tags: ["ready"])
     .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"]);
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-builder.Services.AddCors(o =>
-{
-    o.AddPolicy(
-        "Spa",
-        p =>
-        {
-            if (allowedOrigins.Length == 0)
-                p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-            else
-                p.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod();
-        });
-});
+builder.Services.AddCors();
+builder.Services.AddSingleton<IConfigureOptions<CorsOptions>, SpaCorsOptionsConfigure>();
 
 var app = builder.Build();
 

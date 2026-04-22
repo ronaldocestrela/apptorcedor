@@ -15,6 +15,7 @@ using AppTorcedor.Infrastructure.Services.Membership;
 using AppTorcedor.Infrastructure.Services.News;
 using AppTorcedor.Infrastructure.Services.Plans;
 using AppTorcedor.Infrastructure.Services.Support;
+using AppTorcedor.Infrastructure.Services.Cors;
 using AppTorcedor.Infrastructure.Options;
 using AppTorcedor.Infrastructure.Services.Account;
 using AppTorcedor.Infrastructure.Services.Branding;
@@ -30,6 +31,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton<ICorsAllowlist, CorsAllowlist>();
+
         services.Configure<ProfilePhotoStorageOptions>(configuration.GetSection(ProfilePhotoStorageOptions.SectionName));
         services.Configure<TeamShieldStorageOptions>(configuration.GetSection(TeamShieldStorageOptions.SectionName));
         services.Configure<OpponentLogoStorageOptions>(configuration.GetSection(OpponentLogoStorageOptions.SectionName));
