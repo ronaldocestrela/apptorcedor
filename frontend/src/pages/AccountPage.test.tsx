@@ -61,6 +61,43 @@ describe('AccountPage', () => {
     vi.mocked(plansService.listPublished).mockReset()
   })
 
+  it('keeps account shell and perfil column structure for layout regression', async () => {
+    vi.mocked(subscriptionsService.getMySummary).mockResolvedValue({
+      hasMembership: true,
+      membershipId: 'm1',
+      membershipStatus: 'Ativo',
+      startDate: '2025-01-01T00:00:00Z',
+      endDate: null,
+      nextDueDate: '2025-02-01T12:00:00Z',
+      plan: { planId: 'p1', name: 'Gold', price: 50, billingCycle: 'Monthly', discountPercentage: 0 },
+      lastPayment: null,
+      digitalCard: null,
+    })
+    vi.mocked(plansService.listPublished).mockResolvedValue({
+      items: [
+        { planId: 'p1', name: 'Gold', price: 50, billingCycle: 'Monthly', discountPercentage: 0, summary: null, benefits: [] },
+      ],
+    })
+    const { container } = render(
+      <MemoryRouter>
+        <AccountPage />
+      </MemoryRouter>,
+    )
+    await waitFor(() => {
+      expect(screen.getByText('Sócio Torcedor')).toBeInTheDocument()
+    })
+    const root = container.querySelector('.account-root')
+    expect(root).toBeInTheDocument()
+    const main = root?.querySelector('main') as HTMLElement | null
+    expect(main).toBeInTheDocument()
+    expect(main?.className).toContain('app-shell')
+    expect(main?.className).toContain('app-shell--narrow')
+    expect(main?.className).toContain('account-page')
+    expect(main?.className).toContain('account-page--perfil')
+    expect(main?.querySelector('.account-page__perfil-top')).toBeInTheDocument()
+    expect(main?.querySelector('.account-page__perfil-card')).toBeInTheDocument()
+  })
+
   it('shows subscription status when user has membership', async () => {
     const user = userEvent.setup()
     vi.mocked(subscriptionsService.getMySummary).mockResolvedValue({
