@@ -259,6 +259,47 @@ Define o **prazo de arrependimento** em dias que o torcedor tem para cancelar a 
 
 ---
 
+### B.2.1 — E-mail de boas-vindas (HTML editável)
+
+Modelo de e-mail enviado após cadastro (e-mail/senha ou Google). Implementação: [`WelcomeEmailComposer`](../../backend/src/AppTorcedor.Infrastructure/Services/Email/WelcomeEmailComposer.cs). Edição recomendada: painel `/admin/configurations`, bloco **E-mail — boas-vindas**.
+
+#### `Email.Welcome.Subject`
+
+| Atributo | Detalhe |
+|----------|---------|
+| **Tipo** | Texto livre (assunto) |
+| **Padrão (fallback)** | *(ausente)* — usa assunto fixo em código (`Bem-vindo ao sócio torcedor`) |
+| **Placeholder** | `{{Name}}` — substituído pelo nome de exibição (texto simples, não HTML) |
+
+#### `Email.Welcome.Html`
+
+| Atributo | Detalhe |
+|----------|---------|
+| **Tipo** | String HTML |
+| **Padrão (fallback)** | *(ausente ou rejeitado)* — template HTML embutido no código |
+| **Placeholders** | `{{Name}}` (nome escapado para HTML); `{{BannerImage}}` (bloco `<img>` opcional a partir de `Email.Welcome.ImageUrl`) |
+| **Segurança** | Conteúdo com `<script`, `javascript:`, ` onerror=`, ` onload=` é **rejeitado** e substituído pelo padrão |
+
+#### `Email.Welcome.ImageUrl`
+
+| Atributo | Detalhe |
+|----------|---------|
+| **Tipo** | URL absoluta `http` ou `https` pública (CDN, Cloudinary, etc.) |
+| **Padrão** | *(vazio)* — sem banner |
+| **Comportamento** | Se preenchido com URL válida e o HTML **não** contiver `{{BannerImage}}`, o `<img>` é **prefixado** ao corpo |
+
+**Exemplo de HTML:**
+
+```html
+{{BannerImage}}
+<p>Olá, {{Name}}!</p>
+<p>Obrigado por se cadastrar.</p>
+```
+
+**API:** as três chaves seguem o fluxo normal `PUT /api/admin/config/{key}` com `{ "value": "..." }`.
+
+---
+
 ### B.3 — CORS — origens extras (sem redeploy)
 
 #### `Cors.AllowedOriginsExtra`

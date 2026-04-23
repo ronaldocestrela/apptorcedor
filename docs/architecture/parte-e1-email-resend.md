@@ -53,15 +53,37 @@ Referência também em [`deploy/vps/api.env.example`](../../deploy/vps/api.env.e
 - `AppTorcedor.Infrastructure.Tests/Services/Email/MockEmailSenderTests.cs`
 - `AppTorcedor.Infrastructure.Tests/Services/Email/ResendEmailSenderTests.cs` (mock de `IResend`)
 - `AppTorcedor.Infrastructure.Tests/TorcedorAccountServiceRegisterTests.cs` — boas-vindas após `RegisterAsync` / `RegisterGoogleUserAsync` e resiliência quando o envio falha
+- `AppTorcedor.Infrastructure.Tests/Services/Email/WelcomeEmailComposerTests.cs` — placeholders, banner, rejeição de HTML suspeito, fallback
+- `AppTorcedor.Api.Tests/PartAGovernanceAndObservabilityTests.cs` — persistência das chaves `Email.Welcome.*` via `PUT /api/admin/config/{key}`
 
 Os testes de API fixam `Email:Provider=Mock` em [`AppWebApplicationFactory`](../../backend/tests/AppTorcedor.Api.Tests/AppWebApplicationFactory.cs) para evitar dependência de chaves Resend.
 
 ## Fluxo implementado: boas-vindas no cadastro
 
-Após **commit** bem-sucedido do registo do torcedor, [`TorcedorAccountService`](../../backend/src/AppTorcedor.Infrastructure/Services/Account/TorcedorAccountService.cs) chama `IEmailSender.SendAsync` com assunto **«Bem-vindo ao sócio torcedor»** e corpo HTML/texto simples (nome do utilizador escapado em HTML). Cobre:
+Após **commit** bem-sucedido do registo do torcedor, [`TorcedorAccountService`](../../backend/src/AppTorcedor.Infrastructure/Services/Account/TorcedorAccountService.cs) compõe a mensagem com [`IWelcomeEmailComposer`](../../backend/src/AppTorcedor.Application/Abstractions/IWelcomeEmailComposer.cs) / [`WelcomeEmailComposer`](../../backend/src/AppTorcedor.Infrastructure/Services/Email/WelcomeEmailComposer.cs) e chama `IEmailSender.SendAsync`. Cobre:
 
 - cadastro por formulário (`RegisterAsync`);
 - primeiro registo via Google (`RegisterGoogleUserAsync`).
+
+### Template administrável (Tipo B)
+
+Três chaves em `AppConfigurationEntries` (editáveis em `/admin/configurations`, secção *E-mail — boas-vindas*):
+
+| Chave | Uso |
+|-------|-----|
+| `Email.Welcome.Subject` | Assunto. Aceita `{{Name}}` (nome **não** escapado, apenas substituição de texto). |
+| `Email.Welcome.Html` | Corpo HTML. Placeholders: `{{Name}}` (nome **escapado** em HTML) e `{{BannerImage}}` (bloco `<img>` centrado quando `Email.Welcome.ImageUrl` for uma URL `http`/`https` absoluta válida). |
+| `Email.Welcome.ImageUrl` | URL pública da imagem (banner). Se o HTML não contiver `{{BannerImage}}`, o backend **prefixa** o bloco de imagem ao corpo. |
+
+**Fallback:** se assunto/HTML estiverem vazios, ou o HTML for considerado inválido/perigoso (`<script`, `javascript:`, atributos `onerror`/`onload`), ou a URL da imagem não for `http`/`https` absoluta, o sistema usa o template padrão embutido em código e regista aviso em log — **o cadastro não falha**.
+
+**Exemplo de HTML com banner explícito:**
+
+```html
+{{BannerImage}}
+<p>Olá, {{Name}}!</p>
+<p>Obrigado por se cadastrar no sócio torcedor.</p>
+```
 
 Falhas no envio são registadas com **`LogWarning`** e **não** falham o cadastro (utilizador já persistido).
 

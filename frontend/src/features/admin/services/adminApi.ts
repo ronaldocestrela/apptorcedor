@@ -1,5 +1,31 @@
 import { api } from '../../../shared/api/http'
 
+/** Chaves em `AppConfigurationEntries` para o e-mail de boas-vindas (alinhado ao backend `EmailWelcomeTemplateKeys`). */
+export const EMAIL_WELCOME_TEMPLATE_KEYS = {
+  Subject: 'Email.Welcome.Subject',
+  Html: 'Email.Welcome.Html',
+  ImageUrl: 'Email.Welcome.ImageUrl',
+} as const
+
+export const EMAIL_WELCOME_TEMPLATE_KEY_SET = new Set<string>(Object.values(EMAIL_WELCOME_TEMPLATE_KEYS))
+
+/**
+ * Valida URL de banner opcional: vazio é permitido; caso contrário deve ser `http:` ou `https:` absoluto.
+ * (O backend ainda revalida antes de injetar no HTML.)
+ */
+export function isValidWelcomeBannerImageUrl(raw: string): boolean {
+  const t = raw.trim()
+  if (t.length === 0)
+    return true
+  try {
+    const u = new URL(t)
+    return u.protocol === 'http:' || u.protocol === 'https:'
+  }
+  catch {
+    return false
+  }
+}
+
 /** Axios default is application/json; for FormData the browser must set multipart boundary. */
 function formDataMultipartTransform(body: unknown, headers: Record<string, string>) {
   if (body instanceof FormData)

@@ -1,4 +1,3 @@
-using System.Net;
 using System.Security.Cryptography;
 using AppTorcedor.Application.Abstractions;
 using AppTorcedor.Application.Modules.Account;
@@ -18,6 +17,7 @@ public sealed class TorcedorAccountService(
     IRegistrationLegalReadPort legalRead,
     ILgpdAdministrationPort lgpd,
     IEmailSender emailSender,
+    IWelcomeEmailComposer welcomeEmailComposer,
     ILogger<TorcedorAccountService> logger) : ITorcedorAccountPort
 {
     public async Task<RegisterTorcedorResult> RegisterAsync(RegisterTorcedorRequest request, CancellationToken cancellationToken = default)
@@ -273,14 +273,10 @@ public sealed class TorcedorAccountService(
         try
         {
             logger.LogInformation("E-mail de boas-vindas: iniciando para {Email}", toEmail);
-            var safeName = string.IsNullOrWhiteSpace(displayName) ? "Torcedor" : displayName.Trim();
-            const string subject = "Bem-vindo ao sócio torcedor";
-            var html =
-                $"<p>Olá, {WebUtility.HtmlEncode(safeName)}!</p><p>Obrigado por se cadastrar.</p>";
-            var text = $"Olá, {safeName}!\n\nObrigado por se cadastrar.";
-            await emailSender
-                .SendAsync(new EmailMessage(toEmail.Trim(), subject, html, text), cancellationToken)
+            var message = await welcomeEmailComposer
+                .ComposeWelcomeAsync(toEmail, displayName, cancellationToken)
                 .ConfigureAwait(false);
+            await emailSender.SendAsync(message, cancellationToken).ConfigureAwait(false);
             logger.LogInformation("E-mail de boas-vindas: envio concluído para {Email}", toEmail);
         }
         catch (Exception ex)

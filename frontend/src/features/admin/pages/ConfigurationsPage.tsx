@@ -4,6 +4,9 @@ import { hasPermission } from '../../../shared/auth/permissionUtils'
 import { useAuth } from '../../auth/AuthContext'
 import { PermissionGate } from '../../auth/PermissionGate'
 import {
+  EMAIL_WELCOME_TEMPLATE_KEYS,
+  EMAIL_WELCOME_TEMPLATE_KEY_SET,
+  isValidWelcomeBannerImageUrl,
   listConfigurations,
   updateConfiguration,
   uploadTeamShield,
@@ -24,6 +27,12 @@ export function ConfigurationsPage() {
   const [shieldBusy, setShieldBusy] = useState(false)
   const [shieldMessage, setShieldMessage] = useState<string | null>(null)
   const [shieldPreviewUrl, setShieldPreviewUrl] = useState<string | null>(null)
+  const [welcomeSubject, setWelcomeSubject] = useState('')
+  const [welcomeHtml, setWelcomeHtml] = useState('')
+  const [welcomeImageUrl, setWelcomeImageUrl] = useState('')
+  const [welcomeBannerUrlError, setWelcomeBannerUrlError] = useState<string | null>(null)
+  const [welcomeSaving, setWelcomeSaving] = useState(false)
+  const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null)
   const canEdit = hasPermission(user, ApplicationPermissions.ConfiguracoesEditar)
 
   const load = async () => {
@@ -41,6 +50,17 @@ export function ConfigurationsPage() {
   useEffect(() => {
     void load()
   }, [])
+
+  useEffect(() => {
+    const sub = rows.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.Subject)?.value ?? ''
+    const html = rows.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.Html)?.value ?? ''
+    const img = rows.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.ImageUrl)?.value ?? ''
+    setWelcomeSubject(sub)
+    setWelcomeHtml(html)
+    setWelcomeImageUrl(img)
+    setWelcomeBannerUrlError(null)
+    setWelcomeMessage(null)
+  }, [rows])
 
   useEffect(() => {
     if (!shieldFile) {
@@ -74,6 +94,32 @@ export function ConfigurationsPage() {
     }
   }
 
+  async function saveWelcomeTemplate() {
+    setWelcomeBannerUrlError(null)
+    setWelcomeMessage(null)
+    if (!isValidWelcomeBannerImageUrl(welcomeImageUrl)) {
+      setWelcomeBannerUrlError('Use uma URL absoluta http ou https (ou deixe em branco).')
+      return
+    }
+    setWelcomeSaving(true)
+    setError(null)
+    try {
+      await Promise.all([
+        updateConfiguration(EMAIL_WELCOME_TEMPLATE_KEYS.Subject, welcomeSubject),
+        updateConfiguration(EMAIL_WELCOME_TEMPLATE_KEYS.Html, welcomeHtml),
+        updateConfiguration(EMAIL_WELCOME_TEMPLATE_KEYS.ImageUrl, welcomeImageUrl.trim()),
+      ])
+      setWelcomeMessage('Modelo de e-mail de boas-vindas salvo.')
+      await load()
+    }
+    catch {
+      setError('Falha ao salvar modelo de e-mail.')
+    }
+    finally {
+      setWelcomeSaving(false)
+    }
+  }
+
   async function save(key: string) {
     setSaving(true)
     setError(null)
@@ -89,6 +135,7 @@ export function ConfigurationsPage() {
   }
 
   const shieldRow = rows.find((r) => r.key === 'Brand.TeamShieldUrl')
+  const tableRows = rows.filter((r) => !EMAIL_WELCOME_TEMPLATE_KEY_SET.has(r.key))
 
   return (
     <PermissionGate anyOf={[ApplicationPermissions.ConfiguracoesVisualizar]}>
@@ -149,9 +196,104 @@ export function ConfigurationsPage() {
         ) : null}
         {shieldMessage ? <p role="status" style={{ marginTop: '0.75rem', color: '#0a5' }}>{shieldMessage}</p> : null}
       </section>
+      <section style={{ marginBottom: '2rem', maxWidth: 720 }}>
+        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>E-mail — boas-vindas (cadastro)</h2>
+        <p style={{ color: '#666', fontSize: '0.9rem', marginTop: 0 }}>
+          Assunto e corpo HTML enviados após o cadastro (e-mail/senha ou Google). Placeholders suportados pelo backend:{' '}
+          <code>{'{{Name}}'}</code>
+          {' '}
+          (nome do torcedor, escapado no HTML) e{' '}
+          <code>{'{{BannerImage}}'}</code>
+          {' '}
+          (bloco
+          {' '}
+          <code>&lt;img&gt;</code>
+          {' '}
+          quando houver URL de imagem válida abaixo). Se o HTML não incluir
+          {' '}
+          <code>{'{{BannerImage}}'}</code>
+          , a imagem é colocada no início do corpo automaticamente.
+        </p>
+        <p style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+          Chaves no banco:
+          {' '}
+          <code>{EMAIL_WELCOME_TEMPLATE_KEYS.Subject}</code>
+          ,
+          {' '}
+          <code>{EMAIL_WELCOME_TEMPLATE_KEYS.Html}</code>
+          ,
+          {' '}
+          <code>{EMAIL_WELCOME_TEMPLATE_KEYS.ImageUrl}</code>
+          . Se algum valor estiver vazio ou inválido no servidor, o sistema usa o template padrão embutido (fallback).
+        </p>
+        <div style={{ display: 'grid', gap: '0.75rem', marginTop: '1rem' }}>
+          <label style={{ display: 'block' }}>
+            Assunto
+            <input
+              type="text"
+              value={welcomeSubject}
+              onChange={(e) => {
+                setWelcomeSubject(e.target.value)
+                setWelcomeMessage(null)
+              }}
+              readOnly={!canEdit}
+              style={{ display: 'block', width: '100%', marginTop: 6, boxSizing: 'border-box' }}
+            />
+          </label>
+          <label style={{ display: 'block' }}>
+            Corpo HTML
+            <textarea
+              value={welcomeHtml}
+              onChange={(e) => {
+                setWelcomeHtml(e.target.value)
+                setWelcomeMessage(null)
+              }}
+              readOnly={!canEdit}
+              rows={10}
+              placeholder={'Ex.: {{BannerImage}}<p>Olá, {{Name}}!</p><p>Obrigado por se cadastrar.</p>'}
+              style={{ display: 'block', width: '100%', marginTop: 6, fontFamily: 'monospace', boxSizing: 'border-box' }}
+            />
+          </label>
+          <label style={{ display: 'block' }}>
+            URL pública da imagem (banner opcional)
+            <input
+              type="url"
+              value={welcomeImageUrl}
+              onChange={(e) => {
+                setWelcomeImageUrl(e.target.value)
+                setWelcomeBannerUrlError(null)
+                setWelcomeMessage(null)
+              }}
+              onBlur={() => {
+                if (welcomeImageUrl.trim().length > 0 && !isValidWelcomeBannerImageUrl(welcomeImageUrl))
+                  setWelcomeBannerUrlError('Use uma URL absoluta http ou https.')
+                else
+                  setWelcomeBannerUrlError(null)
+              }}
+              readOnly={!canEdit}
+              placeholder="https://cdn.exemplo.com/banner.png"
+              style={{ display: 'block', width: '100%', marginTop: 6, boxSizing: 'border-box' }}
+            />
+          </label>
+        </div>
+        {welcomeBannerUrlError ? <p role="alert" style={{ color: 'crimson', marginTop: 8 }}>{welcomeBannerUrlError}</p> : null}
+        {canEdit ? (
+          <div style={{ marginTop: '1rem' }}>
+            <button
+              type="button"
+              data-testid="welcome-email-save"
+              disabled={welcomeSaving || !isValidWelcomeBannerImageUrl(welcomeImageUrl)}
+              onClick={() => void saveWelcomeTemplate()}
+            >
+              {welcomeSaving ? 'Salvando...' : 'Salvar modelo de boas-vindas'}
+            </button>
+          </div>
+        ) : null}
+        {welcomeMessage ? <p role="status" style={{ marginTop: '0.75rem', color: '#0a5' }}>{welcomeMessage}</p> : null}
+      </section>
       {error ? <p role="alert" style={{ color: 'crimson' }}>{error}</p> : null}
       {loading ? <p>Carregando...</p> : null}
-      {!loading && rows.length === 0 ? <p>Nenhuma entrada.</p> : null}
+      {!loading && tableRows.length === 0 ? <p>Nenhuma entrada (além do bloco de e-mail acima).</p> : null}
       <table style={{ borderCollapse: 'collapse', width: '100%', maxWidth: 900 }}>
         <thead>
           <tr>
@@ -162,7 +304,7 @@ export function ConfigurationsPage() {
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {tableRows.map((r) => (
             <tr key={r.key}>
               <td style={{ padding: '8px 0', verticalAlign: 'top' }}>{r.key}</td>
               <td style={{ padding: '8px 0', verticalAlign: 'top' }}>{r.version}</td>

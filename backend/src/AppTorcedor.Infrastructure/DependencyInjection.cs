@@ -119,6 +119,7 @@ public static class DependencyInjection
         services.AddScoped<IStaffAdministrationPort, StaffAdministrationService>();
         services.AddScoped<IUserAdministrationPort, UserAdministrationService>();
         services.AddScoped<IRegistrationLegalReadPort, RegistrationLegalReadService>();
+        services.AddScoped<IWelcomeEmailComposer, WelcomeEmailComposer>();
         services.AddScoped<ITorcedorAccountPort, TorcedorAccountService>();
         services.AddScoped<IProfilePhotoStorage>(
             sp =>

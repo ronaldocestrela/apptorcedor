@@ -3,6 +3,7 @@ using AppTorcedor.Identity;
 using AppTorcedor.Infrastructure.Entities;
 using AppTorcedor.Infrastructure.Persistence;
 using AppTorcedor.Infrastructure.Services.Account;
+using AppTorcedor.Infrastructure.Services.Email;
 using AppTorcedor.Infrastructure.Tests.TestSupport;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -53,7 +54,13 @@ public sealed class TorcedorAccountServiceCpfTests
 
         // Apenas o DbContext é usado em UpsertProfile; demais portas do ctor não entram nesses caminhos.
         var sut = new TorcedorAccountService(
-            db, null!, null!, null!, new NoopEmailSender(), NullLogger<TorcedorAccountService>.Instance);
+            db,
+            null!,
+            null!,
+            null!,
+            new NoopEmailSender(),
+            new WelcomeEmailComposer(new EmptyAppConfigurationPort(), NullLogger<WelcomeEmailComposer>.Instance),
+            NullLogger<TorcedorAccountService>.Instance);
         return (db, sut, userA, userB);
     }
 

@@ -4,7 +4,9 @@ using AppTorcedor.Application.Modules.Lgpd;
 using AppTorcedor.Identity;
 using AppTorcedor.Infrastructure.Entities;
 using AppTorcedor.Infrastructure.Persistence;
+using AppTorcedor.Application.Modules.Administration;
 using AppTorcedor.Infrastructure.Services.Account;
+using AppTorcedor.Infrastructure.Services.Email;
 using AppTorcedor.Infrastructure.Services.Lgpd;
 using AppTorcedor.Infrastructure.Tests.TestSupport;
 using Microsoft.AspNetCore.Identity;
@@ -105,8 +107,18 @@ public sealed class TorcedorAccountServiceRegisterTests
     /// Cria o SUT usando serviços reais (sem interceptor de auditoria — contexto direto).
     /// UserManager não é necessário para RecordInitialConsentsAsync.
     /// </summary>
+    private static WelcomeEmailComposer CreateWelcomeComposer(IAppConfigurationPort? port = null) =>
+        new(port ?? new EmptyAppConfigurationPort(), NullLogger<WelcomeEmailComposer>.Instance);
+
     private static TorcedorAccountService BuildSut(AppDbContext db) =>
-        new(db, null!, new RegistrationLegalReadService(db), new LgpdAdministrationService(db, null!, null!), new NoopEmailSender(), NullLogger<TorcedorAccountService>.Instance);
+        new(
+            db,
+            null!,
+            new RegistrationLegalReadService(db),
+            new LgpdAdministrationService(db, null!, null!),
+            new NoopEmailSender(),
+            CreateWelcomeComposer(),
+            NullLogger<TorcedorAccountService>.Instance);
 
     // ─── RegisterAsync + transação (SQLite — provider InMemory não garante rollback) ─
 
@@ -150,6 +162,7 @@ public sealed class TorcedorAccountServiceRegisterTests
             new RegistrationLegalReadService(db),
             lgpd,
             new NoopEmailSender(),
+            CreateWelcomeComposer(),
             NullLogger<TorcedorAccountService>.Instance);
 
         var req = new RegisterTorcedorRequest(
@@ -205,6 +218,7 @@ public sealed class TorcedorAccountServiceRegisterTests
             new RegistrationLegalReadService(db),
             new LgpdAdministrationService(db, userManager, null!),
             capturer,
+            CreateWelcomeComposer(),
             NullLogger<TorcedorAccountService>.Instance);
 
         var req = new RegisterTorcedorRequest(
@@ -224,6 +238,72 @@ public sealed class TorcedorAccountServiceRegisterTests
         Assert.Equal("Bem-vindo ao sócio torcedor", msg.Subject);
         Assert.Contains("Welcome User", msg.HtmlBody, StringComparison.Ordinal);
         Assert.Contains("Welcome User", msg.PlainTextBody ?? "", StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_uses_custom_welcome_template_from_app_configuration()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddDbContext<AppDbContext>(o => o.UseSqlite(connection));
+        services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 8;
+            })
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
+
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+
+        await db.Database.EnsureCreatedAsync();
+        if (!await roleManager.RoleExistsAsync(SystemRoles.Torcedor))
+            await roleManager.CreateAsync(new IdentityRole<Guid>(SystemRoles.Torcedor));
+
+        var (termsVerId, privacyVerId) = await SeedPublishedLegalDocsAsync(db);
+        var config = new DictionaryAppConfigurationPort(new Dictionary<string, string>
+        {
+            [EmailWelcomeTemplateKeys.Subject] = "Olá {{Name}}, bem-vindo!",
+            [EmailWelcomeTemplateKeys.Html] = "<p>Custom para {{Name}}</p>{{BannerImage}}",
+            [EmailWelcomeTemplateKeys.ImageUrl] = "https://cdn.test/w.png",
+        });
+        var capturer = new CapturingEmailSender();
+        var sut = new TorcedorAccountService(
+            db,
+            userManager,
+            new RegistrationLegalReadService(db),
+            new LgpdAdministrationService(db, userManager, null!),
+            capturer,
+            new WelcomeEmailComposer(config, NullLogger<WelcomeEmailComposer>.Instance),
+            NullLogger<TorcedorAccountService>.Instance);
+
+        var result = await sut.RegisterAsync(
+            new RegisterTorcedorRequest(
+                "Ada Lovelace",
+                "custom-welcome@test.local",
+                "Password123!",
+                null,
+                [termsVerId, privacyVerId]),
+            CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Single(capturer.Sent);
+        var msg = capturer.Sent[0];
+        Assert.Equal("Olá Ada Lovelace, bem-vindo!", msg.Subject);
+        Assert.Contains("Custom para Ada Lovelace", msg.HtmlBody, StringComparison.Ordinal);
+        Assert.Contains("https://cdn.test/w.png", msg.HtmlBody, StringComparison.Ordinal);
+        Assert.Contains("<img ", msg.HtmlBody, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -265,6 +345,7 @@ public sealed class TorcedorAccountServiceRegisterTests
             new RegistrationLegalReadService(db),
             new LgpdAdministrationService(db, userManager, null!),
             capturer,
+            CreateWelcomeComposer(),
             NullLogger<TorcedorAccountService>.Instance);
 
         var userId = Guid.NewGuid();
@@ -323,6 +404,7 @@ public sealed class TorcedorAccountServiceRegisterTests
             new RegistrationLegalReadService(db),
             new LgpdAdministrationService(db, userManager, null!),
             new ThrowingEmailSender(),
+            CreateWelcomeComposer(),
             NullLogger<TorcedorAccountService>.Instance);
 
         var req = new RegisterTorcedorRequest(
@@ -510,6 +592,7 @@ public sealed class TorcedorAccountServiceRegisterTests
             new RegistrationLegalReadService(db),
             new AlwaysThrowingLgpdPort(),
             new NoopEmailSender(),
+            CreateWelcomeComposer(),
             NullLogger<TorcedorAccountService>.Instance);
 
         var result = await sut.RecordInitialConsentsAsync(
