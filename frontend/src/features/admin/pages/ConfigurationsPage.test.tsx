@@ -95,7 +95,8 @@ describe('ConfigurationsPage — e-mail de boas-vindas', () => {
     })
 
     const subjectInput = await screen.findByDisplayValue('Assunto antigo')
-    expect(screen.getByDisplayValue('<p>Hi {{Name}}</p>')).toBeInTheDocument()
+    const bodyEditor = await screen.findByRole('textbox', { name: /corpo do e-mail em html/i })
+    expect(bodyEditor).toHaveTextContent('Hi {{Name}}')
 
     // userEvent trata `{` como sintaxe especial; placeholders com {{Name}} precisam de change direto
     fireEvent.change(subjectInput, { target: { value: 'Bem-vindo, {{Name}}' } })
@@ -107,7 +108,9 @@ describe('ConfigurationsPage — e-mail de boas-vindas', () => {
 
     await waitFor(() => {
       expect(updateConfiguration).toHaveBeenCalledWith(EMAIL_WELCOME_TEMPLATE_KEYS.Subject, 'Bem-vindo, {{Name}}')
-      expect(updateConfiguration).toHaveBeenCalledWith(EMAIL_WELCOME_TEMPLATE_KEYS.Html, '<p>Hi {{Name}}</p>')
+      const htmlCall = updateConfiguration.mock.calls.find((c) => c[0] === EMAIL_WELCOME_TEMPLATE_KEYS.Html)
+      expect(htmlCall).toBeDefined()
+      expect(htmlCall![1] as string).toContain('Hi {{Name}}')
       expect(updateConfiguration).toHaveBeenCalledWith(EMAIL_WELCOME_TEMPLATE_KEYS.ImageUrl, 'https://img.test/banner.jpg')
     })
   })

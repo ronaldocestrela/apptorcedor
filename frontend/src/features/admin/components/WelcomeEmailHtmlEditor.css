@@ -1,0 +1,177 @@
+/* Editor de e-mail — tema escuro (isolado ao componente) */
+.welcome-email-editor {
+  --we-bg-deep: #14161c;
+  --we-bg-surface: #1e222b;
+  --we-bg-raised: #282d38;
+  --we-bg-hover: #323845;
+  --we-border: #3d4554;
+  --we-border-strong: #4f5869;
+  --we-text: #e8eaef;
+  --we-text-muted: #9aa3b2;
+  --we-accent: #5b9fd4;
+  --we-accent-dim: rgba(91, 159, 212, 0.22);
+  --we-link: #7eb8ff;
+  --we-placeholder: #6b7280;
+
+  margin-top: 6px;
+  color: var(--we-text);
+}
+
+.welcome-email-editor__loading {
+  padding: 12px 14px;
+  border: 1px solid var(--we-border);
+  border-radius: 6px;
+  background: var(--we-bg-surface);
+  color: var(--we-text-muted);
+  font-size: 0.9rem;
+}
+
+.welcome-email-editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid var(--we-border);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: var(--we-bg-raised);
+}
+
+.welcome-email-editor__toolbar button {
+  min-width: 2rem;
+  padding: 4px 8px;
+  border: 1px solid var(--we-border-strong);
+  border-radius: 4px;
+  background: var(--we-bg-surface);
+  color: var(--we-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.welcome-email-editor__toolbar button:hover:not(:disabled) {
+  background: var(--we-bg-hover);
+  border-color: var(--we-border-strong);
+}
+
+.welcome-email-editor__toolbar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.welcome-email-editor__toolbar button[aria-pressed='true'] {
+  background: var(--we-accent-dim);
+  border-color: var(--we-accent);
+  color: var(--we-text);
+}
+
+.welcome-email-editor__sep {
+  width: 1px;
+  height: 1.25rem;
+  background: var(--we-border);
+  margin: 0 2px;
+}
+
+.welcome-email-editor__body {
+  border: 1px solid var(--we-border);
+  border-radius: 0 0 6px 6px;
+  background: var(--we-bg-deep);
+}
+
+.welcome-email-editor__body .welcome-email-prose {
+  min-height: 220px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  outline: none;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--we-text);
+  caret-color: var(--we-accent);
+}
+
+.welcome-email-editor__body .welcome-email-prose:focus {
+  box-shadow: inset 0 0 0 1px var(--we-accent);
+}
+
+.welcome-email-editor__body .welcome-email-prose ::selection {
+  background: rgba(91, 159, 212, 0.35);
+}
+
+.welcome-email-editor__body .welcome-email-prose p {
+  margin: 0 0 0.5em;
+}
+
+.welcome-email-editor__body .welcome-email-prose p:last-child {
+  margin-bottom: 0;
+}
+
+.welcome-email-editor__body .welcome-email-prose h2 {
+  font-size: 1.25rem;
+  margin: 0.75em 0 0.35em;
+  color: var(--we-text);
+}
+
+.welcome-email-editor__body .welcome-email-prose h3 {
+  font-size: 1.1rem;
+  margin: 0.65em 0 0.3em;
+  color: var(--we-text);
+}
+
+.welcome-email-editor__body .welcome-email-prose a {
+  color: var(--we-link);
+  text-decoration: underline;
+}
+
+.welcome-email-editor__body .welcome-email-prose code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.88em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--we-bg-raised);
+  border: 1px solid var(--we-border);
+}
+
+.welcome-email-editor__body .welcome-email-prose ul,
+.welcome-email-editor__body .welcome-email-prose ol {
+  margin: 0.35em 0;
+  padding-left: 1.5rem;
+}
+
+.welcome-email-editor__body .welcome-email-prose blockquote {
+  margin: 0.5em 0;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--we-border-strong);
+  color: var(--we-text-muted);
+}
+
+.welcome-email-editor__body .welcome-email-prose hr {
+  margin: 0.75em 0;
+  border: none;
+  border-top: 1px solid var(--we-border);
+}
+
+/* TipTap Placeholder */
+.welcome-email-editor__body .welcome-email-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--we-placeholder);
+  pointer-events: none;
+  height: 0;
+}
+
+.welcome-email-editor__hint {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--we-text-muted);
+}
+
+.welcome-email-editor__hint code {
+  font-size: 0.85em;
+  padding: 0.05em 0.3em;
+  border-radius: 3px;
+  background: var(--we-bg-raised);
+  border: 1px solid var(--we-border);
+  color: var(--we-text);
+}

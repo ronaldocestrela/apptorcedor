@@ -14,6 +14,14 @@ import {
 } from '../services/adminApi'
 import { TeamShieldLogo } from '../../../shared/branding/TeamShieldLogo'
 import { resolvePublicAssetUrl } from '../../account/accountApi'
+import { WelcomeEmailHtmlEditor } from '../components/WelcomeEmailHtmlEditor'
+
+function welcomeEmailEditorKey(rows: AppConfigurationEntry[]): string {
+  const sub = rows.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.Subject)?.version
+  const html = rows.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.Html)?.version
+  const img = rows.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.ImageUrl)?.version
+  return `${sub ?? 'x'}-${html ?? 'x'}-${img ?? 'x'}`
+}
 
 export function ConfigurationsPage() {
   const { user } = useAuth()
@@ -39,7 +47,16 @@ export function ConfigurationsPage() {
     setLoading(true)
     setError(null)
     try {
-      setRows(await listConfigurations())
+      const data = await listConfigurations()
+      setRows(data)
+      const sub = data.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.Subject)?.value ?? ''
+      const html = data.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.Html)?.value ?? ''
+      const img = data.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.ImageUrl)?.value ?? ''
+      setWelcomeSubject(sub)
+      setWelcomeHtml(html)
+      setWelcomeImageUrl(img)
+      setWelcomeBannerUrlError(null)
+      setWelcomeMessage(null)
     } catch {
       setError('Falha ao listar configurações.')
     } finally {
@@ -50,17 +67,6 @@ export function ConfigurationsPage() {
   useEffect(() => {
     void load()
   }, [])
-
-  useEffect(() => {
-    const sub = rows.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.Subject)?.value ?? ''
-    const html = rows.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.Html)?.value ?? ''
-    const img = rows.find((r) => r.key === EMAIL_WELCOME_TEMPLATE_KEYS.ImageUrl)?.value ?? ''
-    setWelcomeSubject(sub)
-    setWelcomeHtml(html)
-    setWelcomeImageUrl(img)
-    setWelcomeBannerUrlError(null)
-    setWelcomeMessage(null)
-  }, [rows])
 
   useEffect(() => {
     if (!shieldFile) {
@@ -240,20 +246,18 @@ export function ConfigurationsPage() {
               style={{ display: 'block', width: '100%', marginTop: 6, boxSizing: 'border-box' }}
             />
           </label>
-          <label style={{ display: 'block' }}>
-            Corpo HTML
-            <textarea
-              value={welcomeHtml}
-              onChange={(e) => {
-                setWelcomeHtml(e.target.value)
+          <div style={{ display: 'block' }}>
+            <span style={{ display: 'block', marginBottom: 4 }}>Corpo do e-mail (HTML)</span>
+            <WelcomeEmailHtmlEditor
+              key={welcomeEmailEditorKey(rows)}
+              initialHtml={welcomeHtml}
+              editable={canEdit}
+              onChange={(html) => {
+                setWelcomeHtml(html)
                 setWelcomeMessage(null)
               }}
-              readOnly={!canEdit}
-              rows={10}
-              placeholder={'Ex.: {{BannerImage}}<p>Olá, {{Name}}!</p><p>Obrigado por se cadastrar.</p>'}
-              style={{ display: 'block', width: '100%', marginTop: 6, fontFamily: 'monospace', boxSizing: 'border-box' }}
             />
-          </label>
+          </div>
           <label style={{ display: 'block' }}>
             URL pública da imagem (banner opcional)
             <input

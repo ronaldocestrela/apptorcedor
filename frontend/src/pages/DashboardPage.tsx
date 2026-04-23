@@ -83,7 +83,7 @@ export function DashboardPage() {
       <header className="dash-header">
         <div className="dash-header__brand">
           <TeamShieldLogo className="dash-header__logo" alt="Escudo do clube" width={36} height={36} />
-          <span className="dash-header__logo-text">AppTorcedor</span>
+          {/* <span className="dash-header__logo-text">AppTorcedor</span> */}
         </div>
         <div className="dash-header__right">
           <button
