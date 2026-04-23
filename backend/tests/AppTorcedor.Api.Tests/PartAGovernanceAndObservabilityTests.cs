@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -100,6 +101,38 @@ public sealed class PartAGovernanceAndObservabilityTests(AppWebApplicationFactor
             e =>
                 e.TryGetProperty("action", out var a)
                 && (a.GetString() == "AppConfigurationEntry.Update" || a.GetString() == "AppConfigurationEntry.Create"));
+    }
+
+    [Fact]
+    public async Task Welcome_email_template_keys_can_be_upserted_and_listed()
+    {
+        var token = await LoginAdminAsync();
+        foreach (var (key, value) in new (string Key, string Value)[]
+                 {
+                     ("Email.Welcome.Subject", "Olá {{Name}}"),
+                     ("Email.Welcome.Html", """<p>Teste {{BannerImage}}{{Name}}</p>"""),
+                     ("Email.Welcome.ImageUrl", "https://cdn.example/welcome.png"),
+                 })
+        {
+            using var put = new HttpRequestMessage(HttpMethod.Put, $"/api/admin/config/{Uri.EscapeDataString(key)}");
+            put.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            put.Content = JsonContent.Create(new { value });
+            var upsert = await _client.SendAsync(put);
+            Assert.Equal(HttpStatusCode.OK, upsert.StatusCode);
+        }
+
+        using var listReq = new HttpRequestMessage(HttpMethod.Get, "/api/admin/config");
+        listReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var listRes = await _client.SendAsync(listReq);
+        Assert.Equal(HttpStatusCode.OK, listRes.StatusCode);
+        var rows = await listRes.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(JsonValueKind.Array, rows.ValueKind);
+        var byKey = rows.EnumerateArray().ToDictionary(
+            e => e.GetProperty("key").GetString()!,
+            e => e.GetProperty("value").GetString());
+        Assert.Equal("Olá {{Name}}", byKey["Email.Welcome.Subject"]);
+        Assert.Equal("""<p>Teste {{BannerImage}}{{Name}}</p>""", byKey["Email.Welcome.Html"]);
+        Assert.Equal("https://cdn.example/welcome.png", byKey["Email.Welcome.ImageUrl"]);
     }
 
     private async Task<string> LoginAdminAsync()

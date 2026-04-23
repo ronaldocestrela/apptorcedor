@@ -16,6 +16,8 @@ public sealed class TorcedorAccountService(
     UserManager<ApplicationUser> userManager,
     IRegistrationLegalReadPort legalRead,
     ILgpdAdministrationPort lgpd,
+    IEmailSender emailSender,
+    IWelcomeEmailComposer welcomeEmailComposer,
     ILogger<TorcedorAccountService> logger) : ITorcedorAccountPort
 {
     public async Task<RegisterTorcedorResult> RegisterAsync(RegisterTorcedorRequest request, CancellationToken cancellationToken = default)
@@ -63,6 +65,7 @@ public sealed class TorcedorAccountService(
             await lgpd.RecordConsentAsync(user.Id, requirements.PrivacyPolicyVersionId, null, cancellationToken).ConfigureAwait(false);
 
             await tx.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await TrySendWelcomeEmailAsync(user.Email!, user.Name, cancellationToken).ConfigureAwait(false);
             return RegisterTorcedorResult.Ok(user.Id);
         }
         catch (Exception ex)
@@ -133,6 +136,7 @@ public sealed class TorcedorAccountService(
             await lgpd.RecordConsentAsync(user.Id, requirements.PrivacyPolicyVersionId, null, cancellationToken).ConfigureAwait(false);
 
             await tx.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await TrySendWelcomeEmailAsync(user.Email!, user.Name, cancellationToken).ConfigureAwait(false);
             return RegisterTorcedorResult.Ok(user.Id);
         }
         catch (Exception ex)
@@ -262,5 +266,25 @@ public sealed class TorcedorAccountService(
         var bytes = RandomNumberGenerator.GetBytes(32);
         var b64 = Convert.ToBase64String(bytes);
         return $"{b64}Aa1!";
+    }
+
+    private async Task TrySendWelcomeEmailAsync(string toEmail, string displayName, CancellationToken cancellationToken)
+    {
+        try
+        {
+            logger.LogInformation("E-mail de boas-vindas: iniciando para {Email}", toEmail);
+            var message = await welcomeEmailComposer
+                .ComposeWelcomeAsync(toEmail, displayName, cancellationToken)
+                .ConfigureAwait(false);
+            await emailSender.SendAsync(message, cancellationToken).ConfigureAwait(false);
+            logger.LogInformation("E-mail de boas-vindas: envio concluído para {Email}", toEmail);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Falha ao enviar e-mail de boas-vindas para {Email}. Com Provider=Resend, confirme domínio/remetente verificados no painel Resend e Email:Resend:FromAddress.",
+                toEmail);
+        }
     }
 }

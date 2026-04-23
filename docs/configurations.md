@@ -87,6 +87,19 @@ Este documento descreve **todas as configurações disponíveis** no sistema, or
 
 ---
 
+### 6.1. E-mail transacional (Mock / Resend)
+
+| Chave | Variável de Ambiente | Padrão | Descrição |
+|-------|----------------------|--------|-----------|
+| `Email:Provider` | `Email__Provider` | `Mock` | `Mock` — apenas log, sem envio; `Resend` — envio via API Resend (exige `Email:Resend:ApiKey` e remetente verificado). |
+| `Email:Resend:ApiKey` | `Email__Resend__ApiKey` | *(vazio)* | Chave API (`re_…`). Obrigatória quando `Provider=Resend`. No Compose: `RESEND_API_KEY`. |
+| `Email:Resend:FromAddress` | `Email__Resend__FromAddress` | *(vazio)* | Endereço remetente verificado no Resend. Obrigatório no envio quando `Provider=Resend`. Compose: `RESEND_FROM_ADDRESS`. |
+| `Email:Resend:FromName` | `Email__Resend__FromName` | *(vazio)* | Nome de exibição opcional do remetente. Compose: `RESEND_FROM_NAME`. |
+
+**Uso no código:** injete `IEmailSender` (porta em `AppTorcedor.Application.Abstractions`) em handlers ou serviços; mensagem: `EmailMessage(To, Subject, HtmlBody, PlainTextBody?)`. O cadastro de torcedor dispara **e-mail de boas-vindas** a partir de [`TorcedorAccountService`](../../backend/src/AppTorcedor.Infrastructure/Services/Account/TorcedorAccountService.cs) após o commit. Detalhes e Jenkins: [parte-e1-email-resend.md](architecture/parte-e1-email-resend.md).
+
+---
+
 ### 7. Armazenamento de Fotos de Perfil
 
 | Chave | Variável de Ambiente | Padrão | Descrição |
@@ -243,6 +256,47 @@ Define o **prazo de arrependimento** em dias que o torcedor tem para cancelar a 
 | **Consumo** | `GET /api/branding`; componente `TeamShieldLogo` no login, cadastro, shell admin e header do torcedor |
 
 **Nota:** alterar apenas o texto da chave sem enviar arquivo por multipart **não** cria arquivo novo no storage; prefira sempre o upload pelo painel (seção *Identidade — escudo do clube*) para manter arquivo e URL alinhados.
+
+---
+
+### B.2.1 — E-mail de boas-vindas (HTML editável)
+
+Modelo de e-mail enviado após cadastro (e-mail/senha ou Google). Implementação: [`WelcomeEmailComposer`](../../backend/src/AppTorcedor.Infrastructure/Services/Email/WelcomeEmailComposer.cs). Edição recomendada: painel `/admin/configurations`, bloco **E-mail — boas-vindas**.
+
+#### `Email.Welcome.Subject`
+
+| Atributo | Detalhe |
+|----------|---------|
+| **Tipo** | Texto livre (assunto) |
+| **Padrão (fallback)** | *(ausente)* — usa assunto fixo em código (`Bem-vindo ao sócio torcedor`) |
+| **Placeholder** | `{{Name}}` — substituído pelo nome de exibição (texto simples, não HTML) |
+
+#### `Email.Welcome.Html`
+
+| Atributo | Detalhe |
+|----------|---------|
+| **Tipo** | String HTML |
+| **Padrão (fallback)** | *(ausente ou rejeitado)* — template HTML embutido no código |
+| **Placeholders** | `{{Name}}` (nome escapado para HTML); `{{BannerImage}}` (bloco `<img>` opcional a partir de `Email.Welcome.ImageUrl`) |
+| **Segurança** | Conteúdo com `<script`, `javascript:`, ` onerror=`, ` onload=` é **rejeitado** e substituído pelo padrão |
+
+#### `Email.Welcome.ImageUrl`
+
+| Atributo | Detalhe |
+|----------|---------|
+| **Tipo** | URL absoluta `http` ou `https` pública (CDN, Cloudinary, etc.) |
+| **Padrão** | *(vazio)* — sem banner |
+| **Comportamento** | Se preenchido com URL válida e o HTML **não** contiver `{{BannerImage}}`, o `<img>` é **prefixado** ao corpo |
+
+**Exemplo de HTML:**
+
+```html
+{{BannerImage}}
+<p>Olá, {{Name}}!</p>
+<p>Obrigado por se cadastrar.</p>
+```
+
+**API:** as três chaves seguem o fluxo normal `PUT /api/admin/config/{key}` com `{ "value": "..." }`.
 
 ---
 
