@@ -15,7 +15,8 @@ public sealed class GameTorcedorReadService(AppDbContext db) : IGameTorcedorRead
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var query = db.Games.AsNoTracking().Where(g => g.IsActive);
+        var nowUtc = DateTimeOffset.UtcNow;
+        var query = db.Games.AsNoTracking().Where(g => g.IsActive && g.GameDate >= nowUtc);
         if (!string.IsNullOrWhiteSpace(search))
         {
             var s = search.Trim();

@@ -91,6 +91,63 @@ public sealed class PartC4TorcedorGamesTicketsTests(AppWebApplicationFactory fac
     }
 
     [Fact]
+    public async Task Torcedor_list_excludes_past_active_games()
+    {
+        var admin = await LoginAdminAsync();
+        var member = await LoginMemberAsync();
+        var prefix = $"C4Past-{Guid.NewGuid():N}"[..12];
+        var opponentPast = $"{prefix}-old";
+        var opponentFuture = $"{prefix}-new";
+
+        Guid pastId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/games"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            post.Content = JsonContent.Create(
+                new
+                {
+                    opponent = opponentPast,
+                    competition = "Brasileirão",
+                    gameDate = DateTimeOffset.UtcNow.AddDays(-3),
+                    isActive = true,
+                });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            pastId = Guid.Parse(body.GetProperty("gameId").GetString()!);
+        }
+
+        Guid futureId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/games"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            post.Content = JsonContent.Create(
+                new
+                {
+                    opponent = opponentFuture,
+                    competition = "Brasileirão",
+                    gameDate = DateTimeOffset.UtcNow.AddDays(20),
+                    isActive = true,
+                });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            futureId = Guid.Parse(body.GetProperty("gameId").GetString()!);
+        }
+
+        using var list = new HttpRequestMessage(HttpMethod.Get, $"/api/games?search={Uri.EscapeDataString(prefix)}&pageSize=50");
+        list.Headers.Authorization = new AuthenticationHeaderValue("Bearer", member);
+        var listRes = await _client.SendAsync(list);
+        listRes.EnsureSuccessStatusCode();
+        var page = await listRes.Content.ReadFromJsonAsync<JsonElement>();
+        var ids = new HashSet<string>();
+        foreach (var el in page.GetProperty("items").EnumerateArray())
+            ids.Add(el.GetProperty("gameId").GetString()!);
+        Assert.DoesNotContain(pastId.ToString(), ids);
+        Assert.Contains(futureId.ToString(), ids);
+    }
+
+    [Fact]
     public async Task Torcedor_games_list_includes_opponent_logo_url_when_set()
     {
         var admin = await LoginAdminAsync();

@@ -1,6 +1,6 @@
 # Parte C.4 — Jogos e ingressos (torcedor)
 
-Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (C.4) e [AGENTS.md](../../AGENTS.md): **catálogo de jogos ativos** e **listagem, detalhe e resgate de ingressos** do usuário autenticado, com **isolamento por conta** (sem parâmetro `userId` no cliente; o `UserId` vem só do JWT). A gestão administrativa permanece em [parte-b8-games-tickets-admin.md](parte-b8-games-tickets-admin.md).
+Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (C.4) e [AGENTS.md](../../AGENTS.md): **catálogo de jogos ativos e futuros** (`GameDate` em UTC ≥ instante atual) e **listagem, detalhe e resgate de ingressos** do usuário autenticado, com **isolamento por conta** (sem parâmetro `userId` no cliente; o `UserId` vem só do JWT). A gestão administrativa permanece em [parte-b8-games-tickets-admin.md](parte-b8-games-tickets-admin.md).
 
 ## Separação de responsabilidades
 
@@ -14,7 +14,7 @@ Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (C
 
 | Porta | Implementação | Função |
 |--------|----------------|--------|
-| `IGameTorcedorReadPort` | `GameTorcedorReadService` | Lista apenas jogos com `IsActive == true`. |
+| `IGameTorcedorReadPort` | `GameTorcedorReadService` | Lista jogos com `IsActive == true` e `GameDate >= DateTimeOffset.UtcNow` (partidas já realizadas não aparecem no catálogo). |
 | `ITicketTorcedorPort` | `TicketTorcedorService` | Lista/detalha ingressos do usuário; resgate com checagem de propriedade. |
 
 Registro em `AppTorcedor.Infrastructure/DependencyInjection.cs`.
@@ -34,7 +34,7 @@ Base: **`api/games`** e **`api/tickets`** — `[Authorize]` no controlador (mesm
 
 | Método | Rota | Descrição |
 |--------|------|------------|
-| GET | `/api/games?search=&page=&pageSize=` | Jogos **ativos** (paginação). Cada item inclui `opponentLogoUrl` (opcional) para exibição no app. |
+| GET | `/api/games?search=&page=&pageSize=` | Jogos **ativos** cuja data/hora do jogo **ainda não passou** em UTC (paginação). Cada item inclui `opponentLogoUrl` (opcional) para exibição no app. |
 | GET | `/api/tickets?gameId=&status=&page=&pageSize=` | Ingressos do usuário autenticado. |
 | GET | `/api/tickets/{ticketId}` | Detalhe **somente se** o ingresso pertencer ao usuário; caso contrário `404`. |
 | POST | `/api/tickets/{ticketId}/redeem` | Resgate `Purchased` → `Redeemed` (mesma regra de negócio da B.8 + `ILoyaltyPointsTriggerPort`); `404` se ingresso inexistente ou de outro usuário; `400` se transição inválida. |
@@ -52,7 +52,7 @@ Controladores: `TorcedorGamesController`, `TorcedorTicketsController`.
 ## Testes
 
 - **Application:** `TorcedorGamesTicketsHandlersTests` — delegação aos ports.
-- **API:** `PartC4TorcedorGamesTicketsTests` — auth, jogos ativos vs inativos, `opponentLogoUrl` na listagem, fluxo listagem/detalhe/resgate, isolamento entre usuários, resgate inválido em `Reserved`.
+- **API:** `PartC4TorcedorGamesTicketsTests` — auth, jogos ativos vs inativos, exclusão de jogos **passados** no catálogo torcedor, `opponentLogoUrl` na listagem, fluxo listagem/detalhe/resgate, isolamento entre usuários, resgate inválido em `Reserved`.
 - **Frontend:** `torcedorGamesTicketsApi.test.ts` — chamadas Axios.
 
 ## Referências

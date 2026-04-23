@@ -37,7 +37,7 @@ public sealed record TorcedorTicketDetailDto(
     DateTimeOffset UpdatedAt,
     DateTimeOffset? RedeemedAt);
 
-/// <summary>Read-only games catalog for the authenticated supporter (active games only).</summary>
+/// <summary>Read-only games catalog for the authenticated supporter (active games with <c>GameDate</c> at or after UTC now).</summary>
 public interface IGameTorcedorReadPort
 {
     Task<TorcedorGameListPageDto> ListActiveGamesAsync(
