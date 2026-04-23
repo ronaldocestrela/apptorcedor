@@ -96,7 +96,7 @@ Este documento descreve **todas as configurações disponíveis** no sistema, or
 | `Email:Resend:FromAddress` | `Email__Resend__FromAddress` | *(vazio)* | Endereço remetente verificado no Resend. Obrigatório no envio quando `Provider=Resend`. Compose: `RESEND_FROM_ADDRESS`. |
 | `Email:Resend:FromName` | `Email__Resend__FromName` | *(vazio)* | Nome de exibição opcional do remetente. Compose: `RESEND_FROM_NAME`. |
 
-**Uso no código:** injete `IEmailSender` (porta em `AppTorcedor.Application.Abstractions`) em handlers ou serviços; mensagem: `EmailMessage(To, Subject, HtmlBody, PlainTextBody?)`. Detalhes e Jenkins: [parte-e1-email-resend.md](architecture/parte-e1-email-resend.md).
+**Uso no código:** injete `IEmailSender` (porta em `AppTorcedor.Application.Abstractions`) em handlers ou serviços; mensagem: `EmailMessage(To, Subject, HtmlBody, PlainTextBody?)`. O cadastro de torcedor dispara **e-mail de boas-vindas** a partir de [`TorcedorAccountService`](../../backend/src/AppTorcedor.Infrastructure/Services/Account/TorcedorAccountService.cs) após o commit. Detalhes e Jenkins: [parte-e1-email-resend.md](architecture/parte-e1-email-resend.md).
 
 ---
 

@@ -35,8 +35,19 @@ public sealed class ResendEmailSender(
         payload.To.Add(message.To.Trim());
 
         var response = await resend.EmailSendAsync(payload, cancellationToken).ConfigureAwait(false);
+        if (!response.Success)
+        {
+            var detail = response.Exception?.Message ?? "Resend API returned failure without details.";
+            logger.LogError(
+                "Resend e-mail falhou (API). To={To}, From={From}, Detalhe={Detail}",
+                message.To,
+                from,
+                detail);
+            throw new InvalidOperationException($"Resend e-mail falhou: {detail}");
+        }
+
         logger.LogInformation(
-            "Resend e-mail queued. Id={EmailId}, To={To}",
+            "Resend e-mail enfileirado. Id={EmailId}, To={To}",
             response.Content,
             message.To);
     }

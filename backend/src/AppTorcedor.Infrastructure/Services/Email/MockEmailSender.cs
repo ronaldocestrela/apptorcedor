@@ -10,7 +10,7 @@ public sealed class MockEmailSender(ILogger<MockEmailSender> logger) : IEmailSen
     {
         cancellationToken.ThrowIfCancellationRequested();
         logger.LogInformation(
-            "Mock e-mail (not sent). To={To}, Subject={Subject}",
+            "E-mail (Mock): não enviado à rede; simulação. To={To}, Subject={Subject}",
             message.To,
             message.Subject);
         return Task.CompletedTask;

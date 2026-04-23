@@ -52,12 +52,28 @@ Referência também em [`deploy/vps/api.env.example`](../../deploy/vps/api.env.e
 
 - `AppTorcedor.Infrastructure.Tests/Services/Email/MockEmailSenderTests.cs`
 - `AppTorcedor.Infrastructure.Tests/Services/Email/ResendEmailSenderTests.cs` (mock de `IResend`)
+- `AppTorcedor.Infrastructure.Tests/TorcedorAccountServiceRegisterTests.cs` — boas-vindas após `RegisterAsync` / `RegisterGoogleUserAsync` e resiliência quando o envio falha
 
 Os testes de API fixam `Email:Provider=Mock` em [`AppWebApplicationFactory`](../../backend/tests/AppTorcedor.Api.Tests/AppWebApplicationFactory.cs) para evitar dependência de chaves Resend.
 
-## Próximos passos (negócio)
+## Fluxo implementado: boas-vindas no cadastro
 
-Nenhum fluxo de domínio chama `IEmailSender` ainda; ao implementar (ex.: boas-vindas, recuperação de senha, recibo), injete `IEmailSender` no handler/serviço e mantenha templates/HTML na camada de aplicação ou recursos.
+Após **commit** bem-sucedido do registo do torcedor, [`TorcedorAccountService`](../../backend/src/AppTorcedor.Infrastructure/Services/Account/TorcedorAccountService.cs) chama `IEmailSender.SendAsync` com assunto **«Bem-vindo ao sócio torcedor»** e corpo HTML/texto simples (nome do utilizador escapado em HTML). Cobre:
+
+- cadastro por formulário (`RegisterAsync`);
+- primeiro registo via Google (`RegisterGoogleUserAsync`).
+
+Falhas no envio são registadas com **`LogWarning`** e **não** falham o cadastro (utilizador já persistido).
+
+## Outros usos futuros
+
+Para outros eventos (recuperação de senha, recibo, etc.), reutilize `IEmailSender` ou extraia templates para recursos/serviços dedicados.
+
+## Diagnóstico: cadastro sem e-mail visível nos logs
+
+- Com **`Email:Provider=Mock`**, procure no JSON de log mensagens **`E-mail (Mock):`** e, no fluxo de cadastro, **`E-mail de boas-vindas: iniciando`** / **`envio concluído`** em `TorcedorAccountService`.
+- Com **`Email:Provider=Resend`**, o remetente **`Email:Resend:FromAddress`** tem de ser um endereço de um **domínio verificado** no Resend; endereços fictícios (ex.: `*.local`) ou domínios não verificados fazem a API falhar. O backend regista **`Resend e-mail falhou (API)`** ou **`Falha ao enviar e-mail de boas-vindas`** com nível **Error** e a mensagem devolvida pela API.
+- **Não** coloque chaves `re_…` em ficheiros versionados; use variáveis de ambiente, User Secrets ou Jenkins Credentials.
 
 ## Referência Resend
 
