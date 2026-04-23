@@ -17,6 +17,10 @@
 // - cloudinary-cloud-name     (Secret text) Cloudinary__CloudName
 // - cloudinary-api-key        (Secret text) Cloudinary__ApiKey
 // - cloudinary-api-secret     (Secret text) Cloudinary__ApiSecret
+// - email-provider            (Secret text) EMAIL_PROVIDER — Mock ou Resend
+// - resend-api-key            (Secret text) RESEND_API_KEY (re_…; vazio se só Mock)
+// - resend-from-address       (Secret text) RESEND_FROM_ADDRESS (ex.: noreply@seudominio.com.br)
+// - resend-from-name          (Secret text) RESEND_FROM_NAME (ex.: Sócio Torcedor)
 // - api-cors-origin           (Secret text) Cors__AllowedOrigins__0
 // - api-aspnetcore-urls       (Secret text) ASPNETCORE_URLS (ex.: http://127.0.0.1:5031)
 // - vite-public-api-url       (Secret text) URL pública da API para build do Vite (gravada também no arquivo vite na VPS)
@@ -107,7 +111,11 @@ pipeline {
             string(credentialsId: 'support-ticket-attachments-provider', variable: 'SUPPORT_ATTACHMENTS_PROVIDER'),
             string(credentialsId: 'cloudinary-cloud-name', variable: 'CLOUDINARY_CLOUD_NAME'),
             string(credentialsId: 'cloudinary-api-key', variable: 'CLOUDINARY_API_KEY'),
-            string(credentialsId: 'cloudinary-api-secret', variable: 'CLOUDINARY_API_SECRET')
+            string(credentialsId: 'cloudinary-api-secret', variable: 'CLOUDINARY_API_SECRET'),
+            string(credentialsId: 'email-provider', variable: 'EMAIL_PROVIDER'),
+            string(credentialsId: 'resend-api-key', variable: 'RESEND_API_KEY'),
+            string(credentialsId: 'resend-from-address', variable: 'RESEND_FROM_ADDRESS'),
+            string(credentialsId: 'resend-from-name', variable: 'RESEND_FROM_NAME')
           ]
 
           def useCompose = (env.DEPLOY_USE_COMPOSE ?: 'true').trim().equalsIgnoreCase('true')
@@ -140,6 +148,10 @@ pipeline {
                     printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
                     printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
                     printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
+                    printf 'Email__Provider=%s\n'             "${EMAIL_PROVIDER:-Mock}"
+                    printf 'Email__Resend__ApiKey=%s\n'       "${RESEND_API_KEY:-}"
+                    printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
+                    printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   cp "${API_ENV_LOCAL}" "${REMOTE_ENV}"
@@ -159,6 +171,10 @@ pipeline {
                     printf 'CLOUDINARY_CLOUD_NAME=%s\n' "${CLOUDINARY_CLOUD_NAME}"
                     printf 'CLOUDINARY_API_KEY=%s\n' "${CLOUDINARY_API_KEY}"
                     printf 'CLOUDINARY_API_SECRET=%s\n' "${CLOUDINARY_API_SECRET}"
+                    printf 'EMAIL_PROVIDER=%s\n'      "${EMAIL_PROVIDER:-Mock}"
+                    printf 'RESEND_API_KEY=%s\n'      "${RESEND_API_KEY:-}"
+                    printf 'RESEND_FROM_ADDRESS=%s\n' "${RESEND_FROM_ADDRESS:-}"
+                    printf 'RESEND_FROM_NAME=%s\n'    "${RESEND_FROM_NAME:-}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -199,6 +215,10 @@ pipeline {
                     printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
                     printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
                     printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
+                    printf 'Email__Provider=%s\n'             "${EMAIL_PROVIDER:-Mock}"
+                    printf 'Email__Resend__ApiKey=%s\n'       "${RESEND_API_KEY:-}"
+                    printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
+                    printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"
@@ -266,6 +286,10 @@ pipeline {
                     printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
                     printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
                     printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
+                    printf 'Email__Provider=%s\n'             "${EMAIL_PROVIDER:-Mock}"
+                    printf 'Email__Resend__ApiKey=%s\n'       "${RESEND_API_KEY:-}"
+                    printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
+                    printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   {
@@ -284,6 +308,10 @@ pipeline {
                     printf 'CLOUDINARY_CLOUD_NAME=%s\n' "${CLOUDINARY_CLOUD_NAME}"
                     printf 'CLOUDINARY_API_KEY=%s\n' "${CLOUDINARY_API_KEY}"
                     printf 'CLOUDINARY_API_SECRET=%s\n' "${CLOUDINARY_API_SECRET}"
+                    printf 'EMAIL_PROVIDER=%s\n'      "${EMAIL_PROVIDER:-Mock}"
+                    printf 'RESEND_API_KEY=%s\n'      "${RESEND_API_KEY:-}"
+                    printf 'RESEND_FROM_ADDRESS=%s\n' "${RESEND_FROM_ADDRESS:-}"
+                    printf 'RESEND_FROM_NAME=%s\n'    "${RESEND_FROM_NAME:-}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -329,6 +357,10 @@ pipeline {
                     printf 'Cloudinary__CloudName=%s\n' "${CLOUDINARY_CLOUD_NAME}"
                     printf 'Cloudinary__ApiKey=%s\n' "${CLOUDINARY_API_KEY}"
                     printf 'Cloudinary__ApiSecret=%s\n' "${CLOUDINARY_API_SECRET}"
+                    printf 'Email__Provider=%s\n'             "${EMAIL_PROVIDER:-Mock}"
+                    printf 'Email__Resend__ApiKey=%s\n'       "${RESEND_API_KEY:-}"
+                    printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
+                    printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"

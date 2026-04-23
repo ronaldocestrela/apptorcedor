@@ -87,6 +87,19 @@ Este documento descreve **todas as configurações disponíveis** no sistema, or
 
 ---
 
+### 6.1. E-mail transacional (Mock / Resend)
+
+| Chave | Variável de Ambiente | Padrão | Descrição |
+|-------|----------------------|--------|-----------|
+| `Email:Provider` | `Email__Provider` | `Mock` | `Mock` — apenas log, sem envio; `Resend` — envio via API Resend (exige `Email:Resend:ApiKey` e remetente verificado). |
+| `Email:Resend:ApiKey` | `Email__Resend__ApiKey` | *(vazio)* | Chave API (`re_…`). Obrigatória quando `Provider=Resend`. No Compose: `RESEND_API_KEY`. |
+| `Email:Resend:FromAddress` | `Email__Resend__FromAddress` | *(vazio)* | Endereço remetente verificado no Resend. Obrigatório no envio quando `Provider=Resend`. Compose: `RESEND_FROM_ADDRESS`. |
+| `Email:Resend:FromName` | `Email__Resend__FromName` | *(vazio)* | Nome de exibição opcional do remetente. Compose: `RESEND_FROM_NAME`. |
+
+**Uso no código:** injete `IEmailSender` (porta em `AppTorcedor.Application.Abstractions`) em handlers ou serviços; mensagem: `EmailMessage(To, Subject, HtmlBody, PlainTextBody?)`. Detalhes e Jenkins: [parte-e1-email-resend.md](architecture/parte-e1-email-resend.md).
+
+---
+
 ### 7. Armazenamento de Fotos de Perfil
 
 | Chave | Variável de Ambiente | Padrão | Descrição |

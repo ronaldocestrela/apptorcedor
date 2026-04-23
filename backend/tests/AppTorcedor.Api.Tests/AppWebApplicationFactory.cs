@@ -21,6 +21,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("Testing:SeedMinimalLegalDocuments", "false");
         builder.UseSetting("Payments:Provider", "Mock");
         builder.UseSetting("Payments:WebhookSecret", "test-webhook-secret");
+        builder.UseSetting("Email:Provider", "Mock");
         builder.UseSetting("ProfilePhotos:Provider", "Local");
         builder.UseSetting("TeamShield:Provider", "Local");
         builder.UseSetting("OpponentLogos:Provider", "Local");

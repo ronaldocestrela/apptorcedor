@@ -16,7 +16,9 @@ using AppTorcedor.Infrastructure.Services.News;
 using AppTorcedor.Infrastructure.Services.Plans;
 using AppTorcedor.Infrastructure.Services.Support;
 using AppTorcedor.Infrastructure.Services.Cors;
+using AppTorcedor.Infrastructure.Services.Email;
 using AppTorcedor.Infrastructure.Options;
+using Resend;
 using AppTorcedor.Infrastructure.Services.Account;
 using AppTorcedor.Infrastructure.Services.Branding;
 using AppTorcedor.Infrastructure.Services.Cloudinary;
@@ -40,6 +42,22 @@ public static class DependencyInjection
         services.Configure<BenefitOfferBannerStorageOptions>(configuration.GetSection(BenefitOfferBannerStorageOptions.SectionName));
         services.Configure<CloudinaryOptions>(configuration.GetSection(CloudinaryOptions.SectionName));
         services.Configure<PaymentsOptions>(configuration.GetSection(PaymentsOptions.SectionName));
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+
+        var emailProvider = configuration.GetValue<string>("Email:Provider") ?? "Mock";
+        if (string.Equals(emailProvider.Trim(), "Resend", StringComparison.OrdinalIgnoreCase))
+        {
+            var apiKey = configuration["Email:Resend:ApiKey"];
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new InvalidOperationException("Email:Resend:ApiKey is required when Email:Provider is Resend.");
+
+            services.AddHttpClient<ResendClient>();
+            services.Configure<ResendClientOptions>(options => options.ApiToken = apiKey);
+            services.AddTransient<IResend, ResendClient>();
+            services.AddScoped<IEmailSender, ResendEmailSender>();
+        }
+        else
+            services.AddScoped<IEmailSender, MockEmailSender>();
 
         var paymentsProvider = configuration.GetValue<string>("Payments:Provider") ?? "Mock";
         if (string.Equals(paymentsProvider.Trim(), "Stripe", StringComparison.OrdinalIgnoreCase))
