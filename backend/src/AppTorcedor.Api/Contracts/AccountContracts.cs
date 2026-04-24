@@ -4,7 +4,7 @@ public sealed record RegisterPublicRequest(
     string Name,
     string Email,
     string Password,
-    string? PhoneNumber,
+    string PhoneNumber,
     IReadOnlyList<Guid> AcceptedLegalDocumentVersionIds);
 
 public sealed record RegistrationLegalRequirementsResponse(

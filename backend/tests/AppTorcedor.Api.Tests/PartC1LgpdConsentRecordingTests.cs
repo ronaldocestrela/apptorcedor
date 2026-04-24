@@ -81,7 +81,7 @@ public sealed class PartC1LgpdConsentRecordingTests
             name = "Test",
             email = $"no-ids-{Guid.NewGuid():N}@test.local",
             password = "SomePass123!",
-            phoneNumber = (string?)null,
+            phoneNumber = "11999999999",
             acceptedLegalDocumentVersionIds = Array.Empty<Guid>(),
         });
 
@@ -96,7 +96,7 @@ public sealed class PartC1LgpdConsentRecordingTests
             name = "Test",
             email = $"wrong-ids-{Guid.NewGuid():N}@test.local",
             password = "SomePass123!",
-            phoneNumber = (string?)null,
+            phoneNumber = "11999999999",
             acceptedLegalDocumentVersionIds = new[] { Guid.NewGuid(), Guid.NewGuid() },
         });
 
@@ -113,7 +113,7 @@ public sealed class PartC1LgpdConsentRecordingTests
             name = "Test",
             email = $"only-terms-{Guid.NewGuid():N}@test.local",
             password = "SomePass123!",
-            phoneNumber = (string?)null,
+            phoneNumber = "11999999999",
             acceptedLegalDocumentVersionIds = new[] { legal.TermsOfUseVersionId },
         });
 
@@ -130,7 +130,7 @@ public sealed class PartC1LgpdConsentRecordingTests
             name = "Test",
             email = $"only-privacy-{Guid.NewGuid():N}@test.local",
             password = "SomePass123!",
-            phoneNumber = (string?)null,
+            phoneNumber = "11999999999",
             acceptedLegalDocumentVersionIds = new[] { legal.PrivacyPolicyVersionId },
         });
 
@@ -191,7 +191,7 @@ public sealed class PartC1LgpdConsentRecordingTests
             name = "Consent Recorder",
             email = $"cr-{Guid.NewGuid():N}@test.local",
             password = "ConsentPass123!",
-            phoneNumber = (string?)null,
+            phoneNumber = "11999999999",
             acceptedLegalDocumentVersionIds = new[] { legal.TermsOfUseVersionId, legal.PrivacyPolicyVersionId },
         });
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);

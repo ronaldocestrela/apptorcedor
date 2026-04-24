@@ -112,6 +112,7 @@ describe('RegisterPage', () => {
     await user.type(screen.getByLabelText(/^Nome/i), 'Fulano')
     await user.type(screen.getByLabelText(/^E-mail/i), 'fulano@test.local')
     await user.type(screen.getByLabelText(/^Senha/i), 'ValidPass1')
+    await user.type(screen.getByLabelText(/^Celular/i), '11999999999')
 
     await user.click(screen.getByRole('checkbox', { name: /Li e aceito: Termos de uso/i }))
     await user.click(screen.getByRole('checkbox', { name: /Li e aceito: Política de privacidade/i }))
@@ -122,7 +123,7 @@ describe('RegisterPage', () => {
         name: 'Fulano',
         email: 'fulano@test.local',
         password: 'ValidPass1',
-        phoneNumber: undefined,
+        phoneNumber: '11999999999',
         acceptedLegalDocumentVersionIds: [legal.termsOfUseVersionId, legal.privacyPolicyVersionId],
       })
     })
@@ -150,11 +151,33 @@ describe('RegisterPage', () => {
     await user.type(screen.getByLabelText(/^Nome/i), 'Fulano')
     await user.type(screen.getByLabelText(/^E-mail/i), 'fulano@test.local')
     await user.type(screen.getByLabelText(/^Senha/i), 'ValidPass1')
+    await user.type(screen.getByLabelText(/^Celular/i), '11999999999')
     await user.click(screen.getByRole('checkbox', { name: /Li e aceito: Termos de uso/i }))
     await user.click(screen.getByRole('checkbox', { name: /Li e aceito: Política de privacidade/i }))
     await user.click(screen.getByRole('button', { name: /Criar conta/i }))
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent(/Passwords must have at least one digit/i)
+  })
+
+  it('does not call register when celular is empty', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <RegisterPage />
+      </MemoryRouter>,
+    )
+
+    await screen.findByLabelText(/^Nome/i)
+    await user.type(screen.getByLabelText(/^Nome/i), 'Fulano')
+    await user.type(screen.getByLabelText(/^E-mail/i), 'fulano@test.local')
+    await user.type(screen.getByLabelText(/^Senha/i), 'ValidPass1')
+    await user.click(screen.getByRole('checkbox', { name: /Li e aceito: Termos de uso/i }))
+    await user.click(screen.getByRole('checkbox', { name: /Li e aceito: Política de privacidade/i }))
+    await user.click(screen.getByRole('button', { name: /Criar conta/i }))
+
+    expect(authMock.register).not.toHaveBeenCalled()
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent(/Informe o celular/i)
   })
 })

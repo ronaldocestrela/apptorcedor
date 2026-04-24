@@ -28,7 +28,7 @@ export type RegisterPayload = {
   name: string
   email: string
   password: string
-  phoneNumber?: string
+  phoneNumber: string
   acceptedLegalDocumentVersionIds: string[]
 }
 
@@ -39,7 +39,7 @@ export async function registerPublic(payload: RegisterPayload) {
       name: payload.name,
       email: payload.email,
       password: payload.password,
-      phoneNumber: payload.phoneNumber ?? null,
+      phoneNumber: payload.phoneNumber.trim(),
       acceptedLegalDocumentVersionIds: payload.acceptedLegalDocumentVersionIds,
     },
   )

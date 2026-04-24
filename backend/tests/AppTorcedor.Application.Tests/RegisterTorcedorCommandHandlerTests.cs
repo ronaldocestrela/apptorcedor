@@ -60,4 +60,20 @@ public sealed class RegisterTorcedorCommandHandlerTests
         Assert.Equal("ana@test.local", fake.LastRequest.Email);
         Assert.Equal("11", fake.LastRequest.PhoneNumber);
     }
+
+    [Fact]
+    public async Task Handler_maps_whitespace_only_phone_to_empty_string_for_port()
+    {
+        var fake = new FakeTorcedorAccount();
+        var handler = new RegisterTorcedorCommandHandler(fake);
+        var v1 = Guid.NewGuid();
+        var v2 = Guid.NewGuid();
+
+        await handler.Handle(
+            new RegisterTorcedorCommand("Ana", "ana@test.local", "Pass123!", "   ", new[] { v1, v2 }),
+            CancellationToken.None);
+
+        Assert.NotNull(fake.LastRequest);
+        Assert.Equal(string.Empty, fake.LastRequest!.PhoneNumber);
+    }
 }

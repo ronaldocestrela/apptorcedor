@@ -169,7 +169,7 @@ public sealed class TorcedorAccountServiceRegisterTests
             "Test User",
             "rollback-test@test.local",
             "Password123!",
-            null,
+            "11999999999",
             [termsVerId, privacyVerId]);
 
         var result = await sut.RegisterAsync(req, CancellationToken.None);
@@ -225,7 +225,7 @@ public sealed class TorcedorAccountServiceRegisterTests
             "Welcome User",
             "welcome-form@test.local",
             "Password123!",
-            null,
+            "11999999999",
             [termsVerId, privacyVerId]);
 
         var result = await sut.RegisterAsync(req, CancellationToken.None);
@@ -293,7 +293,7 @@ public sealed class TorcedorAccountServiceRegisterTests
                 "Ada Lovelace",
                 "custom-welcome@test.local",
                 "Password123!",
-                null,
+                "11999999999",
                 [termsVerId, privacyVerId]),
             CancellationToken.None);
 
@@ -411,7 +411,7 @@ public sealed class TorcedorAccountServiceRegisterTests
             "User MailFail",
             "mail-fail@test.local",
             "Password123!",
-            null,
+            "11999999999",
             [termsVerId, privacyVerId]);
 
         var result = await sut.RegisterAsync(req, CancellationToken.None);

@@ -47,10 +47,36 @@ public sealed class PartC1TorcedorAccountTests
                 name = "Novo Torcedor",
                 email,
                 password = "short",
-                phoneNumber = (string?)null,
+                phoneNumber = "11999999999",
                 acceptedLegalDocumentVersionIds = new[] { legal!.TermsOfUseVersionId, legal.PrivacyPolicyVersionId },
             });
         Assert.Equal(HttpStatusCode.BadRequest, register.StatusCode);
+    }
+
+    [Fact]
+    public async Task Register_rejects_empty_phone()
+    {
+        var req = await _client.GetAsync("/api/account/register/requirements");
+        var legal = await req.Content.ReadFromJsonAsync<RequirementsDto>();
+        Assert.NotNull(legal);
+
+        var email = $"no-phone-{Guid.NewGuid():N}@test.local";
+        var register = await _client.PostAsJsonAsync(
+            "/api/account/register",
+            new
+            {
+                name = "Novo Torcedor",
+                email,
+                password = "RegisterPass123!",
+                phoneNumber = (string?)"   ",
+                acceptedLegalDocumentVersionIds = new[] { legal!.TermsOfUseVersionId, legal.PrivacyPolicyVersionId },
+            });
+        Assert.Equal(HttpStatusCode.BadRequest, register.StatusCode);
+        var err = await register.Content.ReadFromJsonAsync<JsonElement>();
+        var errors = err.GetProperty("errors");
+        Assert.Equal(JsonValueKind.Array, errors.ValueKind);
+        var first = errors[0].GetString() ?? string.Empty;
+        Assert.Contains("Celular", first, StringComparison.Ordinal);
     }
 
     [Fact]

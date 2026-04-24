@@ -10,7 +10,7 @@ public sealed record RegisterTorcedorRequest(
     string Name,
     string Email,
     string Password,
-    string? PhoneNumber,
+    string PhoneNumber,
     IReadOnlyList<Guid> AcceptedLegalDocumentVersionIds);
 
 public sealed record RegisterTorcedorResult(bool Succeeded, Guid? UserId, IReadOnlyList<string> Errors)

@@ -9,11 +9,14 @@ public sealed class RegisterTorcedorCommandHandler(ITorcedorAccountPort account)
 {
     public Task<RegisterTorcedorResult> Handle(RegisterTorcedorCommand request, CancellationToken cancellationToken)
     {
+        var phone = string.IsNullOrWhiteSpace(request.PhoneNumber)
+            ? string.Empty
+            : request.PhoneNumber.Trim();
         var r = new RegisterTorcedorRequest(
             request.Name.Trim(),
             request.Email.Trim(),
             request.Password,
-            string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim(),
+            phone,
             request.AcceptedLegalDocumentVersionIds);
         return account.RegisterAsync(r, cancellationToken);
     }

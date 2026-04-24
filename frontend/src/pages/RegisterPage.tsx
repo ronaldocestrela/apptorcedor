@@ -72,13 +72,18 @@ export function RegisterPage() {
       setError('A senha não atende a todos os requisitos abaixo.')
       return
     }
+    const phoneTrimmed = phone.trim()
+    if (!phoneTrimmed) {
+      setError('Informe o celular.')
+      return
+    }
     setBusy(true)
     try {
       await register({
         name,
         email,
         password,
-        phoneNumber: phone.trim() || undefined,
+        phoneNumber: phoneTrimmed,
         acceptedLegalDocumentVersionIds: [legal.termsOfUseVersionId, legal.privacyPolicyVersionId],
       })
     } catch (err) {
@@ -154,12 +159,13 @@ export function RegisterPage() {
                 ))}
               </ul>
               <label className="register-form__field">
-                Celular <span className="register-form__optional">(opcional)</span>
+                Celular
                 <input
                   type="tel"
                   value={phone}
                   onChange={(ev) => setPhone(ev.target.value)}
                   autoComplete="tel"
+                  aria-required="true"
                 />
               </label>
 

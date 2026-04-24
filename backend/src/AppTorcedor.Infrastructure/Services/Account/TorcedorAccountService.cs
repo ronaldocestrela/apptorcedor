@@ -26,6 +26,8 @@ public sealed class TorcedorAccountService(
             return RegisterTorcedorResult.Fail("Nome é obrigatório.");
         if (string.IsNullOrWhiteSpace(request.Email))
             return RegisterTorcedorResult.Fail("E-mail é obrigatório.");
+        if (string.IsNullOrWhiteSpace(request.PhoneNumber))
+            return RegisterTorcedorResult.Fail("Celular é obrigatório.");
 
         var requirements = await legalRead.GetRequiredPublishedVersionsAsync(cancellationToken).ConfigureAwait(false);
         if (requirements is null)
@@ -45,7 +47,7 @@ public sealed class TorcedorAccountService(
             Email = request.Email,
             EmailConfirmed = true,
             Name = request.Name.Trim(),
-            PhoneNumber = request.PhoneNumber,
+            PhoneNumber = request.PhoneNumber.Trim(),
             IsActive = true,
             CreatedAt = DateTimeOffset.UtcNow,
         };

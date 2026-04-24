@@ -7,5 +7,5 @@ public sealed record RegisterTorcedorCommand(
     string Name,
     string Email,
     string Password,
-    string? PhoneNumber,
+    string PhoneNumber,
     IReadOnlyList<Guid> AcceptedLegalDocumentVersionIds) : IRequest<RegisterTorcedorResult>;
