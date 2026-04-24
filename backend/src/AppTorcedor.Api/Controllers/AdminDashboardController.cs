@@ -17,6 +17,10 @@ public sealed class AdminDashboardController(IMediator mediator) : ControllerBas
     public async Task<ActionResult<AdminDashboardResponse>> Get(CancellationToken cancellationToken)
     {
         var dto = await mediator.Send(new GetAdminDashboardQuery(), cancellationToken).ConfigureAwait(false);
-        return Ok(new AdminDashboardResponse(dto.ActiveMembersCount, dto.DelinquentMembersCount, dto.OpenSupportTickets));
+        return Ok(new AdminDashboardResponse(
+            dto.ActiveMembersCount,
+            dto.DelinquentMembersCount,
+            dto.OpenSupportTickets,
+            dto.TotalFaturadoLast30Days));
     }
 }

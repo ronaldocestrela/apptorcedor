@@ -75,6 +75,7 @@ export type AdminDashboardResult = {
   activeMembersCount: number
   delinquentMembersCount: number
   openSupportTickets: number
+  totalFaturadoLast30Days: number
 }
 
 export type StaffInviteRow = {

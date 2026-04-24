@@ -1,4 +1,5 @@
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.Modules.Administration.Payments;
 using AppTorcedor.Identity;
 using AppTorcedor.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,15 @@ public sealed class AdminDashboardReadPort(AppDbContext db) : IAdminDashboardRea
                 cancellationToken)
             .ConfigureAwait(false);
 
-        return new AdminDashboardDto(active, delinquent, openTickets);
+        var thirtyDaysAgo = DateTimeOffset.UtcNow.AddDays(-30);
+        var totalFaturadoLast30Days = await db.Payments.AsNoTracking()
+            .Where(p =>
+                p.Status == PaymentChargeStatuses.Paid
+                && p.PaidAt != null
+                && p.PaidAt >= thirtyDaysAgo)
+            .SumAsync(p => (decimal?)p.Amount, cancellationToken)
+            .ConfigureAwait(false) ?? 0m;
+
+        return new AdminDashboardDto(active, delinquent, openTickets, totalFaturadoLast30Days);
     }
 }

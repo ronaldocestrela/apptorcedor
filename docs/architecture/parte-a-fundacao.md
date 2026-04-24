@@ -26,7 +26,7 @@ O endpoint `GET /api/auth/me` devolve a mesma lista em **`permissions`**, para o
 | Método | Rota | Política (permissão) |
 |--------|------|------------------------|
 | GET | `/api/diagnostics/admin-master-only` | `Administracao.Diagnostics` |
-| GET | `/api/admin/dashboard` | política composta `AdminDashboard` (`Usuarios.Visualizar` **ou** `Configuracoes.Visualizar`) |
+| GET | `/api/admin/dashboard` | política composta `AdminDashboard` (`Usuarios.Visualizar` **ou** `Configuracoes.Visualizar`); resposta inclui `totalFaturadoLast30Days` — soma bruta de `Payments` com `Paid` e `PaidAt` nos últimos 30 dias (UTC) |
 | POST | `/api/admin/staff/invites` | `Usuarios.Editar` |
 | GET | `/api/admin/staff/invites` | `Usuarios.Visualizar` |
 | GET | `/api/admin/staff/users` | `Usuarios.Visualizar` |
