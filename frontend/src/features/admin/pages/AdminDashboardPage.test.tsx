@@ -28,6 +28,7 @@ describe('AdminDashboardPage', () => {
       activeMembersCount: 100,
       delinquentMembersCount: 50,
       openSupportTickets: 6,
+      totalFaturadoLast30Days: 1234.56,
     })
 
     const { container } = renderPage()
@@ -40,10 +41,26 @@ describe('AdminDashboardPage', () => {
 
     expect(container.querySelector('.admin-dashboard')).toBeInTheDocument()
     expect(container.querySelector('.admin-dashboard__kpi-grid')).toBeInTheDocument()
-    expect(container.querySelectorAll('.admin-kpi-card')).toHaveLength(3)
+    expect(container.querySelectorAll('.admin-kpi-card')).toHaveLength(4)
     expect(screen.getByText('100')).toBeInTheDocument()
     expect(screen.getByText('50')).toBeInTheDocument()
     expect(screen.getByText('6')).toBeInTheDocument()
+    expect(screen.getByText('R$ 1.234,56')).toBeInTheDocument()
+  })
+
+  it('formats zero total faturado as BRL', async () => {
+    getAdminDashboardMock.mockResolvedValue({
+      activeMembersCount: 0,
+      delinquentMembersCount: 0,
+      openSupportTickets: 0,
+      totalFaturadoLast30Days: 0,
+    })
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByText('R$ 0,00')).toBeInTheDocument()
+    })
   })
 
   it('shows error feedback when API fails', async () => {

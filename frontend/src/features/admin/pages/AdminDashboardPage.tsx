@@ -9,6 +9,7 @@ import {
   Layers,
   Receipt,
   Headphones,
+  CircleDollarSign,
 } from 'lucide-react'
 import { ApplicationPermissions } from '../../../shared/auth/applicationPermissions'
 import { PermissionGate } from '../../auth/PermissionGate'
@@ -19,6 +20,8 @@ import './AdminDashboardPage.css'
 function KpiSkeletonCard() {
   return <div className="admin-kpi-skeleton" aria-hidden="true" />
 }
+
+const brlCurrency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export function AdminDashboardPage() {
   const [data, setData] = useState<AdminDashboardResult | null>(null)
@@ -62,6 +65,7 @@ export function AdminDashboardPage() {
               <KpiSkeletonCard />
               <KpiSkeletonCard />
               <KpiSkeletonCard />
+              <KpiSkeletonCard />
             </>
           ) : data ? (
             <>
@@ -82,6 +86,13 @@ export function AdminDashboardPage() {
                 value={data.openSupportTickets}
                 icon={<MessageSquare size={20} />}
                 variant="info"
+              />
+              <KpiCard
+                label="Total faturado (30d)"
+                value={brlCurrency.format(data.totalFaturadoLast30Days)}
+                hint="Soma bruta de cobranças pagas nos últimos 30 dias (UTC)."
+                icon={<CircleDollarSign size={20} />}
+                variant="success"
               />
             </>
           ) : null}

@@ -52,6 +52,12 @@ Serviços em [`frontend/src/features/admin/services/adminApi.ts`](../../frontend
 
 LGPD: [`frontend/src/features/admin/services/lgpdApi.ts`](../../frontend/src/features/admin/services/lgpdApi.ts) → `GET/POST /api/admin/lgpd/...` (ver [parte-b2-lgpd.md](../architecture/parte-b2-lgpd.md)).
 
+## Dashboard administrativo (`/admin/dashboard`)
+
+- **`GET /api/admin/dashboard`** (política `AdminDashboard`, alinhada ao `PermissionGate` da página): retorna `activeMembersCount`, `delinquentMembersCount`, `openSupportTickets` e **`totalFaturadoLast30Days`** (número decimal em BRL implícito).
+- **Total faturado (30d):** soma bruta dos valores `Amount` em `Payments` com `Status == Paid`, `PaidAt` preenchido e dentro dos **últimos 30 dias em UTC**; estornos (`Refunded`) não entram na soma (métrica bruta de recebido no período, não líquida pós-estorno).
+- Na SPA ([`AdminDashboardPage.tsx`](../../frontend/src/features/admin/pages/AdminDashboardPage.tsx)), o campo é formatado em **BRL** (`pt-BR`) no card **Total faturado (30d)**.
+
 ## Fluxo de convite (staff)
 
 1. Admin com `Usuarios.Editar` cria convite em **Staff**; a API devolve o **token** uma vez (armazenado como hash no servidor).
@@ -104,12 +110,13 @@ Implementado um baseline de visual contínuo para o painel administrativo, inspi
 	- valida manutenção da visibilidade de menu orientada por permissões.
 
 - `frontend/src/features/admin/pages/AdminDashboardPage.test.tsx`
-	- valida renderização do dashboard com classes novas e 3 cards KPI após carregamento;
+	- valida renderização do dashboard com classes novas e **4** cards KPI após carregamento (inclui total faturado em BRL);
+	- valida formatação de valor zero em BRL;
 	- valida mensagem de erro em falha de API.
 
 ### Decisões técnicas
 
-- não houve alteração de contratos de API (`adminApi.ts`) nem de políticas de autorização;
+- o contrato de `GET /api/admin/dashboard` / `getAdminDashboard` foi estendido com `totalFaturadoLast30Days`; políticas de autorização do painel permanecem as mesmas;
 - foco em refatoração visual incremental para reduzir risco de regressão funcional;
 - tokens globais `--admin-*` foram preferidos para facilitar reaproveitamento futuro no restante do frontend.
 
