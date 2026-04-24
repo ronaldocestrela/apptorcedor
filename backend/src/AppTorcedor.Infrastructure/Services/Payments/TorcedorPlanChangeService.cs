@@ -134,14 +134,14 @@ public sealed class TorcedorPlanChangeService(
             if (paymentMethod == TorcedorSubscriptionPaymentMethod.Pix)
             {
                 var r = await paymentProvider
-                    .CreatePixAsync(paymentId.Value, proration, Currency, cancellationToken)
+                    .CreatePixAsync(paymentId.Value, proration, Currency, payingUserId: userId, cancellationToken)
                     .ConfigureAwait(false);
                 pix = new TorcedorSubscriptionCheckoutPixDto(r.QrCodePayload, r.CopyPasteKey);
             }
             else
             {
                 var r = await paymentProvider
-                    .CreateCardAsync(paymentId.Value, proration, Currency, cancellationToken)
+                    .CreateCardAsync(paymentId.Value, proration, Currency, maxInstallments: null, cancellationToken)
                     .ConfigureAwait(false);
                 card = new TorcedorSubscriptionCheckoutCardDto(r.CheckoutUrl);
                 externalRef = r.ProviderReference ?? paymentId.Value.ToString("N");

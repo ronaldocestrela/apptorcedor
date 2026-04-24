@@ -12,6 +12,27 @@ public sealed class PaymentsOptions
     public string WebhookSecret { get; set; } = string.Empty;
 
     public PaymentsStripeOptions Stripe { get; set; } = new();
+
+    public PaymentsAsaasOptions Asaas { get; set; } = new();
+}
+
+/// <summary>ASAAS (cartão parcelado via link de pagamento, PIX, webhooks).</summary>
+public sealed class PaymentsAsaasOptions
+{
+    /// <summary>Chave de API (access token do painel ASAAS).</summary>
+    public string ApiKey { get; set; } = string.Empty;
+
+    /// <summary>Token de autenticação do webhook (header <c>asaas-access-token</c>).</summary>
+    public string WebhookToken { get; set; } = string.Empty;
+
+    /// <summary>URL de sucesso após pagamento no link (deve estar no domínio cadastrado no ASAAS).</summary>
+    public string SuccessUrl { get; set; } = string.Empty;
+
+    /// <summary>URL quando o usuário abandona (opcional no ASAAS; usada em mensagens de erro).</summary>
+    public string CancelUrl { get; set; } = string.Empty;
+
+    /// <summary>Base da API: produção <c>https://api.asaas.com</c>, sandbox <c>https://api-sandbox.asaas.com</c>.</summary>
+    public string BaseUrl { get; set; } = "https://api.asaas.com";
 }
 
 /// <summary>Stripe Checkout + webhooks (cartão).</summary>

@@ -22,6 +22,7 @@ public sealed class StripePaymentProvider(IOptions<PaymentsOptions> paymentsOpti
         Guid paymentId,
         decimal amount,
         string currency,
+        Guid? payingUserId = null,
         CancellationToken cancellationToken = default) =>
         throw new InvalidOperationException(
             "O provedor Stripe está habilitado apenas para pagamento com cartão nesta versão. Use cartão ou altere Payments:Provider.");
@@ -30,6 +31,7 @@ public sealed class StripePaymentProvider(IOptions<PaymentsOptions> paymentsOpti
         Guid paymentId,
         decimal amount,
         string currency,
+        int? maxInstallments = null,
         CancellationToken cancellationToken = default)
     {
         var opts = paymentsOptions.Value.Stripe;
@@ -58,6 +60,18 @@ public sealed class StripePaymentProvider(IOptions<PaymentsOptions> paymentsOpti
                     ClientReferenceId = paymentId.ToString("D"),
                     Metadata = new Dictionary<string, string> { ["payment_id"] = paymentId.ToString("D") },
                     PaymentMethodTypes = ["card"],
+                    PaymentMethodOptions = maxInstallments.HasValue
+                        ? new SessionPaymentMethodOptionsOptions
+                        {
+                            Card = new SessionPaymentMethodOptionsCardOptions
+                            {
+                                Installments = new SessionPaymentMethodOptionsCardInstallmentsOptions
+                                {
+                                    Enabled = true,
+                                },
+                            },
+                        }
+                        : null,
                     LineItems =
                     [
                         new SessionLineItemOptions

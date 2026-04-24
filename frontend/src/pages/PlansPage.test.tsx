@@ -75,6 +75,7 @@ describe('PlansPage', () => {
     await waitFor(() => {
       expect(screen.getByText('/ ano')).toBeInTheDocument()
     })
+    expect(screen.getByText(/parcelamento no cartão no checkout/i)).toBeInTheDocument()
   })
 
   it('shows empty state when no plans are published', async () => {

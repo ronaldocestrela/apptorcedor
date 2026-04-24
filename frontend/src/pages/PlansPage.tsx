@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Settings } from 'lucide-react'
+import { cardInstallmentsCheckoutShortHint, planOffersCardInstallmentsAtCheckout } from '../features/plans/cardInstallmentsCopy'
 import { plansService, type TorcedorPublishedPlan } from '../features/plans/plansService'
 import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
@@ -119,6 +120,9 @@ export function PlansPage() {
                         {plan.discountPercentage}
                         %
                       </p>
+                    ) : null}
+                    {planOffersCardInstallmentsAtCheckout(plan.billingCycle) ? (
+                      <p className="plans-figma-card__installments-hint">{cardInstallmentsCheckoutShortHint}</p>
                     ) : null}
                     <Link
                       to={`/plans/${plan.planId}`}

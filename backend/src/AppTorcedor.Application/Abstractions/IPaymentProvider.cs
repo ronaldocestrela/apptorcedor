@@ -23,12 +23,14 @@ public interface IPaymentProvider
         Guid paymentId,
         decimal amount,
         string currency,
+        Guid? payingUserId = null,
         CancellationToken cancellationToken = default);
 
     Task<CardPaymentProviderResult> CreateCardAsync(
         Guid paymentId,
         decimal amount,
         string currency,
+        int? maxInstallments = null,
         CancellationToken cancellationToken = default);
 
     Task CancelAsync(Guid paymentId, string? externalReference, CancellationToken cancellationToken = default);

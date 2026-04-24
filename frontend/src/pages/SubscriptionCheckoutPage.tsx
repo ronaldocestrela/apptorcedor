@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { isAxiosError } from 'axios'
+import { cardInstallmentsCheckoutShortHint, planOffersCardInstallmentsAtCheckout } from '../features/plans/cardInstallmentsCopy'
 import { plansService, type TorcedorPublishedPlanDetail } from '../features/plans/plansService'
 import { subscriptionsService, type SubscriptionPaymentMethod } from '../features/plans/subscriptionsService'
 import './AppShell.css'
@@ -26,7 +27,7 @@ export function SubscriptionCheckoutPage() {
   const navigate = useNavigate()
   const { planId } = useParams<{ planId: string }>()
   const [plan, setPlan] = useState<TorcedorPublishedPlanDetail | null>(null)
-  const [method, setMethod] = useState<SubscriptionPaymentMethod>('Pix')
+  const [method, setMethod] = useState<SubscriptionPaymentMethod>('Card')
   const [loadingPlan, setLoadingPlan] = useState(true)
   const [planError, setPlanError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -144,6 +145,11 @@ export function SubscriptionCheckoutPage() {
                 Valor com desconto (cobrança inicial):
                 {' '}
                 <strong>{formatPrice(discountedPrice)}</strong>
+              </p>
+            ) : null}
+            {planOffersCardInstallmentsAtCheckout(plan.billingCycle) ? (
+              <p className="subscription-checkout-page__installments-note subscription-checkout-page__installments-note--prominent">
+                {cardInstallmentsCheckoutShortHint}
               </p>
             ) : null}
 

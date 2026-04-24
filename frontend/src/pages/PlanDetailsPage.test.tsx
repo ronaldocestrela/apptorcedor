@@ -112,6 +112,19 @@ describe('PlanDetailsPage', () => {
     expect(screen.getByText(/checkout em uma plataforma externa/i)).toBeInTheDocument()
   })
 
+  it('shows card installments hint for yearly billing', async () => {
+    vi.mocked(plansService.getById).mockResolvedValue({
+      ...defaultPlan,
+      billingCycle: 'Yearly',
+      price: 1200,
+    })
+    renderAtPlanRoute('p1')
+    await waitFor(() => {
+      expect(screen.getByText('Plano Gold')).toBeInTheDocument()
+    })
+    expect(screen.getByText(/parcelamento no cartão no checkout/i)).toBeInTheDocument()
+  })
+
   it('navigates to login with redirect when Assinar agora is clicked without auth', async () => {
     const u = userEvent.setup()
     planDetailsAuthState.user = null

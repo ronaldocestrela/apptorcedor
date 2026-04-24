@@ -82,7 +82,7 @@ public sealed class StripeWebhookProcessorTests
         Assert.Equal(StripeWebhookProcessResult.Ok, r1);
         Assert.Equal(StripeWebhookProcessResult.Ok, r2);
         Assert.Equal(1, checkout.ConfirmAfterCalls);
-        Assert.True(await db.ProcessedStripeWebhookEvents.AnyAsync(e => e.EventId == "evt_idem_1"));
+        Assert.True(await db.ProcessedWebhookEvents.AnyAsync(e => e.Provider == "Stripe" && e.EventId == "evt_idem_1"));
     }
 
     [Fact]

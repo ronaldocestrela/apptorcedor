@@ -4,6 +4,7 @@ import { ApplicationPermissions } from '../../../shared/auth/applicationPermissi
 import { hasPermission } from '../../../shared/auth/permissionUtils'
 import { useAuth } from '../../auth/AuthContext'
 import { PermissionGate } from '../../auth/PermissionGate'
+import { cardInstallmentsAdminHelpYearly, planOffersCardInstallmentsAtCheckout } from '../../plans/cardInstallmentsCopy'
 import {
   createAdminPlan,
   getAdminPlan,
@@ -263,6 +264,11 @@ export function PlansAdminPage() {
                 ))}
               </select>
             </label>
+            {planOffersCardInstallmentsAtCheckout(form.billingCycle) ? (
+              <p style={{ margin: 0, fontSize: 13, color: '#444', lineHeight: 1.45 }}>
+                {cardInstallmentsAdminHelpYearly}
+              </p>
+            ) : null}
             <label>
               Desconto (%)
               <input

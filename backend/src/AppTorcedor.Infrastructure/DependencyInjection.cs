@@ -62,10 +62,33 @@ public static class DependencyInjection
         var paymentsProvider = configuration.GetValue<string>("Payments:Provider") ?? "Mock";
         if (string.Equals(paymentsProvider.Trim(), "Stripe", StringComparison.OrdinalIgnoreCase))
             services.AddScoped<IPaymentProvider, StripePaymentProvider>();
+        else if (string.Equals(paymentsProvider.Trim(), "Asaas", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddHttpClient(
+                nameof(AsaasPaymentProvider),
+                (serviceProvider, client) =>
+                {
+                    var o = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<PaymentsOptions>>().Value.Asaas;
+                    var baseUrl = string.IsNullOrWhiteSpace(o.BaseUrl)
+                        ? "https://api.asaas.com"
+                        : o.BaseUrl.Trim().TrimEnd('/');
+                    client.BaseAddress = new Uri(baseUrl + "/");
+                });
+            services.AddScoped<IPaymentProvider>(sp =>
+            {
+                var http = sp.GetRequiredService<System.Net.Http.IHttpClientFactory>()
+                    .CreateClient(nameof(AsaasPaymentProvider));
+                return new AsaasPaymentProvider(
+                    http,
+                    sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<PaymentsOptions>>(),
+                    sp.GetRequiredService<AppDbContext>());
+            });
+        }
         else
             services.AddScoped<IPaymentProvider, MockPaymentProvider>();
 
         services.AddScoped<IStripeWebhookProcessor, StripeWebhookProcessor>();
+        services.AddScoped<IAsaasWebhookProcessor, AsaasWebhookProcessor>();
         services.Configure<SupportTicketAttachmentStorageOptions>(
             configuration.GetSection(SupportTicketAttachmentStorageOptions.SectionName));
         services.AddHttpClient<ICloudinaryAssetGateway, CloudinaryAssetGateway>();

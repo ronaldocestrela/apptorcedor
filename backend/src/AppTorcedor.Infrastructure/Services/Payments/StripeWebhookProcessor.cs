@@ -76,8 +76,8 @@ public sealed class StripeWebhookProcessor(
             return StripeWebhookProcessResult.InvalidPayload;
         }
 
-        if (await db.ProcessedStripeWebhookEvents.AsNoTracking()
-                .AnyAsync(e => e.EventId == stripeEvent.Id, cancellationToken)
+        if (await db.ProcessedWebhookEvents.AsNoTracking()
+                .AnyAsync(e => e.Provider == "Stripe" && e.EventId == stripeEvent.Id, cancellationToken)
                 .ConfigureAwait(false))
             return StripeWebhookProcessResult.Ok;
 
@@ -149,9 +149,10 @@ public sealed class StripeWebhookProcessor(
 
         try
         {
-            db.ProcessedStripeWebhookEvents.Add(
-                new ProcessedStripeWebhookEventRecord
+            db.ProcessedWebhookEvents.Add(
+                new ProcessedWebhookEventRecord
                 {
+                    Provider = "Stripe",
                     EventId = stripeEvent.Id,
                     EventType = stripeEvent.Type ?? EventTypes.CheckoutSessionCompleted,
                     ProcessedAtUtc = DateTimeOffset.UtcNow,
@@ -161,8 +162,8 @@ public sealed class StripeWebhookProcessor(
         }
         catch (DbUpdateException ex)
         {
-            if (await db.ProcessedStripeWebhookEvents.AsNoTracking()
-                    .AnyAsync(e => e.EventId == stripeEvent.Id, cancellationToken)
+            if (await db.ProcessedWebhookEvents.AsNoTracking()
+                    .AnyAsync(e => e.Provider == "Stripe" && e.EventId == stripeEvent.Id, cancellationToken)
                     .ConfigureAwait(false))
                 return StripeWebhookProcessResult.Ok;
 

@@ -58,12 +58,17 @@ public sealed class TorcedorSubscriptionCheckoutService(
 
         if (paymentMethod == TorcedorSubscriptionPaymentMethod.Pix)
         {
-            var r = await paymentProvider.CreatePixAsync(paymentId, amount, Currency, cancellationToken).ConfigureAwait(false);
+            var r = await paymentProvider
+                .CreatePixAsync(paymentId, amount, Currency, payingUserId: userId, cancellationToken)
+                .ConfigureAwait(false);
             pix = new TorcedorSubscriptionCheckoutPixDto(r.QrCodePayload, r.CopyPasteKey);
         }
         else
         {
-            var r = await paymentProvider.CreateCardAsync(paymentId, amount, Currency, cancellationToken).ConfigureAwait(false);
+            var maxInstallments = plan.BillingCycle.Trim() == "Yearly" ? 12 : (int?)null;
+            var r = await paymentProvider
+                .CreateCardAsync(paymentId, amount, Currency, maxInstallments, cancellationToken)
+                .ConfigureAwait(false);
             card = new TorcedorSubscriptionCheckoutCardDto(r.CheckoutUrl);
             externalReference = r.ProviderReference ?? paymentId.ToString("N");
         }

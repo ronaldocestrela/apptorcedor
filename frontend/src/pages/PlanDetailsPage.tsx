@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Settings } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import { useAuth } from '../features/auth/AuthContext'
+import { cardInstallmentsCheckoutShortHint, planOffersCardInstallmentsAtCheckout } from '../features/plans/cardInstallmentsCopy'
 import { plansService, type TorcedorPublishedPlanDetail } from '../features/plans/plansService'
 import { subscriptionsService } from '../features/plans/subscriptionsService'
 import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
@@ -171,6 +172,9 @@ export function PlanDetailsPage() {
                     {`/ ${billingCyclePeriodLabel(plan.billingCycle)}`}
                   </span>
                 </p>
+                {planOffersCardInstallmentsAtCheckout(plan.billingCycle) ? (
+                  <p className="plan-detail__installments-hint">{cardInstallmentsCheckoutShortHint}</p>
+                ) : null}
               </div>
               {sortedBenefits.length > 0 ? (
                 <ul className="plan-detail__benefits">

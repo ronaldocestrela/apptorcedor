@@ -14,6 +14,7 @@ public sealed class MockPaymentProvider : IPaymentProvider
         Guid paymentId,
         decimal amount,
         string currency,
+        Guid? payingUserId = null,
         CancellationToken cancellationToken = default) =>
         Task.FromResult(
             new PixPaymentProviderResult(
@@ -24,6 +25,7 @@ public sealed class MockPaymentProvider : IPaymentProvider
         Guid paymentId,
         decimal amount,
         string currency,
+        int? maxInstallments = null,
         CancellationToken cancellationToken = default) =>
         Task.FromResult(
             new CardPaymentProviderResult(

@@ -21,7 +21,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<MembershipRecord> Memberships => Set<MembershipRecord>();
     public DbSet<MembershipHistoryRecord> MembershipHistories => Set<MembershipHistoryRecord>();
     public DbSet<PaymentRecord> Payments => Set<PaymentRecord>();
-    public DbSet<ProcessedStripeWebhookEventRecord> ProcessedStripeWebhookEvents => Set<ProcessedStripeWebhookEventRecord>();
+    public DbSet<ProcessedWebhookEventRecord> ProcessedWebhookEvents => Set<ProcessedWebhookEventRecord>();
     public DbSet<AuditLogEntry> AuditLogs => Set<AuditLogEntry>();
     public DbSet<AppConfigurationEntry> AppConfigurationEntries => Set<AppConfigurationEntry>();
     public DbSet<StaffInviteRecord> StaffInvites => Set<StaffInviteRecord>();
@@ -162,10 +162,11 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        builder.Entity<ProcessedStripeWebhookEventRecord>(entity =>
+        builder.Entity<ProcessedWebhookEventRecord>(entity =>
         {
-            entity.ToTable("ProcessedStripeWebhookEvents");
-            entity.HasKey(x => x.EventId);
+            entity.ToTable("ProcessedWebhookEvents");
+            entity.HasKey(x => new { x.Provider, x.EventId });
+            entity.Property(x => x.Provider).HasMaxLength(32).IsRequired();
             entity.Property(x => x.EventId).HasMaxLength(255);
             entity.Property(x => x.EventType).HasMaxLength(128).IsRequired();
             entity.HasIndex(x => x.ProcessedAtUtc);

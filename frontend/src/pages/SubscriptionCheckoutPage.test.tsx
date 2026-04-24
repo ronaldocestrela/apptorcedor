@@ -88,12 +88,43 @@ describe('SubscriptionCheckoutPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Gold')).toBeInTheDocument()
     })
+    await user.click(screen.getByLabelText(/^PIX$/i))
     await user.click(screen.getByRole('button', { name: /Confirmar contratação/i }))
     await waitFor(() => {
       expect(subscriptionsService.subscribe).toHaveBeenCalledWith('p1', 'Pix')
     })
     expect(await screen.findByText(/Você acabou de se tornar/i)).toBeInTheDocument()
     expect(await screen.findByText(/MOCK_PIX\|x/)).toBeInTheDocument()
+  })
+
+  it('shows installments note for yearly plan (card checkout)', async () => {
+    vi.mocked(plansService.getById).mockResolvedValue({
+      planId: 'p1',
+      name: 'Gold Anual',
+      price: 1200,
+      billingCycle: 'Yearly',
+      discountPercentage: 0,
+      summary: null,
+      rulesNotes: null,
+      benefits: [],
+    })
+    vi.mocked(subscriptionsService.subscribe).mockResolvedValue({
+      membershipId: 'm1',
+      paymentId: 'pay1',
+      paymentMethod: 'Card',
+      amount: 1200,
+      currency: 'BRL',
+      membershipStatus: 'PendingPayment',
+      pix: null,
+      card: { checkoutUrl: 'https://example.com/checkout' },
+    })
+    renderAtCheckout('p1')
+    await waitFor(() => {
+      expect(screen.getByText('Gold Anual')).toBeInTheDocument()
+    })
+    expect(
+      screen.getByText(/parcelamento no cartão no checkout/i),
+    ).toBeInTheDocument()
   })
 
   it('shows error on 409', async () => {

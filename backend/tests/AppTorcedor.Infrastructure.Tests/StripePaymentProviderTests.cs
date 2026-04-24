@@ -19,7 +19,7 @@ public sealed class StripePaymentProviderTests
             });
         var sut = new StripePaymentProvider(opts);
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            sut.CreateCardAsync(Guid.NewGuid(), 10m, "BRL", CancellationToken.None));
+            sut.CreateCardAsync(Guid.NewGuid(), 10m, "BRL", maxInstallments: null, CancellationToken.None));
     }
 
     [Fact]
