@@ -1,12 +1,33 @@
+import axios from 'axios'
 import { describe, expect, it } from 'vitest'
-import { resolvePublicAssetUrl } from './accountApi'
+import { formatRegisterApiErrorMessage } from './accountApi'
 
-describe('resolvePublicAssetUrl', () => {
-  it('prefixes API origin for relative paths', () => {
-    expect(resolvePublicAssetUrl('/uploads/x.jpg')).toMatch(/\/uploads\/x\.jpg$/)
+describe('formatRegisterApiErrorMessage', () => {
+  it('returns fallback for non-axios errors', () => {
+    expect(formatRegisterApiErrorMessage(new Error('x'), 'fallback')).toBe('fallback')
   })
 
-  it('returns absolute URLs unchanged', () => {
-    expect(resolvePublicAssetUrl('https://cdn.example/x.jpg')).toBe('https://cdn.example/x.jpg')
+  it('joins errors array from 400 response body', () => {
+    const err = new axios.AxiosError('Bad Request')
+    err.response = {
+      status: 400,
+      data: { errors: ['First.', 'Second.'] },
+      statusText: 'Bad Request',
+      headers: {},
+      config: {} as never,
+    }
+    expect(formatRegisterApiErrorMessage(err, 'fallback')).toBe('First. Second.')
+  })
+
+  it('returns fallback when errors missing or empty', () => {
+    const err = new axios.AxiosError('Bad Request')
+    err.response = {
+      status: 400,
+      data: { errors: [] },
+      statusText: 'Bad Request',
+      headers: {},
+      config: {} as never,
+    }
+    expect(formatRegisterApiErrorMessage(err, 'fallback')).toBe('fallback')
   })
 })

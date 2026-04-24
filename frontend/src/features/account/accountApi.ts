@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios'
 import { api } from '../../shared/api/http'
 
 const apiOrigin = () => (import.meta.env.VITE_API_URL ?? 'http://localhost:5031').replace(/\/$/, '')
@@ -43,6 +44,22 @@ export async function registerPublic(payload: RegisterPayload) {
     },
   )
   return data
+}
+
+/** Mensagens de validação em `400 { errors: string[] }` do cadastro público. */
+export function formatRegisterApiErrorMessage(err: unknown, fallback: string): string {
+  if (!isAxiosError(err))
+    return fallback
+  const data = err.response?.data
+  if (!data || typeof data !== 'object')
+    return fallback
+  const raw = (data as { errors?: unknown }).errors
+  if (!Array.isArray(raw) || raw.length === 0)
+    return fallback
+  const strings = raw.filter((e): e is string => typeof e === 'string')
+  if (strings.length === 0)
+    return fallback
+  return strings.join(' ')
 }
 
 export type MyProfile = {

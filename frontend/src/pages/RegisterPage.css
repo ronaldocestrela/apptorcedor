@@ -86,6 +86,44 @@
   box-shadow: 0 0 0 3px rgba(140, 211, 146, 0.12);
 }
 
+.register-form__optional {
+  font-weight: 400;
+  color: #9b9b9b;
+}
+
+.register-password-rules {
+  margin: 0;
+  padding: 0 0 0 1.35rem;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.register-password-rules__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: #a6b0bf;
+}
+
+.register-password-rules__item--met {
+  color: #8cd392;
+}
+
+.register-password-rules__item--pending {
+  color: #8a929e;
+}
+
+.register-password-rules__mark {
+  flex-shrink: 0;
+  width: 1em;
+  text-align: center;
+  font-size: 0.85em;
+}
+
 .register-form__error {
   margin: 0;
   font-size: 0.82rem;

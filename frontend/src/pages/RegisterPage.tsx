@@ -1,6 +1,14 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { getRegistrationRequirements, type RegistrationRequirements } from '../features/account/accountApi'
+import {
+  formatRegisterApiErrorMessage,
+  getRegistrationRequirements,
+  type RegistrationRequirements,
+} from '../features/account/accountApi'
+import {
+  evaluatePublicRegisterPasswordRules,
+  publicRegisterPasswordMeetsAllRules,
+} from '../features/account/registerPasswordRules'
 import { TeamShieldLogo } from '../shared/branding/TeamShieldLogo'
 import { useAuth } from '../features/auth/AuthContext'
 import { DEFAULT_DOCUMENT_TITLE } from '../shared/seo'
@@ -18,6 +26,9 @@ export function RegisterPage() {
   const [acceptPrivacy, setAcceptPrivacy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+
+  const passwordRuleStates = useMemo(() => evaluatePublicRegisterPasswordRules(password), [password])
+  const allPasswordRulesMet = publicRegisterPasswordMeetsAllRules(password)
 
   useEffect(() => {
     let cancelled = false
@@ -57,6 +68,10 @@ export function RegisterPage() {
       setError('Aceite os termos e a política de privacidade.')
       return
     }
+    if (!publicRegisterPasswordMeetsAllRules(password)) {
+      setError('A senha não atende a todos os requisitos abaixo.')
+      return
+    }
     setBusy(true)
     try {
       await register({
@@ -66,8 +81,9 @@ export function RegisterPage() {
         phoneNumber: phone.trim() || undefined,
         acceptedLegalDocumentVersionIds: [legal.termsOfUseVersionId, legal.privacyPolicyVersionId],
       })
-    } catch {
-      setError('Não foi possível concluir o cadastro. Verifique os dados ou tente outro e-mail.')
+    } catch (err) {
+      const fallback = 'Não foi possível concluir o cadastro. Verifique os dados ou tente outro e-mail.'
+      setError(formatRegisterApiErrorMessage(err, fallback))
     } finally {
       setBusy(false)
     }
@@ -117,10 +133,28 @@ export function RegisterPage() {
                   required
                   minLength={8}
                   autoComplete="new-password"
+                  aria-describedby="register-password-rules"
                 />
               </label>
+              <ul id="register-password-rules" className="register-password-rules" aria-live="polite">
+                {passwordRuleStates.map((rule) => (
+                  <li
+                    key={rule.id}
+                    className={
+                      rule.met
+                        ? 'register-password-rules__item register-password-rules__item--met'
+                        : 'register-password-rules__item register-password-rules__item--pending'
+                    }
+                  >
+                    <span className="register-password-rules__mark" aria-hidden>
+                      {rule.met ? '✓' : '○'}
+                    </span>
+                    {rule.label}
+                  </li>
+                ))}
+              </ul>
               <label className="register-form__field">
-                Celular <span style={{ fontWeight: 400, color: '#9b9b9b' }}>(opcional)</span>
+                Celular <span className="register-form__optional">(opcional)</span>
                 <input
                   type="tel"
                   value={phone}
@@ -151,7 +185,11 @@ export function RegisterPage() {
 
               {error ? <p role="alert" className="register-form__error">{error}</p> : null}
 
-              <button className="register-form__submit" type="submit" disabled={busy}>
+              <button
+                className="register-form__submit"
+                type="submit"
+                disabled={busy || !allPasswordRulesMet}
+              >
                 {busy ? 'Cadastrando...' : 'Criar conta'}
               </button>
             </form>
