@@ -274,6 +274,123 @@ public sealed class PartB8GamesTicketsAdminTests(AppWebApplicationFactory factor
             res.EnsureSuccessStatusCode();
             var d = await res.Content.ReadFromJsonAsync<JsonElement>();
             Assert.Equal("Redeemed", d.GetProperty("status").GetString());
+            Assert.Equal("Pending", d.GetProperty("requestStatus").GetString());
+            Assert.True(d.GetProperty("membershipPlanName").ValueKind is JsonValueKind.Null);
+        }
+    }
+
+    [Fact]
+    public async Task Ticket_request_status_defaults_to_pending_and_can_be_toggled_by_gerenciar()
+    {
+        var token = await LoginAdminAsync();
+        Guid gameId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/games"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            post.Content = JsonContent.Create(
+                new
+                {
+                    opponent = "ReqSt",
+                    competition = "Camp",
+                    gameDate = DateTimeOffset.UtcNow.AddDays(4),
+                    isActive = true,
+                });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            gameId = Guid.Parse(body.GetProperty("gameId").GetString()!);
+        }
+
+        Guid ticketId;
+        using (var reserve = new HttpRequestMessage(HttpMethod.Post, "/api/admin/tickets/reserve"))
+        {
+            reserve.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            reserve.Content = JsonContent.Create(
+                new { userId = TestingSeedConstants.SampleMemberUserId, gameId });
+            var res = await _client.SendAsync(reserve);
+            Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            ticketId = Guid.Parse(body.GetProperty("ticketId").GetString()!);
+        }
+
+        using (var get = new HttpRequestMessage(HttpMethod.Get, $"/api/admin/tickets/{ticketId}"))
+        {
+            get.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await _client.SendAsync(get);
+            res.EnsureSuccessStatusCode();
+            var d = await res.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal("Pending", d.GetProperty("requestStatus").GetString());
+            Assert.Equal("Member Sample", d.GetProperty("userName").GetString());
+            Assert.True(d.GetProperty("membershipPlanName").ValueKind is JsonValueKind.Null);
+        }
+
+        using (var patch = new HttpRequestMessage(HttpMethod.Patch, $"/api/admin/tickets/{ticketId}/request-status"))
+        {
+            patch.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            patch.Content = JsonContent.Create(new { requestStatus = "Issued" });
+            var res = await _client.SendAsync(patch);
+            Assert.Equal(HttpStatusCode.NoContent, res.StatusCode);
+        }
+
+        using (var get2 = new HttpRequestMessage(HttpMethod.Get, $"/api/admin/tickets/{ticketId}"))
+        {
+            get2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await _client.SendAsync(get2);
+            res.EnsureSuccessStatusCode();
+            var d = await res.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal("Issued", d.GetProperty("requestStatus").GetString());
+        }
+
+        using (var patch2 = new HttpRequestMessage(HttpMethod.Patch, $"/api/admin/tickets/{ticketId}/request-status"))
+        {
+            patch2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            patch2.Content = JsonContent.Create(new { requestStatus = "Pending" });
+            var res = await _client.SendAsync(patch2);
+            Assert.Equal(HttpStatusCode.NoContent, res.StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task Patch_ticket_request_status_requires_ingressos_gerenciar()
+    {
+        var adminToken = await LoginAdminAsync();
+        Guid gameId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/games"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            post.Content = JsonContent.Create(
+                new
+                {
+                    opponent = "Pend",
+                    competition = "Camp",
+                    gameDate = DateTimeOffset.UtcNow.AddDays(2),
+                    isActive = true,
+                });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            gameId = Guid.Parse(body.GetProperty("gameId").GetString()!);
+        }
+
+        Guid ticketId;
+        using (var reserve = new HttpRequestMessage(HttpMethod.Post, "/api/admin/tickets/reserve"))
+        {
+            reserve.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            reserve.Content = JsonContent.Create(
+                new { userId = TestingSeedConstants.SampleMemberUserId, gameId });
+            var res = await _client.SendAsync(reserve);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            ticketId = Guid.Parse(body.GetProperty("ticketId").GetString()!);
+        }
+
+        var torcedorToken = await LoginTorcedorAsync();
+        using (var patch = new HttpRequestMessage(HttpMethod.Patch, $"/api/admin/tickets/{ticketId}/request-status"))
+        {
+            patch.Headers.Authorization = new AuthenticationHeaderValue("Bearer", torcedorToken);
+            patch.Content = JsonContent.Create(new { requestStatus = "Issued" });
+            var res = await _client.SendAsync(patch);
+            Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
         }
     }
 

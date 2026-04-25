@@ -10,6 +10,7 @@ public sealed class TicketRecord
     public string? ExternalTicketId { get; set; }
     public string? QrCode { get; set; }
     public TicketStatus Status { get; set; }
+    public TicketRequestStatus RequestStatus { get; set; } = TicketRequestStatus.Pending;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? RedeemedAt { get; set; }

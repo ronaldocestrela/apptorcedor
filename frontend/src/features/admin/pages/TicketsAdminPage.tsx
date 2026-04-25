@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApplicationPermissions } from '../../../shared/auth/applicationPermissions'
 import { hasPermission } from '../../../shared/auth/permissionUtils'
 import { useAuth } from '../../auth/AuthContext'
@@ -7,6 +7,7 @@ import {
   getAdminTicket,
   listAdminGames,
   listAdminTickets,
+  patchAdminTicketRequestStatus,
   purchaseAdminTicket,
   redeemAdminTicket,
   reserveAdminTicket,
@@ -14,6 +15,10 @@ import {
   type AdminGameListItem,
   type AdminTicketListItem,
 } from '../services/adminApi'
+
+function formatRequestStatusPt(status: 'Pending' | 'Issued'): 'Pendente' | 'Emitido' {
+  return status === 'Issued' ? 'Emitido' : 'Pendente'
+}
 
 export function TicketsAdminPage() {
   const { user } = useAuth()
@@ -29,6 +34,7 @@ export function TicketsAdminPage() {
   const [userId, setUserId] = useState('')
   const [gameId, setGameId] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [requestStatusFilter, setRequestStatusFilter] = useState<'' | 'Pending' | 'Issued'>('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [detailQr, setDetailQr] = useState<string | null>(null)
 
@@ -50,6 +56,7 @@ export function TicketsAdminPage() {
         userId: userId.trim() || undefined,
         gameId: gameId.trim() || undefined,
         status: statusFilter.trim() || undefined,
+        requestStatus: requestStatusFilter || undefined,
         pageSize: 100,
       })
       setItems(page.items)
@@ -59,7 +66,7 @@ export function TicketsAdminPage() {
     } finally {
       setLoading(false)
     }
-  }, [userId, gameId, statusFilter])
+  }, [userId, gameId, statusFilter, requestStatusFilter])
 
   useEffect(() => {
     void loadGames()
@@ -68,6 +75,11 @@ export function TicketsAdminPage() {
   useEffect(() => {
     void loadTickets()
   }, [loadTickets])
+
+  const selected = useMemo(
+    () => (selectedId ? items.find((t) => t.ticketId === selectedId) ?? null : null),
+    [items, selectedId],
+  )
 
   async function onReserve() {
     if (!canManage || !userId.trim() || !gameId.trim())
@@ -106,6 +118,22 @@ export function TicketsAdminPage() {
       await refreshDetail(selectedId)
     } catch {
       setError('Falha na operação.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function setRequestStatus(next: 'Pending' | 'Issued') {
+    if (!selectedId || !canManage)
+      return
+    setBusy(true)
+    setError(null)
+    try {
+      await patchAdminTicketRequestStatus(selectedId, next)
+      await loadTickets()
+      await refreshDetail(selectedId)
+    } catch {
+      setError('Falha ao atualizar status da solicitação.')
     } finally {
       setBusy(false)
     }
@@ -154,8 +182,19 @@ export function TicketsAdminPage() {
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
         <label>
-          Filtro status
-          <input value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} placeholder="Reserved | Purchased | Redeemed" />
+          Ciclo (Reserved / Purchased / Redeemed)
+          <input value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} placeholder="Reserved" />
+        </label>
+        <label>
+          Solicitação
+          <select
+            value={requestStatusFilter}
+            onChange={(e) => setRequestStatusFilter(e.target.value as '' | 'Pending' | 'Issued')}
+          >
+            <option value="">Todas</option>
+            <option value="Pending">Pendente</option>
+            <option value="Issued">Emitido</option>
+          </select>
         </label>
         <button type="button" onClick={() => void loadTickets()}>
           Atualizar lista
@@ -169,8 +208,10 @@ export function TicketsAdminPage() {
             <thead>
               <tr style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>
                 <th>Seleção</th>
-                <th>Status</th>
+                <th>Solicitação</th>
+                <th>Ciclo</th>
                 <th>Torcedor</th>
+                <th>Plano</th>
                 <th>Jogo</th>
                 <th>Criado</th>
               </tr>
@@ -189,8 +230,13 @@ export function TicketsAdminPage() {
                       }}
                     />
                   </td>
+                  <td>{formatRequestStatusPt(t.requestStatus)}</td>
                   <td>{t.status}</td>
-                  <td>{t.userEmail}</td>
+                  <td>
+                    <div>{t.userName ?? '—'}</div>
+                    <div style={{ color: '#666', fontSize: 12 }}>{t.userEmail}</div>
+                  </td>
+                  <td>{t.membershipPlanName ?? '—'}</td>
                   <td>
                     {t.opponent} ({new Date(t.gameDate).toLocaleDateString()})
                   </td>
@@ -205,6 +251,32 @@ export function TicketsAdminPage() {
           <h2>Ações</h2>
           {canManage ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={{ margin: 0, fontSize: 13, color: '#555' }}>
+                {selected
+                  ? (
+                      <>
+                        Solicitação atual:
+                        {' '}
+                        <strong>{formatRequestStatusPt(selected.requestStatus)}</strong>
+                      </>
+                    )
+                  : 'Selecione um ingresso na lista.'}
+              </p>
+              <button
+                type="button"
+                disabled={busy || !selectedId || !selected || selected.requestStatus === 'Issued'}
+                onClick={() => void setRequestStatus('Issued')}
+              >
+                Marcar como emitido
+              </button>
+              <button
+                type="button"
+                disabled={busy || !selectedId || !selected || selected.requestStatus === 'Pending'}
+                onClick={() => void setRequestStatus('Pending')}
+              >
+                Marcar como pendente
+              </button>
+              <hr style={{ width: '100%' }} />
               <button type="button" disabled={busy || !selectedId} onClick={() => void runAction(purchaseAdminTicket)}>
                 Comprar / confirmar
               </button>
@@ -216,7 +288,7 @@ export function TicketsAdminPage() {
               </button>
             </div>
           ) : (
-            <p style={{ color: '#666' }}>Requer Ingressos.Gerenciar.</p>
+            <p style={{ color: '#666' }}>Requer Ingressos.Gerenciar para ações e edição de solicitação.</p>
           )}
           <h3 style={{ marginTop: 16 }}>QR / payload</h3>
           <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', background: '#fafafa', padding: 8 }}>

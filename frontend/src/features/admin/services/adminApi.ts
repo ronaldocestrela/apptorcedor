@@ -702,6 +702,8 @@ export type AdminTicketListItem = {
   qrCode: string | null
   createdAt: string
   redeemedAt: string | null
+  requestStatus: 'Pending' | 'Issued'
+  membershipPlanName: string | null
 }
 
 export type AdminTicketListPage = {
@@ -724,12 +726,15 @@ export type AdminTicketDetail = {
   createdAt: string
   updatedAt: string
   redeemedAt: string | null
+  requestStatus: 'Pending' | 'Issued'
+  membershipPlanName: string | null
 }
 
 export async function listAdminTickets(params: {
   userId?: string
   gameId?: string
   status?: string
+  requestStatus?: 'Pending' | 'Issued'
   page?: number
   pageSize?: number
 }): Promise<AdminTicketListPage> {
@@ -738,6 +743,7 @@ export async function listAdminTickets(params: {
       userId: params.userId?.trim() || undefined,
       gameId: params.gameId?.trim() || undefined,
       status: params.status || undefined,
+      requestStatus: params.requestStatus || undefined,
       page: params.page ?? 1,
       pageSize: params.pageSize ?? 20,
     },
@@ -765,6 +771,13 @@ export async function syncAdminTicket(ticketId: string): Promise<void> {
 
 export async function redeemAdminTicket(ticketId: string): Promise<void> {
   await api.post(`/api/admin/tickets/${encodeURIComponent(ticketId)}/redeem`, {})
+}
+
+export async function patchAdminTicketRequestStatus(
+  ticketId: string,
+  requestStatus: 'Pending' | 'Issued',
+): Promise<void> {
+  await api.patch(`/api/admin/tickets/${encodeURIComponent(ticketId)}/request-status`, { requestStatus })
 }
 
 export type NewsEditorialStatus = 'Draft' | 'Published' | 'Unpublished'

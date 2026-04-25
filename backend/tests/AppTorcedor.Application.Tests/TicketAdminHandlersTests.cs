@@ -3,6 +3,7 @@ using AppTorcedor.Application.Modules.Administration.Commands.PurchaseAdminTicke
 using AppTorcedor.Application.Modules.Administration.Commands.RedeemAdminTicket;
 using AppTorcedor.Application.Modules.Administration.Commands.ReserveAdminTicket;
 using AppTorcedor.Application.Modules.Administration.Commands.SyncAdminTicket;
+using AppTorcedor.Application.Modules.Administration.Commands.UpdateAdminTicketRequestStatus;
 using AppTorcedor.Application.Modules.Administration.Queries.GetAdminTicket;
 using AppTorcedor.Application.Modules.Administration.Queries.ListAdminTickets;
 
@@ -17,12 +18,15 @@ public sealed class TicketAdminHandlersTests
         var gid = Guid.NewGuid();
         var fake = new FakeTicketPort();
         var handler = new ListAdminTicketsQueryHandler(fake);
-        var page = await handler.Handle(new ListAdminTicketsQuery(uid, gid, "Reserved", 3, 10), CancellationToken.None);
+        var page = await handler.Handle(
+            new ListAdminTicketsQuery(uid, gid, "Reserved", "Issued", 3, 10),
+            CancellationToken.None);
         Assert.Equal(0, page.TotalCount);
         Assert.Single(fake.ListCalls);
         Assert.Equal(uid, fake.ListCalls[0].UserId);
         Assert.Equal(gid, fake.ListCalls[0].GameId);
         Assert.Equal("Reserved", fake.ListCalls[0].Status);
+        Assert.Equal("Issued", fake.ListCalls[0].RequestStatus);
     }
 
     [Fact]
@@ -64,14 +68,28 @@ public sealed class TicketAdminHandlersTests
         Assert.Single(fake.RedeemCalls);
     }
 
+    [Fact]
+    public async Task UpdateAdminTicketRequestStatus_delegates_to_port()
+    {
+        var tid = Guid.NewGuid();
+        var fake = new FakeTicketPort { Mutation = TicketMutationResult.Success() };
+        var handler = new UpdateAdminTicketRequestStatusCommandHandler(fake);
+        var r = await handler.Handle(new UpdateAdminTicketRequestStatusCommand(tid, "Issued"), CancellationToken.None);
+        Assert.True(r.Ok);
+        Assert.Single(fake.UpdateRequestStatusCalls);
+        Assert.Equal(tid, fake.UpdateRequestStatusCalls[0].TicketId);
+        Assert.Equal("Issued", fake.UpdateRequestStatusCalls[0].RequestStatus);
+    }
+
     private sealed class FakeTicketPort : ITicketAdministrationPort
     {
-        public List<(Guid? UserId, Guid? GameId, string? Status, int Page, int PageSize)> ListCalls { get; } = [];
+        public List<(Guid? UserId, Guid? GameId, string? Status, string? RequestStatus, int Page, int PageSize)> ListCalls { get; } = [];
         public List<Guid> DetailCalls { get; } = [];
         public List<(Guid UserId, Guid GameId)> ReserveCalls { get; } = [];
         public List<Guid> PurchaseCalls { get; } = [];
         public List<Guid> SyncCalls { get; } = [];
         public List<Guid> RedeemCalls { get; } = [];
+        public List<(Guid TicketId, string RequestStatus)> UpdateRequestStatusCalls { get; } = [];
 
         public TicketReserveResult ReserveResult { get; init; } = new(null, TicketMutationError.UserNotFound);
         public TicketMutationResult Mutation { get; init; } = TicketMutationResult.Fail(TicketMutationError.NotFound);
@@ -80,11 +98,12 @@ public sealed class TicketAdminHandlersTests
             Guid? userId,
             Guid? gameId,
             string? status,
+            string? requestStatus,
             int page,
             int pageSize,
             CancellationToken cancellationToken = default)
         {
-            ListCalls.Add((userId, gameId, status, page, pageSize));
+            ListCalls.Add((userId, gameId, status, requestStatus, page, pageSize));
             return Task.FromResult(new AdminTicketListPageDto(0, []));
         }
 
@@ -115,6 +134,15 @@ public sealed class TicketAdminHandlersTests
         public Task<TicketMutationResult> RedeemTicketAsync(Guid ticketId, CancellationToken cancellationToken = default)
         {
             RedeemCalls.Add(ticketId);
+            return Task.FromResult(Mutation);
+        }
+
+        public Task<TicketMutationResult> UpdateTicketRequestStatusAsync(
+            Guid ticketId,
+            string requestStatus,
+            CancellationToken cancellationToken = default)
+        {
+            UpdateRequestStatusCalls.Add((ticketId, requestStatus));
             return Task.FromResult(Mutation);
         }
     }

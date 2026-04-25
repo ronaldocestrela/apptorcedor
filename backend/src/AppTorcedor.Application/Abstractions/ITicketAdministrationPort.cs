@@ -6,6 +6,7 @@ public interface ITicketAdministrationPort
         Guid? userId,
         Guid? gameId,
         string? status,
+        string? requestStatus,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);
@@ -19,6 +20,11 @@ public interface ITicketAdministrationPort
     Task<TicketMutationResult> SyncTicketAsync(Guid ticketId, CancellationToken cancellationToken = default);
 
     Task<TicketMutationResult> RedeemTicketAsync(Guid ticketId, CancellationToken cancellationToken = default);
+
+    Task<TicketMutationResult> UpdateTicketRequestStatusAsync(
+        Guid ticketId,
+        string requestStatus,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record AdminTicketListItemDto(
@@ -34,7 +40,9 @@ public sealed record AdminTicketListItemDto(
     string? ExternalTicketId,
     string? QrCode,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? RedeemedAt);
+    DateTimeOffset? RedeemedAt,
+    string RequestStatus,
+    string? MembershipPlanName);
 
 public sealed record AdminTicketListPageDto(int TotalCount, IReadOnlyList<AdminTicketListItemDto> Items);
 
@@ -52,7 +60,9 @@ public sealed record AdminTicketDetailDto(
     string? QrCode,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    DateTimeOffset? RedeemedAt);
+    DateTimeOffset? RedeemedAt,
+    string RequestStatus,
+    string? MembershipPlanName);
 
 public enum TicketMutationError
 {
@@ -63,6 +73,7 @@ public enum TicketMutationError
     InvalidTransition,
     ExternalIdMissing,
     ProviderError,
+    InvalidRequestStatus,
 }
 
 public sealed record TicketMutationResult(bool Ok, TicketMutationError? Error)

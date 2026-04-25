@@ -11,6 +11,7 @@ public sealed class ListAdminTicketsQueryHandler(ITicketAdministrationPort ticke
             request.UserId,
             request.GameId,
             request.Status,
+            request.RequestStatus,
             request.Page,
             request.PageSize,
             cancellationToken);
