@@ -47,3 +47,8 @@ export async function getMyTicket(ticketId: string): Promise<TorcedorTicketDetai
 export async function redeemMyTicket(ticketId: string): Promise<void> {
   await api.post(`/api/tickets/${encodeURIComponent(ticketId)}/redeem`)
 }
+
+export async function requestTicket(gameId: string): Promise<{ ticketId: string }> {
+  const { data } = await api.post<{ ticketId: string }>('/api/tickets/request', { gameId })
+  return data
+}

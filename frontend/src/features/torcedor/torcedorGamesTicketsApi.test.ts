@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { listTorcedorGames } from './torcedorGamesApi'
-import { getMyTicket, listMyTickets, redeemMyTicket } from './torcedorTicketsApi'
+import { getMyTicket, listMyTickets, redeemMyTicket, requestTicket } from './torcedorTicketsApi'
 
 vi.mock('../../shared/api/http', () => ({
   api: {
@@ -58,5 +58,12 @@ describe('torcedor C.4 games & tickets APIs', () => {
     vi.mocked(api.post).mockResolvedValue({ data: null })
     await redeemMyTicket('t1')
     expect(api.post).toHaveBeenCalledWith('/api/tickets/t1/redeem')
+  })
+
+  it('requestTicket calls POST /api/tickets/request', async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: { ticketId: 'tid' } })
+    const r = await requestTicket('g1')
+    expect(r.ticketId).toBe('tid')
+    expect(api.post).toHaveBeenCalledWith('/api/tickets/request', { gameId: 'g1' })
   })
 })

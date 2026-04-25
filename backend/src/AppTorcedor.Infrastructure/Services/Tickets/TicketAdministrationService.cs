@@ -15,6 +15,7 @@ public sealed class TicketAdministrationService(
         Guid? userId,
         Guid? gameId,
         string? status,
+        string? requestStatus,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
@@ -40,6 +41,13 @@ public sealed class TicketAdministrationService(
         if (statusFilter is { } sf)
             query = query.Where(x => x.t.Status == sf);
 
+        TicketRequestStatus? requestStatusFilter = null;
+        if (!string.IsNullOrWhiteSpace(requestStatus)
+            && Enum.TryParse<TicketRequestStatus>(requestStatus, ignoreCase: true, out var parsedRequest))
+            requestStatusFilter = parsedRequest;
+        if (requestStatusFilter is { } rqf)
+            query = query.Where(x => x.t.RequestStatus == rqf);
+
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
         var rows = await query
             .OrderByDescending(x => x.t.CreatedAt)
@@ -47,6 +55,9 @@ public sealed class TicketAdministrationService(
             .Take(pageSize)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        var userIds = rows.Select(x => x.t.UserId).Distinct().ToList();
+        var planByUser = await GetLatestPlanNamesByUserIdsAsync(userIds, cancellationToken).ConfigureAwait(false);
 
         var items = rows
             .Select(x => new AdminTicketListItemDto(
@@ -62,7 +73,9 @@ public sealed class TicketAdministrationService(
                 x.t.ExternalTicketId,
                 x.t.QrCode,
                 x.t.CreatedAt,
-                x.t.RedeemedAt))
+                x.t.RedeemedAt,
+                x.t.RequestStatus.ToString(),
+                planByUser.GetValueOrDefault(x.t.UserId)))
             .ToList();
 
         return new AdminTicketListPageDto(total, items);
@@ -81,6 +94,12 @@ public sealed class TicketAdministrationService(
         if (row is null)
             return null;
 
+        var planByUser = await GetLatestPlanNamesByUserIdsAsync(
+                new[] { row.t.UserId },
+                cancellationToken)
+            .ConfigureAwait(false);
+        var planName = planByUser.GetValueOrDefault(row.t.UserId);
+
         return new AdminTicketDetailDto(
             row.t.Id,
             row.t.UserId,
@@ -95,7 +114,9 @@ public sealed class TicketAdministrationService(
             row.t.QrCode,
             row.t.CreatedAt,
             row.t.UpdatedAt,
-            row.t.RedeemedAt);
+            row.t.RedeemedAt,
+            row.t.RequestStatus.ToString(),
+            planName);
     }
 
     public async Task<TicketReserveResult> ReserveTicketAsync(
@@ -113,6 +134,10 @@ public sealed class TicketAdministrationService(
         if (!userExists)
             return new TicketReserveResult(null, TicketMutationError.UserNotFound);
 
+        if (await db.Tickets.AnyAsync(t => t.UserId == userId && t.GameId == gameId, cancellationToken)
+                .ConfigureAwait(false))
+            return new TicketReserveResult(null, TicketMutationError.TicketAlreadyExistsForGame);
+
         var ticketId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
         var row = new TicketRecord
@@ -121,6 +146,7 @@ public sealed class TicketAdministrationService(
             UserId = userId,
             GameId = gameId,
             Status = TicketStatus.Reserved,
+            RequestStatus = TicketRequestStatus.Pending,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -218,5 +244,47 @@ public sealed class TicketAdministrationService(
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await loyaltyPoints.AwardPointsForTicketRedeemedAsync(ticketId, cancellationToken).ConfigureAwait(false);
         return TicketMutationResult.Success();
+    }
+
+    public async Task<TicketMutationResult> UpdateTicketRequestStatusAsync(
+        Guid ticketId,
+        string requestStatus,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(requestStatus)
+            || !Enum.TryParse<TicketRequestStatus>(requestStatus, ignoreCase: true, out var newStatus))
+            return TicketMutationResult.Fail(TicketMutationError.InvalidRequestStatus);
+
+        var row = await db.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId, cancellationToken).ConfigureAwait(false);
+        if (row is null)
+            return TicketMutationResult.Fail(TicketMutationError.NotFound);
+
+        row.RequestStatus = newStatus;
+        row.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return TicketMutationResult.Success();
+    }
+
+    private async Task<Dictionary<Guid, string?>> GetLatestPlanNamesByUserIdsAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken)
+    {
+        if (userIds.Count == 0)
+            return new Dictionary<Guid, string?>();
+
+        var pairs = await (
+                from m in db.Memberships.AsNoTracking()
+                join p in db.MembershipPlans.AsNoTracking() on m.PlanId equals p.Id
+                where userIds.Contains(m.UserId) && m.PlanId != null
+                select new { m.UserId, m.StartDate, p.Name }
+            )
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return pairs
+            .GroupBy(x => x.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => (string?)g.OrderByDescending(x => x.StartDate).First().Name);
     }
 }

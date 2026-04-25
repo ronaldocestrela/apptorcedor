@@ -35,3 +35,10 @@ public sealed class ReserveTicketRequest
     [Required]
     public Guid GameId { get; set; }
 }
+
+public sealed class UpdateTicketRequestStatusRequest
+{
+    [Required]
+    [MaxLength(32)]
+    public string RequestStatus { get; set; } = string.Empty;
+}

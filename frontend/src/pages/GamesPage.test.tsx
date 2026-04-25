@@ -11,14 +11,41 @@ vi.mock('../shared/branding/brandingApi', () => ({
   getPublicBranding: vi.fn(),
 }))
 
+vi.mock('../features/plans/subscriptionsService', () => ({
+  subscriptionsService: {
+    getMySummary: vi.fn(),
+  },
+}))
+
+vi.mock('../features/torcedor/torcedorTicketsApi', () => ({
+  listMyTickets: vi.fn(),
+  requestTicket: vi.fn(),
+}))
+
+import { subscriptionsService } from '../features/plans/subscriptionsService'
 import { listTorcedorGames } from '../features/torcedor/torcedorGamesApi'
 import { getPublicBranding } from '../shared/branding/brandingApi'
+import { listMyTickets } from '../features/torcedor/torcedorTicketsApi'
 
 describe('GamesPage', () => {
   beforeEach(() => {
     vi.mocked(listTorcedorGames).mockReset()
     vi.mocked(getPublicBranding).mockReset()
     vi.mocked(getPublicBranding).mockResolvedValue({ teamShieldUrl: null })
+    vi.mocked(subscriptionsService.getMySummary).mockReset()
+    vi.mocked(listMyTickets).mockReset()
+    vi.mocked(subscriptionsService.getMySummary).mockResolvedValue({
+      hasMembership: true,
+      membershipId: 'm1',
+      membershipStatus: 'NaoAssociado',
+      startDate: null,
+      endDate: null,
+      nextDueDate: null,
+      plan: null,
+      lastPayment: null,
+      digitalCard: null,
+    })
+    vi.mocked(listMyTickets).mockResolvedValue({ totalCount: 0, items: [] })
   })
 
   it('renders match cards with active featured game and muted others', async () => {
@@ -56,8 +83,8 @@ describe('GamesPage', () => {
 
     expect(screen.getByRole('heading', { name: /Partidas/i })).toBeInTheDocument()
     expect(screen.getByText('Evento Próximo')).toBeInTheDocument()
-    expect(screen.getByText('Ingresso disponível')).toBeInTheDocument()
-    expect(screen.getByText('Ingresso indisponível')).toBeInTheDocument()
+    const needSocio = screen.getAllByText('Sócio ativo necessário')
+    expect(needSocio).toHaveLength(2)
 
     const active = container.querySelector('.game-card-ev--active')
     const muted = container.querySelectorAll('.game-card-ev--muted')

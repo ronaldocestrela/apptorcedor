@@ -5,6 +5,7 @@ using AppTorcedor.Application.Modules.Administration.Commands.PurchaseAdminTicke
 using AppTorcedor.Application.Modules.Administration.Commands.RedeemAdminTicket;
 using AppTorcedor.Application.Modules.Administration.Commands.ReserveAdminTicket;
 using AppTorcedor.Application.Modules.Administration.Commands.SyncAdminTicket;
+using AppTorcedor.Application.Modules.Administration.Commands.UpdateAdminTicketRequestStatus;
 using AppTorcedor.Application.Modules.Administration.Queries.GetAdminTicket;
 using AppTorcedor.Application.Modules.Administration.Queries.ListAdminTickets;
 using AppTorcedor.Identity;
@@ -25,12 +26,13 @@ public sealed class AdminTicketsController(IMediator mediator) : ControllerBase
         [FromQuery] Guid? userId,
         [FromQuery] Guid? gameId,
         [FromQuery] string? status,
+        [FromQuery] string? requestStatus,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
         var pageDto = await mediator
-            .Send(new ListAdminTicketsQuery(userId, gameId, status, page, pageSize), cancellationToken)
+            .Send(new ListAdminTicketsQuery(userId, gameId, status, requestStatus, page, pageSize), cancellationToken)
             .ConfigureAwait(false);
         return Ok(pageDto);
     }
@@ -83,12 +85,29 @@ public sealed class AdminTicketsController(IMediator mediator) : ControllerBase
         return MapTicketMutation(result);
     }
 
+    [HttpPatch("{ticketId:guid}/request-status")]
+    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.IngressosGerenciar)]
+    public async Task<IActionResult> UpdateRequestStatus(
+        Guid ticketId,
+        [FromBody] UpdateTicketRequestStatusRequest body,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var result = await mediator
+            .Send(new UpdateAdminTicketRequestStatusCommand(ticketId, body.RequestStatus), cancellationToken)
+            .ConfigureAwait(false);
+        return MapRequestStatusUpdate(result);
+    }
+
     private static string MapReserveError(TicketMutationError? error) =>
         error switch
         {
             TicketMutationError.GameNotFound => "Game not found.",
             TicketMutationError.UserNotFound => "User not found.",
             TicketMutationError.GameInactive => "Game is not active.",
+            TicketMutationError.TicketAlreadyExistsForGame => "A ticket for this user and game already exists.",
             TicketMutationError.ProviderError => "Ticket provider error.",
             _ => "Unable to reserve ticket.",
         };
@@ -106,6 +125,18 @@ public sealed class AdminTicketsController(IMediator mediator) : ControllerBase
             TicketMutationError.InvalidTransition => BadRequest(new { error = "Invalid ticket status transition." }),
             TicketMutationError.ExternalIdMissing => BadRequest(new { error = "External ticket id is missing." }),
             TicketMutationError.ProviderError => BadRequest(new { error = "Ticket provider error." }),
+            _ => BadRequest(),
+        };
+    }
+
+    private IActionResult MapRequestStatusUpdate(TicketMutationResult result)
+    {
+        if (result.Ok)
+            return NoContent();
+        return result.Error switch
+        {
+            TicketMutationError.NotFound => NotFound(),
+            TicketMutationError.InvalidRequestStatus => BadRequest(new { error = "Invalid requestStatus. Use Pending or Issued." }),
             _ => BadRequest(),
         };
     }

@@ -323,10 +323,12 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             entity.ToTable("Tickets");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Status).HasConversion<int>();
+            entity.Property(x => x.RequestStatus).HasConversion<int>();
             entity.Property(x => x.ExternalTicketId).HasMaxLength(128);
             entity.Property(x => x.QrCode).HasMaxLength(2048);
             entity.HasIndex(x => x.UserId);
             entity.HasIndex(x => x.GameId);
+            entity.HasIndex(x => new { x.UserId, x.GameId }).IsUnique();
             entity.HasIndex(x => x.ExternalTicketId);
             entity
                 .HasOne<ApplicationUser>()

@@ -7,5 +7,6 @@ public sealed record ListAdminTicketsQuery(
     Guid? UserId,
     Guid? GameId,
     string? Status,
+    string? RequestStatus,
     int Page,
     int PageSize) : IRequest<AdminTicketListPageDto>;

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using AppTorcedor.Application.Abstractions;
 
 namespace AppTorcedor.Api.Contracts;
@@ -106,6 +107,12 @@ public sealed record TorcedorTicketDetailResponse(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     DateTimeOffset? RedeemedAt);
+
+public sealed class RequestTicketRequest
+{
+    [Required]
+    public Guid GameId { get; set; }
+}
 
 public sealed record TorcedorLoyaltySummaryResponse(
     int TotalPoints,
