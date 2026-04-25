@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Settings } from 'lucide-react'
 import { resolvePublicAssetUrl } from '../features/account/accountApi'
+import { subscriptionsService } from '../features/plans/subscriptionsService'
 import { listTorcedorGames, type TorcedorGameListItem } from '../features/torcedor/torcedorGamesApi'
+import { listMyTickets, requestTicket } from '../features/torcedor/torcedorTicketsApi'
 import { getPublicBranding } from '../shared/branding/brandingApi'
 import { getTeamShieldPlaceholderDataUrl } from '../shared/branding/teamShieldPlaceholder'
 import { TORCEDOR_INGRESSO_REDEEM_TOAST_KEY } from '../shared/torcedorIngressoToast'
@@ -72,6 +75,11 @@ export function GamesPage() {
   const [error, setError] = useState<string | null>(null)
   const [clubShieldSrc, setClubShieldSrc] = useState(() => getTeamShieldPlaceholderDataUrl())
   const [ingressoToast, setIngressoToast] = useState(false)
+  const [ctxLoading, setCtxLoading] = useState(true)
+  const [membershipStatus, setMembershipStatus] = useState<string | null>(null)
+  const [ticketIdByGameId, setTicketIdByGameId] = useState<Record<string, string>>({})
+  const [requestingGameId, setRequestingGameId] = useState<string | null>(null)
+  const [requestFeedback, setRequestFeedback] = useState<string | null>(null)
 
   useEffect(() => {
     document.title = 'Partidas | FFC'
@@ -138,6 +146,74 @@ export function GamesPage() {
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      setCtxLoading(true)
+      setRequestFeedback(null)
+      try {
+        const [summary, tix] = await Promise.all([
+          subscriptionsService.getMySummary(),
+          listMyTickets({ pageSize: 200 }),
+        ])
+        if (cancelled)
+          return
+        setMembershipStatus(summary.membershipStatus ?? null)
+        const next: Record<string, string> = {}
+        for (const t of tix.items)
+          next[t.gameId] = t.ticketId
+        setTicketIdByGameId(next)
+      }
+      catch {
+        if (!cancelled) {
+          setMembershipStatus(null)
+          setTicketIdByGameId({})
+        }
+      }
+      finally {
+        if (!cancelled)
+          setCtxLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const isSocioAtivo = membershipStatus === 'Ativo'
+
+  const onRequestTicket = useCallback(
+    async (gameId: string) => {
+      setRequestingGameId(gameId)
+      setRequestFeedback(null)
+      try {
+        const { ticketId } = await requestTicket(gameId)
+        setTicketIdByGameId((prev) => ({ ...prev, [gameId]: ticketId }))
+        setRequestFeedback('Solicitação enviada. Acompanhe em “Meus ingressos” ou aguarde a emissão no clube.')
+      }
+      catch (e) {
+        if (axios.isAxiosError(e) && e.response?.status === 409) {
+          setRequestFeedback('Você já possui solicitação ou ingresso para esta partida.')
+        }
+        else if (axios.isAxiosError(e) && e.response?.status === 400) {
+          const msg = (e.response?.data as { error?: string } | undefined)?.error
+          setRequestFeedback(
+            msg && msg.toLowerCase().includes('active membership')
+              ? 'É necessário ser sócio ativo para solicitar.'
+              : (msg ?? 'Não foi possível solicitar o ingresso.'),
+          )
+        }
+        else {
+          setRequestFeedback('Não foi possível solicitar o ingresso.')
+        }
+      }
+      finally {
+        setRequestingGameId(null)
+      }
+    },
+    [],
+  )
+
   const sortedItems = useMemo(
     () =>
       [...items].sort(
@@ -194,6 +270,12 @@ export function GamesPage() {
               ×
             </button>
           </div>
+        ) : null}
+
+        {requestFeedback ? (
+          <p className="games-page__error" role="status">
+            {requestFeedback}
+          </p>
         ) : null}
 
         <div className="games-schedule">
@@ -260,17 +342,39 @@ export function GamesPage() {
                             </div>
                           </div>
                           <div className="game-card-ev__cta-footer">
-                            <button
-                              type="button"
-                              className={
-                                isActive
-                                  ? 'game-card-ev__cta game-card-ev__cta--available'
-                                  : 'game-card-ev__cta game-card-ev__cta--unavailable'
-                              }
-                              disabled={!isActive}
-                            >
-                              {isActive ? 'Ingresso disponível' : 'Ingresso indisponível'}
-                            </button>
+                            {ctxLoading
+                              ? (
+                                  <span className="app-muted" style={{ fontSize: 13 }}>Verificando sócio…</span>
+                                )
+                              : ticketIdByGameId[g.gameId]
+                                ? (
+                                    <Link
+                                      to="/tickets"
+                                      className="game-card-ev__cta game-card-ev__cta--available"
+                                    >
+                                      Ver meus ingressos
+                                    </Link>
+                                  )
+                                :                                 isSocioAtivo
+                                  ? (
+                                      <button
+                                        type="button"
+                                        className="game-card-ev__cta game-card-ev__cta--available"
+                                        disabled={requestingGameId === g.gameId}
+                                        onClick={() => void onRequestTicket(g.gameId)}
+                                      >
+                                        {requestingGameId === g.gameId ? 'Enviando…' : 'Solicitar ingresso'}
+                                      </button>
+                                    )
+                                  : (
+                                      <button
+                                        type="button"
+                                        className="game-card-ev__cta game-card-ev__cta--unavailable"
+                                        disabled
+                                      >
+                                        Sócio ativo necessário
+                                      </button>
+                                    )}
                           </div>
                         </article>
                       </li>

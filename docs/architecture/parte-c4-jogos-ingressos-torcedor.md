@@ -6,7 +6,7 @@ Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (C
 
 - **Conta:** `UserId` obtido exclusivamente do JWT nas rotas de ingressos; jogos são somente leitura e não exigem escopo além de `[Authorize]`.
 - **Permissões de backoffice:** não utilizadas nas rotas torcedor (`Jogos.*` / `Ingressos.*` continuam só em `api/admin/*`).
-- **Associação (Membership):** C.4 **não** exige sócio ativo para listar jogos ou ver ingressos já vinculados à conta (paridade com B.8: ingresso amarra-se ao `UserId`).
+- **Associação (Membership):** listar jogos e ver **ingressos já existentes** **não** exige sócio ativo. **Solicitar** um novo ingresso exige `MembershipStatus.Ativo` e é bloqueada se já existir qualquer `Ticket` para o par `UserId` + `GameId` (índice único composto e validação de aplicação; ver B.8).
 
 ## Backend
 
@@ -15,7 +15,7 @@ Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (C
 | Porta | Implementação | Função |
 |--------|----------------|--------|
 | `IGameTorcedorReadPort` | `GameTorcedorReadService` | Lista jogos com `IsActive == true` e `GameDate >= DateTimeOffset.UtcNow` (partidas já realizadas não aparecem no catálogo). |
-| `ITicketTorcedorPort` | `TicketTorcedorService` | Lista/detalha ingressos do usuário; resgate com checagem de propriedade. |
+| `ITicketTorcedorPort` | `TicketTorcedorService` | Lista/detalha ingressos do usuário; resgate com checagem de propriedade; **solicitação** de ingresso (sócio ativo, sem duplicar por jogo) com `ITicketProvider` + `RequestStatus = Pending`. |
 
 Registro em `AppTorcedor.Infrastructure/DependencyInjection.cs`.
 
@@ -25,6 +25,7 @@ Registro em `AppTorcedor.Infrastructure/DependencyInjection.cs`.
 - `ListMyTicketsQuery` / `ListMyTicketsQueryHandler`
 - `GetMyTicketQuery` / `GetMyTicketQueryHandler`
 - `RedeemMyTicketCommand` / `RedeemMyTicketCommandHandler`
+- `RequestMyTicketCommand` / `RequestMyTicketCommandHandler`
 
 Contratos e DTOs: `AppTorcedor.Application/Abstractions/TorcedorGamesTicketsContracts.cs`.
 
@@ -37,6 +38,7 @@ Base: **`api/games`** e **`api/tickets`** — `[Authorize]` no controlador (mesm
 | GET | `/api/games?search=&page=&pageSize=` | Jogos **ativos** cuja data/hora do jogo **ainda não passou** em UTC (paginação). Cada item inclui `opponentLogoUrl` (opcional) para exibição no app. |
 | GET | `/api/tickets?gameId=&status=&page=&pageSize=` | Ingressos do usuário autenticado. |
 | GET | `/api/tickets/{ticketId}` | Detalhe **somente se** o ingresso pertencer ao usuário; caso contrário `404`. |
+| POST | `/api/tickets/request` | Corpo: `{ "gameId" }`. Cria `Ticket` `Reserved` com `RequestStatus = Pending` (visível no admin). Exige `MembershipStatus.Ativo`. Bloqueia se já existir ticket para o mesmo jogo. `201` com `{ "ticketId" }`; `400` se jogo inexistente/inativo, sem sócio ativo, ou provedor; `401` se não autenticado; `409` se duplicar `UserId`+`GameId`. |
 | POST | `/api/tickets/{ticketId}/redeem` | Resgate `Purchased` → `Redeemed` (mesma regra de negócio da B.8 + `ILoyaltyPointsTriggerPort`); `404` se ingresso inexistente ou de outro usuário; `400` se transição inválida. |
 
 Contratos HTTP (camelCase): `AppTorcedor.Api/Contracts/TorcedorConsumptionContracts.cs` (tipos `TorcedorGame*`, `TorcedorTicket*`).
@@ -47,12 +49,12 @@ Controladores: `TorcedorGamesController`, `TorcedorTicketsController`.
 
 - Rotas: `/games` (`GamesPage`), `/tickets` (`MyTicketsPage`), registradas em `frontend/src/app/App.tsx`; links no `DashboardPage`.
 - Clientes: `frontend/src/features/torcedor/torcedorGamesApi.ts`, `torcedorTicketsApi.ts`.
-- UI `/games` (**Partidas**): listagem alinhada ao Figma FanSpot (frame *partidas*) — cabeçalho escuro com título central e atalho à conta; cartões por dia com chip “Evento Próximo”; CTA “Ingresso disponível” / “Ingresso indisponível” no rodapé **dentro** do cartão (`.game-card-ev__cta-footer`); toast fixo após resgate (flag em `sessionStorage` em `MyTicketsPage`). Classes: `.games-day__match*`, `.game-card-ev*`, `.games-page__ingresso-toast`. Sigla da casa: `VITE_CLUB_SHORT_NAME` (padrão `FFC`). Ver `docs/architecture/visual-identity.md` §10.5.
+- UI `/games` (**Partidas**): listagem alinhada ao Figma FanSpot (frame *partidas*) — cabeçalho escuro com título central e atalho à conta; cartões por dia com chip “Evento Próximo”; rodapé do cartão (`.game-card-ev__cta-footer`) com **“Solicitar ingresso”** (sócio ativo, via `getMySummary` + `requestTicket`), **“Sócio ativo necessário”** (desabilitado) ou **“Ver meus ingressos”** se já houver registro; toast fixo após resgate (flag em `sessionStorage` em `MyTicketsPage`). Classes: `.games-day__match*`, `.game-card-ev*`, `.games-page__ingresso-toast`. Sigla da casa: `VITE_CLUB_SHORT_NAME` (padrão `FFC`). Ver `docs/architecture/visual-identity.md` §10.5.
 
 ## Testes
 
 - **Application:** `TorcedorGamesTicketsHandlersTests` — delegação aos ports.
-- **API:** `PartC4TorcedorGamesTicketsTests` — auth, jogos ativos vs inativos, exclusão de jogos **passados** no catálogo torcedor, `opponentLogoUrl` na listagem, fluxo listagem/detalhe/resgate, isolamento entre usuários, resgate inválido em `Reserved`.
+- **API:** `PartC4TorcedorGamesTicketsTests` — auth, jogos ativos vs inativos, exclusão de jogos **passados** no catálogo torcedor, `opponentLogoUrl` na listagem, fluxo listagem/detalhe/resgate, isolamento entre usuários, resgate inválido em `Reserved`, `POST /api/tickets/request` (sócio ativo, 409 em duplicidade, `requestStatus` Pending no admin).
 - **Frontend:** `torcedorGamesTicketsApi.test.ts` — chamadas Axios.
 
 ## Referências

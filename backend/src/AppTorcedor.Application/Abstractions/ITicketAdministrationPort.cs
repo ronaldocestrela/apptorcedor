@@ -74,6 +74,8 @@ public enum TicketMutationError
     ExternalIdMissing,
     ProviderError,
     InvalidRequestStatus,
+    MembershipNotActive,
+    TicketAlreadyExistsForGame,
 }
 
 public sealed record TicketMutationResult(bool Ok, TicketMutationError? Error)

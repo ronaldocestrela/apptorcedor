@@ -47,9 +47,12 @@ public interface IGameTorcedorReadPort
         CancellationToken cancellationToken = default);
 }
 
-/// <summary>Tickets owned by the authenticated user (list, detail, redeem).</summary>
+/// <summary>Tickets owned by the authenticated user (list, detail, redeem, request).</summary>
 public interface ITicketTorcedorPort
 {
+    /// <summary>Solicita ingresso para um jogo (sócio ativo; bloqueia duplicidade UserId+GameId). Cria ticket Reserved com RequestStatus Pending.</summary>
+    Task<TicketReserveResult> RequestMyTicketAsync(Guid userId, Guid gameId, CancellationToken cancellationToken = default);
+
     Task<TorcedorTicketListPageDto> ListMyTicketsAsync(
         Guid userId,
         Guid? gameId,

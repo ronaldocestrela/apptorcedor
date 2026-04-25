@@ -107,6 +107,7 @@ public sealed class AdminTicketsController(IMediator mediator) : ControllerBase
             TicketMutationError.GameNotFound => "Game not found.",
             TicketMutationError.UserNotFound => "User not found.",
             TicketMutationError.GameInactive => "Game is not active.",
+            TicketMutationError.TicketAlreadyExistsForGame => "A ticket for this user and game already exists.",
             TicketMutationError.ProviderError => "Ticket provider error.",
             _ => "Unable to reserve ticket.",
         };

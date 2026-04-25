@@ -6,8 +6,72 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AppTorcedor.Infrastructure.Services.Tickets;
 
-public sealed class TicketTorcedorService(AppDbContext db, ILoyaltyPointsTriggerPort loyaltyPoints) : ITicketTorcedorPort
+public sealed class TicketTorcedorService(
+    AppDbContext db,
+    ILoyaltyPointsTriggerPort loyaltyPoints,
+    ITicketProvider ticketProvider) : ITicketTorcedorPort
 {
+    public async Task<TicketReserveResult> RequestMyTicketAsync(
+        Guid userId,
+        Guid gameId,
+        CancellationToken cancellationToken = default)
+    {
+        var membership = await db.Memberships.AsNoTracking()
+            .Where(m => m.UserId == userId)
+            .OrderByDescending(m => m.StartDate)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (membership is null || membership.Status != MembershipStatus.Ativo)
+            return new TicketReserveResult(null, TicketMutationError.MembershipNotActive);
+
+        if (await db.Tickets.AnyAsync(
+                t => t.UserId == userId && t.GameId == gameId,
+                cancellationToken)
+            .ConfigureAwait(false))
+            return new TicketReserveResult(null, TicketMutationError.TicketAlreadyExistsForGame);
+
+        var game = await db.Games.FirstOrDefaultAsync(g => g.Id == gameId, cancellationToken).ConfigureAwait(false);
+        if (game is null)
+            return new TicketReserveResult(null, TicketMutationError.GameNotFound);
+        if (!game.IsActive)
+            return new TicketReserveResult(null, TicketMutationError.GameInactive);
+
+        var userExists = await db.Users.AnyAsync(u => u.Id == userId, cancellationToken).ConfigureAwait(false);
+        if (!userExists)
+            return new TicketReserveResult(null, TicketMutationError.UserNotFound);
+
+        var ticketId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        var row = new TicketRecord
+        {
+            Id = ticketId,
+            UserId = userId,
+            GameId = gameId,
+            Status = TicketStatus.Reserved,
+            RequestStatus = TicketRequestStatus.Pending,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        db.Tickets.Add(row);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            var res = await ticketProvider.ReserveAsync(ticketId, gameId, userId, cancellationToken).ConfigureAwait(false);
+            row.ExternalTicketId = res.ExternalTicketId;
+            row.QrCode = res.QrCodePayload;
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            db.Tickets.Remove(row);
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return new TicketReserveResult(null, TicketMutationError.ProviderError);
+        }
+
+        return new TicketReserveResult(ticketId, null);
+    }
+
     public async Task<TorcedorTicketListPageDto> ListMyTicketsAsync(
         Guid userId,
         Guid? gameId,

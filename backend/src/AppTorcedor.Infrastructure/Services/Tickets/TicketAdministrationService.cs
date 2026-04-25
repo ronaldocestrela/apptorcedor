@@ -134,6 +134,10 @@ public sealed class TicketAdministrationService(
         if (!userExists)
             return new TicketReserveResult(null, TicketMutationError.UserNotFound);
 
+        if (await db.Tickets.AnyAsync(t => t.UserId == userId && t.GameId == gameId, cancellationToken)
+                .ConfigureAwait(false))
+            return new TicketReserveResult(null, TicketMutationError.TicketAlreadyExistsForGame);
+
         var ticketId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
         var row = new TicketRecord

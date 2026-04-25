@@ -387,6 +387,105 @@ public sealed class PartC4TorcedorGamesTicketsTests(AppWebApplicationFactory fac
         }
     }
 
+    [Fact]
+    public async Task Request_ticket_requires_auth()
+    {
+        var res = await _client.PostAsJsonAsync("/api/tickets/request", new { gameId = Guid.NewGuid() });
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Request_ticket_fails_when_membership_not_ativo()
+    {
+        var torcedor = await LoginTorcedorAsync();
+        var admin = await LoginAdminAsync();
+        Guid gameId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/games"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            post.Content = JsonContent.Create(
+                new
+                {
+                    opponent = "C4ReqA",
+                    competition = "Camp",
+                    gameDate = DateTimeOffset.UtcNow.AddDays(6),
+                    isActive = true,
+                });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            gameId = Guid.Parse(body.GetProperty("gameId").GetString()!);
+        }
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, "/api/tickets/request");
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", torcedor);
+        req.Content = JsonContent.Create(new { gameId });
+        var res2 = await _client.SendAsync(req);
+        Assert.Equal(HttpStatusCode.BadRequest, res2.StatusCode);
+    }
+
+    [Fact]
+    public async Task Request_ticket_succeeds_for_ativo_and_blocks_duplicate()
+    {
+        var admin = await LoginAdminAsync();
+        var member = await LoginMemberAsync();
+        using (var act = new HttpRequestMessage(
+                   HttpMethod.Patch,
+                   $"/api/admin/memberships/{TestingSeedConstants.SampleMembershipId}/status"))
+        {
+            act.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            act.Content = JsonContent.Create(
+                new { status = "Ativo", reason = "test ativo" });
+            (await _client.SendAsync(act)).EnsureSuccessStatusCode();
+        }
+
+        Guid gameId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/games"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            post.Content = JsonContent.Create(
+                new
+                {
+                    opponent = "C4ReqB",
+                    competition = "Camp",
+                    gameDate = DateTimeOffset.UtcNow.AddDays(7),
+                    isActive = true,
+                });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            gameId = Guid.Parse(body.GetProperty("gameId").GetString()!);
+        }
+
+        Guid ticketId;
+        using (var req1 = new HttpRequestMessage(HttpMethod.Post, "/api/tickets/request"))
+        {
+            req1.Headers.Authorization = new AuthenticationHeaderValue("Bearer", member);
+            req1.Content = JsonContent.Create(new { gameId });
+            var res = await _client.SendAsync(req1);
+            Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            ticketId = Guid.Parse(body.GetProperty("ticketId").GetString()!);
+        }
+
+        using (var req2 = new HttpRequestMessage(HttpMethod.Post, "/api/tickets/request"))
+        {
+            req2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", member);
+            req2.Content = JsonContent.Create(new { gameId });
+            var res = await _client.SendAsync(req2);
+            Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+        }
+
+        using (var getA = new HttpRequestMessage(HttpMethod.Get, $"/api/admin/tickets/{ticketId}"))
+        {
+            getA.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            var res = await _client.SendAsync(getA);
+            res.EnsureSuccessStatusCode();
+            var d = await res.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal("Pending", d.GetProperty("requestStatus").GetString());
+        }
+    }
+
     private async Task<string> LoginAdminAsync()
     {
         var login = await _client.PostAsJsonAsync(

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using AppTorcedor.Api.Contracts;
 using AppTorcedor.Application.Abstractions;
 using AppTorcedor.Application.Modules.Torcedor.Commands.RedeemMyTicket;
+using AppTorcedor.Application.Modules.Torcedor.Commands.RequestMyTicket;
 using AppTorcedor.Application.Modules.Torcedor.Queries.GetMyTicket;
 using AppTorcedor.Application.Modules.Torcedor.Queries.ListMyTickets;
 using MediatR;
@@ -15,6 +16,25 @@ namespace AppTorcedor.Api.Controllers;
 [Authorize]
 public sealed class TorcedorTicketsController(IMediator mediator) : ControllerBase
 {
+    [HttpPost("request")]
+    public async Task<IActionResult> RequestTicket(
+        [FromBody] RequestTicketRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var userId = GetUserIdOrDefault();
+        if (userId is null)
+            return Unauthorized();
+        var result = await mediator
+            .Send(new RequestMyTicketCommand(userId.Value, body.GameId), cancellationToken)
+            .ConfigureAwait(false);
+        if (!result.Ok)
+            return MapRequestTicket(result);
+        return CreatedAtAction(nameof(GetById), new { ticketId = result.TicketId }, new { ticketId = result.TicketId });
+    }
+
     [HttpGet]
     public async Task<ActionResult<TorcedorTicketListPageResponse>> List(
         [FromQuery] Guid? gameId,
@@ -99,4 +119,16 @@ public sealed class TorcedorTicketsController(IMediator mediator) : ControllerBa
             _ => BadRequest(),
         };
     }
+
+    private IActionResult MapRequestTicket(TicketReserveResult result) =>
+        result.Error switch
+        {
+            TicketMutationError.MembershipNotActive => BadRequest(new { error = "Active membership required to request a ticket." }),
+            TicketMutationError.GameNotFound => BadRequest(new { error = "Game not found." }),
+            TicketMutationError.GameInactive => BadRequest(new { error = "Game is not active." }),
+            TicketMutationError.TicketAlreadyExistsForGame => Conflict(new { error = "A request or ticket for this game already exists." }),
+            TicketMutationError.UserNotFound => BadRequest(new { error = "User not found." }),
+            TicketMutationError.ProviderError => BadRequest(new { error = "Ticket provider error." }),
+            _ => BadRequest(),
+        };
 }

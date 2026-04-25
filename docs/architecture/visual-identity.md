@@ -497,7 +497,7 @@ Implementação em `frontend/src/pages/GamesPage.tsx` + estilos em `frontend/src
 - Estados: `.game-card-ev--active` (jogo “próximo” — primeiro futuro na ordenação global, ou o primeiro se todos forem passados) e `.game-card-ev--muted` (demais; escurecimento vem do wrapper).
 - Corpo: `.game-card-ev__body` — confronto `.game-card-ev__title` (`{sigla} x {adversário}`; sigla via `VITE_CLUB_SHORT_NAME`, padrão `FFC`), subtítulo `.game-card-ev__subtitle` (`{competition} - {horário}`).
 - Logos: `.game-card-ev__logos` — casa `.game-card-ev__logo-slot--home` (~73px), separador “X” `.game-card-ev__vs`, visitante `.game-card-ev__logo-slot--away` (~69×111), fallback `.game-card-ev__opponent-fallback`.
-- CTA **dentro** do cartão (rodapé do `.game-card-ev`): `.game-card-ev__cta-footer` → `button.game-card-ev__cta` com `.game-card-ev__cta--available` (“Ingresso disponível”, fundo `#8cd392`, texto `#080808`, tipografia ~20px) e `.game-card-ev__cta--unavailable` (“Ingresso indisponível”, fundo `#6c7074`, texto branco). CTA **somente visual** na listagem (sem navegação).
+- CTA **dentro** do cartão (rodapé do `.game-card-ev`): `.game-card-ev__cta-footer` → `button.game-card-ev__cta` / `a.game-card-ev__cta` com `.game-card-ev__cta--available` (“Solicitar ingresso” se sócio ativo, “Ver meus ingressos” se já houver registro, fundo `#8cd392`, texto `#080808`, tipografia ~20px) e `.game-card-ev__cta--unavailable` (“Sócio ativo necessário” quando a conta não tem `MembershipStatus.Ativo`, fundo `#6c7074`, texto branco). Solicitação chama `POST /api/tickets/request`.
 
 **Toast pós-resgate de ingresso**
 

@@ -1,5 +1,6 @@
 using AppTorcedor.Application.Abstractions;
 using AppTorcedor.Application.Modules.Torcedor.Commands.RedeemMyTicket;
+using AppTorcedor.Application.Modules.Torcedor.Commands.RequestMyTicket;
 using AppTorcedor.Application.Modules.Torcedor.Queries.GetMyTicket;
 using AppTorcedor.Application.Modules.Torcedor.Queries.ListMyTickets;
 using AppTorcedor.Application.Modules.Torcedor.Queries.ListTorcedorGames;
@@ -50,6 +51,21 @@ public sealed class TorcedorGamesTicketsHandlersTests
     }
 
     [Fact]
+    public async Task RequestMyTicket_delegates_to_port()
+    {
+        var uid = Guid.NewGuid();
+        var gid = Guid.NewGuid();
+        var tid = Guid.NewGuid();
+        var fake = new FakeTicketsPort { RequestResult = new TicketReserveResult(tid, null) };
+        var handler = new RequestMyTicketCommandHandler(fake);
+        var r = await handler.Handle(new RequestMyTicketCommand(uid, gid), CancellationToken.None);
+        Assert.True(r.Ok);
+        Assert.Equal(tid, r.TicketId);
+        Assert.Single(fake.RequestCalls);
+        Assert.Equal((uid, gid), fake.RequestCalls[0]);
+    }
+
+    [Fact]
     public async Task RedeemMyTicket_delegates_to_port()
     {
         var uid = Guid.NewGuid();
@@ -82,8 +98,19 @@ public sealed class TorcedorGamesTicketsHandlersTests
         public List<(Guid UserId, Guid? GameId, string? Status, int Page, int PageSize)> ListCalls { get; } = [];
         public List<(Guid UserId, Guid TicketId)> GetCalls { get; } = [];
         public List<(Guid UserId, Guid TicketId)> RedeemCalls { get; } = [];
+        public List<(Guid UserId, Guid GameId)> RequestCalls { get; } = [];
 
         public TicketMutationResult RedeemResult { get; init; } = TicketMutationResult.Fail(TicketMutationError.NotFound);
+        public TicketReserveResult RequestResult { get; init; } = new(null, TicketMutationError.MembershipNotActive);
+
+        public Task<TicketReserveResult> RequestMyTicketAsync(
+            Guid userId,
+            Guid gameId,
+            CancellationToken cancellationToken = default)
+        {
+            RequestCalls.Add((userId, gameId));
+            return Task.FromResult(RequestResult);
+        }
 
         public Task<TorcedorTicketListPageDto> ListMyTicketsAsync(
             Guid userId,

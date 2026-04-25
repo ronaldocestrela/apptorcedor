@@ -8,9 +8,9 @@ Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B
 |--------|-----------|
 | `Games` | `Opponent`, `Competition`, `OpponentLogoUrl` (opcional; URL pública da logo do adversário), `GameDate`, `IsActive`, `CreatedAt`. Desativação lógica (`IsActive =0`) em vez de exclusão física quando há histórico de ingressos. |
 | `OpponentLogoAssets` | Biblioteca de logos enviadas pelo admin: `PublicUrl` (único), `CreatedAt`. Só URLs registradas aqui podem ser associadas a um jogo (`OpponentLogoUrl`). |
-| `Tickets` | `UserId`, `GameId`, `ExternalTicketId`, `QrCode`, `Status` — ciclo operacional com o provedor (`Reserved` / `Purchased` / `Redeemed`); `RequestStatus` — **solicitação / emissão** no backoffice (`Pending` = pendente, `Issued` = emitido), independente do ciclo; `CreatedAt`, `UpdatedAt`, `RedeemedAt`. |
+| `Tickets` | `UserId`, `GameId` com **índice único composto** (no máximo um ingresso/solicitação por torcedor por partida); `ExternalTicketId`, `QrCode`, `Status` — ciclo operacional com o provedor (`Reserved` / `Purchased` / `Redeemed`); `RequestStatus` — **solicitação / emissão** no backoffice (`Pending` = pendente, `Issued` = emitido), independente do ciclo; `CreatedAt`, `UpdatedAt`, `RedeemedAt`. Solicitações via torcedor (C.4) e reservas via admin alimentam a mesma tabela. |
 
-Migrações EF: `PartB8GamesTicketsAdmin`, `OpponentLogoGameLibrary` e `TicketRequestStatus` em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
+Migrações EF: `PartB8GamesTicketsAdmin`, `OpponentLogoGameLibrary`, `TicketRequestStatus` e `TicketsUserGameUnique` (índice único `UserId`+`GameId`) em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
 
 ## Permissões
 
@@ -47,7 +47,7 @@ Respostas de criação: `201` com `{ "gameId" }`; mutações: `204`; `404` não 
 |--------|------|-----------|
 | GET | `/api/admin/tickets?userId=&gameId=&status=&requestStatus=&page=&pageSize=` | Lista paginada (join usuário/jogo). `status` filtra o ciclo (`Reserved` / `Purchased` / `Redeemed`); `requestStatus` filtra a solicitação (`Pending` / `Issued`). Cada item inclui `userEmail`, `userName`, `requestStatus` e `membershipPlanName` (última associação com `PlanId` preenchido, por `StartDate` desc.; `null` se inexistente). |
 | GET | `/api/admin/tickets/{ticketId}` | Detalhe (mesmos campos de apresentação + `requestStatus`, `membershipPlanName`). |
-| POST | `/api/admin/tickets/reserve` | Corpo: `{ "userId", "gameId" }`. Cria ingresso, chama `ITicketProvider.ReserveAsync`, define `RequestStatus = Pending`. |
+| POST | `/api/admin/tickets/reserve` | Corpo: `{ "userId", "gameId" }`. Cria ingresso, chama `ITicketProvider.ReserveAsync`, define `RequestStatus = Pending`. **Rejeita** (400) se já existir `Ticket` para o mesmo `userId`+`gameId` (alinhado ao índice único e ao C.4). |
 | POST | `/api/admin/tickets/{ticketId}/purchase` | Confirma compra via `ITicketProvider.PurchaseAsync` (status local `Reserved`). |
 | POST | `/api/admin/tickets/{ticketId}/sync` | Consulta provedor `ITicketProvider.GetAsync` e alinha QR/status quando aplicável. |
 | POST | `/api/admin/tickets/{ticketId}/redeem` | Marca como resgatado (status `Purchased` → `Redeemed`). |
