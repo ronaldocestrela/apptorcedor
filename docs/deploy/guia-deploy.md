@@ -181,6 +181,7 @@ Crie credenciais (IDs podem ser alterados no [`Jenkinsfile`](../../Jenkinsfile) 
 | `resend-api-key` | Secret text | `RESEND_API_KEY` → `Email__Resend__ApiKey`. Vazio se só Mock. |
 | `resend-from-address` | Secret text | `RESEND_FROM_ADDRESS` → `Email__Resend__FromAddress` (domínio verificado no Resend). |
 | `resend-from-name` | Secret text | `RESEND_FROM_NAME` → `Email__Resend__FromName` (opcional). |
+| `auth-password-reset-frontend-base-url` | Secret text | URL pública da SPA (sem barra final) para links de **esqueci senha** no e-mail → `Auth__PasswordReset__FrontendBaseUrl` e `AUTH_PASSWORD_RESET_FRONTEND_BASE_URL` no Compose. Pode repetir o valor de `api-cors-origin` quando a SPA é servida nessa origem. Se o secret estiver **vazio**, o pipeline usa o valor de `api-cors-origin`. |
 | `api-cors-origin` | Secret text | `Cors__AllowedOrigins__0` |
 | `api-aspnetcore-urls` | Secret text | `ASPNETCORE_URLS` (ex.: `http://127.0.0.1:5031`) |
 | `vite-public-api-url` | Secret text | `VITE_API_URL` (build do Vite na VPS) |
@@ -188,7 +189,7 @@ Crie credenciais (IDs podem ser alterados no [`Jenkinsfile`](../../Jenkinsfile) 
 | `vps-ssh-key` | SSH Username with private key | Só se **`JENKINS_LOCAL_DEPLOY=false`**: utilizador + chave privada para `scp`/`ssh` |
 | `vps-host` | Secret text | Só se **`JENKINS_LOCAL_DEPLOY=false`**: hostname ou IP (sem `https://`) |
 
-As variáveis do [`docker-compose.yml`](../../docker-compose.yml) (`PAYMENTS_WEBHOOK_SECRET`, `PAYMENTS_PROVIDER`, `STRIPE_*`, `EMAIL_PROVIDER`, `RESEND_*`) são preenchidas pelo pipeline a partir das credenciais da tabela acima (`api-webhook-secret`, `stripe-api-key`, `stripe-webhook-secret`, **`payments-provider`**, **`stripe-success-url`**, **`stripe-cancel-url`**, **`email-provider`**, **`resend-api-key`**, **`resend-from-address`**, **`resend-from-name`**). Detalhes Stripe: [guia-configuracao-stripe.md](guia-configuracao-stripe.md). E-mail Resend: [../architecture/parte-e1-email-resend.md](../architecture/parte-e1-email-resend.md).
+As variáveis do [`docker-compose.yml`](../../docker-compose.yml) (`PAYMENTS_WEBHOOK_SECRET`, `PAYMENTS_PROVIDER`, `STRIPE_*`, `EMAIL_PROVIDER`, `RESEND_*`, `AUTH_PASSWORD_RESET_FRONTEND_BASE_URL`) são preenchidas pelo pipeline a partir das credenciais da tabela acima (`api-webhook-secret`, `stripe-api-key`, `stripe-webhook-secret`, **`payments-provider`**, **`stripe-success-url`**, **`stripe-cancel-url`**, **`email-provider`**, **`resend-api-key`**, **`resend-from-address`**, **`resend-from-name`**, **`auth-password-reset-frontend-base-url`**). Detalhes Stripe: [guia-configuracao-stripe.md](guia-configuracao-stripe.md). E-mail Resend: [../architecture/parte-e1-email-resend.md](../architecture/parte-e1-email-resend.md).
 
 Com **`JENKINS_LOCAL_DEPLOY=true`** (Jenkins na mesma VPS), **não** são necessárias `vps-ssh-key` nem `vps-host`. Para deploy remoto por SSH, gera e configura chaves conforme [chave-ssh-gerar-e-configurar.md](chave-ssh-gerar-e-configurar.md).
 

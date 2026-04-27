@@ -140,7 +140,10 @@ export function LoginPage() {
                 autoComplete="current-password"
               />
             </label>
-            <Link className="login-form__forgot" to="/support">Esqueceu sua senha?</Link>
+            <Link className="login-form__forgot" to="/forgot-password">Esqueceu sua senha?</Link>
+            {searchParams.get('reset') === 'success' ? (
+              <p role="status" className="login-form__success">Senha alterada com sucesso. Entre com sua nova senha.</p>
+            ) : null}
             {error ? <p role="alert" className="login-form__error">{error}</p> : null}
             <button className="login-form__submit" type="submit" disabled={busy}>
               {busy ? 'Entrando...' : 'Entrar'}

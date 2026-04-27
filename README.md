@@ -118,6 +118,8 @@ O repositório inclui [`Jenkinsfile`](Jenkinsfile) para **deploy contínuo na VP
 | POST | `/api/auth/logout` | Não | Revoga o refresh informado |
 | GET | `/api/auth/me` | Bearer (JWT) | Dados do usuário, roles, **permissions** e `requiresProfileCompletion` |
 | POST | `/api/auth/google` | Não | Login Google (`idToken` + consentimentos para novos usuários); retorno igual ao login |
+| POST | `/api/auth/forgot-password` | Não | Solicita e-mail de redefinição (`email`); resposta **sempre 204** (anti-enumeração) |
+| POST | `/api/auth/reset-password` | Não | Redefine senha (`email`, `token`, `newPassword`); **204** ou **400** com `errors[]` |
 | GET | `/api/account/register/requirements` | Não | IDs das versões publicadas de termos e privacidade (cadastro) |
 | POST | `/api/account/register` | Não | Cadastro público (LGPD); retorno igual ao login |
 | GET | `/api/account/profile` | Bearer | Perfil do torcedor (`UserProfile` sem nota admin) |

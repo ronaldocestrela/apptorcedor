@@ -30,6 +30,7 @@ services:
       Email__Resend__ApiKey: ${RESEND_API_KEY:-}
       Email__Resend__FromAddress: ${RESEND_FROM_ADDRESS:-}
       Email__Resend__FromName: ${RESEND_FROM_NAME:-}
+      Auth__PasswordReset__FrontendBaseUrl: ${AUTH_PASSWORD_RESET_FRONTEND_BASE_URL:-${CORS_ORIGIN:-http://localhost:5173}}
       ADMIN_MASTER_INITIAL_PASSWORD: ${ADMIN_MASTER_INITIAL_PASSWORD:?Defina ADMIN_MASTER_INITIAL_PASSWORD no arquivo .env}
       Cors__AllowedOrigins__0: ${CORS_ORIGIN:-http://localhost:5173}
 

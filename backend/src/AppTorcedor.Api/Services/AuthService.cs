@@ -5,6 +5,7 @@ using AppTorcedor.Application.Abstractions;
 using AppTorcedor.Identity;
 using AppTorcedor.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace AppTorcedor.Api.Services;
@@ -17,6 +18,9 @@ public sealed class AuthService(
     ITorcedorAccountPort torcedorAccount,
     IGoogleIdTokenValidator googleTokens,
     IJwtTokenIssuer jwt,
+    IEmailSender emailSender,
+    IPasswordResetEmailComposer passwordResetComposer,
+    ILogger<AuthService> logger,
     IOptions<JwtOptions> jwtOptions) : IAuthService
 {
     public async Task<AuthResponse?> LoginAsync(string email, string password, CancellationToken cancellationToken = default)
@@ -137,6 +141,60 @@ public sealed class AuthService(
             return null;
 
         return await IssueSessionAsync(user, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task RequestPasswordResetAsync(string email, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return;
+
+        var user = await userManager.FindByEmailAsync(email.Trim()).ConfigureAwait(false);
+        if (user is null || !user.IsActive)
+            return;
+
+        try
+        {
+            var token = await userManager.GeneratePasswordResetTokenAsync(user).ConfigureAwait(false);
+            var accountEmail = string.IsNullOrWhiteSpace(user.Email) ? email.Trim() : user.Email.Trim();
+            var message = passwordResetComposer.Compose(accountEmail, accountEmail, token);
+            await emailSender.SendAsync(message, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falha ao enviar e-mail de redefinição de senha.");
+        }
+    }
+
+    public async Task<PasswordResetResult> ResetPasswordAsync(
+        string email,
+        string token,
+        string newPassword,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(newPassword))
+        {
+            return new PasswordResetResult(false, ["Informe e-mail, token e nova senha."]);
+        }
+
+        var user = await userManager.FindByEmailAsync(email.Trim()).ConfigureAwait(false);
+        if (user is null || !user.IsActive)
+        {
+            return new PasswordResetResult(false, ["Não foi possível redefinir a senha. Solicite um novo link."]);
+        }
+
+        var result = await userManager.ResetPasswordAsync(user, token, newPassword).ConfigureAwait(false);
+        if (result.Succeeded)
+            return new PasswordResetResult(true);
+
+        var errors = result.Errors.Select(MapPasswordResetError).ToList();
+        return new PasswordResetResult(false, errors);
+    }
+
+    private static string MapPasswordResetError(IdentityError error)
+    {
+        if (string.Equals(error.Code, "InvalidToken", StringComparison.Ordinal))
+            return "Link inválido ou expirado. Solicite nova redefinição de senha.";
+        return string.IsNullOrWhiteSpace(error.Description) ? "Não foi possível redefinir a senha." : error.Description;
     }
 
     private async Task<AuthResponse?> IssueSessionAsync(

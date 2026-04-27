@@ -23,3 +23,9 @@ public sealed record MeResponse(
     bool RequiresProfileCompletion);
 
 public sealed record GoogleSignInRequest(string IdToken, IReadOnlyList<Guid>? AcceptedLegalDocumentVersionIds);
+
+public sealed record ForgotPasswordRequest(string Email);
+
+public sealed record ResetPasswordRequest(string Email, string Token, string NewPassword);
+
+public sealed record PasswordResetResult(bool Succeeded, IReadOnlyList<string>? Errors = null);

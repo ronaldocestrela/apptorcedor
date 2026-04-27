@@ -22,6 +22,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("Payments:Provider", "Mock");
         builder.UseSetting("Payments:WebhookSecret", "test-webhook-secret");
         builder.UseSetting("Email:Provider", "Mock");
+        builder.UseSetting("Auth:PasswordReset:FrontendBaseUrl", "http://localhost:5173");
         builder.UseSetting("ProfilePhotos:Provider", "Local");
         builder.UseSetting("TeamShield:Provider", "Local");
         builder.UseSetting("OpponentLogos:Provider", "Local");

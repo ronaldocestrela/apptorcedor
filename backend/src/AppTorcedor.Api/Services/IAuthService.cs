@@ -22,4 +22,12 @@ public interface IAuthService
     Task<AuthResponse?> IssueSessionForUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task<AuthResponse?> SignInWithGoogleAsync(GoogleSignInRequest request, CancellationToken cancellationToken = default);
+
+    Task RequestPasswordResetAsync(string email, CancellationToken cancellationToken = default);
+
+    Task<PasswordResetResult> ResetPasswordAsync(
+        string email,
+        string token,
+        string newPassword,
+        CancellationToken cancellationToken = default);
 }

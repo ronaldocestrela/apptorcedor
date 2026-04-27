@@ -101,6 +101,12 @@
   color: #ffb4ba;
 }
 
+.login-form__success {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #8cd392;
+}
+
 .login-form__submit {
   border: 0;
   border-radius: 8px;

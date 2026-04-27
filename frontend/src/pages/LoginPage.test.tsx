@@ -45,7 +45,8 @@ describe('LoginPage', () => {
     expect(logo).toHaveAttribute('src', expect.stringMatching(/^data:image\/svg\+xml/))
     expect(screen.getByRole('heading', { level: 1, name: /Acesse a sua Conta/i })).toBeInTheDocument()
     expect(screen.getByText(/Insira seu e-mail e senha para prosseguir/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Esqueceu sua senha/i })).toBeInTheDocument()
+    const forgot = screen.getByRole('link', { name: /Esqueceu sua senha/i })
+    expect(forgot).toHaveAttribute('href', '/forgot-password')
     expect(screen.getByRole('button', { name: /Entrar com Google/i })).toBeDisabled()
     expect(container.querySelector('.login-page__hero')).toBeInTheDocument()
   })
@@ -67,6 +68,15 @@ describe('LoginPage', () => {
     await waitFor(() => {
       expect(authMock.login).toHaveBeenCalledWith('fulano@test.local', '123456')
     })
+  })
+
+  it('shows success message after password reset query flag', () => {
+    render(
+      <MemoryRouter initialEntries={['/login?reset=success']}>
+        <LoginPage />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText(/Senha alterada com sucesso/i)).toBeInTheDocument()
   })
 
   it('redirects to path from query when already authenticated', async () => {

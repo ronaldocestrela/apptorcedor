@@ -67,6 +67,7 @@ Ajuste os IDs no [`Jenkinsfile`](../../Jenkinsfile) ou use **folder credentials*
 | `payments-provider` | Secret text | `PAYMENTS_PROVIDER` — `Mock` ou `Stripe` |
 | `stripe-success-url` | Secret text | `STRIPE_SUCCESS_URL` (HTTPS; vazio se não usar) |
 | `stripe-cancel-url` | Secret text | `STRIPE_CANCEL_URL` (HTTPS; vazio se não usar) |
+| `auth-password-reset-frontend-base-url` | Secret text | `Auth__PasswordReset__FrontendBaseUrl` / `AUTH_PASSWORD_RESET_FRONTEND_BASE_URL` (URL pública da SPA para links no e-mail; vazio = mesmo valor que `api-cors-origin` no [`Jenkinsfile`](../../Jenkinsfile)) |
 | `api-cors-origin` | Secret text | `Cors__AllowedOrigins__0` |
 | `api-aspnetcore-urls` | Secret text | `ASPNETCORE_URLS` (ex.: `http://127.0.0.1:5031`) |
 | `vite-public-api-url` | Secret text | `VITE_API_URL` no build do frontend na VPS |

@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.Configure<CloudinaryOptions>(configuration.GetSection(CloudinaryOptions.SectionName));
         services.Configure<PaymentsOptions>(configuration.GetSection(PaymentsOptions.SectionName));
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        services.Configure<PasswordResetOptions>(configuration.GetSection(PasswordResetOptions.SectionName));
 
         var emailProvider = configuration.GetValue<string>("Email:Provider") ?? "Mock";
         if (string.Equals(emailProvider.Trim(), "Resend", StringComparison.OrdinalIgnoreCase))
@@ -120,6 +121,7 @@ public static class DependencyInjection
         services.AddScoped<IUserAdministrationPort, UserAdministrationService>();
         services.AddScoped<IRegistrationLegalReadPort, RegistrationLegalReadService>();
         services.AddScoped<IWelcomeEmailComposer, WelcomeEmailComposer>();
+        services.AddScoped<IPasswordResetEmailComposer, PasswordResetEmailComposer>();
         services.AddScoped<ITorcedorAccountPort, TorcedorAccountService>();
         services.AddScoped<IProfilePhotoStorage>(
             sp =>

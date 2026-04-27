@@ -21,6 +21,7 @@
 // - resend-api-key            (Secret text) RESEND_API_KEY (re_…; vazio se só Mock)
 // - resend-from-address       (Secret text) RESEND_FROM_ADDRESS (ex.: noreply@seudominio.com.br)
 // - resend-from-name          (Secret text) RESEND_FROM_NAME (ex.: Sócio Torcedor)
+// - auth-password-reset-frontend-base-url (Secret text) AUTH_PASSWORD_RESET_FRONTEND_BASE_URL → Auth__PasswordReset__FrontendBaseUrl (URL pública da SPA para links no e-mail; se vazio no secret, o pipeline usa o mesmo valor de api-cors-origin)
 // - api-cors-origin           (Secret text) Cors__AllowedOrigins__0
 // - api-aspnetcore-urls       (Secret text) ASPNETCORE_URLS (ex.: http://127.0.0.1:5031)
 // - vite-public-api-url       (Secret text) URL pública da API para build do Vite (gravada também no arquivo vite na VPS)
@@ -115,7 +116,8 @@ pipeline {
             string(credentialsId: 'email-provider', variable: 'EMAIL_PROVIDER'),
             string(credentialsId: 'resend-api-key', variable: 'RESEND_API_KEY'),
             string(credentialsId: 'resend-from-address', variable: 'RESEND_FROM_ADDRESS'),
-            string(credentialsId: 'resend-from-name', variable: 'RESEND_FROM_NAME')
+            string(credentialsId: 'resend-from-name', variable: 'RESEND_FROM_NAME'),
+            string(credentialsId: 'auth-password-reset-frontend-base-url', variable: 'AUTH_PASSWORD_RESET_FRONTEND_BASE_URL')
           ]
 
           def useCompose = (env.DEPLOY_USE_COMPOSE ?: 'true').trim().equalsIgnoreCase('true')
@@ -125,6 +127,7 @@ pipeline {
               if (useCompose) {
                 sh '''#!/bin/bash
                   set -euo pipefail
+                  PW_RESET_BASE="${AUTH_PASSWORD_RESET_FRONTEND_BASE_URL:-${API_CORS}}"
                   API_ENV_LOCAL="$(pwd)/api.env.jenkins.${BUILD_NUMBER}"
                   REMOTE_ENV="/tmp/apptorcedor-api.env.${BUILD_NUMBER}"
                   REMOTE_COMPOSE_ENV="/tmp/apptorcedor.compose.env.${BUILD_NUMBER}"
@@ -152,6 +155,7 @@ pipeline {
                     printf 'Email__Resend__ApiKey=%s\n'       "${RESEND_API_KEY:-}"
                     printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
                     printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
+                    printf 'Auth__PasswordReset__FrontendBaseUrl=%s\n' "${PW_RESET_BASE}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   cp "${API_ENV_LOCAL}" "${REMOTE_ENV}"
@@ -175,6 +179,7 @@ pipeline {
                     printf 'RESEND_API_KEY=%s\n'      "${RESEND_API_KEY:-}"
                     printf 'RESEND_FROM_ADDRESS=%s\n' "${RESEND_FROM_ADDRESS:-}"
                     printf 'RESEND_FROM_NAME=%s\n'    "${RESEND_FROM_NAME:-}"
+                    printf 'AUTH_PASSWORD_RESET_FRONTEND_BASE_URL=%s\n' "${PW_RESET_BASE}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -191,6 +196,7 @@ pipeline {
               } else {
                 sh '''#!/bin/bash
                   set -euo pipefail
+                  PW_RESET_BASE="${AUTH_PASSWORD_RESET_FRONTEND_BASE_URL:-${API_CORS}}"
                   API_ENV_LOCAL="$(pwd)/api.env.jenkins.${BUILD_NUMBER}"
                   VITE_LOCAL="$(pwd)/vite-api-url.jenkins.${BUILD_NUMBER}"
                   REMOTE_ENV="/tmp/apptorcedor-api.env.${BUILD_NUMBER}"
@@ -219,6 +225,7 @@ pipeline {
                     printf 'Email__Resend__ApiKey=%s\n'       "${RESEND_API_KEY:-}"
                     printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
                     printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
+                    printf 'Auth__PasswordReset__FrontendBaseUrl=%s\n' "${PW_RESET_BASE}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"
@@ -263,6 +270,7 @@ pipeline {
                 sh '''#!/bin/bash
                   set -euo pipefail
                   chmod 600 "${SSH_KEY}"
+                  PW_RESET_BASE="${AUTH_PASSWORD_RESET_FRONTEND_BASE_URL:-${API_CORS}}"
                   API_ENV_LOCAL="$(pwd)/api.env.jenkins.${BUILD_NUMBER}"
                   REMOTE_ENV="/tmp/apptorcedor-api.env.${BUILD_NUMBER}"
                   REMOTE_COMPOSE_ENV="/tmp/apptorcedor.compose.env.${BUILD_NUMBER}"
@@ -290,6 +298,7 @@ pipeline {
                     printf 'Email__Resend__ApiKey=%s\n'       "${RESEND_API_KEY:-}"
                     printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
                     printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
+                    printf 'Auth__PasswordReset__FrontendBaseUrl=%s\n' "${PW_RESET_BASE}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   {
@@ -312,6 +321,7 @@ pipeline {
                     printf 'RESEND_API_KEY=%s\n'      "${RESEND_API_KEY:-}"
                     printf 'RESEND_FROM_ADDRESS=%s\n' "${RESEND_FROM_ADDRESS:-}"
                     printf 'RESEND_FROM_NAME=%s\n'    "${RESEND_FROM_NAME:-}"
+                    printf 'AUTH_PASSWORD_RESET_FRONTEND_BASE_URL=%s\n' "${PW_RESET_BASE}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -333,6 +343,7 @@ pipeline {
                 sh '''#!/bin/bash
                   set -euo pipefail
                   chmod 600 "${SSH_KEY}"
+                  PW_RESET_BASE="${AUTH_PASSWORD_RESET_FRONTEND_BASE_URL:-${API_CORS}}"
                   API_ENV_LOCAL="$(pwd)/api.env.jenkins.${BUILD_NUMBER}"
                   VITE_LOCAL="$(pwd)/vite-api-url.jenkins.${BUILD_NUMBER}"
                   REMOTE_ENV="/tmp/apptorcedor-api.env.${BUILD_NUMBER}"
@@ -361,6 +372,7 @@ pipeline {
                     printf 'Email__Resend__ApiKey=%s\n'       "${RESEND_API_KEY:-}"
                     printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
                     printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
+                    printf 'Auth__PasswordReset__FrontendBaseUrl=%s\n' "${PW_RESET_BASE}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"

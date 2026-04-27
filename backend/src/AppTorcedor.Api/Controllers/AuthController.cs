@@ -69,4 +69,25 @@ public sealed class AuthController(IAuthService auth) : ControllerBase
             return Unauthorized();
         return Ok(result);
     }
+
+    /// <summary>Sempre retorna 204 para não revelar se o e-mail existe.</summary>
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken cancellationToken)
+    {
+        await auth.RequestPasswordResetAsync(request.Email, cancellationToken).ConfigureAwait(false);
+        return NoContent();
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        var result = await auth
+            .ResetPasswordAsync(request.Email, request.Token, request.NewPassword, cancellationToken)
+            .ConfigureAwait(false);
+        if (result.Succeeded)
+            return NoContent();
+        return BadRequest(new { errors = result.Errors ?? [] });
+    }
 }

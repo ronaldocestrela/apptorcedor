@@ -98,6 +98,12 @@ Este documento descreve **todas as configurações disponíveis** no sistema, or
 
 **Uso no código:** injete `IEmailSender` (porta em `AppTorcedor.Application.Abstractions`) em handlers ou serviços; mensagem: `EmailMessage(To, Subject, HtmlBody, PlainTextBody?)`. O cadastro de torcedor dispara **e-mail de boas-vindas** a partir de [`TorcedorAccountService`](../../backend/src/AppTorcedor.Infrastructure/Services/Account/TorcedorAccountService.cs) após o commit. Detalhes e Jenkins: [parte-e1-email-resend.md](architecture/parte-e1-email-resend.md).
 
+### 6.2. Recuperação de senha (link no e-mail)
+
+| Chave | Variável de ambiente | Padrão | Descrição |
+|-------|----------------------|--------|-----------|
+| `Auth:PasswordReset:FrontendBaseUrl` | `Auth__PasswordReset__FrontendBaseUrl` | `http://localhost:5173` (appsettings) | Origem pública da SPA usada para montar o link `/reset-password?…` nos e-mails. **Produção:** definir explicitamente (ex.: `https://app.clube.com.br`). No Docker Compose: `AUTH_PASSWORD_RESET_FRONTEND_BASE_URL` ou, se omitido, repete `CORS_ORIGIN` (ver [`docker-compose.yml`](../../docker-compose.yml)). No Jenkins: credencial `auth-password-reset-frontend-base-url` ou fallback para o valor de `api-cors-origin` quando o secret está vazio. |
+
 ---
 
 ### 7. Armazenamento de Fotos de Perfil
