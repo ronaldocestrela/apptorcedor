@@ -10,6 +10,11 @@ public interface IDigitalCardAdministrationPort
         int pageSize,
         CancellationToken cancellationToken = default);
 
+    Task<AdminDigitalCardIssueCandidatesPageDto> ListDigitalCardIssueCandidatesAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
     Task<AdminDigitalCardDetailDto?> GetDigitalCardByIdAsync(Guid digitalCardId, CancellationToken cancellationToken = default);
 
     Task<DigitalCardMutationResult> IssueDigitalCardAsync(Guid membershipId, Guid actorUserId, CancellationToken cancellationToken = default);
@@ -39,6 +44,16 @@ public sealed record AdminDigitalCardListItemDto(
     string MembershipStatus);
 
 public sealed record AdminDigitalCardListPageDto(int TotalCount, IReadOnlyList<AdminDigitalCardListItemDto> Items);
+
+public sealed record AdminDigitalCardIssueCandidateItemDto(
+    Guid MembershipId,
+    Guid UserId,
+    string UserName,
+    string UserEmail,
+    Guid? PlanId,
+    string? PlanName);
+
+public sealed record AdminDigitalCardIssueCandidatesPageDto(int TotalCount, IReadOnlyList<AdminDigitalCardIssueCandidateItemDto> Items);
 
 public sealed record AdminDigitalCardDetailDto(
     Guid DigitalCardId,

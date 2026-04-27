@@ -16,7 +16,7 @@ Migração EF: `PartB7DigitalCardAdmin` em `backend/src/AppTorcedor.Infrastructu
 ## Permissões
 
 - `Carteirinha.Visualizar` — `GET /api/admin/digital-cards`, `GET /api/admin/digital-cards/{id}`.
-- `Carteirinha.Gerenciar` — `POST /api/admin/digital-cards/issue`, `POST .../regenerate`, `POST .../invalidate`.
+- `Carteirinha.Gerenciar` — `GET /api/admin/digital-cards/issue-candidates`, `POST /api/admin/digital-cards/issue`, `POST .../regenerate`, `POST .../invalidate`.
 
 O Administrador Master recebe todas as permissões do catálogo via seed (`ApplicationPermissions.All`).
 
@@ -27,8 +27,9 @@ Base: `api/admin/digital-cards` (JWT + política por permissão). CQRS em `AppTo
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | GET | `/api/admin/digital-cards?userId=&membershipId=&status=&page=&pageSize=` | Lista paginada (`status`: `Active` ou `Invalidated`). |
+| GET | `/api/admin/digital-cards/issue-candidates?page=&pageSize=` | Associações **Ativas** **sem** carteirinha **Active** (candidatos à emissão). Itens: `membershipId`, `userId`, `userName`, `userEmail`, `planId`, `planName`. |
 | GET | `/api/admin/digital-cards/{digitalCardId}` | Detalhe incluindo `token` e `templatePreviewLines` (preview do template fixo). |
-| POST | `/api/admin/digital-cards/issue` | Corpo: `{ "membershipId": "..." }`. Cria primeira emissão **se** não houver ativa e membership **Ativo**. |
+| POST | `/api/admin/digital-cards/issue` | Corpo: `{ "membershipId": "..." }`. Cria emissão **se** não houver carteirinha ativa para a associação e membership **Ativo**. |
 | POST | `/api/admin/digital-cards/{digitalCardId}/regenerate` | Corpo opcional: `{ "reason": "..." }` (padrão interno se omitido). Só `Active`; exige membership **Ativo**. |
 | POST | `/api/admin/digital-cards/{digitalCardId}/invalidate` | Corpo: `{ "reason": "..." }` obrigatório. Só `Active`. |
 
@@ -53,9 +54,11 @@ Mutações em `DigitalCardRecord` geram entradas em `AuditLogs` (interceptor exi
 ## Frontend (backoffice)
 
 - Rota `/admin/digital-cards` (`Carteirinha.Visualizar` e/ou `Carteirinha.Gerenciar` para o shell; listagem com `Visualizar`; emitir/regenerar/invalidar com `Gerenciar`).
-- Serviços: `frontend/src/features/admin/services/adminApi.ts`.
+- **Emissão:** seleção em lista carregada de `GET /api/admin/digital-cards/issue-candidates` (sem digitar `membershipId` manualmente); botão **Atualizar lista** refaz a consulta.
+- Serviços: `frontend/src/features/admin/services/adminApi.ts` (`listAdminDigitalCardIssueCandidates`, `issueAdminDigitalCard`, …).
 
 ## Testes
 
-- `AppTorcedor.Application.Tests` / `DigitalCardAdminHandlersTests`: delegação dos handlers ao port.
-- `AppTorcedor.Api.Tests` / `PartB7DigitalCardAdminTests`: autorização, emissão com conflito, regeneração, invalidação, preview e auditoria; coleção `DigitalCardAdmin` com `DisableParallelization` para isolamento de dados de exemplo.
+- `AppTorcedor.Application.Tests` / `DigitalCardAdminHandlersTests`: delegação dos handlers ao port (incl. `ListDigitalCardIssueCandidatesQuery`).
+- `AppTorcedor.Api.Tests` / `PartB7DigitalCardAdminTests`: autorização, candidatos à emissão, emissão com conflito, regeneração, invalidação, preview e auditoria; coleção `DigitalCardAdmin` com `DisableParallelization` para isolamento de dados de exemplo.
+- `frontend/src/features/admin/pages/DigitalCardsAdminPage.test.tsx`: emissão a partir da lista de candidatos (mocks).

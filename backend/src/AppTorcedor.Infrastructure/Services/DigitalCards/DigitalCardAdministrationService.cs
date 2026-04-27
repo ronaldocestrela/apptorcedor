@@ -65,6 +65,48 @@ public sealed class DigitalCardAdministrationService(AppDbContext db) : IDigital
         return new AdminDigitalCardListPageDto(total, items);
     }
 
+    public async Task<AdminDigitalCardIssueCandidatesPageDto> ListDigitalCardIssueCandidatesAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var baseQuery =
+            from m in db.Memberships.AsNoTracking()
+            join u in db.Users.AsNoTracking() on m.UserId equals u.Id
+            join p in db.MembershipPlans.AsNoTracking() on m.PlanId equals p.Id into planJoin
+            from p in planJoin.DefaultIfEmpty()
+            join c in db.DigitalCards.AsNoTracking().Where(x => x.Status == DigitalCardStatus.Active)
+                on m.Id equals c.MembershipId into activeCardJoin
+            from c in activeCardJoin.DefaultIfEmpty()
+            where m.Status == MembershipStatus.Ativo && c == null
+            select new { m, u, p };
+
+        var total = await baseQuery.CountAsync(cancellationToken).ConfigureAwait(false);
+        var rows = await baseQuery
+            .OrderBy(x => x.u.Name)
+            .ThenBy(x => x.u.Email)
+            .ThenBy(x => x.m.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var items = rows
+            .Select(x => new AdminDigitalCardIssueCandidateItemDto(
+                x.m.Id,
+                x.m.UserId,
+                x.u.Name,
+                x.u.Email ?? string.Empty,
+                x.m.PlanId,
+                x.p?.Name))
+            .ToList();
+
+        return new AdminDigitalCardIssueCandidatesPageDto(total, items);
+    }
+
     public async Task<AdminDigitalCardDetailDto?> GetDigitalCardByIdAsync(Guid digitalCardId, CancellationToken cancellationToken = default)
     {
         var row = await (

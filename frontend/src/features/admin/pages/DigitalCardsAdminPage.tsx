@@ -5,13 +5,130 @@ import {
   getAdminDigitalCard,
   invalidateAdminDigitalCard,
   issueAdminDigitalCard,
+  listAdminDigitalCardIssueCandidates,
   listAdminDigitalCards,
   regenerateAdminDigitalCard,
   type AdminDigitalCardDetail,
+  type AdminDigitalCardIssueCandidateItem,
   type AdminDigitalCardListItem,
 } from '../services/adminApi'
 
 type CardStatusFilter = '' | 'Active' | 'Invalidated'
+
+type DigitalCardIssueFormProps = {
+  onIssued: () => Promise<void>
+  busy: boolean
+  setBusy: (v: boolean) => void
+  setActionMessage: (m: string | null) => void
+  setActionError: (e: string | null) => void
+}
+
+function DigitalCardIssueForm({
+  onIssued,
+  busy,
+  setBusy,
+  setActionMessage,
+  setActionError,
+}: DigitalCardIssueFormProps) {
+  const [candidates, setCandidates] = useState<AdminDigitalCardIssueCandidateItem[]>([])
+  const [loadingCandidates, setLoadingCandidates] = useState(true)
+  const [candidatesError, setCandidatesError] = useState<string | null>(null)
+  const [selectedMembershipId, setSelectedMembershipId] = useState('')
+
+  const loadCandidates = useCallback(async () => {
+    setLoadingCandidates(true)
+    setCandidatesError(null)
+    try {
+      const res = await listAdminDigitalCardIssueCandidates({ page: 1, pageSize: 200 })
+      setCandidates(res.items)
+      setSelectedMembershipId((prev) => {
+        if (prev && res.items.some(i => i.membershipId === prev))
+          return prev
+        return res.items[0]?.membershipId ?? ''
+      })
+    }
+    catch {
+      setCandidatesError('Falha ao carregar associações elegíveis.')
+      setCandidates([])
+      setSelectedMembershipId('')
+    }
+    finally {
+      setLoadingCandidates(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadCandidates()
+  }, [loadCandidates])
+
+  async function onIssue(e: FormEvent) {
+    e.preventDefault()
+    if (!selectedMembershipId)
+      return
+    setBusy(true)
+    setActionMessage(null)
+    setActionError(null)
+    try {
+      await issueAdminDigitalCard(selectedMembershipId)
+      setActionMessage('Carteirinha emitida.')
+      await loadCandidates()
+      await onIssued()
+    }
+    catch {
+      setActionError('Emissão falhou (verifique se a associação ainda está elegível).')
+    }
+    finally {
+      setBusy(false)
+    }
+  }
+
+  function formatCandidateLabel(row: AdminDigitalCardIssueCandidateItem): string {
+    const plan = row.planName?.trim() ? ` · ${row.planName}` : ''
+    return `${row.userName} — ${row.userEmail}${plan}`
+  }
+
+  return (
+    <section style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f5f5f5', borderRadius: 8 }}>
+      <h2 style={{ fontSize: '1rem', marginTop: 0 }}>Emitir carteirinha</h2>
+      <p style={{ marginTop: 0, fontSize: '0.875rem', color: '#555' }}>
+        Associações <strong>Ativas</strong> sem carteirinha ativa no momento.
+      </p>
+      {loadingCandidates ? <p>Carregando elegíveis…</p> : null}
+      {candidatesError ? <p style={{ color: 'crimson' }}>{candidatesError}</p> : null}
+      {!loadingCandidates && !candidatesError && candidates.length === 0
+        ? (
+            <p style={{ color: '#666' }}>Nenhuma associação elegível para emissão.</p>
+          )
+        : null}
+      <form onSubmit={e => void onIssue(e)} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-end' }}>
+        <label>
+          Associação
+          <select
+            style={{ display: 'block', minWidth: 320 }}
+            value={selectedMembershipId}
+            onChange={ev => setSelectedMembershipId(ev.target.value)}
+            disabled={loadingCandidates || candidates.length === 0}
+            required
+          >
+            {candidates.length === 0
+              ? <option value="">—</option>
+              : candidates.map(row => (
+                  <option key={row.membershipId} value={row.membershipId}>
+                    {formatCandidateLabel(row)}
+                  </option>
+                ))}
+          </select>
+        </label>
+        <button type="button" onClick={() => void loadCandidates()} disabled={busy || loadingCandidates}>
+          Atualizar lista
+        </button>
+        <button type="submit" disabled={busy || loadingCandidates || candidates.length === 0}>
+          Emitir
+        </button>
+      </form>
+    </section>
+  )
+}
 
 export function DigitalCardsAdminPage() {
   const [userIdFilter, setUserIdFilter] = useState('')
@@ -28,7 +145,6 @@ export function DigitalCardsAdminPage() {
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
 
-  const [issueMembershipId, setIssueMembershipId] = useState('')
   const [regenerateReason, setRegenerateReason] = useState('')
   const [invalidateReason, setInvalidateReason] = useState('')
   const [actionMessage, setActionMessage] = useState<string | null>(null)
@@ -79,24 +195,6 @@ export function DigitalCardsAdminPage() {
     if (selectedId) void loadDetail(selectedId)
     else setDetail(null)
   }, [selectedId, loadDetail])
-
-  async function onIssue(e: FormEvent) {
-    e.preventDefault()
-    setBusy(true)
-    setActionMessage(null)
-    setActionError(null)
-    try {
-      await issueAdminDigitalCard(issueMembershipId.trim())
-      setActionMessage('Carteirinha emitida.')
-      setIssueMembershipId('')
-      await loadList()
-      if (selectedId) await loadDetail(selectedId)
-    } catch {
-      setActionError('Emissão falhou (verifique se a associação está Ativa e sem carteirinha ativa).')
-    } finally {
-      setBusy(false)
-    }
-  }
 
   async function onRegenerate(e: FormEvent) {
     e.preventDefault()
@@ -195,24 +293,17 @@ export function DigitalCardsAdminPage() {
         </section>
 
         <PermissionGate anyOf={[ApplicationPermissions.CarteirinhaGerenciar]}>
-          <section style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f5f5f5', borderRadius: 8 }}>
-            <h2 style={{ fontSize: '1rem', marginTop: 0 }}>Emitir carteirinha</h2>
-            <form onSubmit={(e) => void onIssue(e)} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-end' }}>
-              <label>
-                MembershipId
-                <input
-                  style={{ display: 'block', minWidth: 320 }}
-                  value={issueMembershipId}
-                  onChange={(ev) => setIssueMembershipId(ev.target.value)}
-                  placeholder="GUID da associação (sócio Ativo)"
-                  required
-                />
-              </label>
-              <button type="submit" disabled={busy}>
-                Emitir
-              </button>
-            </form>
-          </section>
+          <DigitalCardIssueForm
+            busy={busy}
+            setBusy={setBusy}
+            setActionMessage={setActionMessage}
+            setActionError={setActionError}
+            onIssued={async () => {
+              await loadList()
+              if (selectedId)
+                await loadDetail(selectedId)
+            }}
+          />
         </PermissionGate>
 
         {actionMessage ? <p style={{ color: 'green' }}>{actionMessage}</p> : null}

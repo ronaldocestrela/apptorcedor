@@ -4,6 +4,7 @@ using AppTorcedor.Application.Modules.Administration.Commands.IssueDigitalCard;
 using AppTorcedor.Application.Modules.Administration.Commands.RegenerateDigitalCard;
 using AppTorcedor.Application.Modules.Administration.Queries.GetAdminDigitalCardDetail;
 using AppTorcedor.Application.Modules.Administration.Queries.ListAdminDigitalCards;
+using AppTorcedor.Application.Modules.Administration.Queries.ListDigitalCardIssueCandidates;
 
 namespace AppTorcedor.Application.Tests;
 
@@ -22,6 +23,19 @@ public sealed class DigitalCardAdminHandlersTests
         Assert.Equal("Active", fake.ListCalls[0].Status);
         Assert.Equal(2, fake.ListCalls[0].Page);
         Assert.Equal(15, fake.ListCalls[0].PageSize);
+    }
+
+    [Fact]
+    public async Task ListDigitalCardIssueCandidates_delegates_to_port()
+    {
+        var fake = new FakeDigitalCardPort();
+        var handler = new ListDigitalCardIssueCandidatesQueryHandler(fake);
+        var page = await handler.Handle(new ListDigitalCardIssueCandidatesQuery(3, 10), CancellationToken.None);
+        Assert.Equal(0, page.TotalCount);
+        Assert.Empty(page.Items);
+        Assert.Single(fake.IssueCandidatesCalls);
+        Assert.Equal(3, fake.IssueCandidatesCalls[0].Page);
+        Assert.Equal(10, fake.IssueCandidatesCalls[0].PageSize);
     }
 
     [Fact]
@@ -83,6 +97,7 @@ public sealed class DigitalCardAdminHandlersTests
         public DigitalCardMutationResult MutationResult { get; init; } = new(false, DigitalCardMutationError.NotFound);
 
         public List<(Guid? UserId, Guid? MembershipId, string? Status, int Page, int PageSize)> ListCalls { get; } = [];
+        public List<(int Page, int PageSize)> IssueCandidatesCalls { get; } = [];
         public List<Guid> DetailCalls { get; } = [];
         public List<(Guid MembershipId, Guid ActorUserId)> IssueCalls { get; } = [];
         public List<(Guid DigitalCardId, string? Reason, Guid ActorUserId)> RegenerateCalls { get; } = [];
@@ -98,6 +113,15 @@ public sealed class DigitalCardAdminHandlersTests
         {
             ListCalls.Add((userId, membershipId, status, page, pageSize));
             return Task.FromResult(new AdminDigitalCardListPageDto(0, []));
+        }
+
+        public Task<AdminDigitalCardIssueCandidatesPageDto> ListDigitalCardIssueCandidatesAsync(
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            IssueCandidatesCalls.Add((page, pageSize));
+            return Task.FromResult(new AdminDigitalCardIssueCandidatesPageDto(0, []));
         }
 
         public Task<AdminDigitalCardDetailDto?> GetDigitalCardByIdAsync(Guid digitalCardId, CancellationToken cancellationToken = default)

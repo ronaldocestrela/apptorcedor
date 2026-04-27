@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -20,6 +21,59 @@ public sealed class PartB7DigitalCardAdminTests(AppWebApplicationFactory factory
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         var res = await _client.SendAsync(req);
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task List_issue_candidates_requires_carteirinha_gerenciar()
+    {
+        var token = await LoginTorcedorAsync();
+        using var req = new HttpRequestMessage(HttpMethod.Get, "/api/admin/digital-cards/issue-candidates");
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var res = await _client.SendAsync(req);
+        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task List_issue_candidates_includes_active_membership_without_active_card_and_excludes_after_issue()
+    {
+        var token = await LoginAdminAsync();
+        await PrepareSampleMembershipAsync(token, "Ativo");
+        await CleanupActiveDigitalCardsForSampleMembershipAsync(token);
+
+        using (var getCandidates = new HttpRequestMessage(HttpMethod.Get, "/api/admin/digital-cards/issue-candidates?pageSize=200"))
+        {
+            getCandidates.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res = await _client.SendAsync(getCandidates);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            var items = body.GetProperty("items");
+            var matches = items.EnumerateArray()
+                .Where(e => e.GetProperty("membershipId").GetString() == TestingSeedConstants.SampleMembershipId.ToString())
+                .ToList();
+            Assert.Single(matches);
+            var match = matches[0];
+            Assert.Equal(TestingSeedConstants.MemberEmail, match.GetProperty("userEmail").GetString());
+            Assert.False(string.IsNullOrEmpty(match.GetProperty("userName").GetString()));
+        }
+
+        using (var issue = new HttpRequestMessage(HttpMethod.Post, "/api/admin/digital-cards/issue"))
+        {
+            issue.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            issue.Content = JsonContent.Create(new { membershipId = TestingSeedConstants.SampleMembershipId });
+            var issueRes = await _client.SendAsync(issue);
+            Assert.Equal(HttpStatusCode.NoContent, issueRes.StatusCode);
+        }
+
+        using (var getCandidates2 = new HttpRequestMessage(HttpMethod.Get, "/api/admin/digital-cards/issue-candidates?pageSize=200"))
+        {
+            getCandidates2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var res2 = await _client.SendAsync(getCandidates2);
+            res2.EnsureSuccessStatusCode();
+            var body2 = await res2.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.DoesNotContain(
+                body2.GetProperty("items").EnumerateArray(),
+                e => e.GetProperty("membershipId").GetString() == TestingSeedConstants.SampleMembershipId.ToString());
+        }
     }
 
     [Fact]

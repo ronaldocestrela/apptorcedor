@@ -551,6 +551,20 @@ export type AdminDigitalCardDetail = {
   templatePreviewLines: string[]
 }
 
+export type AdminDigitalCardIssueCandidateItem = {
+  membershipId: string
+  userId: string
+  userName: string
+  userEmail: string
+  planId: string | null
+  planName: string | null
+}
+
+export type AdminDigitalCardIssueCandidatesPage = {
+  totalCount: number
+  items: AdminDigitalCardIssueCandidateItem[]
+}
+
 export async function listAdminDigitalCards(params: {
   userId?: string
   membershipId?: string
@@ -572,6 +586,19 @@ export async function listAdminDigitalCards(params: {
 
 export async function getAdminDigitalCard(digitalCardId: string): Promise<AdminDigitalCardDetail> {
   const { data } = await api.get<AdminDigitalCardDetail>(`/api/admin/digital-cards/${encodeURIComponent(digitalCardId)}`)
+  return data
+}
+
+export async function listAdminDigitalCardIssueCandidates(params?: {
+  page?: number
+  pageSize?: number
+}): Promise<AdminDigitalCardIssueCandidatesPage> {
+  const { data } = await api.get<AdminDigitalCardIssueCandidatesPage>('/api/admin/digital-cards/issue-candidates', {
+    params: {
+      page: params?.page ?? 1,
+      pageSize: params?.pageSize ?? 100,
+    },
+  })
   return data
 }
 

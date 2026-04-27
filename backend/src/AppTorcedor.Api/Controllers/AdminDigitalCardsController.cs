@@ -7,6 +7,7 @@ using AppTorcedor.Application.Modules.Administration.Commands.IssueDigitalCard;
 using AppTorcedor.Application.Modules.Administration.Commands.RegenerateDigitalCard;
 using AppTorcedor.Application.Modules.Administration.Queries.GetAdminDigitalCardDetail;
 using AppTorcedor.Application.Modules.Administration.Queries.ListAdminDigitalCards;
+using AppTorcedor.Application.Modules.Administration.Queries.ListDigitalCardIssueCandidates;
 using AppTorcedor.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -31,6 +32,19 @@ public sealed class AdminDigitalCardsController(IMediator mediator) : Controller
     {
         var pageDto = await mediator
             .Send(new ListAdminDigitalCardsQuery(userId, membershipId, status, page, pageSize), cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(pageDto);
+    }
+
+    [HttpGet("issue-candidates")]
+    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.CarteirinhaGerenciar)]
+    public async Task<ActionResult<AdminDigitalCardIssueCandidatesPageDto>> ListIssueCandidates(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var pageDto = await mediator
+            .Send(new ListDigitalCardIssueCandidatesQuery(page, pageSize), cancellationToken)
             .ConfigureAwait(false);
         return Ok(pageDto);
     }
