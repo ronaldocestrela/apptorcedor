@@ -45,8 +45,7 @@ public partial class BenefitShippingStripePayment : Migration
         migrationBuilder.CreateIndex(
             name: "IX_BenefitRedemptions_ShippingPaymentId",
             table: "BenefitRedemptions",
-            column: "ShippingPaymentId",
-            unique: true);
+            column: "ShippingPaymentId");
 
         migrationBuilder.AddForeignKey(
             name: "FK_BenefitRedemptions_Payments_ShippingPaymentId",

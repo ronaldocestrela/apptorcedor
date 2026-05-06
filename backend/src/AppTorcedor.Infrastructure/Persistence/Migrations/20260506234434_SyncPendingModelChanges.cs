@@ -18,6 +18,7 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                 WHERE name = N'IX_BenefitRedemptions_ShippingPaymentId'
                   AND object_id = OBJECT_ID(N'[BenefitRedemptions]')
             )
+            AND COL_LENGTH('BenefitRedemptions', 'ShippingPaymentId') IS NOT NULL
             BEGIN
                 DROP INDEX [IX_BenefitRedemptions_ShippingPaymentId] ON [BenefitRedemptions];
             END
@@ -31,6 +32,7 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                 WHERE name = N'IX_BenefitRedemptions_ShippingPaymentId'
                   AND object_id = OBJECT_ID(N'[BenefitRedemptions]')
             )
+            AND COL_LENGTH('BenefitRedemptions', 'ShippingPaymentId') IS NOT NULL
             BEGIN
                 CREATE INDEX [IX_BenefitRedemptions_ShippingPaymentId]
                 ON [BenefitRedemptions] ([ShippingPaymentId]);
@@ -49,6 +51,7 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                 WHERE name = N'IX_BenefitRedemptions_ShippingPaymentId'
                   AND object_id = OBJECT_ID(N'[BenefitRedemptions]')
             )
+            AND COL_LENGTH('BenefitRedemptions', 'ShippingPaymentId') IS NOT NULL
             BEGIN
                 DROP INDEX [IX_BenefitRedemptions_ShippingPaymentId] ON [BenefitRedemptions];
             END
@@ -62,6 +65,7 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                 WHERE name = N'IX_BenefitRedemptions_ShippingPaymentId'
                   AND object_id = OBJECT_ID(N'[BenefitRedemptions]')
             )
+            AND COL_LENGTH('BenefitRedemptions', 'ShippingPaymentId') IS NOT NULL
             BEGIN
                 CREATE UNIQUE INDEX [IX_BenefitRedemptions_ShippingPaymentId]
                 ON [BenefitRedemptions] ([ShippingPaymentId]);
