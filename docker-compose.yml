@@ -33,6 +33,9 @@ services:
       Auth__PasswordReset__FrontendBaseUrl: ${AUTH_PASSWORD_RESET_FRONTEND_BASE_URL:-${CORS_ORIGIN:-http://localhost:5173}}
       ADMIN_MASTER_INITIAL_PASSWORD: ${ADMIN_MASTER_INITIAL_PASSWORD:?Defina ADMIN_MASTER_INITIAL_PASSWORD no arquivo .env}
       Cors__AllowedOrigins__0: ${CORS_ORIGIN:-http://localhost:5173}
+      MelhorEnvio__Token: ${MELHOR_ENVIO_TOKEN:-}
+      MelhorEnvio__UserAgent: ${MELHOR_ENVIO_USER_AGENT:-}
+      MelhorEnvio__FromPostalCode: ${MELHOR_ENVIO_FROM_POSTAL_CODE:-}
 
   web:
     build:

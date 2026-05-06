@@ -22,6 +22,9 @@
 // - resend-from-address       (Secret text) RESEND_FROM_ADDRESS (ex.: noreply@seudominio.com.br)
 // - resend-from-name          (Secret text) RESEND_FROM_NAME (ex.: Sócio Torcedor)
 // - auth-password-reset-frontend-base-url (Secret text) AUTH_PASSWORD_RESET_FRONTEND_BASE_URL → Auth__PasswordReset__FrontendBaseUrl (URL pública da SPA para links no e-mail; se vazio no secret, o pipeline usa o mesmo valor de api-cors-origin)
+// - melhor-envio-token               (Secret text) MelhorEnvio__Token / MELHOR_ENVIO_TOKEN (Bearer; vazio = não gravar linha → usa appsettings; ID deve existir no Jenkins)
+// - melhor-envio-user-agent          (Secret text) MelhorEnvio__UserAgent / MELHOR_ENVIO_USER_AGENT (ex.: nome app + URL; só gravado se não vazio; ID deve existir)
+// - melhor-envio-from-postal-code    (Secret text) só dígitos, CEP de origem; só gravado se não vazio (ID deve existir)
 // - api-cors-origin           (Secret text) Cors__AllowedOrigins__0
 // - api-aspnetcore-urls       (Secret text) ASPNETCORE_URLS (ex.: http://127.0.0.1:5031)
 // - vite-public-api-url       (Secret text) URL pública da API para build do Vite (gravada também no arquivo vite na VPS)
@@ -117,7 +120,10 @@ pipeline {
             string(credentialsId: 'resend-api-key', variable: 'RESEND_API_KEY'),
             string(credentialsId: 'resend-from-address', variable: 'RESEND_FROM_ADDRESS'),
             string(credentialsId: 'resend-from-name', variable: 'RESEND_FROM_NAME'),
-            string(credentialsId: 'auth-password-reset-frontend-base-url', variable: 'AUTH_PASSWORD_RESET_FRONTEND_BASE_URL')
+            string(credentialsId: 'auth-password-reset-frontend-base-url', variable: 'AUTH_PASSWORD_RESET_FRONTEND_BASE_URL'),
+            string(credentialsId: 'melhor-envio-token', variable: 'MELHOR_ENVIO_TOKEN'),
+            string(credentialsId: 'melhor-envio-user-agent', variable: 'MELHOR_ENVIO_USER_AGENT'),
+            string(credentialsId: 'melhor-envio-from-postal-code', variable: 'MELHOR_ENVIO_FROM_POSTAL_CODE')
           ]
 
           def useCompose = (env.DEPLOY_USE_COMPOSE ?: 'true').trim().equalsIgnoreCase('true')
@@ -156,6 +162,9 @@ pipeline {
                     printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
                     printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
                     printf 'Auth__PasswordReset__FrontendBaseUrl=%s\n' "${PW_RESET_BASE}"
+                    [ -n "${MELHOR_ENVIO_TOKEN:-}" ] && printf 'MelhorEnvio__Token=%s\n' "${MELHOR_ENVIO_TOKEN}"
+                    [ -n "${MELHOR_ENVIO_USER_AGENT:-}" ] && printf 'MelhorEnvio__UserAgent=%s\n' "${MELHOR_ENVIO_USER_AGENT}"
+                    [ -n "${MELHOR_ENVIO_FROM_POSTAL_CODE:-}" ] && printf 'MelhorEnvio__FromPostalCode=%s\n' "${MELHOR_ENVIO_FROM_POSTAL_CODE}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   cp "${API_ENV_LOCAL}" "${REMOTE_ENV}"
@@ -180,6 +189,9 @@ pipeline {
                     printf 'RESEND_FROM_ADDRESS=%s\n' "${RESEND_FROM_ADDRESS:-}"
                     printf 'RESEND_FROM_NAME=%s\n'    "${RESEND_FROM_NAME:-}"
                     printf 'AUTH_PASSWORD_RESET_FRONTEND_BASE_URL=%s\n' "${PW_RESET_BASE}"
+                    [ -n "${MELHOR_ENVIO_TOKEN:-}" ] && printf 'MELHOR_ENVIO_TOKEN=%s\n' "${MELHOR_ENVIO_TOKEN}"
+                    [ -n "${MELHOR_ENVIO_USER_AGENT:-}" ] && printf 'MELHOR_ENVIO_USER_AGENT=%s\n' "${MELHOR_ENVIO_USER_AGENT}"
+                    [ -n "${MELHOR_ENVIO_FROM_POSTAL_CODE:-}" ] && printf 'MELHOR_ENVIO_FROM_POSTAL_CODE=%s\n' "${MELHOR_ENVIO_FROM_POSTAL_CODE}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -226,6 +238,9 @@ pipeline {
                     printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
                     printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
                     printf 'Auth__PasswordReset__FrontendBaseUrl=%s\n' "${PW_RESET_BASE}"
+                    [ -n "${MELHOR_ENVIO_TOKEN:-}" ] && printf 'MelhorEnvio__Token=%s\n' "${MELHOR_ENVIO_TOKEN}"
+                    [ -n "${MELHOR_ENVIO_USER_AGENT:-}" ] && printf 'MelhorEnvio__UserAgent=%s\n' "${MELHOR_ENVIO_USER_AGENT}"
+                    [ -n "${MELHOR_ENVIO_FROM_POSTAL_CODE:-}" ] && printf 'MelhorEnvio__FromPostalCode=%s\n' "${MELHOR_ENVIO_FROM_POSTAL_CODE}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"
@@ -299,6 +314,9 @@ pipeline {
                     printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
                     printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
                     printf 'Auth__PasswordReset__FrontendBaseUrl=%s\n' "${PW_RESET_BASE}"
+                    [ -n "${MELHOR_ENVIO_TOKEN:-}" ] && printf 'MelhorEnvio__Token=%s\n' "${MELHOR_ENVIO_TOKEN}"
+                    [ -n "${MELHOR_ENVIO_USER_AGENT:-}" ] && printf 'MelhorEnvio__UserAgent=%s\n' "${MELHOR_ENVIO_USER_AGENT}"
+                    [ -n "${MELHOR_ENVIO_FROM_POSTAL_CODE:-}" ] && printf 'MelhorEnvio__FromPostalCode=%s\n' "${MELHOR_ENVIO_FROM_POSTAL_CODE}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   {
@@ -322,6 +340,9 @@ pipeline {
                     printf 'RESEND_FROM_ADDRESS=%s\n' "${RESEND_FROM_ADDRESS:-}"
                     printf 'RESEND_FROM_NAME=%s\n'    "${RESEND_FROM_NAME:-}"
                     printf 'AUTH_PASSWORD_RESET_FRONTEND_BASE_URL=%s\n' "${PW_RESET_BASE}"
+                    [ -n "${MELHOR_ENVIO_TOKEN:-}" ] && printf 'MELHOR_ENVIO_TOKEN=%s\n' "${MELHOR_ENVIO_TOKEN}"
+                    [ -n "${MELHOR_ENVIO_USER_AGENT:-}" ] && printf 'MELHOR_ENVIO_USER_AGENT=%s\n' "${MELHOR_ENVIO_USER_AGENT}"
+                    [ -n "${MELHOR_ENVIO_FROM_POSTAL_CODE:-}" ] && printf 'MELHOR_ENVIO_FROM_POSTAL_CODE=%s\n' "${MELHOR_ENVIO_FROM_POSTAL_CODE}"
                     printf 'CORS_ORIGIN=%s\n' "${API_CORS}"
                     printf 'VITE_API_URL=%s\n' "${VITE_API_URL}"
                     printf 'API_PORT=%s\n' "${API_PORT}"
@@ -373,6 +394,9 @@ pipeline {
                     printf 'Email__Resend__FromAddress=%s\n'  "${RESEND_FROM_ADDRESS:-}"
                     printf 'Email__Resend__FromName=%s\n'     "${RESEND_FROM_NAME:-}"
                     printf 'Auth__PasswordReset__FrontendBaseUrl=%s\n' "${PW_RESET_BASE}"
+                    [ -n "${MELHOR_ENVIO_TOKEN:-}" ] && printf 'MelhorEnvio__Token=%s\n' "${MELHOR_ENVIO_TOKEN}"
+                    [ -n "${MELHOR_ENVIO_USER_AGENT:-}" ] && printf 'MelhorEnvio__UserAgent=%s\n' "${MELHOR_ENVIO_USER_AGENT}"
+                    [ -n "${MELHOR_ENVIO_FROM_POSTAL_CODE:-}" ] && printf 'MelhorEnvio__FromPostalCode=%s\n' "${MELHOR_ENVIO_FROM_POSTAL_CODE}"
                     echo 'Google__Auth__ClientId='
                   } > "${API_ENV_LOCAL}"
                   printf '%s' "${VITE_API_URL}" > "${VITE_LOCAL}"
