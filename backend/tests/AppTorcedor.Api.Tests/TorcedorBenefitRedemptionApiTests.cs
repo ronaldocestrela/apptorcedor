@@ -121,7 +121,7 @@ public sealed class TorcedorBenefitRedemptionApiTests(AppWebApplicationFactory f
     }
 
     [Fact]
-    public async Task Shirt_offer_pending_then_approve_flow()
+    public async Task Shirt_offer_pending_then_approve_flow_pickup()
     {
         var admin = await LoginAdminAsync();
         var memberToken = await LoginMemberAsync();
@@ -146,7 +146,7 @@ public sealed class TorcedorBenefitRedemptionApiTests(AppWebApplicationFactory f
                 new
                 {
                     partnerId,
-                    title = "Camisa API",
+                    title = "Camisa API Pickup",
                     description = "desc",
                     isActive = true,
                     startAt = now.AddDays(-1),
@@ -182,23 +182,13 @@ public sealed class TorcedorBenefitRedemptionApiTests(AppWebApplicationFactory f
                         shirtModel = "Home",
                         shirtNumber = "10",
                         shirtDisplayName = "Fulano",
-                        deliveryCep = "01310100",
-                        deliveryNeighborhood = "Centro",
-                        deliveryStreet = "Rua A",
-                        deliveryNumber = "10",
-                        deliveryCity = "São Paulo",
-                        deliveryState = "SP",
-                        shippingMethod = "carrier",
-                        shippingCarrierId = 2,
-                        shippingCarrierName = "Correios",
-                        shippingServiceName = "SEDEX",
-                        shippingPrice = 12.68m,
-                        shippingDeliveryDays = 2,
+                        shippingMethod = "pickup",
                     });
                 var res = await _client.SendAsync(redeem);
                 Assert.Equal(HttpStatusCode.Created, res.StatusCode);
                 var body = await res.Content.ReadFromJsonAsync<JsonElement>();
                 redemptionId = Guid.Parse(body.GetProperty("redemptionId").GetString()!);
+                Assert.Null(body.GetProperty("checkoutUrl").GetString());
             }
 
             using (var detail = new HttpRequestMessage(HttpMethod.Get, $"/api/benefits/offers/{offerId}"))
@@ -238,6 +228,127 @@ public sealed class TorcedorBenefitRedemptionApiTests(AppWebApplicationFactory f
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 foreach (var r in db.BenefitRedemptions.Where(x => x.OfferId == offerId))
                     db.BenefitRedemptions.Remove(r);
+                foreach (var c in db.BenefitShirtCatalogOptions.Where(x => x.OfferId == offerId))
+                    db.BenefitShirtCatalogOptions.Remove(c);
+                db.BenefitOffers.Remove(await db.BenefitOffers.SingleAsync(o => o.Id == offerId));
+                db.BenefitPartners.Remove(await db.BenefitPartners.SingleAsync(p => p.Id == partnerId));
+                await db.SaveChangesAsync();
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Shirt_offer_carrier_redeem_returns_checkout_url_and_awaiting_shipping_payment()
+    {
+        var admin = await LoginAdminAsync();
+        var memberToken = await LoginMemberAsync();
+
+        Guid partnerId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/benefits/partners"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            post.Content = JsonContent.Create(new { name = "Parceiro Camisa Carr", description = "d", isActive = true });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            partnerId = Guid.Parse(body.GetProperty("partnerId").GetString()!);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        Guid offerId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/benefits/offers"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            post.Content = JsonContent.Create(
+                new
+                {
+                    partnerId,
+                    title = "Camisa API Carrier",
+                    description = "desc",
+                    isActive = true,
+                    startAt = now.AddDays(-1),
+                    endAt = now.AddDays(30),
+                    eligiblePlanIds = (Guid[]?)null,
+                    eligibleMembershipStatuses = (string[]?)null,
+                    isShirtCustomizationOffer = true,
+                });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            offerId = Guid.Parse(body.GetProperty("offerId").GetString()!);
+        }
+
+        using (var put = new HttpRequestMessage(HttpMethod.Put, $"/api/admin/benefits/offers/{offerId}/shirt-catalog"))
+        {
+            put.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            put.Content = JsonContent.Create(new { sizes = new[] { "M", "G" }, models = new[] { "Home" } });
+            var res = await _client.SendAsync(put);
+            res.EnsureSuccessStatusCode();
+        }
+
+        try
+        {
+            using (var redeem = new HttpRequestMessage(HttpMethod.Post, $"/api/benefits/offers/{offerId}/redeem"))
+            {
+                redeem.Headers.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
+                redeem.Content = JsonContent.Create(
+                    new
+                    {
+                        shirtSize = "M",
+                        shirtModel = "Home",
+                        shirtNumber = "10",
+                        shirtDisplayName = "Fulano",
+                        deliveryCep = "01310100",
+                        deliveryNeighborhood = "Centro",
+                        deliveryStreet = "Rua A",
+                        deliveryNumber = "10",
+                        deliveryCity = "São Paulo",
+                        deliveryState = "SP",
+                        shippingMethod = "carrier",
+                        shippingCarrierId = 2,
+                        shippingCarrierName = "Correios",
+                        shippingServiceName = "SEDEX",
+                        shippingPrice = 12.68m,
+                        shippingDeliveryDays = 2,
+                    });
+                var res = await _client.SendAsync(redeem);
+                Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+                var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+                Assert.True(Guid.TryParse(body.GetProperty("redemptionId").GetString(), out _));
+                var url = body.GetProperty("checkoutUrl").GetString();
+                Assert.False(string.IsNullOrWhiteSpace(url));
+                Assert.StartsWith("https://mock-payments.local/checkout/", url, StringComparison.Ordinal);
+            }
+
+            using (var detail = new HttpRequestMessage(HttpMethod.Get, $"/api/benefits/offers/{offerId}"))
+            {
+                detail.Headers.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
+                var res = await _client.SendAsync(detail);
+                res.EnsureSuccessStatusCode();
+                var d = await res.Content.ReadFromJsonAsync<JsonElement>();
+                Assert.Equal("awaiting_shipping_payment", d.GetProperty("redemptionWorkflowStatus").GetString());
+            }
+        }
+        finally
+        {
+            await using (var scope = factory.Services.CreateAsyncScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var payIds = await db.BenefitRedemptions.AsNoTracking()
+                    .Where(x => x.OfferId == offerId)
+                    .Select(x => x.ShippingPaymentId)
+                    .Where(x => x != null)
+                    .ToListAsync();
+                foreach (var r in db.BenefitRedemptions.Where(x => x.OfferId == offerId).ToList())
+                    db.BenefitRedemptions.Remove(r);
+                foreach (var pid in payIds)
+                {
+                    if (pid is not { } id)
+                        continue;
+                    var p = await db.Payments.FirstOrDefaultAsync(x => x.Id == id);
+                    if (p is not null)
+                        db.Payments.Remove(p);
+                }
                 foreach (var c in db.BenefitShirtCatalogOptions.Where(x => x.OfferId == offerId))
                     db.BenefitShirtCatalogOptions.Remove(c);
                 db.BenefitOffers.Remove(await db.BenefitOffers.SingleAsync(o => o.Id == offerId));

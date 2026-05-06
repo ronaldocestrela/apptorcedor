@@ -296,6 +296,15 @@ public sealed class LoyaltyAdministrationService(AppDbContext db) : ILoyaltyAdmi
             var payment = await db.Payments.AsNoTracking().FirstOrDefaultAsync(p => p.Id == entityId, cancellationToken).ConfigureAwait(false);
             if (payment is null)
                 return;
+            if (payment.MembershipId is null)
+            {
+                var isBenefitFreight = await db.BenefitRedemptions.AsNoTracking()
+                    .AnyAsync(r => r.ShippingPaymentId == payment.Id, cancellationToken)
+                    .ConfigureAwait(false);
+                if (isBenefitFreight)
+                    return;
+            }
+
             userId = payment.UserId;
         }
         else

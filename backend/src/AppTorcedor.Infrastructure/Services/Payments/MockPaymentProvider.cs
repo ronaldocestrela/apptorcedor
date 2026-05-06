@@ -24,7 +24,8 @@ public sealed class MockPaymentProvider : IPaymentProvider
         Guid paymentId,
         decimal amount,
         string currency,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken = default,
+        string? checkoutProductName = null) =>
         Task.FromResult(
             new CardPaymentProviderResult(
                 CheckoutUrl: $"https://mock-payments.local/checkout/{paymentId:N}?amount={amount:F2}&currency={currency}"));

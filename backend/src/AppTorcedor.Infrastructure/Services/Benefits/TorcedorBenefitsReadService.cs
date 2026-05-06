@@ -165,7 +165,13 @@ public sealed class TorcedorBenefitsReadService(AppDbContext db) : ITorcedorBene
         }
         else if (pending is not null)
         {
-            workflow = "pending";
+            var method = (pending.ShippingMethod ?? "").Trim().ToLowerInvariant();
+            if (method == TorcedorBenefitShippingMethods.Carrier
+                && pending.ShippingPaymentId is not null
+                && pending.ShippingPaidAtUtc is null)
+                workflow = "awaiting_shipping_payment";
+            else
+                workflow = "pending";
             alreadyRedeemed = false;
             redemptionDateUtc = pending.CreatedAt;
         }

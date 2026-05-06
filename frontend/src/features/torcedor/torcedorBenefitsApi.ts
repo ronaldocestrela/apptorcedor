@@ -82,6 +82,7 @@ export type TorcedorBenefitRedeemPayload = {
 
 export type TorcedorBenefitRedeemResponse = {
   redemptionId: string
+  checkoutUrl: string | null
 }
 
 function redeemPayloadHasValues(payload: TorcedorBenefitRedeemPayload): boolean {
@@ -133,5 +134,5 @@ export async function redeemBenefitOffer(
     `/api/benefits/offers/${offerId}/redeem`,
     body,
   )
-  return data
+  return { redemptionId: data.redemptionId, checkoutUrl: data.checkoutUrl ?? null }
 }

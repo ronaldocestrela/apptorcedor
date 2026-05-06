@@ -94,16 +94,29 @@ describe('torcedor C.2 APIs', () => {
 
   it('redeemBenefitOffer calls POST /api/benefits/offers/:id/redeem with optional body', async () => {
     vi.mocked(api.post).mockResolvedValue({
-      data: { redemptionId: 'r1' },
+      data: { redemptionId: 'r1', checkoutUrl: null },
     })
     const r = await redeemBenefitOffer('o1')
     expect(r.redemptionId).toBe('r1')
+    expect(r.checkoutUrl).toBeNull()
     expect(api.post).toHaveBeenCalledWith('/api/benefits/offers/o1/redeem', undefined)
+  })
+
+  it('redeemBenefitOffer returns checkoutUrl for Stripe freight when present', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      data: {
+        redemptionId: 'r-freight',
+        checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_test_freight',
+      },
+    })
+    const r = await redeemBenefitOffer('o1', { shippingMethod: 'carrier', shirtSize: 'M' })
+    expect(r.redemptionId).toBe('r-freight')
+    expect(r.checkoutUrl).toBe('https://checkout.stripe.com/c/pay/cs_test_freight')
   })
 
   it('redeemBenefitOffer sends shirt payload when provided', async () => {
     vi.mocked(api.post).mockResolvedValue({
-      data: { redemptionId: 'r2' },
+      data: { redemptionId: 'r2', checkoutUrl: null },
     })
     await redeemBenefitOffer('o1', { shirtSize: 'M', shirtModel: 'Home', shirtNumber: '10', shirtDisplayName: 'A' })
     expect(api.post).toHaveBeenCalledWith('/api/benefits/offers/o1/redeem', {
@@ -116,7 +129,7 @@ describe('torcedor C.2 APIs', () => {
 
   it('redeemBenefitOffer sends shirt and delivery payload when provided', async () => {
     vi.mocked(api.post).mockResolvedValue({
-      data: { redemptionId: 'r3' },
+      data: { redemptionId: 'r3', checkoutUrl: null },
     })
     await redeemBenefitOffer('o1', {
       shirtSize: 'M',

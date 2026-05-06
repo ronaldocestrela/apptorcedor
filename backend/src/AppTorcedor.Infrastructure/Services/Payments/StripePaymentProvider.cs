@@ -30,7 +30,8 @@ public sealed class StripePaymentProvider(IOptions<PaymentsOptions> paymentsOpti
         Guid paymentId,
         decimal amount,
         string currency,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? checkoutProductName = null)
     {
         var opts = paymentsOptions.Value.Stripe;
         var apiKey = opts.ApiKey?.Trim();
@@ -69,7 +70,9 @@ public sealed class StripePaymentProvider(IOptions<PaymentsOptions> paymentsOpti
                                 UnitAmount = unitAmount,
                                 ProductData = new SessionLineItemPriceDataProductDataOptions
                                 {
-                                    Name = "Assinatura sócio torcedor",
+                                    Name = string.IsNullOrWhiteSpace(checkoutProductName)
+                                        ? "Assinatura sócio torcedor"
+                                        : checkoutProductName.Trim(),
                                 },
                             },
                         },

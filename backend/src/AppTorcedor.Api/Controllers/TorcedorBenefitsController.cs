@@ -154,7 +154,11 @@ public sealed class TorcedorBenefitsController(IMediator mediator) : ControllerB
             .ConfigureAwait(false);
 
         if (result.Ok)
-            return StatusCode(StatusCodes.Status201Created, new { redemptionId = result.RedemptionId });
+        {
+            return StatusCode(
+                StatusCodes.Status201Created,
+                new { redemptionId = result.RedemptionId, checkoutUrl = result.CheckoutUrl });
+        }
 
         return result.Error switch
         {

@@ -3,6 +3,7 @@ using AppTorcedor.Identity;
 using AppTorcedor.Infrastructure.Entities;
 using AppTorcedor.Infrastructure.Persistence;
 using AppTorcedor.Infrastructure.Services.Benefits;
+using AppTorcedor.Infrastructure.Services.Payments;
 using Microsoft.EntityFrameworkCore;
 
 namespace AppTorcedor.Infrastructure.Tests;
@@ -101,7 +102,7 @@ public sealed class TorcedorBenefitRedemptionServiceTests
             });
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
         var r = await sut.RedeemOfferAsync(offerId, userId, null);
 
         Assert.True(r.Ok);
@@ -117,7 +118,7 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         db.Users.Add(MinUser(userId));
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
         var r = await sut.RedeemOfferAsync(Guid.NewGuid(), userId, null);
 
         Assert.False(r.Ok);
@@ -179,7 +180,7 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         db.BenefitOfferPlanEligibilities.Add(new BenefitOfferPlanEligibilityRecord { OfferId = offerId, PlanId = planId });
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
         var r = await sut.RedeemOfferAsync(offerId, userId, null);
 
         Assert.False(r.Ok);
@@ -229,7 +230,7 @@ public sealed class TorcedorBenefitRedemptionServiceTests
             });
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
         var r = await sut.RedeemOfferAsync(offerId, userId, null);
 
         Assert.False(r.Ok);
@@ -336,12 +337,16 @@ public sealed class TorcedorBenefitRedemptionServiceTests
             });
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
         var shirt = SampleCarrierShirtRequest();
         var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
 
         Assert.True(r.Ok);
         var row = await db.BenefitRedemptions.SingleAsync(x => x.Id == r.RedemptionId);
+        Assert.NotNull(row.ShippingPaymentId);
+        Assert.Equal(
+            $"https://mock-payments.local/checkout/{row.ShippingPaymentId:N}?amount=12.68&currency=BRL",
+            r.CheckoutUrl);
         Assert.Equal(BenefitRedemptionStatus.Pending, row.Status);
         Assert.Equal("M", row.ShirtSize);
         Assert.Equal("10", row.ShirtNumber);
@@ -351,6 +356,9 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         Assert.Equal(TorcedorBenefitShippingMethods.Carrier, row.ShippingMethod);
         Assert.Equal(2, row.ShippingCarrierId);
         Assert.Equal("SEDEX", row.ShippingServiceName);
+        var pay = await db.Payments.SingleAsync(p => p.Id == row.ShippingPaymentId!.Value);
+        Assert.Equal(12.68m, pay.Amount);
+        Assert.Equal("Mock", pay.ProviderName);
     }
 
     [Fact]
@@ -405,7 +413,7 @@ public sealed class TorcedorBenefitRedemptionServiceTests
             });
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
         var shirt = SamplePickupShirtRequest();
         var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
 
@@ -462,7 +470,7 @@ public sealed class TorcedorBenefitRedemptionServiceTests
             });
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
         var shirt = new TorcedorShirtRedemptionRequest(
             "M",
             "Home",
@@ -508,7 +516,7 @@ public sealed class TorcedorBenefitRedemptionServiceTests
             });
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
         var shirt = SampleCarrierShirtRequest();
         var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
 
@@ -543,7 +551,7 @@ public sealed class TorcedorBenefitRedemptionServiceTests
             });
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
         var shirt = SampleCarrierShirtRequest();
         var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
 

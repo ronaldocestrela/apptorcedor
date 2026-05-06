@@ -1230,6 +1230,7 @@ export type BenefitRedemptionListItem = {
   shippingServiceName: string | null
   shippingPrice: number | null
   shippingDeliveryDays: number | null
+  shippingPaidAtUtc: string | null
   reviewedAtUtc: string | null
   reviewedByUserId: string | null
   rejectionReason: string | null

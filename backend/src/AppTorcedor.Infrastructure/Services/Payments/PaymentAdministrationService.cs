@@ -128,7 +128,8 @@ public sealed class PaymentAdministrationService(
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        await TryReactivateMembershipAfterPaidAsync(payment.MembershipId, cancellationToken).ConfigureAwait(false);
+        if (payment.MembershipId is { } membershipId)
+            await TryReactivateMembershipAfterPaidAsync(membershipId, cancellationToken).ConfigureAwait(false);
 
         await loyaltyPoints.AwardPointsForPaymentPaidAsync(payment.Id, cancellationToken).ConfigureAwait(false);
 

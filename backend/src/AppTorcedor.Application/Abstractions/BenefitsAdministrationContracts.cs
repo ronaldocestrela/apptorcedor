@@ -90,6 +90,7 @@ public sealed record BenefitRedemptionListItemDto(
     string? ShippingServiceName,
     decimal? ShippingPrice,
     int? ShippingDeliveryDays,
+    DateTimeOffset? ShippingPaidAtUtc,
     DateTimeOffset? ReviewedAtUtc,
     Guid? ReviewedByUserId,
     string? RejectionReason);

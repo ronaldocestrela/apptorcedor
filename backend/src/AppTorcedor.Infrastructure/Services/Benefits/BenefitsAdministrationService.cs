@@ -398,6 +398,7 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
                 x.r.ShippingServiceName,
                 x.r.ShippingPrice,
                 x.r.ShippingDeliveryDays,
+                x.r.ShippingPaidAtUtc,
                 x.r.ReviewedAtUtc,
                 x.r.ReviewedByUserId,
                 x.r.RejectionReason))

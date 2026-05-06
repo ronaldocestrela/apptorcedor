@@ -369,6 +369,12 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                         .HasMaxLength(80)
                         .HasColumnType("nvarchar(80)");
 
+                    b.Property<DateTimeOffset?>("ShippingPaidAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ShippingPaymentId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
@@ -417,6 +423,9 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.HasIndex("Status");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("ShippingPaymentId")
+                        .IsUnique();
 
                     b.ToTable("BenefitRedemptions", (string)null);
                 });
@@ -1004,7 +1013,7 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("LastProviderSyncAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid>("MembershipId")
+                    b.Property<Guid?>("MembershipId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("PaidAt")
@@ -1648,6 +1657,11 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("AppTorcedor.Infrastructure.Entities.PaymentRecord", null)
+                        .WithMany()
+                        .HasForeignKey("ShippingPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AppTorcedor.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1769,8 +1783,7 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.HasOne("AppTorcedor.Infrastructure.Entities.MembershipRecord", null)
                         .WithMany()
                         .HasForeignKey("MembershipId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("AppTorcedor.Identity.ApplicationUser", null)
                         .WithMany()

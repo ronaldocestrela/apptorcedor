@@ -201,7 +201,9 @@ export function BenefitOfferDetailPage() {
     if (!detail?.isShirtCustomizationOffer)
       return false
     const w = detail.redemptionWorkflowStatus?.toLowerCase() ?? 'none'
-    return !detail.alreadyRedeemed && (w === 'none' || w === 'rejected')
+    return !detail.alreadyRedeemed
+      && (w === 'none'
+        || w === 'rejected')
   }, [detail])
 
   const shirtNumberTrimmed = shirtNumber.trim()
@@ -217,6 +219,8 @@ export function BenefitOfferDetailPage() {
     if (!detail?.isShirtCustomizationOffer)
       return null
     const w = detail.redemptionWorkflowStatus?.toLowerCase() ?? 'none'
+    if (w === 'awaiting_shipping_payment')
+      return 'Aguardando confirmação do pagamento do frete. Quando o pagamento for confirmado, sua solicitação será liberada automaticamente.'
     if (w === 'pending')
       return 'Sua solicitação de camisa está em análise pela equipe do clube.'
     return null
@@ -228,6 +232,7 @@ export function BenefitOfferDetailPage() {
     try {
       setRedeeming(true)
       setRedeemError(null)
+      let redeemRes: Awaited<ReturnType<typeof redeemBenefitOffer>> | null = null
       if (detail.isShirtCustomizationOffer) {
         if (!canRequestShirt)
           return
@@ -244,7 +249,7 @@ export function BenefitOfferDetailPage() {
           return
         }
         if (deliveryMode === 'pickup') {
-          await redeemBenefitOffer(offerId, {
+          redeemRes = await redeemBenefitOffer(offerId, {
             shirtSize,
             shirtModel,
             shirtNumber: shirtNumber.trim(),
@@ -271,7 +276,7 @@ export function BenefitOfferDetailPage() {
             setRedeemError('Selecione uma opção de frete.')
             return
           }
-          await redeemBenefitOffer(offerId, {
+          redeemRes = await redeemBenefitOffer(offerId, {
             shirtSize,
             shirtModel,
             shirtNumber: shirtNumber.trim(),
@@ -292,7 +297,11 @@ export function BenefitOfferDetailPage() {
         }
       }
       else {
-        await redeemBenefitOffer(offerId)
+        redeemRes = await redeemBenefitOffer(offerId)
+      }
+      if (redeemRes?.checkoutUrl) {
+        window.location.href = redeemRes.checkoutUrl
+        return
       }
       await load()
     }

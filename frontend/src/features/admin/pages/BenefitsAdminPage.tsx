@@ -123,7 +123,11 @@ function redemptionShippingAdminLine(r: BenefitRedemptionListItem): string | nul
         ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(r.shippingPrice)
         : ''
     const d = r.shippingDeliveryDays != null ? `até ${r.shippingDeliveryDays} dia(s) útil(eis)` : ''
-    return ['Frete:', svc, price, d].filter(Boolean).join(' ')
+    const paid =
+      r.shippingPaidAtUtc
+        ? ` — Frete pago em ${new Date(r.shippingPaidAtUtc).toLocaleString('pt-BR')}`
+        : ' — Frete ainda não pago'
+    return ['Frete:', svc, price, d, paid].filter(Boolean).join(' ')
   }
   return null
 }

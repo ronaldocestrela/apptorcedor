@@ -44,6 +44,11 @@ public sealed class BenefitRedemptionRecord
     /// <summary>Prazo em dias corridos/uso do trecho máximo disponível pela API quando aplicável.</summary>
     public int? ShippingDeliveryDays { get; set; }
 
+    /// <summary>One-off Stripe/Mock card charge for Melhor Envio freight; null for pickup.</summary>
+    public Guid? ShippingPaymentId { get; set; }
+
+    public DateTimeOffset? ShippingPaidAtUtc { get; set; }
+
     public DateTimeOffset? ReviewedAtUtc { get; set; }
     public Guid? ReviewedByUserId { get; set; }
     public string? RejectionReason { get; set; }

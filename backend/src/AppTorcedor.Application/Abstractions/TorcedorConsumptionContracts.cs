@@ -77,11 +77,18 @@ public sealed record TorcedorShirtRedemptionRequest(
     decimal? ShippingPrice = null,
     int? ShippingDeliveryDays = null);
 
-public sealed record TorcedorRedemptionResult(bool Ok, Guid? RedemptionId, TorcedorRedemptionError? Error)
+public sealed record TorcedorRedemptionResult(
+    bool Ok,
+    Guid? RedemptionId,
+    TorcedorRedemptionError? Error,
+    string? CheckoutUrl = null)
 {
-    public static TorcedorRedemptionResult Success(Guid redemptionId) => new(true, redemptionId, null);
+    public static TorcedorRedemptionResult Success(Guid redemptionId) => new(true, redemptionId, null, null);
 
-    public static TorcedorRedemptionResult Fail(TorcedorRedemptionError error) => new(false, null, error);
+    public static TorcedorRedemptionResult SuccessWithCheckout(Guid redemptionId, string checkoutUrl) =>
+        new(true, redemptionId, null, checkoutUrl);
+
+    public static TorcedorRedemptionResult Fail(TorcedorRedemptionError error) => new(false, null, error, null);
 }
 
 /// <summary>Self-service benefit redemption for authenticated torcedor (no admin actor).</summary>

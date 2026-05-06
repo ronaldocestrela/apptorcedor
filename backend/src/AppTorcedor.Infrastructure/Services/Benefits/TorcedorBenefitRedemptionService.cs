@@ -1,13 +1,14 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.Modules.Administration.Payments;
 using AppTorcedor.Infrastructure.Entities;
 using AppTorcedor.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AppTorcedor.Infrastructure.Services.Benefits;
 
-public sealed class TorcedorBenefitRedemptionService(AppDbContext db) : ITorcedorBenefitRedemptionPort
+public sealed class TorcedorBenefitRedemptionService(AppDbContext db, IPaymentProvider paymentProvider) : ITorcedorBenefitRedemptionPort
 {
     private static readonly Regex s_shirtNumberRegex = new("^(?:[0-9]|[1-9][0-9])$", RegexOptions.Compiled);
     private static readonly Regex s_shirtNameRegex = new("^[\\p{L}0-9'\\- ]{1,10}$", RegexOptions.Compiled);
@@ -80,6 +81,64 @@ public sealed class TorcedorBenefitRedemptionService(AppDbContext db) : ITorcedo
             if (method == TorcedorBenefitShippingMethods.Carrier)
                 d = NormalizeDelivery(shirt);
 
+            if (method == TorcedorBenefitShippingMethods.Carrier)
+            {
+                var paymentId = Guid.NewGuid();
+                var amount = shirt.ShippingPrice!.Value;
+                const string currency = "BRL";
+                var card = await paymentProvider
+                    .CreateCardAsync(paymentId, amount, currency, cancellationToken, "Frete — camisa personalizada")
+                    .ConfigureAwait(false);
+
+                db.Payments.Add(
+                    new PaymentRecord
+                    {
+                        Id = paymentId,
+                        UserId = userId,
+                        MembershipId = membership?.Id,
+                        Amount = amount,
+                        Status = PaymentChargeStatuses.Pending,
+                        DueDate = now.AddDays(7),
+                        PaymentMethod = "Card",
+                        ExternalReference = card.ProviderReference ?? paymentId.ToString("N"),
+                        ProviderName = paymentProvider.ProviderKey,
+                        CreatedAt = now,
+                        UpdatedAt = now,
+                        StatusReason = "Frete do benefício (camisa) — aguardando confirmação no gateway.",
+                    });
+
+                db.BenefitRedemptions.Add(
+                    new BenefitRedemptionRecord
+                    {
+                        Id = redemptionId,
+                        OfferId = offerId,
+                        UserId = userId,
+                        ActorUserId = null,
+                        Notes = null,
+                        CreatedAt = now,
+                        Status = BenefitRedemptionStatus.Pending,
+                        ShirtSize = shirt.ShirtSize.Trim(),
+                        ShirtModel = shirt.ShirtModel.Trim(),
+                        ShirtNumber = shirt.ShirtNumber.Trim(),
+                        ShirtDisplayName = shirt.ShirtDisplayName.Trim(),
+                        DeliveryCep = d!.Cep,
+                        DeliveryNeighborhood = d.Neighborhood,
+                        DeliveryStreet = d.Street,
+                        DeliveryNumber = d.Number,
+                        DeliveryCity = d.City,
+                        DeliveryState = d.State,
+                        ShippingMethod = method,
+                        ShippingCarrierId = shirt.ShippingCarrierId,
+                        ShippingCarrierName = (shirt.ShippingCarrierName ?? "").Trim(),
+                        ShippingServiceName = (shirt.ShippingServiceName ?? "").Trim(),
+                        ShippingPrice = shirt.ShippingPrice,
+                        ShippingDeliveryDays = shirt.ShippingDeliveryDays,
+                        ShippingPaymentId = paymentId,
+                    });
+                await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                return TorcedorRedemptionResult.SuccessWithCheckout(redemptionId, card.CheckoutUrl);
+            }
+
             db.BenefitRedemptions.Add(
                 new BenefitRedemptionRecord
                 {
@@ -94,27 +153,18 @@ public sealed class TorcedorBenefitRedemptionService(AppDbContext db) : ITorcedo
                     ShirtModel = shirt.ShirtModel.Trim(),
                     ShirtNumber = shirt.ShirtNumber.Trim(),
                     ShirtDisplayName = shirt.ShirtDisplayName.Trim(),
-                    DeliveryCep = method == TorcedorBenefitShippingMethods.Pickup ? null : d!.Cep,
-                    DeliveryNeighborhood = method == TorcedorBenefitShippingMethods.Pickup ? null : d!.Neighborhood,
-                    DeliveryStreet = method == TorcedorBenefitShippingMethods.Pickup ? null : d!.Street,
-                    DeliveryNumber = method == TorcedorBenefitShippingMethods.Pickup ? null : d!.Number,
-                    DeliveryCity = method == TorcedorBenefitShippingMethods.Pickup ? null : d!.City,
-                    DeliveryState = method == TorcedorBenefitShippingMethods.Pickup ? null : d!.State,
+                    DeliveryCep = null,
+                    DeliveryNeighborhood = null,
+                    DeliveryStreet = null,
+                    DeliveryNumber = null,
+                    DeliveryCity = null,
+                    DeliveryState = null,
                     ShippingMethod = method,
-                    ShippingCarrierId =
-                        method == TorcedorBenefitShippingMethods.Pickup ? null : shirt.ShippingCarrierId,
-                    ShippingCarrierName =
-                        method == TorcedorBenefitShippingMethods.Pickup
-                            ? null
-                            : (shirt.ShippingCarrierName ?? "").Trim(),
-                    ShippingServiceName =
-                        method == TorcedorBenefitShippingMethods.Pickup
-                            ? null
-                            : (shirt.ShippingServiceName ?? "").Trim(),
-                    ShippingPrice =
-                        method == TorcedorBenefitShippingMethods.Pickup ? null : shirt.ShippingPrice,
-                    ShippingDeliveryDays =
-                        method == TorcedorBenefitShippingMethods.Pickup ? null : shirt.ShippingDeliveryDays,
+                    ShippingCarrierId = null,
+                    ShippingCarrierName = null,
+                    ShippingServiceName = null,
+                    ShippingPrice = null,
+                    ShippingDeliveryDays = null,
                 });
             await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return TorcedorRedemptionResult.Success(redemptionId);

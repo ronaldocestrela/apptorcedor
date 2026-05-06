@@ -597,6 +597,7 @@ describe('BenefitsAdminPage', () => {
               shippingServiceName: null,
               shippingPrice: null,
               shippingDeliveryDays: null,
+              shippingPaidAtUtc: null,
               reviewedAtUtc: '2026-02-02T00:00:00.000Z',
               reviewedByUserId: 'admin-1',
               rejectionReason: null,
@@ -616,6 +617,58 @@ describe('BenefitsAdminPage', () => {
     expect(screen.getByTestId(`approved-shirt-detail-${approvedId}`)).toHaveTextContent('Silva')
     expect(screen.getByTestId(`approved-shirt-delivery-${approvedId}`)).toHaveTextContent('20000000')
     expect(screen.getByTestId(`approved-shirt-delivery-${approvedId}`)).toHaveTextContent('Av B')
+  })
+
+  it('shows freight paid timestamp for carrier-approved shirt redemptions', async () => {
+    const approvedCarrierId = 'dddddddd-0000-0000-0000-dddddddddddd'
+    listBenefitRedemptions.mockImplementation((params: { status?: string }) => {
+      if (params?.status === 'approved') {
+        return Promise.resolve({
+          totalCount: 1,
+          items: [
+            {
+              redemptionId: approvedCarrierId,
+              offerId: 'o2',
+              offerTitle: 'Camisa envio',
+              userId: 'u2',
+              userEmail: 'ship@test',
+              actorUserId: null,
+              notes: null,
+              createdAt: '2026-03-01',
+              status: 'Approved',
+              shirtSize: 'M',
+              shirtModel: 'Home',
+              shirtNumber: '9',
+              shirtDisplayName: 'Souza',
+              deliveryCep: '01310100',
+              deliveryNeighborhood: 'Bela Vista',
+              deliveryStreet: 'Rua X',
+              deliveryNumber: '1',
+              deliveryCity: 'São Paulo',
+              deliveryState: 'SP',
+              shippingMethod: 'carrier',
+              shippingCarrierId: 1,
+              shippingCarrierName: 'Correios',
+              shippingServiceName: 'PAC',
+              shippingPrice: 15.5,
+              shippingDeliveryDays: 5,
+              shippingPaidAtUtc: '2026-03-02T14:30:00.000Z',
+              reviewedAtUtc: '2026-03-02T14:30:05.000Z',
+              reviewedByUserId: 'system',
+              rejectionReason: null,
+            },
+          ],
+        })
+      }
+      return Promise.resolve({ totalCount: 0, items: [] })
+    })
+
+    renderPage()
+
+    await waitFor(() => expect(screen.queryByTestId('benefits-admin-loading')).not.toBeInTheDocument())
+
+    const block = screen.getByTestId(`approved-shirt-${approvedCarrierId}`)
+    expect(block).toHaveTextContent(/Frete pago em/i)
   })
 
   it('shows empty state for approved shirts when none', async () => {
@@ -658,6 +711,7 @@ describe('BenefitsAdminPage', () => {
               shippingServiceName: null,
               shippingPrice: null,
               shippingDeliveryDays: null,
+              shippingPaidAtUtc: null,
               reviewedAtUtc: null,
               reviewedByUserId: null,
               rejectionReason: null,

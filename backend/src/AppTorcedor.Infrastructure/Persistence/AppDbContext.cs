@@ -160,7 +160,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .HasOne<MembershipRecord>()
                 .WithMany()
                 .HasForeignKey(x => x.MembershipId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
         });
 
         builder.Entity<ProcessedStripeWebhookEventRecord>(entity =>
@@ -547,6 +548,12 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+            entity
+                .HasOne<PaymentRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.ShippingPaymentId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
         });
 
         builder.Entity<SupportTicketRecord>(entity =>
