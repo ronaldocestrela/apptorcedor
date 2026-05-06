@@ -102,6 +102,9 @@ Defina no servidor (systemd `EnvironmentFile` ou `environment` do Compose). Em A
 | `ASPNETCORE_URLS` | Recomendado | Onde o Kestrel escuta (ex.: `http://127.0.0.1:5031` atrás do proxy). Alinhar com health check e proxy. |
 | `Cors__AllowedOrigins__0` | Sim (se CORS restrito) | URL pública da SPA. Índices `__1`, `__2` para mais origens. |
 | `Google__Auth__ClientId` | Opcional | Login Google na web. |
+| `MelhorEnvio__Token` | Opcional | Bearer OAuth Melhor Envio (`GET /api/benefits/shipping-options`; vazio ⇒ lista vazia). Jenkins: credential `melhor-envio-token` (somente gravada se não vazia). Compose: `MELHOR_ENVIO_TOKEN`. |
+| `MelhorEnvio__UserAgent` | Recomendado com token | Identificação exigida pela API (`nome + URL`; ASCII). Jenkins: `melhor-envio-user-agent`. Compose: `MELHOR_ENVIO_USER_AGENT`. |
+| `MelhorEnvio__FromPostalCode` | Recomendado com token | CEP de origem (somente dígitos). Jenkins: `melhor-envio-from-postal-code`. Compose: `MELHOR_ENVIO_FROM_POSTAL_CODE`. |
 | `Seed__AdminMaster__Email` | Opcional | E-mail do master (há default no código). |
 
 Modelo comentado: [`deploy/vps/api.env.example`](../../deploy/vps/api.env.example). No fluxo **Jenkins + VPS**, o conteúdo de produção é **gerado pelo Jenkins** a cada deploy, incluindo **Stripe** quando configurado nas credenciais (ver [§4.3](#43-credenciais-no-jenkins)).
@@ -118,6 +121,9 @@ O [`docker-compose.yml`](../../docker-compose.yml) lê nomes curtos e injeta na 
 | `STRIPE_WEBHOOK_SECRET` | `Payments__Stripe__WebhookSecret` | Obrigatório se Stripe (`whsec_…` do Dashboard). |
 | `STRIPE_SUCCESS_URL` | `Payments__Stripe__SuccessUrl` | Obrigatório se Stripe (HTTPS em produção). |
 | `STRIPE_CANCEL_URL` | `Payments__Stripe__CancelUrl` | Obrigatório se Stripe. |
+| `MELHOR_ENVIO_TOKEN` | `MelhorEnvio__Token` | Opcional; Bearer Melhor Envio (cotação de frete nos benefícios). |
+| `MELHOR_ENVIO_USER_AGENT` | `MelhorEnvio__UserAgent` | Opcional; texto ASCII (recomendado se o token estiver preenchido). |
+| `MELHOR_ENVIO_FROM_POSTAL_CODE` | `MelhorEnvio__FromPostalCode` | Opcional; CEP de origem apenas dígitos (recomendado com token). |
 
 **Detalhes Stripe (Dashboard, webhook `POST /api/webhooks/stripe`, diferença entre os dois segredos):** [guia-configuracao-stripe.md](guia-configuracao-stripe.md).
 
@@ -182,6 +188,9 @@ Crie credenciais (IDs podem ser alterados no [`Jenkinsfile`](../../Jenkinsfile) 
 | `resend-from-address` | Secret text | `RESEND_FROM_ADDRESS` → `Email__Resend__FromAddress` (domínio verificado no Resend). |
 | `resend-from-name` | Secret text | `RESEND_FROM_NAME` → `Email__Resend__FromName` (opcional). |
 | `auth-password-reset-frontend-base-url` | Secret text | URL pública da SPA (sem barra final) para links de **esqueci senha** no e-mail → `Auth__PasswordReset__FrontendBaseUrl` e `AUTH_PASSWORD_RESET_FRONTEND_BASE_URL` no Compose. Pode repetir o valor de `api-cors-origin` quando a SPA é servida nessa origem. Se o secret estiver **vazio**, o pipeline usa o valor de `api-cors-origin`. |
+| `melhor-envio-token` | Secret text | `MelhorEnvio__Token` / `MELHOR_ENVIO_TOKEN` (Bearer Melhor Envio). **Vazio** = pipeline não grava a linha. O ID deve existir no Jenkins (credencial Secret text vazio se não usar a integração). |
+| `melhor-envio-user-agent` | Secret text | Mesmo critério: ID obrigatório; conteúdo só gravado se não vazio. |
+| `melhor-envio-from-postal-code` | Secret text | Mesmo critério: só dígitos (CEP de origem). |
 | `api-cors-origin` | Secret text | `Cors__AllowedOrigins__0` |
 | `api-aspnetcore-urls` | Secret text | `ASPNETCORE_URLS` (ex.: `http://127.0.0.1:5031`) |
 | `vite-public-api-url` | Secret text | `VITE_API_URL` (build do Vite na VPS) |
@@ -189,7 +198,7 @@ Crie credenciais (IDs podem ser alterados no [`Jenkinsfile`](../../Jenkinsfile) 
 | `vps-ssh-key` | SSH Username with private key | Só se **`JENKINS_LOCAL_DEPLOY=false`**: utilizador + chave privada para `scp`/`ssh` |
 | `vps-host` | Secret text | Só se **`JENKINS_LOCAL_DEPLOY=false`**: hostname ou IP (sem `https://`) |
 
-As variáveis do [`docker-compose.yml`](../../docker-compose.yml) (`PAYMENTS_WEBHOOK_SECRET`, `PAYMENTS_PROVIDER`, `STRIPE_*`, `EMAIL_PROVIDER`, `RESEND_*`, `AUTH_PASSWORD_RESET_FRONTEND_BASE_URL`) são preenchidas pelo pipeline a partir das credenciais da tabela acima (`api-webhook-secret`, `stripe-api-key`, `stripe-webhook-secret`, **`payments-provider`**, **`stripe-success-url`**, **`stripe-cancel-url`**, **`email-provider`**, **`resend-api-key`**, **`resend-from-address`**, **`resend-from-name`**, **`auth-password-reset-frontend-base-url`**). Detalhes Stripe: [guia-configuracao-stripe.md](guia-configuracao-stripe.md). E-mail Resend: [../architecture/parte-e1-email-resend.md](../architecture/parte-e1-email-resend.md).
+As variáveis do [`docker-compose.yml`](../../docker-compose.yml) (`PAYMENTS_WEBHOOK_SECRET`, `PAYMENTS_PROVIDER`, `STRIPE_*`, `EMAIL_PROVIDER`, `RESEND_*`, `AUTH_PASSWORD_RESET_FRONTEND_BASE_URL`, `MELHOR_ENVIO_TOKEN`, `MELHOR_ENVIO_USER_AGENT`, `MELHOR_ENVIO_FROM_POSTAL_CODE`) são preenchidas pelo pipeline a partir das credenciais da tabela acima (`api-webhook-secret`, `stripe-api-key`, `stripe-webhook-secret`, **`payments-provider`**, **`stripe-success-url`**, **`stripe-cancel-url`**, **`email-provider`**, **`resend-api-key`**, **`resend-from-address`**, **`resend-from-name`**, **`auth-password-reset-frontend-base-url`**, **`melhor-envio-token`**, **`melhor-envio-user-agent`**, **`melhor-envio-from-postal-code`**). Detalhes Stripe: [guia-configuracao-stripe.md](guia-configuracao-stripe.md). E-mail Resend: [../architecture/parte-e1-email-resend.md](../architecture/parte-e1-email-resend.md).
 
 Com **`JENKINS_LOCAL_DEPLOY=true`** (Jenkins na mesma VPS), **não** são necessárias `vps-ssh-key` nem `vps-host`. Para deploy remoto por SSH, gera e configura chaves conforme [chave-ssh-gerar-e-configurar.md](chave-ssh-gerar-e-configurar.md).
 

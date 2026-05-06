@@ -67,6 +67,9 @@ Ajuste os IDs no [`Jenkinsfile`](../../Jenkinsfile) ou use **folder credentials*
 | `payments-provider` | Secret text | `PAYMENTS_PROVIDER` — `Mock` ou `Stripe` |
 | `stripe-success-url` | Secret text | `STRIPE_SUCCESS_URL` (HTTPS; vazio se não usar) |
 | `stripe-cancel-url` | Secret text | `STRIPE_CANCEL_URL` (HTTPS; vazio se não usar) |
+| `melhor-envio-token` | Secret text | `MelhorEnvio__Token` / `MELHOR_ENVIO_TOKEN` (vazio = não gravar no `api.env`) |
+| `melhor-envio-user-agent` | Secret text | `MelhorEnvio__UserAgent` / `MELHOR_ENVIO_USER_AGENT` (só gravado se não vazio) |
+| `melhor-envio-from-postal-code` | Secret text | `MelhorEnvio__FromPostalCode` / `MELHOR_ENVIO_FROM_POSTAL_CODE` (só dígitos; só gravado se não vazio) |
 | `auth-password-reset-frontend-base-url` | Secret text | `Auth__PasswordReset__FrontendBaseUrl` / `AUTH_PASSWORD_RESET_FRONTEND_BASE_URL` (URL pública da SPA para links no e-mail; vazio = mesmo valor que `api-cors-origin` no [`Jenkinsfile`](../../Jenkinsfile)) |
 | `api-cors-origin` | Secret text | `Cors__AllowedOrigins__0` |
 | `api-aspnetcore-urls` | Secret text | `ASPNETCORE_URLS` (ex.: `http://127.0.0.1:5031`) |

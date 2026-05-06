@@ -443,6 +443,6 @@
 
 ## Integração no AppTorcedor
 
-- **Config:** seção `MelhorEnvio` em `appsettings` (`Token`, `UserAgent`, `FromPostalCode`; opcionais `BaseUrl`, `PackageHeight`, `PackageWidth`, `PackageLength`, `PackageWeight`). Em produção: variáveis `MelhorEnvio__*` — ver `deploy/vps/api.env.example`.
+- **Config:** seção `MelhorEnvio` em `appsettings` (`Token`, `UserAgent`, `FromPostalCode`; opcionais `BaseUrl`, `PackageHeight`, `PackageWidth`, `PackageLength`, `PackageWeight`). **Produção / deploy:** variáveis `MelhorEnvio__*` em `api.env` (manual ou geradas pelo Jenkins: credenciais `melhor-envio-token`, `melhor-envio-user-agent`, `melhor-envio-from-postal-code` — linhas só gravadas quando não vazias); **Docker Compose:** `MELHOR_ENVIO_TOKEN`, `MELHOR_ENVIO_USER_AGENT`, `MELHOR_ENVIO_FROM_POSTAL_CODE` no `.env` da raiz. Ver `deploy/vps/api.env.example`, [guia-deploy.md](../deploy/guia-deploy.md) e [`Jenkinsfile`](../../Jenkinsfile).
 - **API torcedor:** `GET /api/benefits/shipping-options?cep=` (JWT); retorno vazio se `Token` não configurado ou erro na Melhor Envio.
 - **Persistência:** solicitação de camisa grava em `BenefitRedemptions` os campos `ShippingMethod` (`pickup` \| `carrier`), dados do serviço cotado e valores de frete quando `carrier`.
