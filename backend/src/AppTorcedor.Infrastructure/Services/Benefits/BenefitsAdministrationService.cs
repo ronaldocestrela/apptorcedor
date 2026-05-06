@@ -167,7 +167,10 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
             o.UpdatedAt,
             planIds,
             statuses,
-            o.BannerUrl);
+            o.BannerUrl,
+            o.IsShirtCustomizationOffer,
+            await LoadShirtValuesAsync(offerId, BenefitShirtCatalogOptionKind.Size, cancellationToken).ConfigureAwait(false),
+            await LoadShirtValuesAsync(offerId, BenefitShirtCatalogOptionKind.Model, cancellationToken).ConfigureAwait(false));
     }
 
     public async Task<BenefitCreateResult> CreateOfferAsync(BenefitOfferWriteDto dto, CancellationToken cancellationToken = default)
@@ -196,6 +199,7 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
                 BannerUrl = null,
                 CreatedAt = now,
                 UpdatedAt = now,
+                IsShirtCustomizationOffer = dto.IsShirtCustomizationOffer,
             });
 
         ReplaceEligibilities(id, dto.EligiblePlanIds, dto.EligibleMembershipStatuses);
@@ -229,6 +233,7 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
         o.StartAt = dto.StartAt;
         o.EndAt = dto.EndAt;
         o.UpdatedAt = now;
+        o.IsShirtCustomizationOffer = dto.IsShirtCustomizationOffer;
 
         var oldPlans = await db.BenefitOfferPlanEligibilities.Where(x => x.OfferId == offerId).ToListAsync(cancellationToken).ConfigureAwait(false);
         db.BenefitOfferPlanEligibilities.RemoveRange(oldPlans);
@@ -312,6 +317,12 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
                 snapshot))
             return BenefitRedeemResult.Fail(BenefitMutationError.Validation);
 
+        if (offer.IsShirtCustomizationOffer)
+            return BenefitRedeemResult.Fail(BenefitMutationError.Validation);
+
+        if (await HasBlockingRedemptionAsync(offerId, userId, cancellationToken).ConfigureAwait(false))
+            return BenefitRedeemResult.Fail(BenefitMutationError.Validation);
+
         var redemptionId = Guid.NewGuid();
         db.BenefitRedemptions.Add(
             new BenefitRedemptionRecord
@@ -322,6 +333,7 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
                 ActorUserId = actorUserId,
                 Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim(),
                 CreatedAt = now,
+                Status = BenefitRedemptionStatus.Approved,
             });
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return BenefitRedeemResult.Success(redemptionId);
@@ -330,6 +342,7 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
     public async Task<BenefitRedemptionListPageDto> ListRedemptionsAsync(
         Guid? offerId,
         Guid? userId,
+        BenefitRedemptionStatus? status,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
@@ -347,6 +360,8 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
             query = query.Where(x => x.r.OfferId == oid);
         if (userId is { } uid)
             query = query.Where(x => x.r.UserId == uid);
+        if (status is { } st)
+            query = query.Where(x => x.r.Status == st);
 
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
         var rows = await query
@@ -365,10 +380,149 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
                 x.u.Email ?? "",
                 x.r.ActorUserId,
                 x.r.Notes,
-                x.r.CreatedAt))
+                x.r.CreatedAt,
+                x.r.Status,
+                x.r.ShirtSize,
+                x.r.ShirtModel,
+                x.r.ShirtNumber,
+                x.r.ShirtDisplayName,
+                x.r.DeliveryCep,
+                x.r.DeliveryNeighborhood,
+                x.r.DeliveryStreet,
+                x.r.DeliveryNumber,
+                x.r.DeliveryCity,
+                x.r.DeliveryState,
+                x.r.ReviewedAtUtc,
+                x.r.ReviewedByUserId,
+                x.r.RejectionReason))
             .ToList();
 
         return new BenefitRedemptionListPageDto(total, items);
+    }
+
+    public async Task<BenefitMutationResult> ReplaceShirtCatalogAsync(
+        Guid offerId,
+        IReadOnlyList<string> sizes,
+        IReadOnlyList<string> models,
+        CancellationToken cancellationToken = default)
+    {
+        var offer = await db.BenefitOffers.FirstOrDefaultAsync(x => x.Id == offerId, cancellationToken).ConfigureAwait(false);
+        if (offer is null)
+            return BenefitMutationResult.Fail(BenefitMutationError.NotFound);
+
+        var normSizes = NormalizeCatalogValues(sizes);
+        var normModels = NormalizeCatalogValues(models);
+        if (normSizes.Count == 0 || normModels.Count == 0)
+            return BenefitMutationResult.Fail(BenefitMutationError.Validation);
+
+        var existing = await db.BenefitShirtCatalogOptions.Where(x => x.OfferId == offerId).ToListAsync(cancellationToken).ConfigureAwait(false);
+        db.BenefitShirtCatalogOptions.RemoveRange(existing);
+
+        var order = 0;
+        foreach (var v in normSizes)
+        {
+            db.BenefitShirtCatalogOptions.Add(
+                new BenefitShirtCatalogOptionRecord
+                {
+                    Id = Guid.NewGuid(),
+                    OfferId = offerId,
+                    Kind = BenefitShirtCatalogOptionKind.Size,
+                    Value = v,
+                    SortOrder = order++,
+                });
+        }
+
+        order = 0;
+        foreach (var v in normModels)
+        {
+            db.BenefitShirtCatalogOptions.Add(
+                new BenefitShirtCatalogOptionRecord
+                {
+                    Id = Guid.NewGuid(),
+                    OfferId = offerId,
+                    Kind = BenefitShirtCatalogOptionKind.Model,
+                    Value = v,
+                    SortOrder = order++,
+                });
+        }
+
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return BenefitMutationResult.Success();
+    }
+
+    public async Task<BenefitMutationResult> ApproveBenefitRedemptionAsync(
+        Guid redemptionId,
+        Guid reviewerUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var r = await db.BenefitRedemptions.FirstOrDefaultAsync(x => x.Id == redemptionId, cancellationToken).ConfigureAwait(false);
+        if (r is null)
+            return BenefitMutationResult.Fail(BenefitMutationError.NotFound);
+        if (r.Status != BenefitRedemptionStatus.Pending)
+            return BenefitMutationResult.Fail(BenefitMutationError.InvalidState);
+
+        var now = DateTimeOffset.UtcNow;
+        r.Status = BenefitRedemptionStatus.Approved;
+        r.ReviewedAtUtc = now;
+        r.ReviewedByUserId = reviewerUserId;
+        r.RejectionReason = null;
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return BenefitMutationResult.Success();
+    }
+
+    public async Task<BenefitMutationResult> RejectBenefitRedemptionAsync(
+        Guid redemptionId,
+        Guid reviewerUserId,
+        string? reason,
+        CancellationToken cancellationToken = default)
+    {
+        var r = await db.BenefitRedemptions.FirstOrDefaultAsync(x => x.Id == redemptionId, cancellationToken).ConfigureAwait(false);
+        if (r is null)
+            return BenefitMutationResult.Fail(BenefitMutationError.NotFound);
+        if (r.Status != BenefitRedemptionStatus.Pending)
+            return BenefitMutationResult.Fail(BenefitMutationError.InvalidState);
+
+        var now = DateTimeOffset.UtcNow;
+        r.Status = BenefitRedemptionStatus.Rejected;
+        r.ReviewedAtUtc = now;
+        r.ReviewedByUserId = reviewerUserId;
+        r.RejectionReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim()[..Math.Min(reason.Trim().Length, 2000)];
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return BenefitMutationResult.Success();
+    }
+
+    private Task<bool> HasBlockingRedemptionAsync(Guid offerId, Guid userId, CancellationToken cancellationToken) =>
+      db.BenefitRedemptions.AsNoTracking()
+            .AnyAsync(
+                x => x.OfferId == offerId
+                     && x.UserId == userId
+                     && (x.Status == BenefitRedemptionStatus.Pending || x.Status == BenefitRedemptionStatus.Approved),
+                cancellationToken);
+
+    private async Task<IReadOnlyList<string>> LoadShirtValuesAsync(
+        Guid offerId,
+        BenefitShirtCatalogOptionKind kind,
+        CancellationToken cancellationToken) =>
+        await db.BenefitShirtCatalogOptions.AsNoTracking()
+            .Where(x => x.OfferId == offerId && x.Kind == kind)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.Value)
+            .Select(x => x.Value)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+    private static List<string> NormalizeCatalogValues(IReadOnlyList<string> raw)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var list = new List<string>();
+        foreach (var s in raw)
+        {
+            var t = s.Trim();
+            if (t.Length == 0 || t.Length > 64 || !seen.Add(t))
+                continue;
+            list.Add(t);
+        }
+        return list;
     }
 
     private void ReplaceEligibilities(

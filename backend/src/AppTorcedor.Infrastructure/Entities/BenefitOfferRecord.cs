@@ -13,4 +13,9 @@ public sealed class BenefitOfferRecord
     public string? BannerUrl { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>
+    /// When true, torcedor must provide shirt customization and request starts as Pending until staff approves.
+    /// </summary>
+    public bool IsShirtCustomizationOffer { get; set; }
 }

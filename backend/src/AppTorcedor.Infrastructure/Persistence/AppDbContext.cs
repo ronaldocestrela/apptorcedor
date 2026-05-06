@@ -45,6 +45,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<BenefitOfferMembershipStatusEligibilityRecord> BenefitOfferMembershipStatusEligibilities =>
         Set<BenefitOfferMembershipStatusEligibilityRecord>();
     public DbSet<BenefitRedemptionRecord> BenefitRedemptions => Set<BenefitRedemptionRecord>();
+    public DbSet<BenefitShirtCatalogOptionRecord> BenefitShirtCatalogOptions => Set<BenefitShirtCatalogOptionRecord>();
     public DbSet<SupportTicketRecord> SupportTickets => Set<SupportTicketRecord>();
     public DbSet<SupportTicketMessageRecord> SupportTicketMessages => Set<SupportTicketMessageRecord>();
     public DbSet<SupportTicketMessageAttachmentRecord> SupportTicketMessageAttachments => Set<SupportTicketMessageAttachmentRecord>();
@@ -467,6 +468,21 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        builder.Entity<BenefitShirtCatalogOptionRecord>(entity =>
+        {
+            entity.ToTable("BenefitShirtCatalogOptions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Kind).HasConversion<int>();
+            entity.Property(x => x.Value).HasMaxLength(64).IsRequired();
+            entity.HasIndex(x => new { x.OfferId, x.Kind, x.Value }).IsUnique();
+            entity.HasIndex(x => x.OfferId);
+            entity
+                .HasOne<BenefitOfferRecord>()
+                .WithMany()
+                .HasForeignKey(x => x.OfferId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         builder.Entity<BenefitOfferPlanEligibilityRecord>(entity =>
         {
             entity.ToTable("BenefitOfferPlanEligibilities");
@@ -501,9 +517,22 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             entity.ToTable("BenefitRedemptions");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Notes).HasMaxLength(2000);
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.Property(x => x.ShirtSize).HasMaxLength(64);
+            entity.Property(x => x.ShirtModel).HasMaxLength(64);
+            entity.Property(x => x.ShirtNumber).HasMaxLength(8);
+            entity.Property(x => x.ShirtDisplayName).HasMaxLength(10);
+            entity.Property(x => x.DeliveryCep).HasMaxLength(8);
+            entity.Property(x => x.DeliveryNeighborhood).HasMaxLength(120);
+            entity.Property(x => x.DeliveryStreet).HasMaxLength(200);
+            entity.Property(x => x.DeliveryNumber).HasMaxLength(20);
+            entity.Property(x => x.DeliveryCity).HasMaxLength(120);
+            entity.Property(x => x.DeliveryState).HasMaxLength(2);
+            entity.Property(x => x.RejectionReason).HasMaxLength(2000);
             entity.HasIndex(x => x.OfferId);
             entity.HasIndex(x => x.UserId);
             entity.HasIndex(x => x.CreatedAt);
+            entity.HasIndex(x => x.Status);
             entity
                 .HasOne<BenefitOfferRecord>()
                 .WithMany()

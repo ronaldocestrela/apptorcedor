@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { uploadBenefitOfferBanner } from './adminApi'
+import {
+  approveBenefitRedemption,
+  replaceBenefitShirtCatalog,
+  uploadBenefitOfferBanner,
+} from './adminApi'
 
 vi.mock('../../../shared/api/http', () => ({
   api: {
     get: vi.fn(),
     post: vi.fn(),
+    put: vi.fn(),
     delete: vi.fn(),
   },
 }))
@@ -36,5 +41,24 @@ describe('adminApi benefits banner upload', () => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     config.transformRequest(formData, headers)
     expect(headers['Content-Type']).toBeUndefined()
+  })
+
+  it('replaceBenefitShirtCatalog PUTs sizes and models', async () => {
+    const { api } = await import('../../../shared/api/http')
+    vi.mocked(api.put).mockResolvedValue({ data: {} })
+    const oid = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+    await replaceBenefitShirtCatalog(oid, { sizes: ['M'], models: ['Home'] })
+    expect(api.put).toHaveBeenCalledWith(`/api/admin/benefits/offers/${encodeURIComponent(oid)}/shirt-catalog`, {
+      sizes: ['M'],
+      models: ['Home'],
+    })
+  })
+
+  it('approveBenefitRedemption POSTs approve endpoint', async () => {
+    const { api } = await import('../../../shared/api/http')
+    vi.mocked(api.post).mockResolvedValue({ data: {} })
+    const rid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    await approveBenefitRedemption(rid)
+    expect(api.post).toHaveBeenCalledWith(`/api/admin/benefits/redemptions/${encodeURIComponent(rid)}/approve`)
   })
 })

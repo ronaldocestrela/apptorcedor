@@ -9,5 +9,5 @@ public sealed class RedeemBenefitOfferByTorcedorCommandHandler(ITorcedorBenefitR
     public Task<TorcedorRedemptionResult> Handle(
         RedeemBenefitOfferByTorcedorCommand request,
         CancellationToken cancellationToken) =>
-        port.RedeemOfferAsync(request.OfferId, request.UserId, cancellationToken);
+        port.RedeemOfferAsync(request.OfferId, request.UserId, request.Shirt, cancellationToken);
 }

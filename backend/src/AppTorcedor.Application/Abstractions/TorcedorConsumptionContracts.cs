@@ -43,14 +43,33 @@ public sealed record TorcedorEligibleBenefitOfferDetailDto(
     DateTimeOffset EndAt,
     bool AlreadyRedeemed,
     DateTimeOffset? RedemptionDateUtc,
-    string? BannerUrl);
+    string? BannerUrl,
+    bool IsShirtCustomizationOffer,
+    IReadOnlyList<string> ShirtSizes,
+    IReadOnlyList<string> ShirtModels,
+    /// <summary>none, pending, approved, rejected</summary>
+    string RedemptionWorkflowStatus);
 
 public enum TorcedorRedemptionError
 {
     NotFound,
     NotEligible,
     AlreadyRedeemed,
+    Validation,
 }
+
+/// <summary>Optional payload when redeeming shirt-customization offers.</summary>
+public sealed record TorcedorShirtRedemptionRequest(
+    string ShirtSize,
+    string ShirtModel,
+    string ShirtNumber,
+    string ShirtDisplayName,
+    string DeliveryCep,
+    string DeliveryNeighborhood,
+    string DeliveryStreet,
+    string DeliveryNumber,
+    string DeliveryCity,
+    string DeliveryState);
 
 public sealed record TorcedorRedemptionResult(bool Ok, Guid? RedemptionId, TorcedorRedemptionError? Error)
 {
@@ -65,6 +84,7 @@ public interface ITorcedorBenefitRedemptionPort
     Task<TorcedorRedemptionResult> RedeemOfferAsync(
         Guid offerId,
         Guid userId,
+        TorcedorShirtRedemptionRequest? shirt,
         CancellationToken cancellationToken = default);
 }
 

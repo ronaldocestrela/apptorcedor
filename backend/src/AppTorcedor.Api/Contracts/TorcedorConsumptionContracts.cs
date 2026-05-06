@@ -44,7 +44,45 @@ public sealed record TorcedorEligibleBenefitOfferDetailResponse(
     DateTimeOffset EndAt,
     bool AlreadyRedeemed,
     DateTimeOffset? RedemptionDateUtc,
-    string? BannerUrl);
+    string? BannerUrl,
+    bool IsShirtCustomizationOffer,
+    IReadOnlyList<string> ShirtSizes,
+    IReadOnlyList<string> ShirtModels,
+    string RedemptionWorkflowStatus);
+
+public sealed class TorcedorRedeemBenefitOfferRequest
+{
+    [MaxLength(64)]
+    public string? ShirtSize { get; set; }
+
+    [MaxLength(64)]
+    public string? ShirtModel { get; set; }
+
+    [MaxLength(8)]
+    public string? ShirtNumber { get; set; }
+
+    [MaxLength(10)]
+    public string? ShirtDisplayName { get; set; }
+
+    /// <summary>Digits only after normalization; API accepts masked CEP.</summary>
+    [MaxLength(8)]
+    public string? DeliveryCep { get; set; }
+
+    [MaxLength(120)]
+    public string? DeliveryNeighborhood { get; set; }
+
+    [MaxLength(200)]
+    public string? DeliveryStreet { get; set; }
+
+    [MaxLength(20)]
+    public string? DeliveryNumber { get; set; }
+
+    [MaxLength(120)]
+    public string? DeliveryCity { get; set; }
+
+    [MaxLength(2)]
+    public string? DeliveryState { get; set; }
+}
 
 public sealed record TorcedorPublishedPlanBenefitResponse(Guid BenefitId, string Title, string? Description);
 

@@ -65,7 +65,7 @@ public sealed class TorcedorConsumptionHandlersTests
         var oid = Guid.NewGuid();
         var fake = new FakeTorcedorBenefitRedemptionPort();
         var handler = new RedeemBenefitOfferByTorcedorCommandHandler(fake);
-        await handler.Handle(new RedeemBenefitOfferByTorcedorCommand(uid, oid), CancellationToken.None);
+        await handler.Handle(new RedeemBenefitOfferByTorcedorCommand(uid, oid, null), CancellationToken.None);
         Assert.Single(fake.RedeemCalls);
         Assert.Equal((oid, uid), fake.RedeemCalls[0]);
     }
@@ -145,6 +145,7 @@ public sealed class TorcedorConsumptionHandlersTests
         public Task<TorcedorRedemptionResult> RedeemOfferAsync(
             Guid offerId,
             Guid userId,
+            TorcedorShirtRedemptionRequest? shirt,
             CancellationToken cancellationToken = default)
         {
             RedeemCalls.Add((offerId, userId));

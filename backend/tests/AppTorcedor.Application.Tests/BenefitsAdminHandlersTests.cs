@@ -139,9 +139,30 @@ public sealed class BenefitsAdminHandlersTests
         public Task<BenefitRedemptionListPageDto> ListRedemptionsAsync(
             Guid? offerId,
             Guid? userId,
+            BenefitRedemptionStatus? status,
             int page,
             int pageSize,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(new BenefitRedemptionListPageDto(0, []));
+
+        public Task<BenefitMutationResult> ReplaceShirtCatalogAsync(
+            Guid offerId,
+            IReadOnlyList<string> sizes,
+            IReadOnlyList<string> models,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(BenefitMutationResult.Success());
+
+        public Task<BenefitMutationResult> ApproveBenefitRedemptionAsync(
+            Guid redemptionId,
+            Guid reviewerUserId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(BenefitMutationResult.Success());
+
+        public Task<BenefitMutationResult> RejectBenefitRedemptionAsync(
+            Guid redemptionId,
+            Guid reviewerUserId,
+            string? reason,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(BenefitMutationResult.Success());
     }
 }

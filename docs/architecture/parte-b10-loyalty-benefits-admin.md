@@ -10,12 +10,13 @@ Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B
 | `LoyaltyPointRules` | `CampaignId`, `Trigger` (`PaymentPaid`, `TicketPurchased`, `TicketRedeemed`), `Points`, `SortOrder`. |
 | `LoyaltyPointLedgerEntries` | `UserId`, `CampaignId?`, `RuleId?`, `Points`, `SourceType` (`Payment`, `TicketPurchase`, `TicketRedeem`, `Manual`), `SourceKey` (único com `SourceType`), `Reason`, `ActorUserId`, `CreatedAt`. |
 | `BenefitPartners` | `Name`, `Description`, `IsActive`, `CreatedAt`, `UpdatedAt`. |
-| `BenefitOffers` | `PartnerId`, `Title`, `Description`, `IsActive`, `StartAt`, `EndAt`, `BannerUrl` (opcional; URL pública do banner), `CreatedAt`, `UpdatedAt`. |
+| `BenefitOffers` | `PartnerId`, `Title`, `Description`, `IsActive`, `StartAt`, `EndAt`, `IsShirtCustomizationOffer`, `BannerUrl` (opcional; URL pública do banner), `CreatedAt`, `UpdatedAt`. |
 | `BenefitOfferPlanEligibilities` | `OfferId`, `PlanId` (PK composta). Lista vazia = sem filtro por plano. |
 | `BenefitOfferMembershipStatusEligibilities` | `OfferId`, `Status` (PK composta). Lista vazia = sem filtro por status. |
-| `BenefitRedemptions` | `OfferId`, `UserId`, `ActorUserId`, `Notes`, `CreatedAt`. |
+| `BenefitShirtCatalogOptions` | `OfferId`, `Kind` (`Size` / `Model`), `Value` (até 64 chars), `SortOrder`. Catálogo administrativo de tamanhos e modelos permitidos para ofertas de camisa. |
+| `BenefitRedemptions` | `OfferId`, `UserId`, `ActorUserId`, `Notes`, `CreatedAt`, `Status` (`Pending` / `Approved` / `Rejected`), campos opcionais de personalização (`ShirtSize`, `ShirtModel`, `ShirtNumber`, `ShirtDisplayName`), endereço de entrega (`DeliveryCep`, `DeliveryNeighborhood`, `DeliveryStreet`, `DeliveryNumber`, `DeliveryCity`, `DeliveryState`), `ReviewedAtUtc`, `ReviewedByUserId`, `RejectionReason`. |
 
-Migrações EF: `PartB10LoyaltyBenefitsAdmin`; coluna `BannerUrl` em `BenefitOfferBanner` em `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`.
+Migrações EF: `PartB10LoyaltyBenefitsAdmin`; coluna `BannerUrl` em `BenefitOfferBanner`; **workflow camisa** em `BenefitShirtRedemptionWorkflow`; **endereço de entrega** em `BenefitRedemptionDeliveryAddress` (`backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`).
 
 ## Permissões
 
@@ -66,8 +67,17 @@ Base: `api/admin/benefits`. Implementação em `BenefitsAdministrationService` (
 | PUT | `/api/admin/benefits/offers/{id}` | `Beneficios.Gerenciar` | Atualiza. |
 | POST | `/api/admin/benefits/offers/{id}/banner` | `Beneficios.Gerenciar` | `multipart/form-data` com campo `file` (JPEG/PNG/Webp; limite alinhado aos outros uploads). Persiste URL em `BannerUrl` via `IBenefitOfferBannerStorage` (Local ou Cloudinary; configuração `BenefitOfferBanner`). |
 | DELETE | `/api/admin/benefits/offers/{id}/banner` | `Beneficios.Gerenciar` | Remove `BannerUrl` e apaga arquivo em **best effort**. |
-| POST | `/api/admin/benefits/offers/{id}/redeem` | `Beneficios.Gerenciar` | Resgate administrativo (`userId`, `notes`); valida vigência e elegibilidade. |
-| GET | `/api/admin/benefits/redemptions` | `Beneficios.Visualizar` | Lista resgates. |
+| POST | `/api/admin/benefits/offers/{id}/redeem` | `Beneficios.Gerenciar` | Resgate administrativo (`userId`, `notes`); valida vigência e elegibilidade. **Indisponível** quando `IsShirtCustomizationOffer` (use aprovação de pedido `Pending`). |
+| PUT | `/api/admin/benefits/offers/{id}/shirt-catalog` | `Beneficios.Gerenciar` | Substitui catálogo: corpo `{ sizes: string[], models: string[] }` (ambos não vazios após normalização). |
+| POST | `/api/admin/benefits/redemptions/{id}/approve` | `Beneficios.Gerenciar` | Aprova pedido `Pending` (camisa). |
+| POST | `/api/admin/benefits/redemptions/{id}/reject` | `Beneficios.Gerenciar` | Recusa pedido `Pending`; corpo opcional `{ reason }`. |
+| GET | `/api/admin/benefits/redemptions` | `Beneficios.Visualizar` | Lista resgates; query `status` opcional (`pending` / `approved` / `rejected`). |
+
+### Oferta de camisa (personalização + aprovação)
+
+- Oferta com `IsShirtCustomizationOffer = true`: torcedor envia `POST /api/benefits/offers/{id}/redeem` com tamanho/modelo (do catálogo), número (0–99), nome (até 10 caracteres) e **endereço de entrega** (CEP, bairro, rua, número, cidade, UF); grava `BenefitRedemptions` em `Pending` até staff **aprovar** ou **recusar** (`Beneficios.Gerenciar`). A listagem admin de resgates inclui os campos de entrega.
+- Catálogo administrativo via `PUT .../shirt-catalog`; sem tamanhos/modelos cadastrados o resgate torcedor falha em validação.
+- Após `Rejected`, o torcedor pode enviar **nova** solicitação (não há linha `Pending` nem `Approved` bloqueando).
 
 ### Elegibilidade no resgate
 
@@ -90,10 +100,13 @@ Mutações nas novas entidades geram entradas em `AuditLogs` via interceptor exi
 Implementação em `frontend/src/features/admin/pages/BenefitsAdminPage.tsx` + helpers `benefitsAdminHelpers.ts`.
 
 - **Parceiros:** listagem com filtro (nome + aplicar; ativo/todos/inativos), criar/editar (`GET /api/admin/benefits/partners/{id}` ao editar), ativar/desativar (via `PUT` preservando nome/descrição carregados do detalhe).
-- **Ofertas (`BenefitOffers`):** formulário com parceiro (select), título, descrição, **início/fim de vigência** (`datetime-local` → ISO UTC na API), checkbox **oferta ativa**, elegibilidade opcional (GUIDs de planos separados por vírgula; checkboxes de status de membership alinhados ao enum do backend).
+- **Ofertas (`BenefitOffers`):** formulário com parceiro (select), título, descrição, **início/fim de vigência** (`datetime-local` → ISO UTC na API), checkbox **oferta ativa**, checkbox **oferta de camisa personalizada** (aprovação manual no admin), elegibilidade opcional por **planos ativos** (lista com checkboxes a partir de `GET /api/admin/plans?isActive=true` após o carregamento da página — requer **`Planos.Visualizar`**; vazio = todos os planos; IDs elegíveis que não constem mais na lista de ativos aparecem à parte para poder remover) e checkboxes de status de membership alinhados ao enum do backend.
+- **Catálogo de camisa:** ao **editar** oferta marcada como camisa, textareas de tamanhos/modelos (um por linha ou vírgula) e botão **Salvar catálogo** → `PUT /api/admin/benefits/offers/{id}/shirt-catalog`.
+- **Fila de pedidos:** seção **Solicitações de camisa pendentes** (`GET .../redemptions?status=pending`) com **Aprovar** / **Recusar** e linha de **endereço de entrega** (CEP, rua, número, bairro, cidade/UF) quando persistido.
+- **Camisas aprovadas:** seção que lista resgates `Approved` com dados de personalização (tam., mod., número, nome) e **entrega** (`GET .../redemptions?status=approved`, filtrado no cliente a itens com camisa — exclui aprovações sem tam./mod.).
 - **Status exibido (derivado no cliente, não persistido):** `Inativa` (`!isActive`); senão `Expirada` se `now > endAt`; senão `Programada` se `now < startAt`; senão `Vigente` se `isActive && startAt ≤ now ≤ endAt`.
 - **Filtros:** parceiro na lista de ofertas; status derivado (Vigente / Programada / Expirada / Inativa).
-- **Ações por linha:** Editar (carrega `GET /offers/{id}` no formulário), Ativar/Desativar e **Excluir (soft)** — ambos atualizam via `PUT /api/admin/benefits/offers/{id}` com `isActive` adequado, **preservando** `eligiblePlanIds` / `eligibleMembershipStatuses` retornados do GET antes do PUT.
+- **Ações por linha:** Editar (carrega `GET /offers/{id}` no formulário), Ativar/Desativar e **Excluir (soft)** — ambos atualizam via `PUT /api/admin/benefits/offers/{id}` com `isActive` adequado, **preservando** `eligiblePlanIds` / `eligibleMembershipStatuses` / `isShirtCustomizationOffer` retornados do GET antes do PUT.
 - **Validação client-side:** data final ≥ data inicial; título e parceiro obrigatórios.
 - **Resgates administrativos** e listagem de últimos resgates permanecem na mesma página.
 - **Banner:** na **nova oferta** ou ao **editar**, envio de imagem (na criação o arquivo fica pendente até o `POST` da oferta devolver `offerId`, depois corre `POST .../banner`) e remoção; proporção recomendada **300×148** (mesma razão do carrossel na home). O `PUT` de oferta não altera `BannerUrl` — só os endpoints de banner.
@@ -102,7 +115,8 @@ Implementação em `frontend/src/features/admin/pages/BenefitsAdminPage.tsx` + h
 
 - `AppTorcedor.Application.Tests` — `LoyaltyAdminHandlersTests`, `BenefitsAdminHandlersTests`.
 - `AppTorcedor.Api.Tests` — `PartB10LoyaltyBenefitsAdminTests` (autorização, pontos por conciliação, fluxo parceiro/oferta/resgate).
-- `frontend` — `benefitsAdminHelpers.test.ts` (regras de status derivado), `BenefitsAdminPage.test.tsx` (lista com badges, criação com vigência e upload de banner após create, validação de datas, desativar com PUT preservando elegibilidade, edição).
+- `frontend` — `benefitsAdminHelpers.test.ts` (regras de status derivado), `BenefitsAdminPage.test.tsx` (lista com badges, criação com vigência e upload de banner após create, validação de datas, desativar com PUT preservando elegibilidade e `isShirtCustomizationOffer`, edição, catálogo de camisa, fila de aprovação, **lista de camisas aprovadas**, **elegibilidade por planos via checkboxes**).
+- `AppTorcedor.Api.Tests` — `TorcedorBenefitRedemptionApiTests` (fluxo camisa pendente → aprovação).
 - `AppTorcedor.Api.Tests` — `PartB10LoyaltyBenefitsAdminTests.Benefits_offer_banner_upload_get_delete_roundtrip` (POST/GET/DELETE banner).
 
 ## Relação com outras partes

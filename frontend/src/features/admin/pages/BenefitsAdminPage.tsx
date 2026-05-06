@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { PermissionGate } from '../../auth/PermissionGate'
 import { resolvePublicAssetUrl } from '../../account/accountApi'
 import {
+  approveBenefitRedemption,
   createBenefitOffer,
   createBenefitPartner,
   deleteBenefitOfferBanner,
@@ -13,19 +14,23 @@ import {
   listBenefitOffers,
   listBenefitPartners,
   listBenefitRedemptions,
+  listAdminPlans,
   redeemBenefitOffer,
+  rejectBenefitRedemption,
+  replaceBenefitShirtCatalog,
   updateBenefitOffer,
   updateBenefitPartner,
   uploadBenefitOfferBanner,
+  type AdminPlanListItem,
   type BenefitOfferDetail,
   type BenefitOfferListItem,
+  type BenefitRedemptionListItem,
 } from '../services/adminApi'
 import {
   deriveOfferUiStatus,
   datetimeLocalValueToIso,
   isoToDatetimeLocalValue,
   MEMBERSHIP_STATUS_OPTIONS,
-  parseCommaSeparatedGuids,
   type OfferUiStatus,
 } from './benefitsAdminHelpers'
 
@@ -54,9 +59,12 @@ type OfferFormState = {
   startAtLocal: string
   endAtLocal: string
   isActive: boolean
-  eligiblePlanIdsRaw: string
+  eligiblePlanIds: Set<string>
   eligibleMembershipStatuses: Set<string>
   bannerUrl: string | null
+  isShirtCustomizationOffer: boolean
+  shirtSizesCatalogRaw: string
+  shirtModelsCatalogRaw: string
 }
 
 function emptyPartnerForm(): PartnerFormState {
@@ -72,25 +80,36 @@ function emptyOfferForm(partnerId = ''): OfferFormState {
     startAtLocal: defaultOfferStartLocal(),
     endAtLocal: defaultOfferEndLocal(),
     isActive: true,
-    eligiblePlanIdsRaw: '',
+    eligiblePlanIds: new Set(),
     eligibleMembershipStatuses: new Set(),
     bannerUrl: null,
+    isShirtCustomizationOffer: false,
+    shirtSizesCatalogRaw: '',
+    shirtModelsCatalogRaw: '',
   }
 }
 
 function detailToOfferForm(d: BenefitOfferDetail): OfferFormState {
   return {
     offerId: d.offerId,
-    partnerId: d.partnerId,
-    title: d.title,
+    partnerId: d.partnerId ?? '',
+    title: d.title ?? '',
     description: d.description ?? '',
     startAtLocal: isoToDatetimeLocalValue(d.startAt),
     endAtLocal: isoToDatetimeLocalValue(d.endAt),
     isActive: d.isActive,
-    eligiblePlanIdsRaw: d.eligiblePlanIds.join(', '),
-    eligibleMembershipStatuses: new Set(d.eligibleMembershipStatuses),
+    eligiblePlanIds: new Set(d.eligiblePlanIds ?? []),
+    eligibleMembershipStatuses: new Set(d.eligibleMembershipStatuses ?? []),
     bannerUrl: d.bannerUrl,
+    isShirtCustomizationOffer: d.isShirtCustomizationOffer,
+    shirtSizesCatalogRaw: d.shirtSizes?.length ? d.shirtSizes.join('\n') : '',
+    shirtModelsCatalogRaw: d.shirtModels?.length ? d.shirtModels.join('\n') : '',
   }
+}
+
+function isApprovedShirtRedemption(item: BenefitRedemptionListItem): boolean {
+  return item.status === 'Approved'
+    && Boolean((item.shirtSize?.trim() ?? '') || (item.shirtModel?.trim() ?? ''))
 }
 
 export function BenefitsAdminPage() {
@@ -100,6 +119,10 @@ export function BenefitsAdminPage() {
   const [partners, setPartners] = useState<Awaited<ReturnType<typeof listBenefitPartners>>['items']>([])
   const [offers, setOffers] = useState<BenefitOfferListItem[]>([])
   const [redemptions, setRedemptions] = useState<Awaited<ReturnType<typeof listBenefitRedemptions>>['items']>([])
+  const [pendingRedemptions, setPendingRedemptions] = useState<BenefitRedemptionListItem[]>([])
+  const [approvedShirtRedemptions, setApprovedShirtRedemptions] = useState<BenefitRedemptionListItem[]>([])
+  /** Planos ativos para multiseleção de elegibilidade (`GET /api/admin/plans?isActive=true`; requer `Planos.Visualizar`). */
+  const [activePlansForOffers, setActivePlansForOffers] = useState<AdminPlanListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
@@ -133,7 +156,7 @@ export function BenefitsAdminPage() {
     setLoading(true)
     setError(null)
     try {
-      const [p, o, r] = await Promise.all([
+      const [p, o, r, pend, appr] = await Promise.all([
         listBenefitPartners({
           search: partnerSearchApplied.trim() || undefined,
           isActive:
@@ -142,10 +165,20 @@ export function BenefitsAdminPage() {
         }),
         listBenefitOffers({ pageSize: 200 }),
         listBenefitRedemptions({ pageSize: 50 }),
+        listBenefitRedemptions({ status: 'pending', pageSize: 100 }),
+        listBenefitRedemptions({ status: 'approved', pageSize: 200 }),
       ])
       setPartners(p.items)
       setOffers(o.items)
       setRedemptions(r.items)
+      setPendingRedemptions(pend.items)
+      setApprovedShirtRedemptions(appr.items.filter(isApprovedShirtRedemption))
+      try {
+        const pl = await listAdminPlans({ isActive: true, pageSize: 200 })
+        setActivePlansForOffers(pl.items)
+      } catch {
+        setActivePlansForOffers([])
+      }
     } catch {
       setError('Falha ao carregar benefícios.')
     } finally {
@@ -167,6 +200,20 @@ export function BenefitsAdminPage() {
     }
     return rows
   }, [offers, offerPartnerFilter, offerStatusFilter])
+
+  const sortedActivePlansForOffers = useMemo(
+    () =>
+      [...activePlansForOffers].sort((a, b) =>
+        (a.name ?? '').localeCompare(b.name ?? '', 'pt-BR'),
+      ),
+    [activePlansForOffers],
+  )
+
+  const orphanEligiblePlanIds = useMemo(() => {
+    const known = new Set(activePlansForOffers.map((x) => x.planId))
+    const ids = offerForm.eligiblePlanIds ?? new Set<string>()
+    return [...ids].filter((id) => !known.has(id)).sort()
+  }, [activePlansForOffers, offerForm.eligiblePlanIds])
 
   async function onPartnerSubmit(e: FormEvent) {
     e.preventDefault()
@@ -252,12 +299,12 @@ export function BenefitsAdminPage() {
       return
     }
 
-    const planIds = parseCommaSeparatedGuids(offerForm.eligiblePlanIdsRaw)
     const statuses =
       offerForm.eligibleMembershipStatuses.size === 0
         ? null
         : [...offerForm.eligibleMembershipStatuses]
-    const eligiblePlanIds = planIds.length === 0 ? null : planIds
+    const eligiblePlanIds =
+      (offerForm.eligiblePlanIds?.size ?? 0) === 0 ? null : [...(offerForm.eligiblePlanIds ?? new Set<string>())]
 
     const body = {
       partnerId: offerForm.partnerId.trim(),
@@ -268,6 +315,7 @@ export function BenefitsAdminPage() {
       endAt: endIso,
       eligiblePlanIds,
       eligibleMembershipStatuses: statuses,
+      isShirtCustomizationOffer: offerForm.isShirtCustomizationOffer,
     }
 
     setSavingOffer(true)
@@ -320,6 +368,50 @@ export function BenefitsAdminPage() {
     })()
   }
 
+  function parseCatalogLines(raw: string): string[] {
+    return raw
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+  }
+
+  async function onSaveShirtCatalog() {
+    if (!offerForm.offerId || !canManage)
+      return
+    setFormError(null)
+    try {
+      const sizes = parseCatalogLines(offerForm.shirtSizesCatalogRaw)
+      const models = parseCatalogLines(offerForm.shirtModelsCatalogRaw)
+      await replaceBenefitShirtCatalog(offerForm.offerId, { sizes, models })
+      const d = await getBenefitOffer(offerForm.offerId)
+      setOfferForm(detailToOfferForm(d))
+      await load()
+    } catch {
+      setFormError('Falha ao salvar catálogo de camisa.')
+    }
+  }
+
+  async function onApproveRedemption(redemptionId: string) {
+    setError(null)
+    try {
+      await approveBenefitRedemption(redemptionId)
+      await load()
+    } catch {
+      setError('Falha ao aprovar solicitação.')
+    }
+  }
+
+  async function onRejectRedemption(redemptionId: string) {
+    const reason = window.prompt('Motivo da recusa (opcional):') ?? undefined
+    setError(null)
+    try {
+      await rejectBenefitRedemption(redemptionId, { reason: reason?.trim() || null })
+      await load()
+    } catch {
+      setError('Falha ao recusar solicitação.')
+    }
+  }
+
   function cancelOfferForm() {
     setFormError(null)
     clearPendingBanner()
@@ -339,6 +431,7 @@ export function BenefitsAdminPage() {
         endAt: d.endAt,
         eligiblePlanIds: d.eligiblePlanIds.length ? d.eligiblePlanIds : null,
         eligibleMembershipStatuses: d.eligibleMembershipStatuses.length ? d.eligibleMembershipStatuses : null,
+        isShirtCustomizationOffer: d.isShirtCustomizationOffer,
       })
       await load()
       if (offerForm.offerId === offerId) {
@@ -393,6 +486,16 @@ export function BenefitsAdminPage() {
       if (next.has(st)) next.delete(st)
       else next.add(st)
       return { ...prev, eligibleMembershipStatuses: next }
+    })
+  }
+
+  function toggleEligiblePlan(planId: string) {
+    setOfferForm((prev) => {
+      const current = prev.eligiblePlanIds ?? new Set<string>()
+      const next = new Set(current)
+      if (next.has(planId)) next.delete(planId)
+      else next.add(planId)
+      return { ...prev, eligiblePlanIds: next }
     })
   }
 
@@ -589,15 +692,59 @@ export function BenefitsAdminPage() {
                     />
                     Oferta ativa
                   </label>
-                  <label>
-                    Planos elegíveis (GUIDs separados por vírgula; vazio = todos)
-                    <textarea
-                      value={offerForm.eligiblePlanIdsRaw}
-                      onChange={(e) => setOfferForm((f) => ({ ...f, eligiblePlanIdsRaw: e.target.value }))}
-                      rows={2}
-                      data-testid="offer-plans-textarea"
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={offerForm.isShirtCustomizationOffer}
+                      onChange={(e) =>
+                        setOfferForm((f) => ({ ...f, isShirtCustomizationOffer: e.target.checked }))}
+                      data-testid="offer-shirt-checkbox"
                     />
+                    Oferta de camisa personalizada (torcedor envia dados; aprovação manual)
                   </label>
+                  <div data-testid="offer-plans-field">
+                    <span>Planos elegíveis (vazio = todos)</span>
+                    {sortedActivePlansForOffers.length === 0 ? (
+                      <p style={{ margin: '6px 0 0', fontSize: '0.85rem', opacity: 0.9 }} data-testid="offer-plans-empty-hint">
+                        Nenhum plano ativo listado. Cadastre planos ativos ou confirme a permissão Planos.Visualizar.
+                      </p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+                        {sortedActivePlansForOffers.map((pl) => (
+                          <label
+                            key={pl.planId}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={(offerForm.eligiblePlanIds ?? new Set<string>()).has(pl.planId)}
+                              onChange={() => toggleEligiblePlan(pl.planId)}
+                              data-testid={`offer-plan-${pl.planId}`}
+                            />
+                            <span>{pl.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {orphanEligiblePlanIds.length > 0 ? (
+                      <div style={{ marginTop: 10, fontSize: '0.85rem', opacity: 0.95 }} data-testid="offer-plans-orphans">
+                        <span>Planos elegíveis ainda associados, mas fora da lista de ativos (remova se não fizer mais sentido):</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+                          {orphanEligiblePlanIds.map((pid) => (
+                            <label key={pid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <input
+                                type="checkbox"
+                                checked
+                                onChange={() => toggleEligiblePlan(pid)}
+                                data-testid={`offer-plan-orphan-${pid}`}
+                              />
+                              <span>{pid}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
                   <div>
                     <span>Status de membership elegíveis (vazio = todos)</span>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
@@ -614,6 +761,49 @@ export function BenefitsAdminPage() {
                       ))}
                     </div>
                   </div>
+                  {offerForm.offerId && offerForm.isShirtCustomizationOffer && canManage ? (
+                    <div
+                      style={{
+                        borderTop: '1px solid rgba(255,255,255,0.12)',
+                        paddingTop: 10,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 8,
+                      }}
+                      data-testid="offer-shirt-catalog-block"
+                    >
+                      <p style={{ margin: 0, fontSize: '0.88rem' }}>
+                        Catálogo de camisa (valores exatos que o torcedor poderá escolher)
+                      </p>
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.85rem' }}>
+                        Tamanhos (um por linha ou vírgula)
+                        <textarea
+                          value={offerForm.shirtSizesCatalogRaw}
+                          onChange={(e) =>
+                            setOfferForm((f) => ({ ...f, shirtSizesCatalogRaw: e.target.value }))}
+                          rows={3}
+                          data-testid="offer-shirt-sizes"
+                        />
+                      </label>
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.85rem' }}>
+                        Modelos (um por linha ou vírgula)
+                        <textarea
+                          value={offerForm.shirtModelsCatalogRaw}
+                          onChange={(e) =>
+                            setOfferForm((f) => ({ ...f, shirtModelsCatalogRaw: e.target.value }))}
+                          rows={3}
+                          data-testid="offer-shirt-models"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        data-testid="offer-shirt-catalog-save"
+                        onClick={() => void onSaveShirtCatalog()}
+                      >
+                        Salvar catálogo
+                      </button>
+                    </div>
+                  ) : null}
                   {canManage ? (
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 10 }}>
                       <p style={{ margin: '0 0 8px', fontSize: '0.88rem' }}>
@@ -745,12 +935,162 @@ export function BenefitsAdminPage() {
           </PermissionGate>
         </section>
 
+        <section data-testid="benefits-pending-section">
+          <h2 style={{ fontSize: '1rem' }}>Solicitações de camisa pendentes</h2>
+          {pendingRedemptions.length === 0 ? (
+            <p data-testid="benefits-pending-empty">Nenhuma solicitação pendente.</p>
+          ) : (
+            <ul data-testid="benefits-pending-redemptions">
+              {pendingRedemptions.map((pr) => (
+                <li key={pr.redemptionId} data-testid={`pending-redemption-${pr.redemptionId}`}>
+                  <strong>{pr.offerTitle}</strong>
+                  {' '}
+                  —
+                  {' '}
+                  {pr.userEmail}
+                  {' '}
+                  — tam.
+                  {pr.shirtSize}
+                  {' '}
+                  / mod.
+                  {pr.shirtModel}
+                  {' '}
+                  — #
+                  {pr.shirtNumber}
+                  {' '}
+                  {pr.shirtDisplayName}
+                  {pr.deliveryStreet || pr.deliveryCep ? (
+                    <div style={{ marginTop: 6, fontSize: '0.85rem', opacity: 0.95 }} data-testid={`pending-delivery-${pr.redemptionId}`}>
+                      <div data-testid="pending-delivery-line">
+                        Entrega: CEP
+                        {' '}
+                        {pr.deliveryCep ?? '—'}
+                        {' '}
+                        —
+                        {' '}
+                        {pr.deliveryStreet ?? ''}
+                        {', '}
+                        {pr.deliveryNumber ?? ''}
+                        {' '}
+                        —
+                        {' '}
+                        {pr.deliveryNeighborhood ?? ''}
+                        {' '}
+                        —
+                        {' '}
+                        {pr.deliveryCity ?? ''}
+                        /
+                        {pr.deliveryState ?? ''}
+                      </div>
+                    </div>
+                  ) : null}
+                  {canManage ? (
+                    <span style={{ marginLeft: 8 }}>
+                      <button
+                        type="button"
+                        data-testid={`approve-redemption-${pr.redemptionId}`}
+                        onClick={() => void onApproveRedemption(pr.redemptionId)}
+                      >
+                        Aprovar
+                      </button>
+                      <button
+                        type="button"
+                        style={{ marginLeft: 8 }}
+                        data-testid={`reject-redemption-${pr.redemptionId}`}
+                        onClick={() => void onRejectRedemption(pr.redemptionId)}
+                      >
+                        Recusar
+                      </button>
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section data-testid="benefits-approved-shirts-section">
+          <h2 style={{ fontSize: '1rem' }}>Camisas aprovadas</h2>
+          {approvedShirtRedemptions.length === 0 ? (
+            <p data-testid="benefits-approved-shirts-empty">Nenhuma camisa aprovada recentemente.</p>
+          ) : (
+            <ul data-testid="benefits-approved-shirts-list">
+              {approvedShirtRedemptions.map((ar) => (
+                <li key={ar.redemptionId} data-testid={`approved-shirt-${ar.redemptionId}`}>
+                  <strong>{ar.offerTitle}</strong>
+                  {' '}
+                  —
+                  {' '}
+                  {ar.userEmail}
+                  {' '}
+                  —
+                  {' '}
+                  {ar.createdAt}
+                  <div style={{ marginTop: 6, fontSize: '0.88rem' }} data-testid={`approved-shirt-detail-${ar.redemptionId}`}>
+                    <div>
+                      Personalização: tam.
+                      {' '}
+                      {ar.shirtSize}
+                      {' '}
+                      / mod.
+                      {' '}
+                      {ar.shirtModel}
+                      {' '}
+                      — #
+                      {ar.shirtNumber}
+                      {' '}
+                      “
+                      {ar.shirtDisplayName}
+                      ”
+                    </div>
+                    {ar.deliveryCep || ar.deliveryStreet ? (
+                      <div style={{ marginTop: 4, opacity: 0.95 }} data-testid={`approved-shirt-delivery-${ar.redemptionId}`}>
+                        Entrega: CEP
+                        {' '}
+                        {ar.deliveryCep ?? '—'}
+                        {' '}
+                        —
+                        {' '}
+                        {ar.deliveryStreet ?? ''}
+                        {', '}
+                        {ar.deliveryNumber ?? ''}
+                        {' '}
+                        —
+                        {' '}
+                        {ar.deliveryNeighborhood ?? ''}
+                        {' '}
+                        —
+                        {' '}
+                        {ar.deliveryCity ?? ''}
+                        /
+                        {ar.deliveryState ?? ''}
+                      </div>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         <section>
           <h2 style={{ fontSize: '1rem' }}>Últimos resgates</h2>
           <ul>
             {redemptions.map((r) => (
               <li key={r.redemptionId}>
-                {r.offerTitle} — {r.userEmail} — {r.createdAt}
+                {r.offerTitle}
+                {' '}
+                —
+                {' '}
+                {r.userEmail}
+                {' '}
+                —
+                {' '}
+                {r.status}
+                {' '}
+                —
+                {' '}
+                {r.createdAt}
               </li>
             ))}
           </ul>

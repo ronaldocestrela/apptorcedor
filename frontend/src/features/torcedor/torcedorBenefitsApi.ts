@@ -40,6 +40,10 @@ export type TorcedorEligibleBenefitOfferDetail = {
   alreadyRedeemed: boolean
   redemptionDateUtc: string | null
   bannerUrl: string | null
+  isShirtCustomizationOffer: boolean
+  shirtSizes: string[]
+  shirtModels: string[]
+  redemptionWorkflowStatus: string
 }
 
 export async function getEligibleBenefitOfferDetail(offerId: string): Promise<TorcedorEligibleBenefitOfferDetail> {
@@ -47,11 +51,47 @@ export async function getEligibleBenefitOfferDetail(offerId: string): Promise<To
   return data
 }
 
+export type TorcedorBenefitRedeemPayload = {
+  shirtSize?: string
+  shirtModel?: string
+  shirtNumber?: string
+  shirtDisplayName?: string
+  deliveryCep?: string
+  deliveryNeighborhood?: string
+  deliveryStreet?: string
+  deliveryNumber?: string
+  deliveryCity?: string
+  deliveryState?: string
+}
+
 export type TorcedorBenefitRedeemResponse = {
   redemptionId: string
 }
 
-export async function redeemBenefitOffer(offerId: string): Promise<TorcedorBenefitRedeemResponse> {
-  const { data } = await api.post<TorcedorBenefitRedeemResponse>(`/api/benefits/offers/${offerId}/redeem`)
+export async function redeemBenefitOffer(
+  offerId: string,
+  payload?: TorcedorBenefitRedeemPayload | null,
+): Promise<TorcedorBenefitRedeemResponse> {
+  const hasPayload =
+    !!payload
+    && Object.values(payload).some((v) => v != null && String(v).trim() !== '')
+  const body = hasPayload
+    ? {
+        shirtSize: payload!.shirtSize?.trim() || undefined,
+        shirtModel: payload!.shirtModel?.trim() || undefined,
+        shirtNumber: payload!.shirtNumber?.trim() || undefined,
+        shirtDisplayName: payload!.shirtDisplayName?.trim() || undefined,
+        deliveryCep: payload!.deliveryCep?.trim() || undefined,
+        deliveryNeighborhood: payload!.deliveryNeighborhood?.trim() || undefined,
+        deliveryStreet: payload!.deliveryStreet?.trim() || undefined,
+        deliveryNumber: payload!.deliveryNumber?.trim() || undefined,
+        deliveryCity: payload!.deliveryCity?.trim() || undefined,
+        deliveryState: payload!.deliveryState?.trim().toUpperCase() || undefined,
+      }
+    : undefined
+  const { data } = await api.post<TorcedorBenefitRedeemResponse>(
+    `/api/benefits/offers/${offerId}/redeem`,
+    body,
+  )
   return data
 }
