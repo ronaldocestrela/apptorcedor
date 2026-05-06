@@ -84,6 +84,12 @@ public sealed record BenefitRedemptionListItemDto(
     string? DeliveryNumber,
     string? DeliveryCity,
     string? DeliveryState,
+    string? ShippingMethod,
+    int? ShippingCarrierId,
+    string? ShippingCarrierName,
+    string? ShippingServiceName,
+    decimal? ShippingPrice,
+    int? ShippingDeliveryDays,
     DateTimeOffset? ReviewedAtUtc,
     Guid? ReviewedByUserId,
     string? RejectionReason);

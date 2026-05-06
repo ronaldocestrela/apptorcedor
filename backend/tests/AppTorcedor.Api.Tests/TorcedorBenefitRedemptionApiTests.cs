@@ -188,6 +188,12 @@ public sealed class TorcedorBenefitRedemptionApiTests(AppWebApplicationFactory f
                         deliveryNumber = "10",
                         deliveryCity = "São Paulo",
                         deliveryState = "SP",
+                        shippingMethod = "carrier",
+                        shippingCarrierId = 2,
+                        shippingCarrierName = "Correios",
+                        shippingServiceName = "SEDEX",
+                        shippingPrice = 12.68m,
+                        shippingDeliveryDays = 2,
                     });
                 var res = await _client.SendAsync(redeem);
                 Assert.Equal(HttpStatusCode.Created, res.StatusCode);
@@ -298,6 +304,117 @@ public sealed class TorcedorBenefitRedemptionApiTests(AppWebApplicationFactory f
                 new { shirtSize = "M", shirtModel = "Home", shirtNumber = "7", shirtDisplayName = "A" });
             var res = await _client.SendAsync(redeem);
             Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        }
+        finally
+        {
+            await using (var scope = factory.Services.CreateAsyncScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                foreach (var r in db.BenefitRedemptions.Where(x => x.OfferId == offerId))
+                    db.BenefitRedemptions.Remove(r);
+                foreach (var c in db.BenefitShirtCatalogOptions.Where(x => x.OfferId == offerId))
+                    db.BenefitShirtCatalogOptions.Remove(c);
+                db.BenefitOffers.Remove(await db.BenefitOffers.SingleAsync(o => o.Id == offerId));
+                db.BenefitPartners.Remove(await db.BenefitPartners.SingleAsync(p => p.Id == partnerId));
+                await db.SaveChangesAsync();
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Benefits_shipping_options_requires_auth()
+    {
+        var res = await _client.GetAsync("/api/benefits/shipping-options?cep=01310100");
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Benefits_shipping_options_returns_array_for_member()
+    {
+        var memberToken = await LoginMemberAsync();
+        using var req = new HttpRequestMessage(HttpMethod.Get, "/api/benefits/shipping-options?cep=01310100");
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
+        var res = await _client.SendAsync(req);
+        res.EnsureSuccessStatusCode();
+        var arr = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(JsonValueKind.Array, arr.ValueKind);
+    }
+
+    [Fact]
+    public async Task Shirt_offer_pickup_member_redeem_returns_created()
+    {
+        var admin = await LoginAdminAsync();
+        var memberToken = await LoginMemberAsync();
+
+        Guid partnerId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/benefits/partners"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            post.Content = JsonContent.Create(new { name = "P Pickup API", description = "d", isActive = true });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            partnerId = Guid.Parse(body.GetProperty("partnerId").GetString()!);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        Guid offerId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/benefits/offers"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            post.Content = JsonContent.Create(
+                new
+                {
+                    partnerId,
+                    title = "Camisa Pickup",
+                    description = "d",
+                    isActive = true,
+                    startAt = now.AddDays(-1),
+                    endAt = now.AddDays(30),
+                    eligiblePlanIds = (Guid[]?)null,
+                    eligibleMembershipStatuses = (string[]?)null,
+                    isShirtCustomizationOffer = true,
+                });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            offerId = Guid.Parse(body.GetProperty("offerId").GetString()!);
+        }
+
+        using (var put = new HttpRequestMessage(HttpMethod.Put, $"/api/admin/benefits/offers/{offerId}/shirt-catalog"))
+        {
+            put.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            put.Content = JsonContent.Create(new { sizes = new[] { "M" }, models = new[] { "Home" } });
+            var res = await _client.SendAsync(put);
+            res.EnsureSuccessStatusCode();
+        }
+
+        try
+        {
+            using (var redeem = new HttpRequestMessage(HttpMethod.Post, $"/api/benefits/offers/{offerId}/redeem"))
+            {
+                redeem.Headers.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
+                redeem.Content = JsonContent.Create(
+                    new
+                    {
+                        shirtSize = "M",
+                        shirtModel = "Home",
+                        shirtNumber = "9",
+                        shirtDisplayName = "Teste",
+                        shippingMethod = "pickup",
+                    });
+                var res = await _client.SendAsync(redeem);
+                Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+            }
+
+            await using (var scope = factory.Services.CreateAsyncScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var row = await db.BenefitRedemptions.AsNoTracking().FirstOrDefaultAsync(x => x.OfferId == offerId);
+                Assert.NotNull(row);
+                Assert.Equal("pickup", row.ShippingMethod);
+                Assert.Null(row.DeliveryCep);
+            }
         }
         finally
         {

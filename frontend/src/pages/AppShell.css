@@ -3996,6 +3996,105 @@ a.benefit-offer-card--link:hover {
   text-align: center;
 }
 
+.benefit-shipping-method {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.benefit-shipping-method__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 211, 146, 0.22);
+  background: rgba(8, 8, 8, 0.35);
+  color: #f5f7fa;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.benefit-shipping-method__btn:hover {
+  border-color: rgba(140, 211, 146, 0.45);
+}
+
+.benefit-shipping-method__btn--active {
+  border-color: #8cd392;
+  background: rgba(140, 211, 146, 0.12);
+  box-shadow: 0 0 0 1px rgba(140, 211, 146, 0.25);
+}
+
+.benefit-shipping-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.benefit-shipping-option-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  text-align: left;
+  width: 100%;
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 211, 146, 0.18);
+  background: rgba(255, 255, 255, 0.02);
+  color: #f5f7fa;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.benefit-shipping-option-card:hover {
+  border-color: rgba(140, 211, 146, 0.4);
+}
+
+.benefit-shipping-option-card--selected {
+  border-color: #8cd392;
+  background: rgba(140, 211, 146, 0.1);
+}
+
+.benefit-shipping-option-card__logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.benefit-shipping-option-card__logo--placeholder {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.benefit-shipping-option-card__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.benefit-shipping-option-card__title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #f5f7fa;
+}
+
+.benefit-shipping-option-card__carrier {
+  font-weight: 600;
+  color: #a6b0bf;
+}
+
+.benefit-shipping-option-card__meta {
+  font-size: 0.78rem;
+  color: #8cd392;
+  margin-top: 0.2rem;
+}
+
 /* ── Tickets page ── */
 .ticket-list {
   list-style: none;

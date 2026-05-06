@@ -392,6 +392,12 @@ public sealed class BenefitsAdministrationService(AppDbContext db, IBenefitOffer
                 x.r.DeliveryNumber,
                 x.r.DeliveryCity,
                 x.r.DeliveryState,
+                x.r.ShippingMethod,
+                x.r.ShippingCarrierId,
+                x.r.ShippingCarrierName,
+                x.r.ShippingServiceName,
+                x.r.ShippingPrice,
+                x.r.ShippingDeliveryDays,
                 x.r.ReviewedAtUtc,
                 x.r.ReviewedByUserId,
                 x.r.RejectionReason))

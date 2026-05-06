@@ -82,7 +82,31 @@ public sealed class TorcedorRedeemBenefitOfferRequest
 
     [MaxLength(2)]
     public string? DeliveryState { get; set; }
+
+    /// <summary><c>pickup</c> ou <c>carrier</c>.</summary>
+    [MaxLength(20)]
+    public string? ShippingMethod { get; set; }
+
+    public int? ShippingCarrierId { get; set; }
+
+    [MaxLength(80)]
+    public string? ShippingCarrierName { get; set; }
+
+    [MaxLength(80)]
+    public string? ShippingServiceName { get; set; }
+
+    public decimal? ShippingPrice { get; set; }
+
+    public int? ShippingDeliveryDays { get; set; }
 }
+
+public sealed record TorcedorShippingOptionResponse(
+    int ServiceId,
+    string ServiceName,
+    string CarrierName,
+    string PictureUrl,
+    decimal Price,
+    int DeliveryDays);
 
 public sealed record TorcedorPublishedPlanBenefitResponse(Guid BenefitId, string Title, string? Description);
 

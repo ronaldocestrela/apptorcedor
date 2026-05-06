@@ -29,6 +29,21 @@ public sealed class BenefitRedemptionRecord
     /// <summary>UF uppercase, 2 letters.</summary>
     public string? DeliveryState { get; set; }
 
+    /// <summary><c>pickup</c> (retirada na loja) ou <c>carrier</c> (envio via Melhor Envio).</summary>
+    public string? ShippingMethod { get; set; }
+
+    /// <summary>Serviço retornado pela API Melhor Envio (<c>id</c> do item da cotação).</summary>
+    public int? ShippingCarrierId { get; set; }
+
+    public string? ShippingCarrierName { get; set; }
+
+    public string? ShippingServiceName { get; set; }
+
+    public decimal? ShippingPrice { get; set; }
+
+    /// <summary>Prazo em dias corridos/uso do trecho máximo disponível pela API quando aplicável.</summary>
+    public int? ShippingDeliveryDays { get; set; }
+
     public DateTimeOffset? ReviewedAtUtc { get; set; }
     public Guid? ReviewedByUserId { get; set; }
     public string? RejectionReason { get; set; }

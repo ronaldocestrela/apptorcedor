@@ -9,8 +9,38 @@ namespace AppTorcedor.Infrastructure.Tests;
 
 public sealed class TorcedorBenefitRedemptionServiceTests
 {
-    private static TorcedorShirtRedemptionRequest SampleShirtRequest() =>
-        new("M", "Home", "10", "Fulano", "01310100", "Bela Vista", "Av Paulista", "1000", "São Paulo", "SP");
+    private static TorcedorShirtRedemptionRequest SampleCarrierShirtRequest() =>
+        new(
+            "M",
+            "Home",
+            "10",
+            "Fulano",
+            "01310100",
+            "Bela Vista",
+            "Av Paulista",
+            "1000",
+            "São Paulo",
+            "SP",
+            TorcedorBenefitShippingMethods.Carrier,
+            2,
+            "Correios",
+            "SEDEX",
+            12.68m,
+            2);
+
+    private static TorcedorShirtRedemptionRequest SamplePickupShirtRequest() =>
+        new(
+            "M",
+            "Home",
+            "10",
+            "Fulano",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            TorcedorBenefitShippingMethods.Pickup);
 
     private static async Task<AppDbContext> CreateDbAsync()
     {
@@ -307,7 +337,7 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         await db.SaveChangesAsync();
 
         var sut = new TorcedorBenefitRedemptionService(db);
-        var shirt = SampleShirtRequest();
+        var shirt = SampleCarrierShirtRequest();
         var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
 
         Assert.True(r.Ok);
@@ -318,6 +348,73 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         Assert.Equal("01310100", row.DeliveryCep);
         Assert.Equal("Av Paulista", row.DeliveryStreet);
         Assert.Equal("SP", row.DeliveryState);
+        Assert.Equal(TorcedorBenefitShippingMethods.Carrier, row.ShippingMethod);
+        Assert.Equal(2, row.ShippingCarrierId);
+        Assert.Equal("SEDEX", row.ShippingServiceName);
+    }
+
+    [Fact]
+    public async Task Shirt_redeem_pickup_creates_pending_without_address()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        var partnerId = Guid.NewGuid();
+        var offerId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        db.Users.Add(MinUser(userId));
+        db.BenefitPartners.Add(
+            new BenefitPartnerRecord
+            {
+                Id = partnerId,
+                Name = "P",
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        db.BenefitOffers.Add(
+            new BenefitOfferRecord
+            {
+                Id = offerId,
+                PartnerId = partnerId,
+                Title = "Camisa",
+                IsActive = true,
+                StartAt = now.AddDays(-1),
+                EndAt = now.AddDays(30),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsShirtCustomizationOffer = true,
+            });
+        db.BenefitShirtCatalogOptions.Add(
+            new BenefitShirtCatalogOptionRecord
+            {
+                Id = Guid.NewGuid(),
+                OfferId = offerId,
+                Kind = BenefitShirtCatalogOptionKind.Size,
+                Value = "M",
+                SortOrder = 0,
+            });
+        db.BenefitShirtCatalogOptions.Add(
+            new BenefitShirtCatalogOptionRecord
+            {
+                Id = Guid.NewGuid(),
+                OfferId = offerId,
+                Kind = BenefitShirtCatalogOptionKind.Model,
+                Value = "Home",
+                SortOrder = 0,
+            });
+        await db.SaveChangesAsync();
+
+        var sut = new TorcedorBenefitRedemptionService(db);
+        var shirt = SamplePickupShirtRequest();
+        var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
+
+        Assert.True(r.Ok);
+        var row = await db.BenefitRedemptions.SingleAsync(x => x.Id == r.RedemptionId);
+        Assert.Equal(BenefitRedemptionStatus.Pending, row.Status);
+        Assert.Equal(TorcedorBenefitShippingMethods.Pickup, row.ShippingMethod);
+        Assert.Null(row.DeliveryCep);
+        Assert.Null(row.ShippingCarrierId);
     }
 
     [Fact]
@@ -366,7 +463,18 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         await db.SaveChangesAsync();
 
         var sut = new TorcedorBenefitRedemptionService(db);
-        var shirt = new TorcedorShirtRedemptionRequest("M", "Home", "10", "Fulano", "", "Bela Vista", "Av Paulista", "1000", "São Paulo", "SP");
+        var shirt = new TorcedorShirtRedemptionRequest(
+            "M",
+            "Home",
+            "10",
+            "Fulano",
+            "",
+            "Bela Vista",
+            "Av Paulista",
+            "1000",
+            "São Paulo",
+            "SP",
+            TorcedorBenefitShippingMethods.Carrier);
         var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
 
         Assert.False(r.Ok);
@@ -401,7 +509,7 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         await db.SaveChangesAsync();
 
         var sut = new TorcedorBenefitRedemptionService(db);
-        var shirt = SampleShirtRequest();
+        var shirt = SampleCarrierShirtRequest();
         var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
 
         Assert.False(r.Ok);
@@ -436,7 +544,7 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         await db.SaveChangesAsync();
 
         var sut = new TorcedorBenefitRedemptionService(db);
-        var shirt = SampleShirtRequest();
+        var shirt = SampleCarrierShirtRequest();
         var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
 
         Assert.False(r.Ok);

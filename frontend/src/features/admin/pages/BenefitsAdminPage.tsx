@@ -112,6 +112,22 @@ function isApprovedShirtRedemption(item: BenefitRedemptionListItem): boolean {
     && Boolean((item.shirtSize?.trim() ?? '') || (item.shirtModel?.trim() ?? ''))
 }
 
+function redemptionShippingAdminLine(r: BenefitRedemptionListItem): string | null {
+  const m = r.shippingMethod?.trim().toLowerCase()
+  if (m === 'pickup')
+    return 'Entrega: retirada na loja'
+  if (m === 'carrier') {
+    const svc = [r.shippingServiceName, r.shippingCarrierName].filter(Boolean).join(' — ')
+    const price =
+      r.shippingPrice != null
+        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(r.shippingPrice)
+        : ''
+    const d = r.shippingDeliveryDays != null ? `até ${r.shippingDeliveryDays} dia(s) útil(eis)` : ''
+    return ['Frete:', svc, price, d].filter(Boolean).join(' ')
+  }
+  return null
+}
+
 export function BenefitsAdminPage() {
   const { user } = useAuth()
   const canManage = hasPermission(user, ApplicationPermissions.BeneficiosGerenciar)
@@ -959,6 +975,11 @@ export function BenefitsAdminPage() {
                   {pr.shirtNumber}
                   {' '}
                   {pr.shirtDisplayName}
+                  {redemptionShippingAdminLine(pr) ? (
+                    <div style={{ marginTop: 6, fontSize: '0.85rem', opacity: 0.95 }} data-testid={`pending-shipping-${pr.redemptionId}`}>
+                      {redemptionShippingAdminLine(pr)}
+                    </div>
+                  ) : null}
                   {pr.deliveryStreet || pr.deliveryCep ? (
                     <div style={{ marginTop: 6, fontSize: '0.85rem', opacity: 0.95 }} data-testid={`pending-delivery-${pr.redemptionId}`}>
                       <div data-testid="pending-delivery-line">
@@ -1043,6 +1064,11 @@ export function BenefitsAdminPage() {
                       {ar.shirtDisplayName}
                       ”
                     </div>
+                    {redemptionShippingAdminLine(ar) ? (
+                      <div style={{ marginTop: 4, opacity: 0.95 }} data-testid={`approved-shirt-shipping-${ar.redemptionId}`}>
+                        {redemptionShippingAdminLine(ar)}
+                      </div>
+                    ) : null}
                     {ar.deliveryCep || ar.deliveryStreet ? (
                       <div style={{ marginTop: 4, opacity: 0.95 }} data-testid={`approved-shirt-delivery-${ar.redemptionId}`}>
                         Entrega: CEP

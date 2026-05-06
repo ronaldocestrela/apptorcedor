@@ -528,6 +528,10 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             entity.Property(x => x.DeliveryNumber).HasMaxLength(20);
             entity.Property(x => x.DeliveryCity).HasMaxLength(120);
             entity.Property(x => x.DeliveryState).HasMaxLength(2);
+            entity.Property(x => x.ShippingMethod).HasMaxLength(20);
+            entity.Property(x => x.ShippingCarrierName).HasMaxLength(80);
+            entity.Property(x => x.ShippingServiceName).HasMaxLength(80);
+            entity.Property(x => x.ShippingPrice).HasPrecision(10, 2);
             entity.Property(x => x.RejectionReason).HasMaxLength(2000);
             entity.HasIndex(x => x.OfferId);
             entity.HasIndex(x => x.UserId);

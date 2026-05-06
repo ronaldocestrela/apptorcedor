@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getEligibleBenefitOfferDetail,
+  getShippingOptions,
   listEligibleBenefitOffers,
   redeemBenefitOffer,
 } from './torcedorBenefitsApi'
@@ -81,6 +82,16 @@ describe('torcedor C.2 APIs', () => {
     expect(api.get).toHaveBeenCalledWith('/api/benefits/offers/o1')
   })
 
+  it('getShippingOptions calls GET /api/benefits/shipping-options', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: [],
+    })
+    await getShippingOptions('01310100')
+    expect(api.get).toHaveBeenCalledWith('/api/benefits/shipping-options', {
+      params: { cep: '01310100' },
+    })
+  })
+
   it('redeemBenefitOffer calls POST /api/benefits/offers/:id/redeem with optional body', async () => {
     vi.mocked(api.post).mockResolvedValue({
       data: { redemptionId: 'r1' },
@@ -117,7 +128,13 @@ describe('torcedor C.2 APIs', () => {
       deliveryStreet: 'Rua A',
       deliveryNumber: '1',
       deliveryCity: 'São Paulo',
-      deliveryState: 'sp',
+      deliveryState: 'SP',
+      shippingMethod: 'carrier',
+      shippingCarrierId: 2,
+      shippingCarrierName: 'Correios',
+      shippingServiceName: 'SEDEX',
+      shippingPrice: 12.68,
+      shippingDeliveryDays: 2,
     })
     expect(api.post).toHaveBeenCalledWith('/api/benefits/offers/o1/redeem', {
       shirtSize: 'M',
@@ -130,6 +147,12 @@ describe('torcedor C.2 APIs', () => {
       deliveryNumber: '1',
       deliveryCity: 'São Paulo',
       deliveryState: 'SP',
+      shippingMethod: 'carrier',
+      shippingCarrierId: 2,
+      shippingCarrierName: 'Correios',
+      shippingServiceName: 'SEDEX',
+      shippingPrice: 12.68,
+      shippingDeliveryDays: 2,
     })
   })
 })

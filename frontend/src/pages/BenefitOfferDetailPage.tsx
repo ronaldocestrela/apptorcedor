@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Gift, Shirt, MapPin, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { ArrowLeft, Gift, Shirt, MapPin, CheckCircle2, AlertCircle, Loader2, Store, Truck } from 'lucide-react'
 import { resolvePublicAssetUrl } from '../features/account/accountApi'
 import {
   getEligibleBenefitOfferDetail,
+  getShippingOptions,
   redeemBenefitOffer,
   type TorcedorEligibleBenefitOfferDetail,
+  type TorcedorShippingOption,
 } from '../features/torcedor/torcedorBenefitsApi'
 import { cepDigitsOnly, lookupViaCep } from '../features/torcedor/viaCep'
 import { TorcedorBottomNav } from '../shared/torcedorBottomNav'
@@ -38,6 +40,12 @@ const shirtNumberOk = (v: string) => {
 }
 const shirtNameOk = (v: string) => /^[\p{L}0-9'\- ]{1,10}$/u.test(v.trim())
 
+type DeliveryMode = 'pickup' | 'carrier' | ''
+
+function formatBrl(n: number): string {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
+}
+
 export function BenefitOfferDetailPage() {
   const { offerId } = useParams<{ offerId: string }>()
   const [detail, setDetail] = useState<TorcedorEligibleBenefitOfferDetail | null>(null)
@@ -60,6 +68,13 @@ export function BenefitOfferDetailPage() {
   const [deliveryState, setDeliveryState] = useState('')
   const [cepHint, setCepHint] = useState<string | null>(null)
   const [cepBusy, setCepBusy] = useState(false)
+
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>('')
+  const [shippingOptions, setShippingOptions] = useState<TorcedorShippingOption[]>([])
+  const [shippingLoading, setShippingLoading] = useState(false)
+  const [shippingError, setShippingError] = useState<string | null>(null)
+  const [shippingQueried, setShippingQueried] = useState(false)
+  const [selectedShipping, setSelectedShipping] = useState<TorcedorShippingOption | null>(null)
 
   const load = useCallback(async () => {
     if (!offerId) {
@@ -93,6 +108,20 @@ export function BenefitOfferDetailPage() {
   }, [load])
 
   useEffect(() => {
+    if (deliveryMode !== 'carrier') {
+      setShippingOptions([])
+      setSelectedShipping(null)
+      setShippingError(null)
+      setShippingQueried(false)
+    }
+  }, [deliveryMode])
+
+  useEffect(() => {
+    if (deliveryMode !== 'carrier') {
+      setCepHint(null)
+      setCepBusy(false)
+      return
+    }
     const digits = cepDigitsOnly(deliveryCep)
     if (digits.length !== 8) {
       setCepHint(null)
@@ -127,7 +156,46 @@ export function BenefitOfferDetailPage() {
     }, 450)
 
     return () => window.clearTimeout(handle)
-  }, [deliveryCep])
+  }, [deliveryCep, deliveryMode])
+
+  const deliveryCepDigits = cepDigitsOnly(deliveryCep)
+
+  useEffect(() => {
+    if (deliveryMode !== 'carrier' || deliveryCepDigits.length !== 8) {
+      setShippingOptions([])
+      setSelectedShipping(null)
+      setShippingLoading(false)
+      setShippingError(null)
+      setShippingQueried(false)
+      return
+    }
+
+    // Show loading immediately (before the debounce fires) so the user sees
+    // feedback right away and the "no options" message never appears prematurely.
+    setShippingLoading(true)
+    setShippingError(null)
+
+    const handle = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const opts = await getShippingOptions(deliveryCepDigits)
+          setShippingOptions(opts)
+          setSelectedShipping(null)
+        }
+        catch {
+          setShippingError('Não foi possível carregar as opções de frete. Tente novamente.')
+          setShippingOptions([])
+          setSelectedShipping(null)
+        }
+        finally {
+          setShippingLoading(false)
+          setShippingQueried(true)
+        }
+      })()
+    }, 450)
+
+    return () => window.clearTimeout(handle)
+  }, [deliveryMode, deliveryCepDigits])
 
   const canRequestShirt = useMemo(() => {
     if (!detail?.isShirtCustomizationOffer)
@@ -141,7 +209,6 @@ export function BenefitOfferDetailPage() {
   const shirtNameTrimmed = shirtName.trim()
   const shirtNameInvalid = shirtNameTrimmed.length > 0 && !shirtNameOk(shirtName)
 
-  const deliveryCepDigits = cepDigitsOnly(deliveryCep)
   const deliveryCepInvalid = deliveryCep.trim().length > 0 && deliveryCepDigits.length !== 8
   const deliveryStateNorm = deliveryState.trim().toUpperCase()
   const stateInvalid = deliveryStateNorm.length > 0 && !/^[A-Z]{2}$/.test(deliveryStateNorm)
@@ -172,32 +239,57 @@ export function BenefitOfferDetailPage() {
           setRedeemError('Número (0 a 99) ou nome inválido (máx. 10 caracteres).')
           return
         }
-        if (deliveryCepDigits.length !== 8) {
-          setRedeemError('Informe um CEP válido (8 dígitos).')
+        if (!deliveryMode) {
+          setRedeemError('Escolha retirar na loja ou envio com frete.')
           return
         }
-        if (
-          !deliveryNeighborhood.trim()
-          || !deliveryStreet.trim()
-          || !deliveryNumber.trim()
-          || !deliveryCity.trim()
-          || !/^[A-Z]{2}$/.test(deliveryStateNorm)
-        ) {
-          setRedeemError('Preencha bairro, rua, número, cidade e UF (2 letras).')
-          return
+        if (deliveryMode === 'pickup') {
+          await redeemBenefitOffer(offerId, {
+            shirtSize,
+            shirtModel,
+            shirtNumber: shirtNumber.trim(),
+            shirtDisplayName: shirtName.trim(),
+            shippingMethod: 'pickup',
+          })
         }
-        await redeemBenefitOffer(offerId, {
-          shirtSize,
-          shirtModel,
-          shirtNumber: shirtNumber.trim(),
-          shirtDisplayName: shirtName.trim(),
-          deliveryCep: deliveryCepDigits,
-          deliveryNeighborhood: deliveryNeighborhood.trim(),
-          deliveryStreet: deliveryStreet.trim(),
-          deliveryNumber: deliveryNumber.trim(),
-          deliveryCity: deliveryCity.trim(),
-          deliveryState: deliveryStateNorm,
-        })
+        else {
+          if (deliveryCepDigits.length !== 8) {
+            setRedeemError('Informe um CEP válido (8 dígitos).')
+            return
+          }
+          if (
+            !deliveryNeighborhood.trim()
+            || !deliveryStreet.trim()
+            || !deliveryNumber.trim()
+            || !deliveryCity.trim()
+            || !/^[A-Z]{2}$/.test(deliveryStateNorm)
+          ) {
+            setRedeemError('Preencha bairro, rua, número, cidade e UF (2 letras).')
+            return
+          }
+          if (!selectedShipping) {
+            setRedeemError('Selecione uma opção de frete.')
+            return
+          }
+          await redeemBenefitOffer(offerId, {
+            shirtSize,
+            shirtModel,
+            shirtNumber: shirtNumber.trim(),
+            shirtDisplayName: shirtName.trim(),
+            deliveryCep: deliveryCepDigits,
+            deliveryNeighborhood: deliveryNeighborhood.trim(),
+            deliveryStreet: deliveryStreet.trim(),
+            deliveryNumber: deliveryNumber.trim(),
+            deliveryCity: deliveryCity.trim(),
+            deliveryState: deliveryStateNorm,
+            shippingMethod: 'carrier',
+            shippingCarrierId: selectedShipping.serviceId,
+            shippingCarrierName: selectedShipping.carrierName,
+            shippingServiceName: selectedShipping.serviceName,
+            shippingPrice: selectedShipping.price,
+            shippingDeliveryDays: selectedShipping.deliveryDays,
+          })
+        }
       }
       else {
         await redeemBenefitOffer(offerId)
@@ -408,107 +500,198 @@ export function BenefitOfferDetailPage() {
                   ) : null}
                 </div>
 
-                {/* Endereço de entrega */}
+                {/* Método de entrega */}
                 <div className="benefit-shirt-form__section">
                   <div className="benefit-shirt-form__section-header">
-                    <MapPin size={16} />
-                    <span>Endereço de entrega</span>
+                    <Truck size={16} />
+                    <span>Como receber</span>
                   </div>
-
-                  <label className="benefit-shirt-form__field">
-                    <span className="benefit-shirt-form__label">CEP</span>
-                    <div className="benefit-shirt-form__cep-row">
-                      <input
-                        className="app-input"
-                        value={deliveryCep}
-                        onChange={(e) => setDeliveryCep(e.target.value)}
-                        inputMode="numeric"
-                        autoComplete="postal-code"
-                        placeholder="00000-000"
-                        maxLength={9}
-                      />
-                      {cepBusy ? (
-                        <Loader2 size={16} className="benefit-shirt-form__cep-spin" />
-                      ) : null}
-                    </div>
-                    {cepHint ? (
-                      <span className={`benefit-shirt-form__hint${cepHint.startsWith('Dados') ? ' benefit-shirt-form__hint--ok' : ''}`}>
-                        {cepHint}
-                      </span>
-                    ) : (
-                      <span className="benefit-shirt-form__hint">
-                        8 dígitos — buscamos o endereço automaticamente.
-                      </span>
-                    )}
-                    {deliveryCepInvalid ? (
-                      <span className="benefit-shirt-form__field-error">CEP deve ter 8 dígitos.</span>
-                    ) : null}
-                  </label>
-
-                  <label className="benefit-shirt-form__field">
-                    <span className="benefit-shirt-form__label">Rua / Avenida</span>
-                    <input
-                      className="app-input"
-                      value={deliveryStreet}
-                      onChange={(e) => setDeliveryStreet(e.target.value)}
-                      maxLength={200}
-                      autoComplete="street-address"
-                      placeholder="Nome da via"
-                    />
-                  </label>
-
-                  <div className="benefit-shirt-form__row-2">
-                    <label className="benefit-shirt-form__field">
-                      <span className="benefit-shirt-form__label">Número</span>
-                      <input
-                        className="app-input"
-                        value={deliveryNumber}
-                        onChange={(e) => setDeliveryNumber(e.target.value)}
-                        maxLength={20}
-                        placeholder="123"
-                      />
-                    </label>
-
-                    <label className="benefit-shirt-form__field">
-                      <span className="benefit-shirt-form__label">Bairro</span>
-                      <input
-                        className="app-input"
-                        value={deliveryNeighborhood}
-                        onChange={(e) => setDeliveryNeighborhood(e.target.value)}
-                        maxLength={120}
-                        placeholder="Bairro"
-                      />
-                    </label>
+                  <div className="benefit-shipping-method" role="radiogroup" aria-label="Método de entrega">
+                    <button
+                      type="button"
+                      className={`benefit-shipping-method__btn${deliveryMode === 'pickup' ? ' benefit-shipping-method__btn--active' : ''}`}
+                      onClick={() => setDeliveryMode('pickup')}
+                    >
+                      <Store size={18} aria-hidden />
+                      <span>Retirar na loja</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`benefit-shipping-method__btn${deliveryMode === 'carrier' ? ' benefit-shipping-method__btn--active' : ''}`}
+                      onClick={() => setDeliveryMode('carrier')}
+                    >
+                      <Truck size={18} aria-hidden />
+                      <span>Receber em casa</span>
+                    </button>
                   </div>
-
-                  <div className="benefit-shirt-form__row-2">
-                    <label className="benefit-shirt-form__field">
-                      <span className="benefit-shirt-form__label">Cidade</span>
-                      <input
-                        className="app-input"
-                        value={deliveryCity}
-                        onChange={(e) => setDeliveryCity(e.target.value)}
-                        maxLength={120}
-                        placeholder="São Paulo"
-                      />
-                    </label>
-
-                    <label className="benefit-shirt-form__field benefit-shirt-form__field--uf">
-                      <span className="benefit-shirt-form__label">UF</span>
-                      <input
-                        className="app-input"
-                        value={deliveryState}
-                        onChange={(e) =>
-                          setDeliveryState(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2))}
-                        maxLength={2}
-                        placeholder="SP"
-                      />
-                      {stateInvalid ? (
-                        <span className="benefit-shirt-form__field-error">2 letras (ex.: SP).</span>
-                      ) : null}
-                    </label>
-                  </div>
+                  {deliveryMode === 'pickup' ? (
+                    <p className="benefit-shirt-form__hint">Você retira a camisa na loja do clube quando estiver pronta.</p>
+                  ) : null}
                 </div>
+
+                {deliveryMode === 'carrier' ? (
+                  <div className="benefit-shirt-form__section">
+                    <div className="benefit-shirt-form__section-header">
+                      <MapPin size={16} />
+                      <span>Endereço de entrega</span>
+                    </div>
+
+                    <label className="benefit-shirt-form__field">
+                      <span className="benefit-shirt-form__label">CEP</span>
+                      <div className="benefit-shirt-form__cep-row">
+                        <input
+                          className="app-input"
+                          value={deliveryCep}
+                          onChange={(e) => setDeliveryCep(e.target.value)}
+                          inputMode="numeric"
+                          autoComplete="postal-code"
+                          placeholder="00000-000"
+                          maxLength={9}
+                        />
+                        {cepBusy ? (
+                          <Loader2 size={16} className="benefit-shirt-form__cep-spin" />
+                        ) : null}
+                      </div>
+                      {cepHint ? (
+                        <span className={`benefit-shirt-form__hint${cepHint.startsWith('Dados') ? ' benefit-shirt-form__hint--ok' : ''}`}>
+                          {cepHint}
+                        </span>
+                      ) : (
+                        <span className="benefit-shirt-form__hint">
+                          8 dígitos — buscamos o endereço automaticamente.
+                        </span>
+                      )}
+                      {deliveryCepInvalid ? (
+                        <span className="benefit-shirt-form__field-error">CEP deve ter 8 dígitos.</span>
+                      ) : null}
+                    </label>
+
+                    <label className="benefit-shirt-form__field">
+                      <span className="benefit-shirt-form__label">Rua / Avenida</span>
+                      <input
+                        className="app-input"
+                        value={deliveryStreet}
+                        onChange={(e) => setDeliveryStreet(e.target.value)}
+                        maxLength={200}
+                        autoComplete="street-address"
+                        placeholder="Nome da via"
+                      />
+                    </label>
+
+                    <div className="benefit-shirt-form__row-2">
+                      <label className="benefit-shirt-form__field">
+                        <span className="benefit-shirt-form__label">Número</span>
+                        <input
+                          className="app-input"
+                          value={deliveryNumber}
+                          onChange={(e) => setDeliveryNumber(e.target.value)}
+                          maxLength={20}
+                          placeholder="123"
+                        />
+                      </label>
+
+                      <label className="benefit-shirt-form__field">
+                        <span className="benefit-shirt-form__label">Bairro</span>
+                        <input
+                          className="app-input"
+                          value={deliveryNeighborhood}
+                          onChange={(e) => setDeliveryNeighborhood(e.target.value)}
+                          maxLength={120}
+                          placeholder="Bairro"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="benefit-shirt-form__row-2">
+                      <label className="benefit-shirt-form__field">
+                        <span className="benefit-shirt-form__label">Cidade</span>
+                        <input
+                          className="app-input"
+                          value={deliveryCity}
+                          onChange={(e) => setDeliveryCity(e.target.value)}
+                          maxLength={120}
+                          placeholder="São Paulo"
+                        />
+                      </label>
+
+                      <label className="benefit-shirt-form__field benefit-shirt-form__field--uf">
+                        <span className="benefit-shirt-form__label">UF</span>
+                        <input
+                          className="app-input"
+                          value={deliveryState}
+                          onChange={(e) =>
+                            setDeliveryState(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2))}
+                          maxLength={2}
+                          placeholder="SP"
+                        />
+                        {stateInvalid ? (
+                          <span className="benefit-shirt-form__field-error">2 letras (ex.: SP).</span>
+                        ) : null}
+                      </label>
+                    </div>
+                  </div>
+                ) : null}
+
+                {deliveryMode === 'carrier' ? (
+                  <div className="benefit-shirt-form__section">
+                    <div className="benefit-shirt-form__section-header">
+                      <Truck size={16} />
+                      <span>Frete</span>
+                    </div>
+                    <p className="benefit-shirt-form__hint">Após um CEP válido, escolha a transportadora e o serviço.</p>
+                    {shippingLoading ? (
+                      <div className="benefit-detail__loading">
+                        <Loader2 size={22} className="benefit-detail__loading-icon" />
+                        <span>Buscando frete…</span>
+                      </div>
+                    ) : null}
+                    {shippingError ? (
+                      <div role="alert" className="benefit-detail__alert benefit-detail__alert--error">
+                        <AlertCircle size={15} />
+                        <span>{shippingError}</span>
+                      </div>
+                    ) : null}
+                    {!shippingLoading && !shippingError && shippingQueried && shippingOptions.length === 0 ? (
+                      <p className="benefit-shirt-form__hint">Nenhuma opção disponível para este CEP no momento.</p>
+                    ) : null}
+                    <div className="benefit-shipping-options">
+                      {shippingOptions.map((opt) => {
+                        const sel = selectedShipping?.serviceId === opt.serviceId
+                        return (
+                          <button
+                            key={opt.serviceId}
+                            type="button"
+                            className={`benefit-shipping-option-card${sel ? ' benefit-shipping-option-card--selected' : ''}`}
+                            onClick={() => setSelectedShipping(opt)}
+                            aria-pressed={sel}
+                          >
+                            {opt.pictureUrl ? (
+                              <img src={opt.pictureUrl} alt="" className="benefit-shipping-option-card__logo" loading="lazy" />
+                            ) : (
+                              <div className="benefit-shipping-option-card__logo benefit-shipping-option-card__logo--placeholder" aria-hidden />
+                            )}
+                            <div className="benefit-shipping-option-card__main">
+                              <div className="benefit-shipping-option-card__title">
+                                {opt.serviceName}
+                                {' · '}
+                                <span className="benefit-shipping-option-card__carrier">{opt.carrierName}</span>
+                              </div>
+                              <div className="benefit-shipping-option-card__meta">
+                                {formatBrl(opt.price)}
+                                {' · '}
+                                até
+                                {' '}
+                                {opt.deliveryDays}
+                                {' '}
+                                dia(s) útil(eis)
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : null}
 
                 <p className="benefit-shirt-form__footer-note">
                   Após o envio, a equipe do clube analisará os dados antes da produção.

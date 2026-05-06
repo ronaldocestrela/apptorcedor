@@ -69,7 +69,13 @@ public sealed record TorcedorShirtRedemptionRequest(
     string DeliveryStreet,
     string DeliveryNumber,
     string DeliveryCity,
-    string DeliveryState);
+    string DeliveryState,
+    string? ShippingMethod = null,
+    int? ShippingCarrierId = null,
+    string? ShippingCarrierName = null,
+    string? ShippingServiceName = null,
+    decimal? ShippingPrice = null,
+    int? ShippingDeliveryDays = null);
 
 public sealed record TorcedorRedemptionResult(bool Ok, Guid? RedemptionId, TorcedorRedemptionError? Error)
 {

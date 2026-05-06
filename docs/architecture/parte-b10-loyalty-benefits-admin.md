@@ -14,9 +14,9 @@ Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B
 | `BenefitOfferPlanEligibilities` | `OfferId`, `PlanId` (PK composta). Lista vazia = sem filtro por plano. |
 | `BenefitOfferMembershipStatusEligibilities` | `OfferId`, `Status` (PK composta). Lista vazia = sem filtro por status. |
 | `BenefitShirtCatalogOptions` | `OfferId`, `Kind` (`Size` / `Model`), `Value` (até 64 chars), `SortOrder`. Catálogo administrativo de tamanhos e modelos permitidos para ofertas de camisa. |
-| `BenefitRedemptions` | `OfferId`, `UserId`, `ActorUserId`, `Notes`, `CreatedAt`, `Status` (`Pending` / `Approved` / `Rejected`), campos opcionais de personalização (`ShirtSize`, `ShirtModel`, `ShirtNumber`, `ShirtDisplayName`), endereço de entrega (`DeliveryCep`, `DeliveryNeighborhood`, `DeliveryStreet`, `DeliveryNumber`, `DeliveryCity`, `DeliveryState`), `ReviewedAtUtc`, `ReviewedByUserId`, `RejectionReason`. |
+| `BenefitRedemptions` | `OfferId`, `UserId`, `ActorUserId`, `Notes`, `CreatedAt`, `Status` (`Pending` / `Approved` / `Rejected`), campos opcionais de personalização (`ShirtSize`, `ShirtModel`, `ShirtNumber`, `ShirtDisplayName`), endereço de entrega (quando envio: `Delivery*` CEP/rua/etc.), **frete ou retirada** (`ShippingMethod` `pickup` \| `carrier`, `ShippingCarrierId`, `ShippingCarrierName`, `ShippingServiceName`, `ShippingPrice`, `ShippingDeliveryDays`), `ReviewedAtUtc`, `ReviewedByUserId`, `RejectionReason`. |
 
-Migrações EF: `PartB10LoyaltyBenefitsAdmin`; coluna `BannerUrl` em `BenefitOfferBanner`; **workflow camisa** em `BenefitShirtRedemptionWorkflow`; **endereço de entrega** em `BenefitRedemptionDeliveryAddress` (`backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`).
+Migrações EF: `PartB10LoyaltyBenefitsAdmin`; coluna `BannerUrl` em `BenefitOfferBanner`; **workflow camisa** em `BenefitShirtRedemptionWorkflow`; **endereço de entrega** em `BenefitRedemptionDeliveryAddress`; **frete/retirada** em `BenefitRedemptionShipping` (`backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`).
 
 ## Permissões
 

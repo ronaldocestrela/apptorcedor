@@ -1224,6 +1224,12 @@ export type BenefitRedemptionListItem = {
   deliveryNumber: string | null
   deliveryCity: string | null
   deliveryState: string | null
+  shippingMethod: string | null
+  shippingCarrierId: number | null
+  shippingCarrierName: string | null
+  shippingServiceName: string | null
+  shippingPrice: number | null
+  shippingDeliveryDays: number | null
   reviewedAtUtc: string | null
   reviewedByUserId: string | null
   rejectionReason: string | null
