@@ -11,6 +11,7 @@ using AppTorcedor.Infrastructure.Services.Payments;
 using AppTorcedor.Infrastructure.Services.Tickets;
 using AppTorcedor.Infrastructure.Services.Loyalty;
 using AppTorcedor.Infrastructure.Services.Benefits;
+using AppTorcedor.Infrastructure.Services.Shipping;
 using AppTorcedor.Infrastructure.Services.Membership;
 using AppTorcedor.Infrastructure.Services.News;
 using AppTorcedor.Infrastructure.Services.Plans;
@@ -191,6 +192,8 @@ public static class DependencyInjection
         services.AddScoped<ITorcedorPublishedPlansReadPort, TorcedorPublishedPlansReadService>();
         services.AddScoped<ITorcedorMembershipSubscriptionPort, TorcedorMembershipSubscriptionService>();
         services.AddScoped<ITorcedorBenefitsReadPort, TorcedorBenefitsReadService>();
+        services.Configure<MelhorEnvioOptions>(configuration.GetSection(MelhorEnvioOptions.SectionName));
+        services.AddHttpClient<IMelhorEnvioShippingPort, MelhorEnvioShippingService>();
         services.AddScoped<ITorcedorBenefitRedemptionPort, TorcedorBenefitRedemptionService>();
         services.AddScoped<ISupportAdministrationPort, SupportAdministrationService>();
         services.AddScoped<ISupportTorcedorPort, SupportTorcedorService>();

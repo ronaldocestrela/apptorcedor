@@ -1131,6 +1131,9 @@ export type BenefitOfferDetail = {
   eligiblePlanIds: string[]
   eligibleMembershipStatuses: string[]
   bannerUrl: string | null
+  isShirtCustomizationOffer: boolean
+  shirtSizes: string[]
+  shirtModels: string[]
 }
 
 export type UpsertBenefitOfferBody = {
@@ -1142,6 +1145,7 @@ export type UpsertBenefitOfferBody = {
   endAt: string
   eligiblePlanIds?: string[] | null
   eligibleMembershipStatuses?: string[] | null
+  isShirtCustomizationOffer?: boolean
 }
 
 export async function listBenefitOffers(params: {
@@ -1198,6 +1202,8 @@ export async function redeemBenefitOffer(offerId: string, body: { userId: string
   return data
 }
 
+export type BenefitRedemptionStatus = 'Pending' | 'Approved' | 'Rejected'
+
 export type BenefitRedemptionListItem = {
   redemptionId: string
   offerId: string
@@ -1207,6 +1213,27 @@ export type BenefitRedemptionListItem = {
   actorUserId: string | null
   notes: string | null
   createdAt: string
+  status: BenefitRedemptionStatus
+  shirtSize: string | null
+  shirtModel: string | null
+  shirtNumber: string | null
+  shirtDisplayName: string | null
+  deliveryCep: string | null
+  deliveryNeighborhood: string | null
+  deliveryStreet: string | null
+  deliveryNumber: string | null
+  deliveryCity: string | null
+  deliveryState: string | null
+  shippingMethod: string | null
+  shippingCarrierId: number | null
+  shippingCarrierName: string | null
+  shippingServiceName: string | null
+  shippingPrice: number | null
+  shippingDeliveryDays: number | null
+  shippingPaidAtUtc: string | null
+  reviewedAtUtc: string | null
+  reviewedByUserId: string | null
+  rejectionReason: string | null
 }
 
 export type BenefitRedemptionListPage = {
@@ -1217,6 +1244,7 @@ export type BenefitRedemptionListPage = {
 export async function listBenefitRedemptions(params: {
   offerId?: string
   userId?: string
+  status?: 'pending' | 'approved' | 'rejected'
   page?: number
   pageSize?: number
 }): Promise<BenefitRedemptionListPage> {
@@ -1224,11 +1252,27 @@ export async function listBenefitRedemptions(params: {
     params: {
       offerId: params.offerId || undefined,
       userId: params.userId || undefined,
+      status: params.status || undefined,
       page: params.page ?? 1,
       pageSize: params.pageSize ?? 20,
     },
   })
   return data
+}
+
+export async function replaceBenefitShirtCatalog(
+  offerId: string,
+  body: { sizes: string[]; models: string[] },
+): Promise<void> {
+  await api.put(`/api/admin/benefits/offers/${encodeURIComponent(offerId)}/shirt-catalog`, body)
+}
+
+export async function approveBenefitRedemption(redemptionId: string): Promise<void> {
+  await api.post(`/api/admin/benefits/redemptions/${encodeURIComponent(redemptionId)}/approve`)
+}
+
+export async function rejectBenefitRedemption(redemptionId: string, body?: { reason?: string | null }): Promise<void> {
+  await api.post(`/api/admin/benefits/redemptions/${encodeURIComponent(redemptionId)}/reject`, body ?? {})
 }
 
 /** B.11 Support (chamados) — admin */

@@ -25,11 +25,13 @@ public interface IPaymentProvider
         string currency,
         CancellationToken cancellationToken = default);
 
+    /// <param name="checkoutProductName">Stripe Checkout line item name; default is subscription wording.</param>
     Task<CardPaymentProviderResult> CreateCardAsync(
         Guid paymentId,
         decimal amount,
         string currency,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string? checkoutProductName = null);
 
     Task CancelAsync(Guid paymentId, string? externalReference, CancellationToken cancellationToken = default);
 

@@ -254,6 +254,9 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsShirtCustomizationOffer")
+                        .HasColumnType("bit");
+
                     b.Property<Guid>("PartnerId")
                         .HasColumnType("uniqueidentifier");
 
@@ -320,12 +323,93 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("DeliveryCep")
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<string>("DeliveryCity")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("DeliveryNeighborhood")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("DeliveryNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("DeliveryState")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("DeliveryStreet")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("ShippingCarrierId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ShippingCarrierName")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<int?>("ShippingDeliveryDays")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ShippingMethod")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal?>("ShippingPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("ShippingServiceName")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<DateTimeOffset?>("ShippingPaidAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ShippingPaymentId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
                     b.Property<Guid>("OfferId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset?>("ReviewedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ShirtDisplayName")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("ShirtModel")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ShirtNumber")
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<string>("ShirtSize")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
@@ -336,9 +420,44 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("OfferId");
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("UserId");
 
+                    b.HasIndex("ShippingPaymentId")
+                        .IsUnique();
+
                     b.ToTable("BenefitRedemptions", (string)null);
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.BenefitShirtCatalogOptionRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("OfferId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfferId");
+
+                    b.HasIndex("OfferId", "Kind", "Value")
+                        .IsUnique();
+
+                    b.ToTable("BenefitShirtCatalogOptions", (string)null);
                 });
 
             modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.DigitalCardRecord", b =>
@@ -894,7 +1013,7 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("LastProviderSyncAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid>("MembershipId")
+                    b.Property<Guid?>("MembershipId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("PaidAt")
@@ -1538,10 +1657,24 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("AppTorcedor.Infrastructure.Entities.PaymentRecord", null)
+                        .WithMany()
+                        .HasForeignKey("ShippingPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AppTorcedor.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AppTorcedor.Infrastructure.Entities.BenefitShirtCatalogOptionRecord", b =>
+                {
+                    b.HasOne("AppTorcedor.Infrastructure.Entities.BenefitOfferRecord", null)
+                        .WithMany()
+                        .HasForeignKey("OfferId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -1650,8 +1783,7 @@ namespace AppTorcedor.Infrastructure.Persistence.Migrations
                     b.HasOne("AppTorcedor.Infrastructure.Entities.MembershipRecord", null)
                         .WithMany()
                         .HasForeignKey("MembershipId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("AppTorcedor.Identity.ApplicationUser", null)
                         .WithMany()

@@ -3777,15 +3777,322 @@ a.benefit-offer-card--link:hover {
 }
 
 .benefit-detail-redeem-btn {
-  margin-top: 0.35rem;
+  margin-top: 0.5rem;
   width: 100%;
   justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
 }
 
+/* kept for backward compatibility */
 .benefit-detail-error {
   margin: 0 0 0.75rem;
   font-size: 0.9rem;
   color: #ffc6c6;
+}
+
+/* ── Alerts / feedback banners ── */
+.benefit-detail__alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  width: 100%;
+  box-sizing: border-box;
+}
+.benefit-detail__alert svg { flex-shrink: 0; margin-top: 1px; }
+
+.benefit-detail__alert--error {
+  background: rgba(255, 100, 100, 0.1);
+  border: 1px solid rgba(255, 100, 100, 0.28);
+  color: #ffc6c6;
+}
+.benefit-detail__alert--success {
+  background: rgba(140, 211, 146, 0.1);
+  border: 1px solid rgba(140, 211, 146, 0.28);
+  color: #8cd392;
+}
+.benefit-detail__alert--info {
+  background: rgba(140, 211, 146, 0.06);
+  border: 1px solid rgba(140, 211, 146, 0.2);
+  color: #a6d8ab;
+}
+.benefit-detail__alert--warning {
+  background: rgba(255, 190, 90, 0.1);
+  border: 1px solid rgba(255, 190, 90, 0.28);
+  color: #ffd97a;
+}
+
+/* ── Loader / spinner ── */
+.benefit-detail__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 2.5rem 0;
+  color: #a6b0bf;
+  font-size: 0.9rem;
+}
+.benefit-detail__loading-icon {
+  color: #8cd392;
+  animation: spin 1s linear infinite;
+}
+.benefit-detail__spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.benefit-detail__not-found {
+  text-align: center;
+  color: #a6b0bf;
+  padding: 2rem 0;
+  font-size: 0.92rem;
+}
+
+/* ── Header row (icon + title + partner, sem banner) ── */
+.benefit-detail-card__header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+}
+.benefit-detail-card__header-row .benefit-detail-card__icon-wrap {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ── Meta row (after banner) ── */
+.benefit-detail-card__meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+}
+
+/* ── Button inner (icon + text) ── */
+.benefit-detail__btn-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Shirt customization form  (/benefits/:offerId)
+   ════════════════════════════════════════════════════════════ */
+.benefit-shirt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.benefit-shirt-form__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(140, 211, 146, 0.14);
+  border-radius: 14px;
+  padding: 1rem 0.95rem 1.05rem;
+}
+
+.benefit-shirt-form__section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8cd392;
+  margin-bottom: 0.2rem;
+}
+
+.benefit-shirt-form__row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.benefit-shirt-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.benefit-shirt-form__field--uf input {
+  max-width: 72px;
+}
+
+.benefit-shirt-form__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #a6b0bf;
+}
+
+.benefit-shirt-form__hint {
+  font-size: 0.76rem;
+  color: #6c7885;
+  margin-top: 2px;
+}
+
+.benefit-shirt-form__hint--ok {
+  color: #8cd392;
+}
+
+.benefit-shirt-form__field-error {
+  font-size: 0.76rem;
+  color: #ffc6c6;
+  margin-top: 1px;
+}
+
+.benefit-shirt-form__cep-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.benefit-shirt-form__cep-row .app-input {
+  flex: 1;
+  padding-right: 2.2rem;
+}
+.benefit-shirt-form__cep-spin {
+  position: absolute;
+  right: 0.7rem;
+  color: #8cd392;
+  animation: spin 1s linear infinite;
+  pointer-events: none;
+}
+
+.benefit-shirt-form__preview {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #8cd392;
+  background: rgba(140, 211, 146, 0.08);
+  border: 1px solid rgba(140, 211, 146, 0.2);
+  border-radius: 10px;
+  padding: 0.45rem 0.65rem;
+  margin-top: 0.1rem;
+}
+
+.benefit-shirt-form__footer-note {
+  font-size: 0.78rem;
+  color: #6c7885;
+  margin: 0;
+  text-align: center;
+}
+
+.benefit-shipping-method {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.benefit-shipping-method__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 211, 146, 0.22);
+  background: rgba(8, 8, 8, 0.35);
+  color: #f5f7fa;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.benefit-shipping-method__btn:hover {
+  border-color: rgba(140, 211, 146, 0.45);
+}
+
+.benefit-shipping-method__btn--active {
+  border-color: #8cd392;
+  background: rgba(140, 211, 146, 0.12);
+  box-shadow: 0 0 0 1px rgba(140, 211, 146, 0.25);
+}
+
+.benefit-shipping-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.benefit-shipping-option-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  text-align: left;
+  width: 100%;
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 211, 146, 0.18);
+  background: rgba(255, 255, 255, 0.02);
+  color: #f5f7fa;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.benefit-shipping-option-card:hover {
+  border-color: rgba(140, 211, 146, 0.4);
+}
+
+.benefit-shipping-option-card--selected {
+  border-color: #8cd392;
+  background: rgba(140, 211, 146, 0.1);
+}
+
+.benefit-shipping-option-card__logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.benefit-shipping-option-card__logo--placeholder {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.benefit-shipping-option-card__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.benefit-shipping-option-card__title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #f5f7fa;
+}
+
+.benefit-shipping-option-card__carrier {
+  font-weight: 600;
+  color: #a6b0bf;
+}
+
+.benefit-shipping-option-card__meta {
+  font-size: 0.78rem;
+  color: #8cd392;
+  margin-top: 0.2rem;
 }
 
 /* ── Tickets page ── */

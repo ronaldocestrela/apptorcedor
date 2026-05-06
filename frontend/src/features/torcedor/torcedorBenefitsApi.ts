@@ -40,6 +40,10 @@ export type TorcedorEligibleBenefitOfferDetail = {
   alreadyRedeemed: boolean
   redemptionDateUtc: string | null
   bannerUrl: string | null
+  isShirtCustomizationOffer: boolean
+  shirtSizes: string[]
+  shirtModels: string[]
+  redemptionWorkflowStatus: string
 }
 
 export async function getEligibleBenefitOfferDetail(offerId: string): Promise<TorcedorEligibleBenefitOfferDetail> {
@@ -47,11 +51,88 @@ export async function getEligibleBenefitOfferDetail(offerId: string): Promise<To
   return data
 }
 
-export type TorcedorBenefitRedeemResponse = {
-  redemptionId: string
+export type TorcedorShippingOption = {
+  serviceId: number
+  serviceName: string
+  carrierName: string
+  pictureUrl: string
+  price: number
+  deliveryDays: number
 }
 
-export async function redeemBenefitOffer(offerId: string): Promise<TorcedorBenefitRedeemResponse> {
-  const { data } = await api.post<TorcedorBenefitRedeemResponse>(`/api/benefits/offers/${offerId}/redeem`)
-  return data
+export type TorcedorBenefitRedeemPayload = {
+  shirtSize?: string
+  shirtModel?: string
+  shirtNumber?: string
+  shirtDisplayName?: string
+  deliveryCep?: string
+  deliveryNeighborhood?: string
+  deliveryStreet?: string
+  deliveryNumber?: string
+  deliveryCity?: string
+  deliveryState?: string
+  /** `pickup` | `carrier` */
+  shippingMethod?: string
+  shippingCarrierId?: number
+  shippingCarrierName?: string
+  shippingServiceName?: string
+  shippingPrice?: number
+  shippingDeliveryDays?: number
+}
+
+export type TorcedorBenefitRedeemResponse = {
+  redemptionId: string
+  checkoutUrl: string | null
+}
+
+function redeemPayloadHasValues(payload: TorcedorBenefitRedeemPayload): boolean {
+  for (const v of Object.values(payload)) {
+    if (v === null || v === undefined)
+      continue
+    if (typeof v === 'number' && Number.isFinite(v))
+      return true
+    if (typeof v === 'string' && v.trim() !== '')
+      return true
+  }
+  return false
+}
+
+export async function getShippingOptions(cepDigits: string): Promise<TorcedorShippingOption[]> {
+  const { data } = await api.get<TorcedorShippingOption[]>('/api/benefits/shipping-options', {
+    params: { cep: cepDigits },
+  })
+  return data ?? []
+}
+
+export async function redeemBenefitOffer(
+  offerId: string,
+  payload?: TorcedorBenefitRedeemPayload | null,
+): Promise<TorcedorBenefitRedeemResponse> {
+  const hasPayload =
+    !!payload && redeemPayloadHasValues(payload as TorcedorBenefitRedeemPayload)
+  const body = hasPayload
+    ? {
+        shirtSize: payload!.shirtSize?.trim() || undefined,
+        shirtModel: payload!.shirtModel?.trim() || undefined,
+        shirtNumber: payload!.shirtNumber?.trim() || undefined,
+        shirtDisplayName: payload!.shirtDisplayName?.trim() || undefined,
+        deliveryCep: payload!.deliveryCep?.trim() || undefined,
+        deliveryNeighborhood: payload!.deliveryNeighborhood?.trim() || undefined,
+        deliveryStreet: payload!.deliveryStreet?.trim() || undefined,
+        deliveryNumber: payload!.deliveryNumber?.trim() || undefined,
+        deliveryCity: payload!.deliveryCity?.trim() || undefined,
+        deliveryState: payload!.deliveryState?.trim().toUpperCase() || undefined,
+        shippingMethod: payload!.shippingMethod?.trim().toLowerCase() || undefined,
+        shippingCarrierId: payload!.shippingCarrierId,
+        shippingCarrierName: payload!.shippingCarrierName?.trim() || undefined,
+        shippingServiceName: payload!.shippingServiceName?.trim() || undefined,
+        shippingPrice: payload!.shippingPrice,
+        shippingDeliveryDays: payload!.shippingDeliveryDays,
+      }
+    : undefined
+  const { data } = await api.post<TorcedorBenefitRedeemResponse>(
+    `/api/benefits/offers/${offerId}/redeem`,
+    body,
+  )
+  return { redemptionId: data.redemptionId, checkoutUrl: data.checkoutUrl ?? null }
 }

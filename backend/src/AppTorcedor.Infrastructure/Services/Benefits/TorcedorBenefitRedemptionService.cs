@@ -1,15 +1,23 @@
+using System.Linq;
+using System.Text.RegularExpressions;
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.Modules.Administration.Payments;
 using AppTorcedor.Infrastructure.Entities;
 using AppTorcedor.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AppTorcedor.Infrastructure.Services.Benefits;
 
-public sealed class TorcedorBenefitRedemptionService(AppDbContext db) : ITorcedorBenefitRedemptionPort
+public sealed class TorcedorBenefitRedemptionService(AppDbContext db, IPaymentProvider paymentProvider) : ITorcedorBenefitRedemptionPort
 {
+    private static readonly Regex s_shirtNumberRegex = new("^(?:[0-9]|[1-9][0-9])$", RegexOptions.Compiled);
+    private static readonly Regex s_shirtNameRegex = new("^[\\p{L}0-9'\\- ]{1,10}$", RegexOptions.Compiled);
+    private static readonly Regex s_ufRegex = new("^[A-Z]{2}$", RegexOptions.Compiled);
+
     public async Task<TorcedorRedemptionResult> RedeemOfferAsync(
         Guid offerId,
         Guid userId,
+        TorcedorShirtRedemptionRequest? shirt,
         CancellationToken cancellationToken = default)
     {
         var row = await (
@@ -55,24 +63,249 @@ public sealed class TorcedorBenefitRedemptionService(AppDbContext db) : ITorcedo
         if (!BenefitOfferEligibility.MatchesPlanAndStatus(planRows, statusRows, snapshot))
             return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.NotEligible);
 
-        var already = await db.BenefitRedemptions.AsNoTracking()
-            .AnyAsync(r => r.OfferId == offerId && r.UserId == userId, cancellationToken)
-            .ConfigureAwait(false);
-        if (already)
+        if (await HasBlockingRedemptionAsync(offerId, userId, cancellationToken).ConfigureAwait(false))
             return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.AlreadyRedeemed);
 
-        var redemptionId = Guid.NewGuid();
+        if (row.Offer.IsShirtCustomizationOffer)
+        {
+            if (shirt is null)
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+
+            var validation = await ValidateShirtPayloadAsync(offerId, shirt, cancellationToken).ConfigureAwait(false);
+            if (validation is not null)
+                return validation;
+
+            var redemptionId = Guid.NewGuid();
+            var method = (shirt.ShippingMethod ?? "").Trim().ToLowerInvariant();
+            NormalizedDelivery? d = null;
+            if (method == TorcedorBenefitShippingMethods.Carrier)
+                d = NormalizeDelivery(shirt);
+
+            if (method == TorcedorBenefitShippingMethods.Carrier)
+            {
+                var paymentId = Guid.NewGuid();
+                var amount = shirt.ShippingPrice!.Value;
+                const string currency = "BRL";
+                var card = await paymentProvider
+                    .CreateCardAsync(paymentId, amount, currency, cancellationToken, "Frete — camisa personalizada")
+                    .ConfigureAwait(false);
+
+                db.Payments.Add(
+                    new PaymentRecord
+                    {
+                        Id = paymentId,
+                        UserId = userId,
+                        MembershipId = membership?.Id,
+                        Amount = amount,
+                        Status = PaymentChargeStatuses.Pending,
+                        DueDate = now.AddDays(7),
+                        PaymentMethod = "Card",
+                        ExternalReference = card.ProviderReference ?? paymentId.ToString("N"),
+                        ProviderName = paymentProvider.ProviderKey,
+                        CreatedAt = now,
+                        UpdatedAt = now,
+                        StatusReason = "Frete do benefício (camisa) — aguardando confirmação no gateway.",
+                    });
+
+                db.BenefitRedemptions.Add(
+                    new BenefitRedemptionRecord
+                    {
+                        Id = redemptionId,
+                        OfferId = offerId,
+                        UserId = userId,
+                        ActorUserId = null,
+                        Notes = null,
+                        CreatedAt = now,
+                        Status = BenefitRedemptionStatus.Pending,
+                        ShirtSize = shirt.ShirtSize.Trim(),
+                        ShirtModel = shirt.ShirtModel.Trim(),
+                        ShirtNumber = shirt.ShirtNumber.Trim(),
+                        ShirtDisplayName = shirt.ShirtDisplayName.Trim(),
+                        DeliveryCep = d!.Cep,
+                        DeliveryNeighborhood = d.Neighborhood,
+                        DeliveryStreet = d.Street,
+                        DeliveryNumber = d.Number,
+                        DeliveryCity = d.City,
+                        DeliveryState = d.State,
+                        ShippingMethod = method,
+                        ShippingCarrierId = shirt.ShippingCarrierId,
+                        ShippingCarrierName = (shirt.ShippingCarrierName ?? "").Trim(),
+                        ShippingServiceName = (shirt.ShippingServiceName ?? "").Trim(),
+                        ShippingPrice = shirt.ShippingPrice,
+                        ShippingDeliveryDays = shirt.ShippingDeliveryDays,
+                        ShippingPaymentId = paymentId,
+                    });
+                await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                return TorcedorRedemptionResult.SuccessWithCheckout(redemptionId, card.CheckoutUrl);
+            }
+
+            db.BenefitRedemptions.Add(
+                new BenefitRedemptionRecord
+                {
+                    Id = redemptionId,
+                    OfferId = offerId,
+                    UserId = userId,
+                    ActorUserId = null,
+                    Notes = null,
+                    CreatedAt = now,
+                    Status = BenefitRedemptionStatus.Pending,
+                    ShirtSize = shirt.ShirtSize.Trim(),
+                    ShirtModel = shirt.ShirtModel.Trim(),
+                    ShirtNumber = shirt.ShirtNumber.Trim(),
+                    ShirtDisplayName = shirt.ShirtDisplayName.Trim(),
+                    DeliveryCep = null,
+                    DeliveryNeighborhood = null,
+                    DeliveryStreet = null,
+                    DeliveryNumber = null,
+                    DeliveryCity = null,
+                    DeliveryState = null,
+                    ShippingMethod = method,
+                    ShippingCarrierId = null,
+                    ShippingCarrierName = null,
+                    ShippingServiceName = null,
+                    ShippingPrice = null,
+                    ShippingDeliveryDays = null,
+                });
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return TorcedorRedemptionResult.Success(redemptionId);
+        }
+
+        if (shirt is not null && HasAnyShirtOrDeliveryFields(shirt))
+            return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+
+        var instantId = Guid.NewGuid();
         db.BenefitRedemptions.Add(
             new BenefitRedemptionRecord
             {
-                Id = redemptionId,
+                Id = instantId,
                 OfferId = offerId,
                 UserId = userId,
                 ActorUserId = null,
                 Notes = null,
                 CreatedAt = now,
+                Status = BenefitRedemptionStatus.Approved,
             });
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return TorcedorRedemptionResult.Success(redemptionId);
+        return TorcedorRedemptionResult.Success(instantId);
+    }
+
+    private static bool HasAnyShirtOrDeliveryFields(TorcedorShirtRedemptionRequest shirt) =>
+        !string.IsNullOrWhiteSpace(shirt.ShirtSize)
+        || !string.IsNullOrWhiteSpace(shirt.ShirtModel)
+        || !string.IsNullOrWhiteSpace(shirt.ShirtNumber)
+        || !string.IsNullOrWhiteSpace(shirt.ShirtDisplayName)
+        || !string.IsNullOrWhiteSpace(shirt.DeliveryCep)
+        || !string.IsNullOrWhiteSpace(shirt.DeliveryNeighborhood)
+        || !string.IsNullOrWhiteSpace(shirt.DeliveryStreet)
+        || !string.IsNullOrWhiteSpace(shirt.DeliveryNumber)
+        || !string.IsNullOrWhiteSpace(shirt.DeliveryCity)
+        || !string.IsNullOrWhiteSpace(shirt.DeliveryState)
+        || !string.IsNullOrWhiteSpace(shirt.ShippingMethod)
+        || shirt.ShippingCarrierId is not null
+        || !string.IsNullOrWhiteSpace(shirt.ShippingCarrierName)
+        || !string.IsNullOrWhiteSpace(shirt.ShippingServiceName)
+        || shirt.ShippingPrice is not null
+        || shirt.ShippingDeliveryDays is not null;
+
+    private Task<bool> HasBlockingRedemptionAsync(
+        Guid offerId,
+        Guid userId,
+        CancellationToken cancellationToken) =>
+        db.BenefitRedemptions.AsNoTracking()
+            .AnyAsync(
+                r => r.OfferId == offerId
+                     && r.UserId == userId
+                     && (r.Status == BenefitRedemptionStatus.Pending || r.Status == BenefitRedemptionStatus.Approved),
+                cancellationToken);
+
+    private sealed record NormalizedDelivery(
+        string Cep,
+        string Neighborhood,
+        string Street,
+        string Number,
+        string City,
+        string State);
+
+    private static NormalizedDelivery NormalizeDelivery(TorcedorShirtRedemptionRequest shirt)
+    {
+        static string T(string? s) => (s ?? "").Trim();
+        var cepDigits = new string(T(shirt.DeliveryCep).Where(char.IsDigit).ToArray());
+        return new NormalizedDelivery(
+            cepDigits,
+            T(shirt.DeliveryNeighborhood),
+            T(shirt.DeliveryStreet),
+            T(shirt.DeliveryNumber),
+            T(shirt.DeliveryCity),
+            T(shirt.DeliveryState).ToUpperInvariant());
+    }
+
+    private async Task<TorcedorRedemptionResult?> ValidateShirtPayloadAsync(
+        Guid offerId,
+        TorcedorShirtRedemptionRequest shirt,
+        CancellationToken cancellationToken)
+    {
+        var size = shirt.ShirtSize?.Trim() ?? "";
+        var model = shirt.ShirtModel?.Trim() ?? "";
+        var number = shirt.ShirtNumber?.Trim() ?? "";
+        var displayName = shirt.ShirtDisplayName?.Trim() ?? "";
+
+        if (string.IsNullOrEmpty(size) || string.IsNullOrEmpty(model) || string.IsNullOrEmpty(number) || string.IsNullOrEmpty(displayName))
+            return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+
+        if (!s_shirtNumberRegex.IsMatch(number) || !s_shirtNameRegex.IsMatch(displayName))
+            return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+
+        var method = (shirt.ShippingMethod ?? "").Trim().ToLowerInvariant();
+        if (method is not TorcedorBenefitShippingMethods.Pickup and not TorcedorBenefitShippingMethods.Carrier)
+            return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+
+        if (method == TorcedorBenefitShippingMethods.Carrier)
+        {
+            var d = NormalizeDelivery(shirt);
+            if (d.Cep.Length != 8 || !d.Cep.All(char.IsDigit))
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+            if (string.IsNullOrEmpty(d.Neighborhood) || d.Neighborhood.Length > 120)
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+            if (string.IsNullOrEmpty(d.Street) || d.Street.Length > 200)
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+            if (string.IsNullOrEmpty(d.Number) || d.Number.Length > 20)
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+            if (string.IsNullOrEmpty(d.City) || d.City.Length > 120)
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+            if (!s_ufRegex.IsMatch(d.State))
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+
+            if (shirt.ShippingCarrierId is not { } cid || cid <= 0)
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+            var carrierName = shirt.ShippingCarrierName?.Trim() ?? "";
+            var serviceName = shirt.ShippingServiceName?.Trim() ?? "";
+            if (string.IsNullOrEmpty(carrierName) || carrierName.Length > 80)
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+            if (string.IsNullOrEmpty(serviceName) || serviceName.Length > 80)
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+            if (shirt.ShippingPrice is not { } price || price < 0m)
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+            if (shirt.ShippingDeliveryDays is not { } days || days < 0)
+                return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+        }
+
+        var allowedSizes = await db.BenefitShirtCatalogOptions.AsNoTracking()
+            .Where(x => x.OfferId == offerId && x.Kind == BenefitShirtCatalogOptionKind.Size)
+            .Select(x => x.Value)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var allowedModels = await db.BenefitShirtCatalogOptions.AsNoTracking()
+            .Where(x => x.OfferId == offerId && x.Kind == BenefitShirtCatalogOptionKind.Model)
+            .Select(x => x.Value)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (allowedSizes.Count == 0 || allowedModels.Count == 0)
+            return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+
+        if (!allowedSizes.Contains(size) || !allowedModels.Contains(model))
+            return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.Validation);
+
+        return null;
     }
 }

@@ -38,6 +38,23 @@ public sealed class UpsertBenefitOfferRequest
     public List<Guid>? EligiblePlanIds { get; set; }
 
     public List<MembershipStatus>? EligibleMembershipStatuses { get; set; }
+
+    public bool IsShirtCustomizationOffer { get; set; }
+}
+
+public sealed class ReplaceBenefitShirtCatalogRequest
+{
+    [Required]
+    public List<string> Sizes { get; set; } = [];
+
+    [Required]
+    public List<string> Models { get; set; } = [];
+}
+
+public sealed class RejectBenefitRedemptionRequest
+{
+    [MaxLength(2000)]
+    public string? Reason { get; set; }
 }
 
 public sealed class RedeemBenefitOfferRequest

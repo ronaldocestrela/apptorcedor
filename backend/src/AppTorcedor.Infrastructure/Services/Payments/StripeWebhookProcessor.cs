@@ -1,4 +1,5 @@
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.Modules.Administration.Payments;
 using AppTorcedor.Infrastructure.Entities;
 using AppTorcedor.Infrastructure.Options;
 using AppTorcedor.Infrastructure.Persistence;
@@ -134,6 +135,18 @@ public sealed class StripeWebhookProcessor(
             return StripeWebhookProcessResult.InvalidPayload;
         }
 
+        if (await db.BenefitRedemptions.AsNoTracking()
+                .AnyAsync(r => r.ShippingPaymentId == paymentId, cancellationToken)
+                .ConfigureAwait(false))
+        {
+            return await ProcessBenefitShippingFreightPaidAsync(
+                    stripeEvent,
+                    session,
+                    paymentId,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         var pi = session.PaymentIntentId;
         var confirm = await checkout
             .ConfirmPaymentAfterProviderSuccessAsync(paymentId, string.IsNullOrEmpty(pi) ? null : pi, cancellationToken)
@@ -146,6 +159,95 @@ public sealed class StripeWebhookProcessor(
                 confirm.Error);
             return StripeWebhookProcessResult.InvalidPayload;
         }
+
+        try
+        {
+            db.ProcessedStripeWebhookEvents.Add(
+                new ProcessedStripeWebhookEventRecord
+                {
+                    EventId = stripeEvent.Id,
+                    EventType = stripeEvent.Type ?? EventTypes.CheckoutSessionCompleted,
+                    ProcessedAtUtc = DateTimeOffset.UtcNow,
+                    RelatedPaymentId = paymentId,
+                });
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateException ex)
+        {
+            if (await db.ProcessedStripeWebhookEvents.AsNoTracking()
+                    .AnyAsync(e => e.EventId == stripeEvent.Id, cancellationToken)
+                    .ConfigureAwait(false))
+                return StripeWebhookProcessResult.Ok;
+
+            logger.LogError(ex, "Failed to record Stripe webhook idempotency for {EventId}.", stripeEvent.Id);
+            throw;
+        }
+
+        return StripeWebhookProcessResult.Ok;
+    }
+
+    private async Task<StripeWebhookProcessResult> ProcessBenefitShippingFreightPaidAsync(
+        Event stripeEvent,
+        Session session,
+        Guid paymentId,
+        CancellationToken cancellationToken)
+    {
+        var pay = await db.Payments.FirstOrDefaultAsync(p => p.Id == paymentId, cancellationToken).ConfigureAwait(false);
+        if (pay is null)
+            return StripeWebhookProcessResult.InvalidPayload;
+
+        var redemption = await db.BenefitRedemptions
+            .FirstOrDefaultAsync(r => r.ShippingPaymentId == paymentId, cancellationToken)
+            .ConfigureAwait(false);
+        if (redemption is null)
+            return StripeWebhookProcessResult.InvalidPayload;
+
+        if (redemption.Status == BenefitRedemptionStatus.Approved && string.Equals(pay.Status, PaymentChargeStatuses.Paid, StringComparison.Ordinal))
+        {
+            try
+            {
+                db.ProcessedStripeWebhookEvents.Add(
+                    new ProcessedStripeWebhookEventRecord
+                    {
+                        EventId = stripeEvent.Id,
+                        EventType = stripeEvent.Type ?? EventTypes.CheckoutSessionCompleted,
+                        ProcessedAtUtc = DateTimeOffset.UtcNow,
+                        RelatedPaymentId = paymentId,
+                    });
+                await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (DbUpdateException ex)
+            {
+                if (await db.ProcessedStripeWebhookEvents.AsNoTracking()
+                        .AnyAsync(e => e.EventId == stripeEvent.Id, cancellationToken)
+                        .ConfigureAwait(false))
+                    return StripeWebhookProcessResult.Ok;
+
+                logger.LogError(ex, "Failed to record Stripe webhook idempotency for {EventId}.", stripeEvent.Id);
+                throw;
+            }
+
+            return StripeWebhookProcessResult.Ok;
+        }
+
+        if (redemption.Status != BenefitRedemptionStatus.Pending)
+            return StripeWebhookProcessResult.InvalidPayload;
+
+        var now = DateTimeOffset.UtcNow;
+        var pi = session.PaymentIntentId;
+        pay.Status = PaymentChargeStatuses.Paid;
+        pay.PaidAt = now;
+        pay.UpdatedAt = now;
+        pay.LastProviderSyncAt = now;
+        pay.StatusReason = "Frete pago via Stripe (benefício camisa).";
+        if (!string.IsNullOrWhiteSpace(pi))
+            pay.ExternalReference = pi;
+
+        redemption.ShippingPaidAtUtc = now;
+        redemption.Status = BenefitRedemptionStatus.Approved;
+        redemption.ReviewedAtUtc = now;
+        redemption.ReviewedByUserId = null;
+        redemption.RejectionReason = null;
 
         try
         {

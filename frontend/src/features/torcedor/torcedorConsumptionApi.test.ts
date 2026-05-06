@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getEligibleBenefitOfferDetail,
+  getShippingOptions,
   listEligibleBenefitOffers,
   redeemBenefitOffer,
 } from './torcedorBenefitsApi'
@@ -70,6 +71,10 @@ describe('torcedor C.2 APIs', () => {
         alreadyRedeemed: false,
         redemptionDateUtc: null,
         bannerUrl: null,
+        isShirtCustomizationOffer: false,
+        shirtSizes: [],
+        shirtModels: [],
+        redemptionWorkflowStatus: 'none',
       },
     })
     const d = await getEligibleBenefitOfferDetail('o1')
@@ -77,12 +82,90 @@ describe('torcedor C.2 APIs', () => {
     expect(api.get).toHaveBeenCalledWith('/api/benefits/offers/o1')
   })
 
-  it('redeemBenefitOffer calls POST /api/benefits/offers/:id/redeem', async () => {
+  it('getShippingOptions calls GET /api/benefits/shipping-options', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: [],
+    })
+    await getShippingOptions('01310100')
+    expect(api.get).toHaveBeenCalledWith('/api/benefits/shipping-options', {
+      params: { cep: '01310100' },
+    })
+  })
+
+  it('redeemBenefitOffer calls POST /api/benefits/offers/:id/redeem with optional body', async () => {
     vi.mocked(api.post).mockResolvedValue({
-      data: { redemptionId: 'r1' },
+      data: { redemptionId: 'r1', checkoutUrl: null },
     })
     const r = await redeemBenefitOffer('o1')
     expect(r.redemptionId).toBe('r1')
-    expect(api.post).toHaveBeenCalledWith('/api/benefits/offers/o1/redeem')
+    expect(r.checkoutUrl).toBeNull()
+    expect(api.post).toHaveBeenCalledWith('/api/benefits/offers/o1/redeem', undefined)
+  })
+
+  it('redeemBenefitOffer returns checkoutUrl for Stripe freight when present', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      data: {
+        redemptionId: 'r-freight',
+        checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_test_freight',
+      },
+    })
+    const r = await redeemBenefitOffer('o1', { shippingMethod: 'carrier', shirtSize: 'M' })
+    expect(r.redemptionId).toBe('r-freight')
+    expect(r.checkoutUrl).toBe('https://checkout.stripe.com/c/pay/cs_test_freight')
+  })
+
+  it('redeemBenefitOffer sends shirt payload when provided', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      data: { redemptionId: 'r2', checkoutUrl: null },
+    })
+    await redeemBenefitOffer('o1', { shirtSize: 'M', shirtModel: 'Home', shirtNumber: '10', shirtDisplayName: 'A' })
+    expect(api.post).toHaveBeenCalledWith('/api/benefits/offers/o1/redeem', {
+      shirtSize: 'M',
+      shirtModel: 'Home',
+      shirtNumber: '10',
+      shirtDisplayName: 'A',
+    })
+  })
+
+  it('redeemBenefitOffer sends shirt and delivery payload when provided', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      data: { redemptionId: 'r3', checkoutUrl: null },
+    })
+    await redeemBenefitOffer('o1', {
+      shirtSize: 'M',
+      shirtModel: 'Home',
+      shirtNumber: '10',
+      shirtDisplayName: 'Fulano',
+      deliveryCep: '01310-100',
+      deliveryNeighborhood: 'Centro',
+      deliveryStreet: 'Rua A',
+      deliveryNumber: '1',
+      deliveryCity: 'São Paulo',
+      deliveryState: 'SP',
+      shippingMethod: 'carrier',
+      shippingCarrierId: 2,
+      shippingCarrierName: 'Correios',
+      shippingServiceName: 'SEDEX',
+      shippingPrice: 12.68,
+      shippingDeliveryDays: 2,
+    })
+    expect(api.post).toHaveBeenCalledWith('/api/benefits/offers/o1/redeem', {
+      shirtSize: 'M',
+      shirtModel: 'Home',
+      shirtNumber: '10',
+      shirtDisplayName: 'Fulano',
+      deliveryCep: '01310-100',
+      deliveryNeighborhood: 'Centro',
+      deliveryStreet: 'Rua A',
+      deliveryNumber: '1',
+      deliveryCity: 'São Paulo',
+      deliveryState: 'SP',
+      shippingMethod: 'carrier',
+      shippingCarrierId: 2,
+      shippingCarrierName: 'Correios',
+      shippingServiceName: 'SEDEX',
+      shippingPrice: 12.68,
+      shippingDeliveryDays: 2,
+    })
   })
 })

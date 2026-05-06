@@ -7,5 +7,11 @@ public sealed class ListBenefitRedemptionsQueryHandler(IBenefitsAdministrationPo
     : IRequestHandler<ListBenefitRedemptionsQuery, BenefitRedemptionListPageDto>
 {
     public Task<BenefitRedemptionListPageDto> Handle(ListBenefitRedemptionsQuery request, CancellationToken cancellationToken) =>
-        benefits.ListRedemptionsAsync(request.OfferId, request.UserId, request.Page, request.PageSize, cancellationToken);
+        benefits.ListRedemptionsAsync(
+            request.OfferId,
+            request.UserId,
+            request.Status,
+            request.Page,
+            request.PageSize,
+            cancellationToken);
 }

@@ -2,10 +2,13 @@ using System.Security.Claims;
 using AppTorcedor.Api.Authorization;
 using AppTorcedor.Api.Contracts;
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.Modules.Administration.Commands.ApproveBenefitRedemption;
 using AppTorcedor.Application.Modules.Administration.Commands.CreateBenefitOffer;
 using AppTorcedor.Application.Modules.Administration.Commands.CreateBenefitPartner;
 using AppTorcedor.Application.Modules.Administration.Commands.RemoveBenefitOfferBanner;
 using AppTorcedor.Application.Modules.Administration.Commands.RedeemBenefitOffer;
+using AppTorcedor.Application.Modules.Administration.Commands.RejectBenefitRedemption;
+using AppTorcedor.Application.Modules.Administration.Commands.ReplaceBenefitOfferShirtCatalog;
 using AppTorcedor.Application.Modules.Administration.Commands.UpdateBenefitOffer;
 using AppTorcedor.Application.Modules.Administration.Commands.UpdateBenefitPartner;
 using AppTorcedor.Application.Modules.Administration.Commands.UploadBenefitOfferBanner;
@@ -198,17 +201,72 @@ public sealed class AdminBenefitsController(IMediator mediator) : ControllerBase
         };
     }
 
+    [HttpPut("offers/{offerId:guid}/shirt-catalog")]
+    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.BeneficiosGerenciar)]
+    public async Task<IActionResult> ReplaceShirtCatalog(
+        Guid offerId,
+        [FromBody] ReplaceBenefitShirtCatalogRequest body,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var result = await mediator
+            .Send(
+                new ReplaceBenefitOfferShirtCatalogCommand(offerId, body.Sizes, body.Models),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return MapBenefitMutation(result);
+    }
+
+    [HttpPost("redemptions/{redemptionId:guid}/approve")]
+    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.BeneficiosGerenciar)]
+    public async Task<IActionResult> ApproveRedemption(Guid redemptionId, CancellationToken cancellationToken)
+    {
+        var actor = GetUserIdOrThrow();
+        var result = await mediator
+            .Send(new ApproveBenefitRedemptionCommand(redemptionId, actor), cancellationToken)
+            .ConfigureAwait(false);
+        return MapBenefitMutation(result);
+    }
+
+    [HttpPost("redemptions/{redemptionId:guid}/reject")]
+    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.BeneficiosGerenciar)]
+    public async Task<IActionResult> RejectRedemption(
+        Guid redemptionId,
+        [FromBody] RejectBenefitRedemptionRequest? body,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var actor = GetUserIdOrThrow();
+        var result = await mediator
+            .Send(new RejectBenefitRedemptionCommand(redemptionId, actor, body?.Reason), cancellationToken)
+            .ConfigureAwait(false);
+        return MapBenefitMutation(result);
+    }
+
     [HttpGet("redemptions")]
     [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.BeneficiosVisualizar)]
     public async Task<ActionResult<BenefitRedemptionListPageDto>> ListRedemptions(
         [FromQuery] Guid? offerId,
         [FromQuery] Guid? userId,
+        [FromQuery] string? status,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
+        BenefitRedemptionStatus? st = status?.Trim().ToLowerInvariant() switch
+        {
+            "pending" => BenefitRedemptionStatus.Pending,
+            "approved" => BenefitRedemptionStatus.Approved,
+            "rejected" => BenefitRedemptionStatus.Rejected,
+            _ => null,
+        };
+
         var dto = await mediator
-            .Send(new ListBenefitRedemptionsQuery(offerId, userId, page, pageSize), cancellationToken)
+            .Send(new ListBenefitRedemptionsQuery(offerId, userId, st, page, pageSize), cancellationToken)
             .ConfigureAwait(false);
         return Ok(dto);
     }
@@ -225,7 +283,8 @@ public sealed class AdminBenefitsController(IMediator mediator) : ControllerBase
             body.StartAt,
             body.EndAt,
             body.EligiblePlanIds,
-            body.EligibleMembershipStatuses);
+            body.EligibleMembershipStatuses,
+            body.IsShirtCustomizationOffer);
 
     private IActionResult MapBenefitMutation(BenefitMutationResult result)
     {

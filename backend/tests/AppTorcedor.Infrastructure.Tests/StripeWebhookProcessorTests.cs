@@ -189,6 +189,101 @@ public sealed class StripeWebhookProcessorTests
             },
         };
 
+    [Fact]
+    public async Task ProcessVerifiedEventAsync_benefit_freight_paid_approves_redemption()
+    {
+        await using var db = await CreateDbAsync();
+        var paymentId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var partnerId = Guid.NewGuid();
+        var offerId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        db.Users.Add(
+            new ApplicationUser
+            {
+                Id = userId,
+                Email = "ship@test.local",
+                NormalizedEmail = "SHIP@TEST.LOCAL",
+                UserName = "ship@test.local",
+                NormalizedUserName = "SHIP@TEST.LOCAL",
+                Name = "S",
+                EmailConfirmed = true,
+                IsActive = true,
+                CreatedAt = now,
+            });
+        db.BenefitPartners.Add(
+            new BenefitPartnerRecord
+            {
+                Id = partnerId,
+                Name = "P",
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        db.BenefitOffers.Add(
+            new BenefitOfferRecord
+            {
+                Id = offerId,
+                PartnerId = partnerId,
+                Title = "Camisa",
+                IsActive = true,
+                StartAt = now.AddDays(-1),
+                EndAt = now.AddDays(30),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsShirtCustomizationOffer = true,
+            });
+        db.Payments.Add(
+            new PaymentRecord
+            {
+                Id = paymentId,
+                UserId = userId,
+                MembershipId = null,
+                Amount = 12.68m,
+                Status = PaymentChargeStatuses.Pending,
+                DueDate = now.AddDays(1),
+                PaymentMethod = "Card",
+                ExternalReference = "cs_test_ship",
+                ProviderName = "Stripe",
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        db.BenefitRedemptions.Add(
+            new BenefitRedemptionRecord
+            {
+                Id = Guid.NewGuid(),
+                OfferId = offerId,
+                UserId = userId,
+                CreatedAt = now,
+                Status = BenefitRedemptionStatus.Pending,
+                ShirtSize = "M",
+                ShirtModel = "Home",
+                ShirtNumber = "10",
+                ShirtDisplayName = "T",
+                ShippingMethod = "carrier",
+                ShippingPrice = 12.68m,
+                ShippingPaymentId = paymentId,
+            });
+        await db.SaveChangesAsync();
+
+        var checkout = new RecordingCheckoutPort();
+        var opts = Microsoft.Extensions.Options.Options.Create(new Infrastructure.Options.PaymentsOptions());
+        var sut = new StripeWebhookProcessor(db, checkout, opts, NullLogger<StripeWebhookProcessor>.Instance);
+        var stripeEvent = BuildCheckoutSessionCompletedEvent(paymentId, amountTotalCents: 1268, eventId: "evt_ship_1");
+
+        var r = await sut.ProcessVerifiedEventAsync(stripeEvent, CancellationToken.None);
+
+        Assert.Equal(StripeWebhookProcessResult.Ok, r);
+        Assert.Equal(0, checkout.ConfirmAfterCalls);
+
+        var pay = await db.Payments.AsNoTracking().SingleAsync(p => p.Id == paymentId);
+        Assert.Equal(PaymentChargeStatuses.Paid, pay.Status);
+
+        var red = await db.BenefitRedemptions.AsNoTracking().SingleAsync(x => x.ShippingPaymentId == paymentId);
+        Assert.Equal(BenefitRedemptionStatus.Approved, red.Status);
+        Assert.NotNull(red.ShippingPaidAtUtc);
+    }
+
     private sealed class RecordingCheckoutPort : ITorcedorSubscriptionCheckoutPort
     {
         public int ConfirmAfterCalls { get; private set; }

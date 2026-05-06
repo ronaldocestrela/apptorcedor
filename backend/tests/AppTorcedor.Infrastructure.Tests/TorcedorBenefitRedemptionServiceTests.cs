@@ -3,12 +3,46 @@ using AppTorcedor.Identity;
 using AppTorcedor.Infrastructure.Entities;
 using AppTorcedor.Infrastructure.Persistence;
 using AppTorcedor.Infrastructure.Services.Benefits;
+using AppTorcedor.Infrastructure.Services.Payments;
 using Microsoft.EntityFrameworkCore;
 
 namespace AppTorcedor.Infrastructure.Tests;
 
 public sealed class TorcedorBenefitRedemptionServiceTests
 {
+    private static TorcedorShirtRedemptionRequest SampleCarrierShirtRequest() =>
+        new(
+            "M",
+            "Home",
+            "10",
+            "Fulano",
+            "01310100",
+            "Bela Vista",
+            "Av Paulista",
+            "1000",
+            "São Paulo",
+            "SP",
+            TorcedorBenefitShippingMethods.Carrier,
+            2,
+            "Correios",
+            "SEDEX",
+            12.68m,
+            2);
+
+    private static TorcedorShirtRedemptionRequest SamplePickupShirtRequest() =>
+        new(
+            "M",
+            "Home",
+            "10",
+            "Fulano",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            TorcedorBenefitShippingMethods.Pickup);
+
     private static async Task<AppDbContext> CreateDbAsync()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -68,8 +102,8 @@ public sealed class TorcedorBenefitRedemptionServiceTests
             });
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
-        var r = await sut.RedeemOfferAsync(offerId, userId);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var r = await sut.RedeemOfferAsync(offerId, userId, null);
 
         Assert.True(r.Ok);
         Assert.NotNull(r.RedemptionId);
@@ -84,8 +118,8 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         db.Users.Add(MinUser(userId));
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
-        var r = await sut.RedeemOfferAsync(Guid.NewGuid(), userId);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var r = await sut.RedeemOfferAsync(Guid.NewGuid(), userId, null);
 
         Assert.False(r.Ok);
         Assert.Equal(TorcedorRedemptionError.NotFound, r.Error);
@@ -146,8 +180,8 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         db.BenefitOfferPlanEligibilities.Add(new BenefitOfferPlanEligibilityRecord { OfferId = offerId, PlanId = planId });
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
-        var r = await sut.RedeemOfferAsync(offerId, userId);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var r = await sut.RedeemOfferAsync(offerId, userId, null);
 
         Assert.False(r.Ok);
         Assert.Equal(TorcedorRedemptionError.NotEligible, r.Error);
@@ -192,11 +226,12 @@ public sealed class TorcedorBenefitRedemptionServiceTests
                 UserId = userId,
                 ActorUserId = Guid.NewGuid(),
                 CreatedAt = now,
+                Status = BenefitRedemptionStatus.Approved,
             });
         await db.SaveChangesAsync();
 
-        var sut = new TorcedorBenefitRedemptionService(db);
-        var r = await sut.RedeemOfferAsync(offerId, userId);
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var r = await sut.RedeemOfferAsync(offerId, userId, null);
 
         Assert.False(r.Ok);
         Assert.Equal(TorcedorRedemptionError.AlreadyRedeemed, r.Error);
@@ -244,5 +279,283 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         Assert.Equal("Parc", d.PartnerName);
         Assert.False(d.AlreadyRedeemed);
         Assert.Null(d.RedemptionDateUtc);
+        Assert.False(d.IsShirtCustomizationOffer);
+        Assert.Empty(d.ShirtSizes);
+        Assert.Empty(d.ShirtModels);
+        Assert.Equal("none", d.RedemptionWorkflowStatus);
+    }
+
+    [Fact]
+    public async Task Shirt_redeem_creates_pending_when_catalog_configured()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        var partnerId = Guid.NewGuid();
+        var offerId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        db.Users.Add(MinUser(userId));
+        db.BenefitPartners.Add(
+            new BenefitPartnerRecord
+            {
+                Id = partnerId,
+                Name = "P",
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        db.BenefitOffers.Add(
+            new BenefitOfferRecord
+            {
+                Id = offerId,
+                PartnerId = partnerId,
+                Title = "Camisa",
+                IsActive = true,
+                StartAt = now.AddDays(-1),
+                EndAt = now.AddDays(30),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsShirtCustomizationOffer = true,
+            });
+        db.BenefitShirtCatalogOptions.Add(
+            new BenefitShirtCatalogOptionRecord
+            {
+                Id = Guid.NewGuid(),
+                OfferId = offerId,
+                Kind = BenefitShirtCatalogOptionKind.Size,
+                Value = "M",
+                SortOrder = 0,
+            });
+        db.BenefitShirtCatalogOptions.Add(
+            new BenefitShirtCatalogOptionRecord
+            {
+                Id = Guid.NewGuid(),
+                OfferId = offerId,
+                Kind = BenefitShirtCatalogOptionKind.Model,
+                Value = "Home",
+                SortOrder = 0,
+            });
+        await db.SaveChangesAsync();
+
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var shirt = SampleCarrierShirtRequest();
+        var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
+
+        Assert.True(r.Ok);
+        var row = await db.BenefitRedemptions.SingleAsync(x => x.Id == r.RedemptionId);
+        Assert.NotNull(row.ShippingPaymentId);
+        Assert.Equal(
+            $"https://mock-payments.local/checkout/{row.ShippingPaymentId:N}?amount=12.68&currency=BRL",
+            r.CheckoutUrl);
+        Assert.Equal(BenefitRedemptionStatus.Pending, row.Status);
+        Assert.Equal("M", row.ShirtSize);
+        Assert.Equal("10", row.ShirtNumber);
+        Assert.Equal("01310100", row.DeliveryCep);
+        Assert.Equal("Av Paulista", row.DeliveryStreet);
+        Assert.Equal("SP", row.DeliveryState);
+        Assert.Equal(TorcedorBenefitShippingMethods.Carrier, row.ShippingMethod);
+        Assert.Equal(2, row.ShippingCarrierId);
+        Assert.Equal("SEDEX", row.ShippingServiceName);
+        var pay = await db.Payments.SingleAsync(p => p.Id == row.ShippingPaymentId!.Value);
+        Assert.Equal(12.68m, pay.Amount);
+        Assert.Equal("Mock", pay.ProviderName);
+    }
+
+    [Fact]
+    public async Task Shirt_redeem_pickup_creates_pending_without_address()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        var partnerId = Guid.NewGuid();
+        var offerId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        db.Users.Add(MinUser(userId));
+        db.BenefitPartners.Add(
+            new BenefitPartnerRecord
+            {
+                Id = partnerId,
+                Name = "P",
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        db.BenefitOffers.Add(
+            new BenefitOfferRecord
+            {
+                Id = offerId,
+                PartnerId = partnerId,
+                Title = "Camisa",
+                IsActive = true,
+                StartAt = now.AddDays(-1),
+                EndAt = now.AddDays(30),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsShirtCustomizationOffer = true,
+            });
+        db.BenefitShirtCatalogOptions.Add(
+            new BenefitShirtCatalogOptionRecord
+            {
+                Id = Guid.NewGuid(),
+                OfferId = offerId,
+                Kind = BenefitShirtCatalogOptionKind.Size,
+                Value = "M",
+                SortOrder = 0,
+            });
+        db.BenefitShirtCatalogOptions.Add(
+            new BenefitShirtCatalogOptionRecord
+            {
+                Id = Guid.NewGuid(),
+                OfferId = offerId,
+                Kind = BenefitShirtCatalogOptionKind.Model,
+                Value = "Home",
+                SortOrder = 0,
+            });
+        await db.SaveChangesAsync();
+
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var shirt = SamplePickupShirtRequest();
+        var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
+
+        Assert.True(r.Ok);
+        var row = await db.BenefitRedemptions.SingleAsync(x => x.Id == r.RedemptionId);
+        Assert.Equal(BenefitRedemptionStatus.Pending, row.Status);
+        Assert.Equal(TorcedorBenefitShippingMethods.Pickup, row.ShippingMethod);
+        Assert.Null(row.DeliveryCep);
+        Assert.Null(row.ShippingCarrierId);
+    }
+
+    [Fact]
+    public async Task Shirt_redeem_fails_validation_when_delivery_incomplete()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        var partnerId = Guid.NewGuid();
+        var offerId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        db.Users.Add(MinUser(userId));
+        db.BenefitPartners.Add(
+            new BenefitPartnerRecord { Id = partnerId, Name = "P", IsActive = true, CreatedAt = now, UpdatedAt = now });
+        db.BenefitOffers.Add(
+            new BenefitOfferRecord
+            {
+                Id = offerId,
+                PartnerId = partnerId,
+                Title = "Camisa",
+                IsActive = true,
+                StartAt = now.AddDays(-1),
+                EndAt = now.AddDays(30),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsShirtCustomizationOffer = true,
+            });
+        db.BenefitShirtCatalogOptions.Add(
+            new BenefitShirtCatalogOptionRecord
+            {
+                Id = Guid.NewGuid(),
+                OfferId = offerId,
+                Kind = BenefitShirtCatalogOptionKind.Size,
+                Value = "M",
+                SortOrder = 0,
+            });
+        db.BenefitShirtCatalogOptions.Add(
+            new BenefitShirtCatalogOptionRecord
+            {
+                Id = Guid.NewGuid(),
+                OfferId = offerId,
+                Kind = BenefitShirtCatalogOptionKind.Model,
+                Value = "Home",
+                SortOrder = 0,
+            });
+        await db.SaveChangesAsync();
+
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var shirt = new TorcedorShirtRedemptionRequest(
+            "M",
+            "Home",
+            "10",
+            "Fulano",
+            "",
+            "Bela Vista",
+            "Av Paulista",
+            "1000",
+            "São Paulo",
+            "SP",
+            TorcedorBenefitShippingMethods.Carrier);
+        var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
+
+        Assert.False(r.Ok);
+        Assert.Equal(TorcedorRedemptionError.Validation, r.Error);
+    }
+
+    [Fact]
+    public async Task Shirt_redeem_fails_validation_without_catalog()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        var partnerId = Guid.NewGuid();
+        var offerId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        db.Users.Add(MinUser(userId));
+        db.BenefitPartners.Add(
+            new BenefitPartnerRecord { Id = partnerId, Name = "P", IsActive = true, CreatedAt = now, UpdatedAt = now });
+        db.BenefitOffers.Add(
+            new BenefitOfferRecord
+            {
+                Id = offerId,
+                PartnerId = partnerId,
+                Title = "Camisa",
+                IsActive = true,
+                StartAt = now.AddDays(-1),
+                EndAt = now.AddDays(30),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsShirtCustomizationOffer = true,
+            });
+        await db.SaveChangesAsync();
+
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var shirt = SampleCarrierShirtRequest();
+        var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
+
+        Assert.False(r.Ok);
+        Assert.Equal(TorcedorRedemptionError.Validation, r.Error);
+    }
+
+    [Fact]
+    public async Task Non_shirt_redeem_fails_when_payload_provided()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        var partnerId = Guid.NewGuid();
+        var offerId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        db.Users.Add(MinUser(userId));
+        db.BenefitPartners.Add(
+            new BenefitPartnerRecord { Id = partnerId, Name = "P", IsActive = true, CreatedAt = now, UpdatedAt = now });
+        db.BenefitOffers.Add(
+            new BenefitOfferRecord
+            {
+                Id = offerId,
+                PartnerId = partnerId,
+                Title = "O",
+                IsActive = true,
+                StartAt = now.AddDays(-1),
+                EndAt = now.AddDays(30),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsShirtCustomizationOffer = false,
+            });
+        await db.SaveChangesAsync();
+
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var shirt = SampleCarrierShirtRequest();
+        var r = await sut.RedeemOfferAsync(offerId, userId, shirt);
+
+        Assert.False(r.Ok);
+        Assert.Equal(TorcedorRedemptionError.Validation, r.Error);
     }
 }

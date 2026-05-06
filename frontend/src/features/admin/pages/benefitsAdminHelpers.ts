@@ -43,10 +43,3 @@ export const MEMBERSHIP_STATUS_OPTIONS = [
   'Cancelado',
   'PendingPayment',
 ] as const
-
-export function parseCommaSeparatedGuids(raw: string): string[] {
-  return raw
-    .split(/[,;\s]+/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0)
-}

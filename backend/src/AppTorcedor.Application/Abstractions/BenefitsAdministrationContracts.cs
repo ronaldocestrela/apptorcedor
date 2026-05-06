@@ -2,6 +2,13 @@ using AppTorcedor.Identity;
 
 namespace AppTorcedor.Application.Abstractions;
 
+public enum BenefitRedemptionStatus
+{
+    Pending = 0,
+    Approved = 1,
+    Rejected = 2,
+}
+
 public sealed record BenefitPartnerListItemDto(Guid PartnerId, string Name, bool IsActive, DateTimeOffset CreatedAt);
 
 public sealed record BenefitPartnerListPageDto(int TotalCount, IReadOnlyList<BenefitPartnerListItemDto> Items);
@@ -41,7 +48,10 @@ public sealed record BenefitOfferDetailDto(
     DateTimeOffset UpdatedAt,
     IReadOnlyList<Guid> EligiblePlanIds,
     IReadOnlyList<MembershipStatus> EligibleMembershipStatuses,
-    string? BannerUrl);
+    string? BannerUrl,
+    bool IsShirtCustomizationOffer,
+    IReadOnlyList<string> ShirtSizes,
+    IReadOnlyList<string> ShirtModels);
 
 public sealed record BenefitOfferWriteDto(
     Guid PartnerId,
@@ -51,7 +61,8 @@ public sealed record BenefitOfferWriteDto(
     DateTimeOffset StartAt,
     DateTimeOffset EndAt,
     IReadOnlyList<Guid>? EligiblePlanIds,
-    IReadOnlyList<MembershipStatus>? EligibleMembershipStatuses);
+    IReadOnlyList<MembershipStatus>? EligibleMembershipStatuses,
+    bool IsShirtCustomizationOffer);
 
 public sealed record BenefitRedemptionListItemDto(
     Guid RedemptionId,
@@ -61,7 +72,28 @@ public sealed record BenefitRedemptionListItemDto(
     string UserEmail,
     Guid? ActorUserId,
     string? Notes,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    BenefitRedemptionStatus Status,
+    string? ShirtSize,
+    string? ShirtModel,
+    string? ShirtNumber,
+    string? ShirtDisplayName,
+    string? DeliveryCep,
+    string? DeliveryNeighborhood,
+    string? DeliveryStreet,
+    string? DeliveryNumber,
+    string? DeliveryCity,
+    string? DeliveryState,
+    string? ShippingMethod,
+    int? ShippingCarrierId,
+    string? ShippingCarrierName,
+    string? ShippingServiceName,
+    decimal? ShippingPrice,
+    int? ShippingDeliveryDays,
+    DateTimeOffset? ShippingPaidAtUtc,
+    DateTimeOffset? ReviewedAtUtc,
+    Guid? ReviewedByUserId,
+    string? RejectionReason);
 
 public sealed record BenefitRedemptionListPageDto(int TotalCount, IReadOnlyList<BenefitRedemptionListItemDto> Items);
 
@@ -148,7 +180,25 @@ public interface IBenefitsAdministrationPort
     Task<BenefitRedemptionListPageDto> ListRedemptionsAsync(
         Guid? offerId,
         Guid? userId,
+        BenefitRedemptionStatus? status,
         int page,
         int pageSize,
+        CancellationToken cancellationToken = default);
+
+    Task<BenefitMutationResult> ReplaceShirtCatalogAsync(
+        Guid offerId,
+        IReadOnlyList<string> sizes,
+        IReadOnlyList<string> models,
+        CancellationToken cancellationToken = default);
+
+    Task<BenefitMutationResult> ApproveBenefitRedemptionAsync(
+        Guid redemptionId,
+        Guid reviewerUserId,
+        CancellationToken cancellationToken = default);
+
+    Task<BenefitMutationResult> RejectBenefitRedemptionAsync(
+        Guid redemptionId,
+        Guid reviewerUserId,
+        string? reason,
         CancellationToken cancellationToken = default);
 }

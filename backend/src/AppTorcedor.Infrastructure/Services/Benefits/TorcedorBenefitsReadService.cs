@@ -1,4 +1,5 @@
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Infrastructure.Entities;
 using AppTorcedor.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -122,11 +123,70 @@ public sealed class TorcedorBenefitsReadService(AppDbContext db) : ITorcedorBene
         if (!BenefitOfferEligibility.MatchesPlanAndStatus(planRows, statusRows, snapshot))
             return null;
 
-        var redemption = await db.BenefitRedemptions.AsNoTracking()
+        List<string> shirtSizes = [];
+        List<string> shirtModels = [];
+        if (row.Offer.IsShirtCustomizationOffer)
+        {
+            shirtSizes = await db.BenefitShirtCatalogOptions.AsNoTracking()
+                .Where(x => x.OfferId == offerId && x.Kind == BenefitShirtCatalogOptionKind.Size)
+                .OrderBy(x => x.SortOrder)
+                .ThenBy(x => x.Value)
+                .Select(x => x.Value)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+            shirtModels = await db.BenefitShirtCatalogOptions.AsNoTracking()
+                .Where(x => x.OfferId == offerId && x.Kind == BenefitShirtCatalogOptionKind.Model)
+                .OrderBy(x => x.SortOrder)
+                .ThenBy(x => x.Value)
+                .Select(x => x.Value)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        var redemptions = await db.BenefitRedemptions.AsNoTracking()
             .Where(r => r.OfferId == offerId && r.UserId == userId)
             .OrderByDescending(r => r.CreatedAt)
-            .FirstOrDefaultAsync(cancellationToken)
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        var approved = redemptions.FirstOrDefault(r => r.Status == BenefitRedemptionStatus.Approved);
+        var pending = redemptions.FirstOrDefault(r => r.Status == BenefitRedemptionStatus.Pending);
+        var rejected = redemptions.FirstOrDefault(r => r.Status == BenefitRedemptionStatus.Rejected);
+
+        string workflow;
+        bool alreadyRedeemed;
+        DateTimeOffset? redemptionDateUtc;
+
+        if (approved is not null)
+        {
+            workflow = "approved";
+            alreadyRedeemed = true;
+            redemptionDateUtc = approved.ReviewedAtUtc ?? approved.CreatedAt;
+        }
+        else if (pending is not null)
+        {
+            var method = (pending.ShippingMethod ?? "").Trim().ToLowerInvariant();
+            if (method == TorcedorBenefitShippingMethods.Carrier
+                && pending.ShippingPaymentId is not null
+                && pending.ShippingPaidAtUtc is null)
+                workflow = "awaiting_shipping_payment";
+            else
+                workflow = "pending";
+            alreadyRedeemed = false;
+            redemptionDateUtc = pending.CreatedAt;
+        }
+        else if (rejected is not null)
+        {
+            workflow = "rejected";
+            alreadyRedeemed = false;
+            redemptionDateUtc = rejected.CreatedAt;
+        }
+        else
+        {
+            workflow = "none";
+            alreadyRedeemed = false;
+            redemptionDateUtc = null;
+        }
 
         return new TorcedorEligibleBenefitOfferDetailDto(
             row.Offer.Id,
@@ -136,8 +196,12 @@ public sealed class TorcedorBenefitsReadService(AppDbContext db) : ITorcedorBene
             row.Offer.Description,
             row.Offer.StartAt,
             row.Offer.EndAt,
-            redemption is not null,
-            redemption?.CreatedAt,
-            row.Offer.BannerUrl);
+            alreadyRedeemed,
+            redemptionDateUtc,
+            row.Offer.BannerUrl,
+            row.Offer.IsShirtCustomizationOffer,
+            shirtSizes,
+            shirtModels,
+            workflow);
     }
 }
