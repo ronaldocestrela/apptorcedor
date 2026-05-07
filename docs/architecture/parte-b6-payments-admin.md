@@ -53,6 +53,7 @@ Respostas de mutação: `204` sucesso; `404` não encontrado; `400` transição 
 - Serviço: `IPaymentDelinquencySweep` / `PaymentDelinquencySweep`.
 - `Pending` com `DueDate` &lt; UTC agora → atualiza para `Overdue`.
 - `Membership` em `Ativo` com pelo menos uma cobrança `Overdue` → `ApplySystemMembershipTransitionAsync` para `Inadimplente` (histórico com `ActorUserId` nulo).
+- Cobranças em `Cancelled` não entram no critério de inadimplência; no fluxo D.4, a confirmação de recontratação encerra cobranças legadas `Pending`/`Overdue` do mesmo `Membership` para evitar regressão de status após sweep.
 - Execução: `PaymentDelinquencyHostedService` a cada 5 minutos (desativado em ambiente `Testing`; testes chamam o sweep via DI).
 
 ## Relação com B.4 e Parte D

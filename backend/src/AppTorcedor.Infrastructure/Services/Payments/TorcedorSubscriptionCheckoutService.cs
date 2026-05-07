@@ -156,6 +156,26 @@ public sealed class TorcedorSubscriptionCheckoutService(
         if (membership.Status != MembershipStatus.PendingPayment)
             return ConfirmTorcedorSubscriptionPaymentResult.Failure(ConfirmTorcedorSubscriptionPaymentError.InvalidState);
 
+        var legacyOpenCharges = await db.Payments
+            .Where(
+                p => p.MembershipId == payment.MembershipId
+                    && p.Id != payment.Id
+                    && (p.Status == PaymentChargeStatuses.Pending || p.Status == PaymentChargeStatuses.Overdue))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var legacyCharge in legacyOpenCharges)
+        {
+            await paymentProvider.CancelAsync(legacyCharge.Id, legacyCharge.ExternalReference, cancellationToken).ConfigureAwait(false);
+            legacyCharge.Status = PaymentChargeStatuses.Cancelled;
+            legacyCharge.CancelledAt = now;
+            legacyCharge.UpdatedAt = now;
+            legacyCharge.LastProviderSyncAt = now;
+            legacyCharge.StatusReason = string.IsNullOrWhiteSpace(legacyCharge.StatusReason)
+                ? "Cobranca legada encerrada na confirmacao da recontratacao (D.4)."
+                : $"{legacyCharge.StatusReason} — encerrada na confirmacao da recontratacao (D.4).";
+        }
+
         var plan = membership.PlanId is { } pid
             ? await db.MembershipPlans.AsNoTracking().FirstOrDefaultAsync(p => p.Id == pid, cancellationToken).ConfigureAwait(false)
             : null;

@@ -13,6 +13,7 @@ Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (D
   - **Frete de benefício (camisa + envio):** quando o `payment_id` corresponde a um resgate com `ShippingPaymentId`, marca o pagamento como pago, define `ShippingPaidAtUtc` e **aprova** o `BenefitRedemption` (sem reativar membership nem gatilhar pontos de mensalidade em cobranças sem `MembershipId`).
   Idempotência por `event.id` na tabela `ProcessedStripeWebhookEvents`.
 - **Ativação:** somente `Membership` em `PendingPayment` + cobrança `Pending`/`Overdue` → `Paid` e `Membership` → `Ativo`; histórico `StatusChanged` com ator nulo (sistema); `ILoyaltyPointsTriggerPort.AwardPointsForPaymentPaidAsync` é chamado após confirmação (paridade com conciliação admin), **exceto** quando o pagamento é apenas de frete de benefício (sem membership associada ao `Payment`).
+- **Recontratação com legado em aberto:** ao confirmar a nova cobrança de contratação (`PendingPayment` → `Ativo`), cobranças legadas do mesmo `Membership` em `Pending`/`Overdue` são encerradas como `Cancelled` via `IPaymentProvider.CancelAsync`, evitando marcação indevida de inadimplência no sweep.
 
 ## API (torcedor)
 
@@ -63,9 +64,9 @@ Ambiente de testes da API força `Payments:Provider=Mock` e define `Payments:Web
 
 ## Testes
 
-- **API:** `PartD4SubscriptionsApiTests` — auth, PIX + callback + idempotência, cartão, conflito `PendingPayment`, segredo inválido; `StripeWebhookApiTests` — comportamento do endpoint quando segredo Stripe não está configurado.
+- **API:** `PartD4SubscriptionsApiTests` — auth, PIX + callback + idempotência, cartão, conflito `PendingPayment`, segredo inválido e cenário de recontratação com cobrança legada cancelada após confirmação; `StripeWebhookApiTests` — comportamento do endpoint quando segredo Stripe não está configurado.
 - **Application:** `TorcedorSubscriptionCheckoutCommandHandlerTests` — delegação aos ports.
-- **Infrastructure:** `StripePaymentProviderTests`, `StripeWebhookProcessorTests` — configuração e idempotência do processador de eventos.
+- **Infrastructure:** `TorcedorSubscriptionCheckoutServiceTests` (cleanup de cobranças legadas na confirmação), `StripePaymentProviderTests`, `StripeWebhookProcessorTests` — configuração e idempotência do processador de eventos.
 
 ## Próximos passos (D.5+)
 
