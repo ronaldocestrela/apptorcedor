@@ -1,3 +1,6 @@
+using AppTorcedor.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -5,6 +8,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AppTorcedor.Infrastructure.Persistence.Migrations;
 
 /// <inheritdoc />
+[DbContext(typeof(AppDbContext))]
+[Migration("20260507180000_BenefitShippingStripePayment")]
 public partial class BenefitShippingStripePayment : Migration
 {
     /// <inheritdoc />

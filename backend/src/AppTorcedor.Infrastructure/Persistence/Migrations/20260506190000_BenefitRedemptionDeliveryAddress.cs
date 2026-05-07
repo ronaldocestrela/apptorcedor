@@ -1,12 +1,17 @@
+using AppTorcedor.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace AppTorcedor.Infrastructure.Persistence.Migrations
 {
-/// <inheritdoc />
-public partial class BenefitRedemptionDeliveryAddress : Migration
-{
+    /// <inheritdoc />
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260506190000_BenefitRedemptionDeliveryAddress")]
+    public partial class BenefitRedemptionDeliveryAddress : Migration
+    {
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {

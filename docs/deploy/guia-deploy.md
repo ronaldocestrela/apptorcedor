@@ -73,6 +73,40 @@ dotnet ef database update \
 
 (use uma máquina com .NET SDK e ferramenta `dotnet-ef` instalada, e rede liberada até o SQL).
 
+#### 2.2.1 Sintoma: `500` em `/api/admin/benefits/redemptions` com `SqlException` “Invalid column name …”
+
+Significa que o **modelo EF da API** espera colunas em `BenefitRedemptions` (entrega/frete/Stripe) que **ainda não existem** no SQL Server a que a API está conectada. Causas comuns:
+
+1. **Connection string diferente** entre o ambiente onde correu `dotnet ef database update` e onde a API sobe (`ConnectionStrings__DefaultConnection` / `DATABASE_CONNECTION_STRING` no Compose).
+2. **Histórico de migrations inconsistente**: linhas em `dbo.__EFMigrationsHistory` sem o SQL correspondente ter corrido de facto (ex.: insert manual). Nesse caso `MigrateAsync()` na subida **não reaplica** migrations já “marcadas”.
+
+**Confirmação no SQL Server** (ajuste o nome da base):
+
+```sql
+SELECT MigrationId, ProductVersion
+FROM dbo.__EFMigrationsHistory
+WHERE MigrationId LIKE '%Benefit%'
+ORDER BY MigrationId;
+
+SELECT COLUMN_NAME
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'BenefitRedemptions'
+  AND COLUMN_NAME IN (
+    'DeliveryCep', 'DeliveryCity', 'DeliveryNeighborhood', 'DeliveryNumber',
+    'DeliveryState', 'DeliveryStreet', 'ShippingCarrierId', 'ShippingCarrierName',
+    'ShippingDeliveryDays', 'ShippingMethod', 'ShippingPaidAtUtc', 'ShippingPaymentId',
+    'ShippingPrice', 'ShippingServiceName');
+```
+
+Deve existir histórico incluindo, entre outras, `20260506175312_BenefitShirtRedemptionWorkflow`, `20260506190000_BenefitRedemptionDeliveryAddress`, `20260506234434_SyncPendingModelChanges`, `20260507120000_BenefitRedemptionShipping` e `20260507180000_BenefitShippingStripePayment` (nomes exatos na pasta `backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`), e a consulta de colunas deve devolver todas as listadas.
+
+**Correção:**
+
+- Garantir que a API usa **a mesma** connection string do banco que vai receber o schema.
+- Confirmar que **todas** as classes de migration no assembly têm o atributo `[Migration("timestamp_Nome")]` (normalmente num ficheiro `*.Designer.cs` gerado pelo `dotnet ef migrations add`). Ficheiros `*.cs` de migration **sem** esse atributo **não entram** na lista do `dotnet ef migrations list` e o `MigrateAsync()` na subida **não executa** o respectivo `Up()` — sintoma típico: `Invalid column name` em colunas só definidas nessas migrations “órfãs”.
+- Se o histórico estiver errado, resolver com o DBA (reverter entradas fantasmas e aplicar `dotnet ef database update` com o artefacto que contém as migrations, ou aplicar script gerado a partir das migrations).
+- Após alinhar schema, **reiniciar** a API (a subida já executa `MigrateAsync` quando o provider é relacional; ver `Program.cs`).
+
 ### 2.3 DNS e TLS (recomendado em produção)
 
 - Defina hostnames públicos para a **API** (ex.: `api.clube.com.br`) e para o **site** (ex.: `app.clube.com.br`).

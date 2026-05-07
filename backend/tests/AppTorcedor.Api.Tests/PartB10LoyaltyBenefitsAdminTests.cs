@@ -116,6 +116,22 @@ public sealed class PartB10LoyaltyBenefitsAdminTests(AppWebApplicationFactory fa
     }
 
     [Fact]
+    public async Task List_benefit_redemptions_pending_returns_ok()
+    {
+        var token = await LoginAdminAsync();
+        using var req = new HttpRequestMessage(
+            HttpMethod.Get,
+            // Regressão: lista admin projeta colunas de entrega/frete; schema deve existir (migrations aplicadas).
+            "/api/admin/benefits/redemptions?status=pending&page=1&pageSize=100");
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var res = await _client.SendAsync(req);
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var page = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(JsonValueKind.Array, page.GetProperty("items").ValueKind);
+        Assert.True(page.TryGetProperty("totalCount", out var tc) && tc.ValueKind == JsonValueKind.Number);
+    }
+
+    [Fact]
     public async Task Benefits_partner_offer_redeem_roundtrip()
     {
         var token = await LoginAdminAsync();

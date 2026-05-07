@@ -88,6 +88,8 @@ Se quiser usar SQL Server **fora** deste repositório (outro host, managed, etc.
 
    É necessário ter a [CLI do EF](https://learn.microsoft.com/ef/core/cli/dotnet) instalada (`dotnet tool install --global dotnet-ef`).
 
+   Se após atualizar o código aparecer **`500`** em `GET /api/admin/benefits/redemptions` com **`Invalid column name`** no SQL, o schema do banco está atrás do modelo: ver **§2.2.1** em [guia de deploy](docs/deploy/guia-deploy.md).
+
 ## Credenciais iniciais (seed)
 
 Na primeira execução, o sistema cria as **roles** (Administrador Master, Administrador, Financeiro, etc.) e o usuário administrador.

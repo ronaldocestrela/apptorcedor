@@ -18,6 +18,8 @@ Implementação alinhada ao [ROADMAP-PENDENCIAS.md](../ROADMAP-PENDENCIAS.md) (B
 
 Migrações EF: `PartB10LoyaltyBenefitsAdmin`; coluna `BannerUrl` em `BenefitOfferBanner`; **workflow camisa** em `BenefitShirtRedemptionWorkflow`; **endereço de entrega** em `BenefitRedemptionDeliveryAddress`; **frete/retirada** em `BenefitRedemptionShipping` (`backend/src/AppTorcedor.Infrastructure/Persistence/Migrations/`); **frete via Stripe** em `BenefitShippingStripePayment` (`ShippingPaymentId` / `ShippingPaidAtUtc`; `Payments.MembershipId` opcional para linhas só de frete); **sincronização de índice de pagamento de frete** em `SyncPendingModelChanges` (ajuste de `IX_BenefitRedemptions_ShippingPaymentId` para não único, alinhado ao modelo EF atual, com SQL defensivo para cenários onde o índice não existe em ambientes legados).
 
+**Deploy:** a API aplica migrations pendentes na subida (`Program.cs`, `MigrateAsync`). Se o rollout da **imagem/binário** for mais novo que o schema do banco (ou se `__EFMigrationsHistory` estiver inconsistente), rotas que leem `BenefitRedemptions` — em especial **`GET /api/admin/benefits/redemptions`** — podem falhar com `SqlException` “Invalid column name …”. Ver troubleshooting em [`docs/deploy/guia-deploy.md`](../deploy/guia-deploy.md) (§2.2.1).
+
 ## Permissões
 
 - `Fidelidade.Visualizar` — leitura de campanhas, extrato, rankings.
