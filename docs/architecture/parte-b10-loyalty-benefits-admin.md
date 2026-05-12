@@ -73,7 +73,7 @@ Base: `api/admin/benefits`. Implementação em `BenefitsAdministrationService` (
 | PUT | `/api/admin/benefits/offers/{id}/shirt-catalog` | `Beneficios.Gerenciar` | Substitui catálogo: corpo `{ sizes: string[], models: string[] }` (ambos não vazios após normalização). |
 | POST | `/api/admin/benefits/redemptions/{id}/approve` | `Beneficios.Gerenciar` | Aprova pedido `Pending` (camisa). |
 | POST | `/api/admin/benefits/redemptions/{id}/reject` | `Beneficios.Gerenciar` | Recusa pedido `Pending`; corpo opcional `{ reason }`. |
-| GET | `/api/admin/benefits/redemptions` | `Beneficios.Visualizar` | Lista resgates; query `status` opcional (`pending` / `approved` / `rejected`). |
+| GET | `/api/admin/benefits/redemptions` | `Beneficios.Visualizar` | Lista resgates; query `status` opcional (`pending` / `approved` / `rejected` / `cancelled_by_user`). |
 
 ### Oferta de camisa (personalização + aprovação)
 
@@ -106,6 +106,7 @@ Implementação em `frontend/src/features/admin/pages/BenefitsAdminPage.tsx` + h
 - **Catálogo de camisa:** ao **editar** oferta marcada como camisa, textareas de tamanhos/modelos (um por linha ou vírgula) e botão **Salvar catálogo** → `PUT /api/admin/benefits/offers/{id}/shirt-catalog`.
 - **Fila de pedidos:** seção **Solicitações de camisa pendentes** (`GET .../redemptions?status=pending`) com **Aprovar** / **Recusar** e linha de **endereço de entrega** (CEP, rua, número, bairro, cidade/UF) quando persistido; em envio **carrier**, linha de frete indica **Frete pago em …** ou **Frete ainda não pago** conforme `shippingPaidAtUtc`.
 - **Camisas aprovadas:** seção que lista resgates `Approved` com dados de personalização (tam., mod., número, nome) e **entrega** + mesma indicação de frete pago quando `carrier` (`GET .../redemptions?status=approved`, filtrado no cliente a itens com camisa — exclui aprovações sem tam./mod.).
+- **Cancelados pelo torcedor:** a listagem administrativa também aceita `status=cancelled_by_user` para auditoria e acompanhamento operacional de desistências.
 - **Status exibido (derivado no cliente, não persistido):** `Inativa` (`!isActive`); senão `Expirada` se `now > endAt`; senão `Programada` se `now < startAt`; senão `Vigente` se `isActive && startAt ≤ now ≤ endAt`.
 - **Filtros:** parceiro na lista de ofertas; status derivado (Vigente / Programada / Expirada / Inativa).
 - **Ações por linha:** Editar (carrega `GET /offers/{id}` no formulário), Ativar/Desativar e **Excluir (soft)** — ambos atualizam via `PUT /api/admin/benefits/offers/{id}` com `isActive` adequado, **preservando** `eligiblePlanIds` / `eligibleMembershipStatuses` / `isShirtCustomizationOffer` retornados do GET antes do PUT.

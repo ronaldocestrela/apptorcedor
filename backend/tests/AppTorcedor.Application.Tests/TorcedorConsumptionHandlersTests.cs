@@ -151,6 +151,12 @@ public sealed class TorcedorConsumptionHandlersTests
             RedeemCalls.Add((offerId, userId));
             return Task.FromResult(TorcedorRedemptionResult.Success(Guid.NewGuid()));
         }
+        
+            public Task<TorcedorRedemptionCancelResult> CancelMyRedemptionAsync(
+                Guid offerId,
+                Guid userId,
+                CancellationToken cancellationToken = default)
+                => Task.FromResult(TorcedorRedemptionCancelResult.Success());
     }
 
     private sealed class FakeTorcedorPublishedPlansPort : ITorcedorPublishedPlansReadPort

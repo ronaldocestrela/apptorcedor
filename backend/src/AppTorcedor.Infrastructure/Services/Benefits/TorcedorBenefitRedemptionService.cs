@@ -66,6 +66,9 @@ public sealed class TorcedorBenefitRedemptionService(AppDbContext db, IPaymentPr
         if (await HasBlockingRedemptionAsync(offerId, userId, cancellationToken).ConfigureAwait(false))
             return TorcedorRedemptionResult.Fail(TorcedorRedemptionError.AlreadyRedeemed);
 
+        // If the user has previously cancelled, every new redemption goes to Pending for staff review.
+        var forceIntoReview = await HasPriorCancellationAsync(offerId, userId, cancellationToken).ConfigureAwait(false);
+
         if (row.Offer.IsShirtCustomizationOffer)
         {
             if (shirt is null)
@@ -183,10 +186,38 @@ public sealed class TorcedorBenefitRedemptionService(AppDbContext db, IPaymentPr
                 ActorUserId = null,
                 Notes = null,
                 CreatedAt = now,
-                Status = BenefitRedemptionStatus.Approved,
+                // Normal offers auto-approve, but after a user cancellation the request
+                // stays Pending until staff reviews it.
+                Status = forceIntoReview ? BenefitRedemptionStatus.Pending : BenefitRedemptionStatus.Approved,
             });
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return TorcedorRedemptionResult.Success(instantId);
+    }
+
+    public async Task<TorcedorRedemptionCancelResult> CancelMyRedemptionAsync(
+        Guid offerId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var row = await db.BenefitRedemptions
+            .Where(r => r.OfferId == offerId
+                     && r.UserId == userId
+                     && (r.Status == BenefitRedemptionStatus.Pending || r.Status == BenefitRedemptionStatus.Approved))
+            .OrderByDescending(r => r.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (row is null)
+            return TorcedorRedemptionCancelResult.Fail(TorcedorRedemptionCancelError.NotFound);
+
+        // Do not allow cancellation when the freight has already been paid via Stripe/Mock.
+        if (row.ShippingPaidAtUtc is not null)
+            return TorcedorRedemptionCancelResult.Fail(TorcedorRedemptionCancelError.NotCancellable);
+
+        row.Status = BenefitRedemptionStatus.CancelledByUser;
+        row.CancelledByUserAtUtc = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return TorcedorRedemptionCancelResult.Success();
     }
 
     private static bool HasAnyShirtOrDeliveryFields(TorcedorShirtRedemptionRequest shirt) =>
@@ -216,6 +247,17 @@ public sealed class TorcedorBenefitRedemptionService(AppDbContext db, IPaymentPr
                 r => r.OfferId == offerId
                      && r.UserId == userId
                      && (r.Status == BenefitRedemptionStatus.Pending || r.Status == BenefitRedemptionStatus.Approved),
+                cancellationToken);
+
+    private Task<bool> HasPriorCancellationAsync(
+        Guid offerId,
+        Guid userId,
+        CancellationToken cancellationToken) =>
+        db.BenefitRedemptions.AsNoTracking()
+            .AnyAsync(
+                r => r.OfferId == offerId
+                     && r.UserId == userId
+                     && r.Status == BenefitRedemptionStatus.CancelledByUser,
                 cancellationToken);
 
     private sealed record NormalizedDelivery(

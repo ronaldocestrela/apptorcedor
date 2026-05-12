@@ -262,6 +262,7 @@ public sealed class AdminBenefitsController(IMediator mediator) : ControllerBase
             "pending" => BenefitRedemptionStatus.Pending,
             "approved" => BenefitRedemptionStatus.Approved,
             "rejected" => BenefitRedemptionStatus.Rejected,
+            "cancelled_by_user" => BenefitRedemptionStatus.CancelledByUser,
             _ => null,
         };
 

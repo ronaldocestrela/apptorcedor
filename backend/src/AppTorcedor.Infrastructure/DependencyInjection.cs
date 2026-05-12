@@ -18,6 +18,7 @@ using AppTorcedor.Infrastructure.Services.Plans;
 using AppTorcedor.Infrastructure.Services.Support;
 using AppTorcedor.Infrastructure.Services.Cors;
 using AppTorcedor.Infrastructure.Services.Email;
+using AppTorcedor.Infrastructure.Services.Partner;
 using AppTorcedor.Infrastructure.Options;
 using Resend;
 using AppTorcedor.Infrastructure.Services.Account;
@@ -209,6 +210,8 @@ public static class DependencyInjection
         services.AddScoped<ITorcedorSubscriptionSummaryPort, TorcedorSubscriptionSummaryReadService>();
         services.AddScoped<ITorcedorPlanChangePort, TorcedorPlanChangeService>();
         services.AddScoped<ITorcedorMembershipCancellationPort, TorcedorMembershipCancellationService>();
+        services.AddScoped<IPartnerApiKeyPort, PartnerApiKeyService>();
+        services.AddScoped<IPartnerLookupPort, PartnerLookupService>();
         services.AddHostedService<PaymentDelinquencyHostedService>();
         services.AddHostedService<InAppNotificationDispatchHostedService>();
 

@@ -47,8 +47,14 @@ public sealed record TorcedorEligibleBenefitOfferDetailDto(
     bool IsShirtCustomizationOffer,
     IReadOnlyList<string> ShirtSizes,
     IReadOnlyList<string> ShirtModels,
-    /// <summary>none, pending, approved, rejected</summary>
-    string RedemptionWorkflowStatus);
+    /// <summary>none, pending, approved, rejected, cancelled, awaiting_shipping_payment</summary>
+    string RedemptionWorkflowStatus,
+    /// <summary>
+    /// True when the user has previously cancelled a redemption for this offer.
+    /// Any new redemption request will be placed in Pending for staff approval,
+    /// even for offers that normally auto-approve.
+    /// </summary>
+    bool RequiresApprovalForNextRedemption);
 
 public enum TorcedorRedemptionError
 {
@@ -56,6 +62,18 @@ public enum TorcedorRedemptionError
     NotEligible,
     AlreadyRedeemed,
     Validation,
+}
+
+public enum TorcedorRedemptionCancelError
+{
+    NotFound,
+    NotCancellable,
+}
+
+public sealed record TorcedorRedemptionCancelResult(bool Ok, TorcedorRedemptionCancelError? Error)
+{
+    public static TorcedorRedemptionCancelResult Success() => new(true, null);
+    public static TorcedorRedemptionCancelResult Fail(TorcedorRedemptionCancelError error) => new(false, error);
 }
 
 /// <summary>Optional payload when redeeming shirt-customization offers.</summary>
@@ -98,6 +116,16 @@ public interface ITorcedorBenefitRedemptionPort
         Guid offerId,
         Guid userId,
         TorcedorShirtRedemptionRequest? shirt,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancels the most recent active (Pending or Approved) redemption for the given offer/user pair,
+    /// provided that freight has not yet been paid (ShippingPaidAtUtc is null).
+    /// After cancellation any new redemption for the same offer will remain Pending for staff review.
+    /// </summary>
+    Task<TorcedorRedemptionCancelResult> CancelMyRedemptionAsync(
+        Guid offerId,
+        Guid userId,
         CancellationToken cancellationToken = default);
 }
 

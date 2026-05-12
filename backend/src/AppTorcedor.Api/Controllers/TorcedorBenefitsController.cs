@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using AppTorcedor.Api.Contracts;
 using AppTorcedor.Application.Abstractions;
+using AppTorcedor.Application.Modules.Torcedor.Commands.CancelMyBenefitRedemption;
 using AppTorcedor.Application.Modules.Torcedor.Commands.RedeemBenefitOfferByTorcedor;
 using AppTorcedor.Application.Modules.Torcedor.Queries.GetEligibleBenefitOfferDetail;
 using AppTorcedor.Application.Modules.Torcedor.Queries.ListEligibleBenefitOffers;
@@ -94,7 +95,8 @@ public sealed class TorcedorBenefitsController(IMediator mediator) : ControllerB
                 dto.IsShirtCustomizationOffer,
                 dto.ShirtSizes,
                 dto.ShirtModels,
-                dto.RedemptionWorkflowStatus));
+                dto.RedemptionWorkflowStatus,
+                dto.RequiresApprovalForNextRedemption));
     }
 
     [HttpPost("offers/{offerId:guid}/redeem")]
@@ -166,6 +168,30 @@ public sealed class TorcedorBenefitsController(IMediator mediator) : ControllerB
             TorcedorRedemptionError.NotEligible => BadRequest(new { error = "not_eligible" }),
             TorcedorRedemptionError.AlreadyRedeemed => BadRequest(new { error = "already_redeemed" }),
             TorcedorRedemptionError.Validation => BadRequest(new { error = "validation_failed" }),
+            _ => BadRequest(),
+        };
+    }
+
+    [HttpDelete("offers/{offerId:guid}/redemption")]
+    public async Task<IActionResult> CancelRedemption(
+        Guid offerId,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = GetUserIdOrDefault();
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await mediator
+            .Send(new CancelMyBenefitRedemptionCommand(userId.Value, offerId), cancellationToken)
+            .ConfigureAwait(false);
+
+        if (result.Ok)
+            return NoContent();
+
+        return result.Error switch
+        {
+            TorcedorRedemptionCancelError.NotFound => NotFound(),
+            TorcedorRedemptionCancelError.NotCancellable => Conflict(new { error = "not_cancellable" }),
             _ => BadRequest(),
         };
     }

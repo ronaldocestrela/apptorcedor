@@ -7,6 +7,7 @@ public enum BenefitRedemptionStatus
     Pending = 0,
     Approved = 1,
     Rejected = 2,
+    CancelledByUser = 3,
 }
 
 public sealed record BenefitPartnerListItemDto(Guid PartnerId, string Name, bool IsActive, DateTimeOffset CreatedAt);

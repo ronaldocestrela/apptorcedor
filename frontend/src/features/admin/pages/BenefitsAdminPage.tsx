@@ -141,6 +141,8 @@ export function BenefitsAdminPage() {
   const [redemptions, setRedemptions] = useState<Awaited<ReturnType<typeof listBenefitRedemptions>>['items']>([])
   const [pendingRedemptions, setPendingRedemptions] = useState<BenefitRedemptionListItem[]>([])
   const [approvedShirtRedemptions, setApprovedShirtRedemptions] = useState<BenefitRedemptionListItem[]>([])
+  const [cancelledRedemptions, setCancelledRedemptions] = useState<BenefitRedemptionListItem[]>([])
+  const [redemptionStatusFilter, setRedemptionStatusFilter] = useState<'' | 'pending' | 'approved' | 'rejected' | 'cancelled_by_user'>('')
   /** Planos ativos para multiseleção de elegibilidade (`GET /api/admin/plans?isActive=true`; requer `Planos.Visualizar`). */
   const [activePlansForOffers, setActivePlansForOffers] = useState<AdminPlanListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -176,7 +178,7 @@ export function BenefitsAdminPage() {
     setLoading(true)
     setError(null)
     try {
-      const [p, o, r, pend, appr] = await Promise.all([
+      const [p, o, r, pend, appr, canc] = await Promise.all([
         listBenefitPartners({
           search: partnerSearchApplied.trim() || undefined,
           isActive:
@@ -187,12 +189,14 @@ export function BenefitsAdminPage() {
         listBenefitRedemptions({ pageSize: 50 }),
         listBenefitRedemptions({ status: 'pending', pageSize: 100 }),
         listBenefitRedemptions({ status: 'approved', pageSize: 200 }),
+        listBenefitRedemptions({ status: 'cancelled_by_user', pageSize: 100 }),
       ])
       setPartners(p.items)
       setOffers(o.items)
       setRedemptions(r.items)
       setPendingRedemptions(pend.items)
       setApprovedShirtRedemptions(appr.items.filter(isApprovedShirtRedemption))
+      setCancelledRedemptions(canc.items)
       try {
         const pl = await listAdminPlans({ isActive: true, pageSize: 200 })
         setActivePlansForOffers(pl.items)
@@ -1105,21 +1109,62 @@ export function BenefitsAdminPage() {
 
         <section>
           <h2 style={{ fontSize: '1rem' }}>Últimos resgates</h2>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label style={{ fontSize: '0.85rem', marginRight: '0.5rem', color: '#a6b0bf' }}>Filtrar por status:</label>
+            <select
+              value={redemptionStatusFilter}
+              onChange={(e) => setRedemptionStatusFilter(e.target.value as typeof redemptionStatusFilter)}
+              style={{ fontSize: '0.85rem', background: '#1a2332', color: '#f5f7fa', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '0.3rem 0.6rem' }}
+            >
+              <option value="">Todos</option>
+              <option value="pending">Pendente</option>
+              <option value="approved">Aprovado</option>
+              <option value="rejected">Recusado</option>
+              <option value="cancelled_by_user">Cancelado pelo torcedor</option>
+            </select>
+          </div>
           <ul>
-            {redemptions.map((r) => (
+            {(redemptionStatusFilter === 'cancelled_by_user'
+              ? cancelledRedemptions
+              : redemptionStatusFilter
+                ? redemptions.filter((r) => {
+                    const map: Record<string, string> = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' }
+                    return r.status === (map[redemptionStatusFilter] ?? redemptionStatusFilter)
+                  })
+                : redemptions
+            ).map((r) => (
               <li key={r.redemptionId}>
                 {r.offerTitle}
-                {' '}
-                —
-                {' '}
+                {' '}—{' '}
                 {r.userEmail}
-                {' '}
-                —
-                {' '}
-                {r.status}
-                {' '}
-                —
-                {' '}
+                {' '}—{' '}
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '1px 8px',
+                    borderRadius: 8,
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    background:
+                      r.status === 'Pending' ? 'rgba(255,193,7,0.15)'
+                      : r.status === 'Approved' ? 'rgba(140,211,146,0.15)'
+                      : r.status === 'Rejected' ? 'rgba(255,112,112,0.15)'
+                      : r.status === 'CancelledByUser' ? 'rgba(166,176,191,0.18)'
+                      : 'rgba(166,176,191,0.12)',
+                    color:
+                      r.status === 'Pending' ? '#ffc107'
+                      : r.status === 'Approved' ? '#8cd392'
+                      : r.status === 'Rejected' ? '#ff7070'
+                      : '#a6b0bf',
+                  }}
+                >
+                  {r.status === 'Pending' ? 'Pendente'
+                    : r.status === 'Approved' ? 'Aprovado'
+                    : r.status === 'Rejected' ? 'Recusado'
+                    : r.status === 'CancelledByUser' ? 'Cancelado pelo torcedor'
+                    : String(r.status)}
+                </span>
+                {' '}—{' '}
                 {r.createdAt}
               </li>
             ))}

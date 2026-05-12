@@ -43,7 +43,13 @@ export type TorcedorEligibleBenefitOfferDetail = {
   isShirtCustomizationOffer: boolean
   shirtSizes: string[]
   shirtModels: string[]
+  /** none | pending | approved | rejected | cancelled | awaiting_shipping_payment */
   redemptionWorkflowStatus: string
+  /**
+   * True when the user previously cancelled a redemption for this offer.
+   * Any new request will stay in Pending awaiting staff approval.
+   */
+  requiresApprovalForNextRedemption: boolean
 }
 
 export async function getEligibleBenefitOfferDetail(offerId: string): Promise<TorcedorEligibleBenefitOfferDetail> {
@@ -135,4 +141,8 @@ export async function redeemBenefitOffer(
     body,
   )
   return { redemptionId: data.redemptionId, checkoutUrl: data.checkoutUrl ?? null }
+}
+
+export async function cancelBenefitRedemption(offerId: string): Promise<void> {
+  await api.delete(`/api/benefits/offers/${offerId}/redemption`)
 }

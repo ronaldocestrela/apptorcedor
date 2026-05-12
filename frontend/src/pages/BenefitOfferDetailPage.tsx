@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Gift, Shirt, MapPin, CheckCircle2, AlertCircle, Loader2, Store, Truck } from 'lucide-react'
+import { ArrowLeft, Gift, Shirt, MapPin, CheckCircle2, AlertCircle, Loader2, Store, Truck, XCircle } from 'lucide-react'
 import { resolvePublicAssetUrl } from '../features/account/accountApi'
 import {
   getEligibleBenefitOfferDetail,
   getShippingOptions,
   redeemBenefitOffer,
+  cancelBenefitRedemption,
   type TorcedorEligibleBenefitOfferDetail,
   type TorcedorShippingOption,
 } from '../features/torcedor/torcedorBenefitsApi'
@@ -54,6 +55,10 @@ export function BenefitOfferDetailPage() {
   const [notFound, setNotFound] = useState(false)
   const [redeeming, setRedeeming] = useState(false)
   const [redeemError, setRedeemError] = useState<string | null>(null)
+
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
+  const [showCancelModal, setShowCancelModal] = useState(false)
 
   const [shirtSize, setShirtSize] = useState('')
   const [shirtModel, setShirtModel] = useState('')
@@ -203,7 +208,8 @@ export function BenefitOfferDetailPage() {
     const w = detail.redemptionWorkflowStatus?.toLowerCase() ?? 'none'
     return !detail.alreadyRedeemed
       && (w === 'none'
-        || w === 'rejected')
+        || w === 'rejected'
+        || w === 'cancelled')
   }, [detail])
 
   const shirtNumberTrimmed = shirtNumber.trim()
@@ -313,6 +319,24 @@ export function BenefitOfferDetailPage() {
     }
   }
 
+  async function handleCancelConfirmed() {
+    if (!offerId)
+      return
+    try {
+      setCancelling(true)
+      setCancelError(null)
+      await cancelBenefitRedemption(offerId)
+      setShowCancelModal(false)
+      await load()
+    }
+    catch {
+      setCancelError('Não foi possível cancelar o resgate. Tente novamente.')
+    }
+    finally {
+      setCancelling(false)
+    }
+  }
+
   return (
     <div className="benefit-detail-root">
       <header className="subpage-header">
@@ -406,6 +430,30 @@ export function BenefitOfferDetailPage() {
                   {' '}
                   {new Date(detail.redemptionDateUtc).toLocaleString('pt-BR')}
                 </span>
+              </div>
+            ) : null}
+
+            {detail.redemptionWorkflowStatus?.toLowerCase() === 'cancelled' ? (
+              <div className="benefit-detail__alert benefit-detail__alert--warning">
+                <XCircle size={15} />
+                <span>Você cancelou este resgate. Você pode fazer uma nova solicitação abaixo.</span>
+              </div>
+            ) : null}
+
+            {detail.requiresApprovalForNextRedemption
+            && detail.redemptionWorkflowStatus?.toLowerCase() === 'none' ? (
+              <div className="benefit-detail__alert benefit-detail__alert--info">
+                <AlertCircle size={15} />
+                <span>
+                  Sua próxima solicitação passará por aprovação do suporte antes de ser efetivada.
+                </span>
+              </div>
+            ) : null}
+
+            {cancelError ? (
+              <div role="alert" className="benefit-detail__alert benefit-detail__alert--error">
+                <AlertCircle size={15} />
+                <span>{cancelError}</span>
               </div>
             ) : null}
 
@@ -728,9 +776,85 @@ export function BenefitOfferDetailPage() {
                     : 'Resgatar benefício'}
               </button>
             ) : null}
+
+            {/* ── Botão cancelar resgate (Pending ou Approved sem frete pago) ── */}
+            {(detail.redemptionWorkflowStatus === 'pending'
+              || detail.redemptionWorkflowStatus === 'approved') ? (
+              <button
+                type="button"
+                className="btn-ghost benefit-detail-cancel-btn"
+                disabled={cancelling}
+                onClick={() => { setCancelError(null); setShowCancelModal(true) }}
+              >
+                {cancelling
+                  ? (
+                      <span className="benefit-detail__btn-inner">
+                        <Loader2 size={15} className="benefit-detail__spin" />
+                        Cancelando…
+                      </span>
+                    )
+                  : (
+                      <span className="benefit-detail__btn-inner">
+                        <XCircle size={15} />
+                        Cancelar resgate
+                      </span>
+                    )}
+              </button>
+            ) : null}
           </article>
         ) : null}
       </main>
+
+      {/* ── Modal de confirmação de cancelamento ── */}
+      {showCancelModal ? (
+        <div className="benefit-cancel-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title">
+          <div className="benefit-cancel-modal">
+            <h2 id="cancel-modal-title" className="benefit-cancel-modal__title">
+              <XCircle size={20} aria-hidden />
+              Cancelar resgate
+            </h2>
+            <p className="benefit-cancel-modal__body">
+              Tem certeza que deseja cancelar este resgate?
+            </p>
+            <div className="benefit-cancel-modal__warning">
+              <AlertCircle size={16} aria-hidden />
+              <span>
+                Atenção: após o cancelamento, qualquer nova solicitação deste benefício
+                precisará ser
+                {' '}
+                <strong>aprovada pelo suporte</strong>
+                {' '}
+                antes de ser efetivada.
+              </span>
+            </div>
+            <div className="benefit-cancel-modal__actions">
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => setShowCancelModal(false)}
+                disabled={cancelling}
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={() => void handleCancelConfirmed()}
+                disabled={cancelling}
+              >
+                {cancelling
+                  ? (
+                      <span className="benefit-detail__btn-inner">
+                        <Loader2 size={15} className="benefit-detail__spin" />
+                        Cancelando…
+                      </span>
+                    )
+                  : 'Confirmar cancelamento'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <TorcedorBottomNav />
     </div>

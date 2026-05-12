@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
+using AppTorcedor.Api.Auth;
 using AppTorcedor.Api.Authorization;
 using AppTorcedor.Api.Configuration;
 using AppTorcedor.Api.Middleware;
@@ -67,7 +68,10 @@ builder.Services
             RoleClaimType = System.Security.Claims.ClaimTypes.Role,
             NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier,
         };
-    });
+    })
+    .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, PartnerApiKeyAuthHandler>(
+        PartnerApiKeyAuthHandler.SchemeName,
+        _ => { });
 
 builder.Services.AddAuthorization(options =>
 {
