@@ -50,6 +50,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<SupportTicketMessageRecord> SupportTicketMessages => Set<SupportTicketMessageRecord>();
     public DbSet<SupportTicketMessageAttachmentRecord> SupportTicketMessageAttachments => Set<SupportTicketMessageAttachmentRecord>();
     public DbSet<SupportTicketHistoryRecord> SupportTicketHistories => Set<SupportTicketHistoryRecord>();
+    public DbSet<PartnerApiKeyRecord> PartnerApiKeys => Set<PartnerApiKeyRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -634,6 +635,17 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 .WithMany()
                 .HasForeignKey(x => x.ActorUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<PartnerApiKeyRecord>(entity =>
+        {
+            entity.ToTable("PartnerApiKeys");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.KeyHash).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.KeyPrefix).HasMaxLength(32).IsRequired();
+            entity.HasIndex(x => x.KeyHash).IsUnique();
+            entity.HasIndex(x => x.IsActive);
         });
     }
 }

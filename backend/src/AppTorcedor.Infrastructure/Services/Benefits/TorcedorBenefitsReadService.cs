@@ -152,10 +152,12 @@ public sealed class TorcedorBenefitsReadService(AppDbContext db) : ITorcedorBene
         var approved = redemptions.FirstOrDefault(r => r.Status == BenefitRedemptionStatus.Approved);
         var pending = redemptions.FirstOrDefault(r => r.Status == BenefitRedemptionStatus.Pending);
         var rejected = redemptions.FirstOrDefault(r => r.Status == BenefitRedemptionStatus.Rejected);
+        var cancelled = redemptions.FirstOrDefault(r => r.Status == BenefitRedemptionStatus.CancelledByUser);
 
         string workflow;
         bool alreadyRedeemed;
         DateTimeOffset? redemptionDateUtc;
+        bool requiresApprovalForNextRedemption = cancelled is not null;
 
         if (approved is not null)
         {
@@ -174,6 +176,12 @@ public sealed class TorcedorBenefitsReadService(AppDbContext db) : ITorcedorBene
                 workflow = "pending";
             alreadyRedeemed = false;
             redemptionDateUtc = pending.CreatedAt;
+        }
+        else if (cancelled is not null)
+        {
+            workflow = "cancelled";
+            alreadyRedeemed = false;
+            redemptionDateUtc = cancelled.CancelledByUserAtUtc ?? cancelled.CreatedAt;
         }
         else if (rejected is not null)
         {
@@ -202,6 +210,7 @@ public sealed class TorcedorBenefitsReadService(AppDbContext db) : ITorcedorBene
             row.Offer.IsShirtCustomizationOffer,
             shirtSizes,
             shirtModels,
-            workflow);
+            workflow,
+            requiresApprovalForNextRedemption);
     }
 }

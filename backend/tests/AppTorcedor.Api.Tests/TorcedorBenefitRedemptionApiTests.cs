@@ -553,6 +553,131 @@ public sealed class TorcedorBenefitRedemptionApiTests(AppWebApplicationFactory f
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
+    [Fact]
+    public async Task Cancel_redemption_requires_auth()
+    {
+        var res = await _client.DeleteAsync($"/api/benefits/offers/{Guid.NewGuid()}/redemption");
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Cancel_redemption_returns_not_found_when_no_active_redemption()
+    {
+        var memberToken = await LoginMemberAsync();
+        using var req = new HttpRequestMessage(HttpMethod.Delete, $"/api/benefits/offers/{Guid.NewGuid()}/redemption");
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
+        var res = await _client.SendAsync(req);
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Cancel_and_reredeem_flow_puts_new_redemption_in_pending()
+    {
+        var admin = await LoginAdminAsync();
+        var memberToken = await LoginMemberAsync();
+
+        Guid partnerId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/benefits/partners"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            post.Content = JsonContent.Create(new { name = "Parceiro Cancel API", description = "d", isActive = true });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            partnerId = Guid.Parse(body.GetProperty("partnerId").GetString()!);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        Guid offerId;
+        using (var post = new HttpRequestMessage(HttpMethod.Post, "/api/admin/benefits/offers"))
+        {
+            post.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin);
+            post.Content = JsonContent.Create(
+                new
+                {
+                    partnerId,
+                    title = "Oferta Cancel API",
+                    description = "desc",
+                    isActive = true,
+                    startAt = now.AddDays(-1),
+                    endAt = now.AddDays(30),
+                    eligiblePlanIds = (Guid[]?)null,
+                    eligibleMembershipStatuses = (string[]?)null,
+                });
+            var res = await _client.SendAsync(post);
+            res.EnsureSuccessStatusCode();
+            var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+            offerId = Guid.Parse(body.GetProperty("offerId").GetString()!);
+        }
+
+        try
+        {
+            // Redeem
+            using (var redeem = new HttpRequestMessage(HttpMethod.Post, $"/api/benefits/offers/{offerId}/redeem"))
+            {
+                redeem.Headers.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
+                var res = await _client.SendAsync(redeem);
+                Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+            }
+
+            // Detail shows approved
+            using (var detail = new HttpRequestMessage(HttpMethod.Get, $"/api/benefits/offers/{offerId}"))
+            {
+                detail.Headers.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
+                var res = await _client.SendAsync(detail);
+                var d = await res.Content.ReadFromJsonAsync<JsonElement>();
+                Assert.Equal("approved", d.GetProperty("redemptionWorkflowStatus").GetString());
+            }
+
+            // Cancel
+            using (var cancel = new HttpRequestMessage(HttpMethod.Delete, $"/api/benefits/offers/{offerId}/redemption"))
+            {
+                cancel.Headers.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
+                var res = await _client.SendAsync(cancel);
+                Assert.Equal(HttpStatusCode.NoContent, res.StatusCode);
+            }
+
+            // Detail shows cancelled and requiresApprovalForNextRedemption = true
+            using (var detail2 = new HttpRequestMessage(HttpMethod.Get, $"/api/benefits/offers/{offerId}"))
+            {
+                detail2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
+                var res = await _client.SendAsync(detail2);
+                var d = await res.Content.ReadFromJsonAsync<JsonElement>();
+                Assert.Equal("cancelled", d.GetProperty("redemptionWorkflowStatus").GetString());
+                Assert.True(d.GetProperty("requiresApprovalForNextRedemption").GetBoolean());
+                Assert.False(d.GetProperty("alreadyRedeemed").GetBoolean());
+            }
+
+            // Re-redeem → must be pending
+            using (var redeem2 = new HttpRequestMessage(HttpMethod.Post, $"/api/benefits/offers/{offerId}/redeem"))
+            {
+                redeem2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
+                var res = await _client.SendAsync(redeem2);
+                Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+            }
+
+            using (var detail3 = new HttpRequestMessage(HttpMethod.Get, $"/api/benefits/offers/{offerId}"))
+            {
+                detail3.Headers.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
+                var res = await _client.SendAsync(detail3);
+                var d = await res.Content.ReadFromJsonAsync<JsonElement>();
+                Assert.Equal("pending", d.GetProperty("redemptionWorkflowStatus").GetString());
+            }
+        }
+        finally
+        {
+            await using (var scope = factory.Services.CreateAsyncScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                foreach (var r in db.BenefitRedemptions.Where(x => x.OfferId == offerId))
+                    db.BenefitRedemptions.Remove(r);
+                db.BenefitOffers.Remove(await db.BenefitOffers.SingleAsync(o => o.Id == offerId));
+                db.BenefitPartners.Remove(await db.BenefitPartners.SingleAsync(p => p.Id == partnerId));
+                await db.SaveChangesAsync();
+            }
+        }
+    }
+
     private async Task<string> LoginAdminAsync()
     {
         var login = await _client.PostAsJsonAsync(

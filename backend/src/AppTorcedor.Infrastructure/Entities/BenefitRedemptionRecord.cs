@@ -52,4 +52,7 @@ public sealed class BenefitRedemptionRecord
     public DateTimeOffset? ReviewedAtUtc { get; set; }
     public Guid? ReviewedByUserId { get; set; }
     public string? RejectionReason { get; set; }
+
+    /// <summary>Set when the torcedor self-cancels a Pending or Approved redemption.</summary>
+    public DateTimeOffset? CancelledByUserAtUtc { get; set; }
 }

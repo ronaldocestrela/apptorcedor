@@ -558,4 +558,212 @@ public sealed class TorcedorBenefitRedemptionServiceTests
         Assert.False(r.Ok);
         Assert.Equal(TorcedorRedemptionError.Validation, r.Error);
     }
+
+    // ──────────────────────── CancelMyRedemptionAsync ────────────────────────
+
+    private static async Task<(Guid PartnerId, Guid OfferId)> SeedOpenOfferAsync(
+        AppDbContext db,
+        Guid userId,
+        bool isShirt = false)
+    {
+        var partnerId = Guid.NewGuid();
+        var offerId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        db.BenefitPartners.Add(
+            new BenefitPartnerRecord
+            {
+                Id = partnerId,
+                Name = "P-Cancel",
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        db.BenefitOffers.Add(
+            new BenefitOfferRecord
+            {
+                Id = offerId,
+                PartnerId = partnerId,
+                Title = "O-Cancel",
+                IsActive = true,
+                StartAt = now.AddDays(-1),
+                EndAt = now.AddDays(30),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsShirtCustomizationOffer = isShirt,
+            });
+        if (isShirt)
+        {
+            db.BenefitShirtCatalogOptions.Add(new BenefitShirtCatalogOptionRecord
+            {
+                Id = Guid.NewGuid(), OfferId = offerId, Kind = BenefitShirtCatalogOptionKind.Size, Value = "M", SortOrder = 0,
+            });
+            db.BenefitShirtCatalogOptions.Add(new BenefitShirtCatalogOptionRecord
+            {
+                Id = Guid.NewGuid(), OfferId = offerId, Kind = BenefitShirtCatalogOptionKind.Model, Value = "Home", SortOrder = 0,
+            });
+        }
+
+        await db.SaveChangesAsync();
+        return (partnerId, offerId);
+    }
+
+    [Fact]
+    public async Task CancelMyRedemption_cancels_approved_redemption()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        db.Users.Add(MinUser(userId));
+        var (_, offerId) = await SeedOpenOfferAsync(db, userId);
+
+        var redemptionId = Guid.NewGuid();
+        db.BenefitRedemptions.Add(
+            new BenefitRedemptionRecord
+            {
+                Id = redemptionId,
+                OfferId = offerId,
+                UserId = userId,
+                CreatedAt = DateTimeOffset.UtcNow,
+                Status = BenefitRedemptionStatus.Approved,
+            });
+        await db.SaveChangesAsync();
+
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var r = await sut.CancelMyRedemptionAsync(offerId, userId);
+
+        Assert.True(r.Ok);
+        var row = await db.BenefitRedemptions.SingleAsync(x => x.Id == redemptionId);
+        Assert.Equal(BenefitRedemptionStatus.CancelledByUser, row.Status);
+        Assert.NotNull(row.CancelledByUserAtUtc);
+    }
+
+    [Fact]
+    public async Task CancelMyRedemption_cancels_pending_redemption()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        db.Users.Add(MinUser(userId));
+        var (_, offerId) = await SeedOpenOfferAsync(db, userId);
+
+        var redemptionId = Guid.NewGuid();
+        db.BenefitRedemptions.Add(
+            new BenefitRedemptionRecord
+            {
+                Id = redemptionId,
+                OfferId = offerId,
+                UserId = userId,
+                CreatedAt = DateTimeOffset.UtcNow,
+                Status = BenefitRedemptionStatus.Pending,
+            });
+        await db.SaveChangesAsync();
+
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var r = await sut.CancelMyRedemptionAsync(offerId, userId);
+
+        Assert.True(r.Ok);
+        var row = await db.BenefitRedemptions.SingleAsync(x => x.Id == redemptionId);
+        Assert.Equal(BenefitRedemptionStatus.CancelledByUser, row.Status);
+        Assert.NotNull(row.CancelledByUserAtUtc);
+    }
+
+    [Fact]
+    public async Task CancelMyRedemption_returns_not_found_when_no_active_redemption()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        db.Users.Add(MinUser(userId));
+        var (_, offerId) = await SeedOpenOfferAsync(db, userId);
+        await db.SaveChangesAsync();
+
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var r = await sut.CancelMyRedemptionAsync(offerId, userId);
+
+        Assert.False(r.Ok);
+        Assert.Equal(TorcedorRedemptionCancelError.NotFound, r.Error);
+    }
+
+    [Fact]
+    public async Task CancelMyRedemption_returns_not_cancellable_when_freight_already_paid()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        db.Users.Add(MinUser(userId));
+        var (_, offerId) = await SeedOpenOfferAsync(db, userId, isShirt: true);
+
+        var redemptionId = Guid.NewGuid();
+        db.BenefitRedemptions.Add(
+            new BenefitRedemptionRecord
+            {
+                Id = redemptionId,
+                OfferId = offerId,
+                UserId = userId,
+                CreatedAt = DateTimeOffset.UtcNow,
+                Status = BenefitRedemptionStatus.Pending,
+                ShippingMethod = TorcedorBenefitShippingMethods.Carrier,
+                ShippingPaymentId = Guid.NewGuid(),
+                ShippingPaidAtUtc = DateTimeOffset.UtcNow,
+            });
+        await db.SaveChangesAsync();
+
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var r = await sut.CancelMyRedemptionAsync(offerId, userId);
+
+        Assert.False(r.Ok);
+        Assert.Equal(TorcedorRedemptionCancelError.NotCancellable, r.Error);
+    }
+
+    [Fact]
+    public async Task After_cancellation_new_redemption_is_placed_in_pending()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        db.Users.Add(MinUser(userId));
+        var (_, offerId) = await SeedOpenOfferAsync(db, userId);
+
+        // First: redeem (normal offer → goes to Approved)
+        var sut = new TorcedorBenefitRedemptionService(db, new MockPaymentProvider());
+        var r1 = await sut.RedeemOfferAsync(offerId, userId, null);
+        Assert.True(r1.Ok);
+        var row1 = await db.BenefitRedemptions.SingleAsync(x => x.Id == r1.RedemptionId);
+        Assert.Equal(BenefitRedemptionStatus.Approved, row1.Status);
+
+        // Cancel it
+        var cancel = await sut.CancelMyRedemptionAsync(offerId, userId);
+        Assert.True(cancel.Ok);
+
+        // Re-redeem → must be Pending (awaiting staff approval)
+        var r2 = await sut.RedeemOfferAsync(offerId, userId, null);
+        Assert.True(r2.Ok);
+        var row2 = await db.BenefitRedemptions.SingleAsync(x => x.Id == r2.RedemptionId);
+        Assert.Equal(BenefitRedemptionStatus.Pending, row2.Status);
+    }
+
+    [Fact]
+    public async Task GetEligibleOfferDetail_shows_cancelled_workflow_status_and_requires_approval_flag()
+    {
+        await using var db = await CreateDbAsync();
+        var userId = Guid.NewGuid();
+        db.Users.Add(MinUser(userId));
+        var (_, offerId) = await SeedOpenOfferAsync(db, userId);
+
+        db.BenefitRedemptions.Add(
+            new BenefitRedemptionRecord
+            {
+                Id = Guid.NewGuid(),
+                OfferId = offerId,
+                UserId = userId,
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+                Status = BenefitRedemptionStatus.CancelledByUser,
+                CancelledByUserAtUtc = DateTimeOffset.UtcNow.AddMinutes(-1),
+            });
+        await db.SaveChangesAsync();
+
+        var read = new TorcedorBenefitsReadService(db);
+        var d = await read.GetEligibleOfferDetailAsync(userId, offerId);
+
+        Assert.NotNull(d);
+        Assert.Equal("cancelled", d.RedemptionWorkflowStatus);
+        Assert.False(d.AlreadyRedeemed);
+        Assert.True(d.RequiresApprovalForNextRedemption);
+    }
 }

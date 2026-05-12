@@ -278,6 +278,11 @@ public static class IdentityDataSeeder
         }
 
         var torcedor = await EnsureUserAsync(TestingSeedConstants.TorcedorEmail, "Torcedor Sample").ConfigureAwait(false);
+        if (torcedor.PhoneNumber is null)
+        {
+            torcedor.PhoneNumber = TestingSeedConstants.TorcedorPhone;
+            await userManager.UpdateAsync(torcedor).ConfigureAwait(false);
+        }
         if (!await userManager.IsInRoleAsync(torcedor, SystemRoles.Torcedor).ConfigureAwait(false))
         {
             var add = await userManager.AddToRoleAsync(torcedor, SystemRoles.Torcedor).ConfigureAwait(false);

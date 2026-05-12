@@ -1202,7 +1202,7 @@ export async function redeemBenefitOffer(offerId: string, body: { userId: string
   return data
 }
 
-export type BenefitRedemptionStatus = 'Pending' | 'Approved' | 'Rejected'
+export type BenefitRedemptionStatus = 'Pending' | 'Approved' | 'Rejected' | 'CancelledByUser'
 
 export type BenefitRedemptionListItem = {
   redemptionId: string
@@ -1244,7 +1244,7 @@ export type BenefitRedemptionListPage = {
 export async function listBenefitRedemptions(params: {
   offerId?: string
   userId?: string
-  status?: 'pending' | 'approved' | 'rejected'
+  status?: 'pending' | 'approved' | 'rejected' | 'cancelled_by_user'
   page?: number
   pageSize?: number
 }): Promise<BenefitRedemptionListPage> {

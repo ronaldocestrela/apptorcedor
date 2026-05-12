@@ -6,6 +6,9 @@ public static class TestingSeedConstants
     public const string TorcedorEmail = "torcedor@test.local";
     public const string MemberEmail = "member@test.local";
 
+    /// <summary>Número de telefone do torcedor de amostra (seed de testes).</summary>
+    public const string TorcedorPhone = "11988880001";
+
     /// <summary>CPF matematicamente válido usado no seed do membro de teste (normalizado, 11 dígitos).</summary>
     public const string SampleMemberCpf = "11144477735";
 

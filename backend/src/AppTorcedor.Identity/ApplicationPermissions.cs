@@ -37,6 +37,8 @@ public static class ApplicationPermissions
     public const string LgpdDadosExportar = "Lgpd.Dados.Exportar";
     public const string LgpdDadosAnonimizar = "Lgpd.Dados.Anonimizar";
 
+    public const string IntegracoesGerenciar = "Integracoes.Gerenciar";
+
     /// <summary>All permissions seeded in the database; assign to roles via <c>RolePermissions</c>.</summary>
     public static IReadOnlyList<string> All { get; } =
     [
@@ -71,5 +73,6 @@ public static class ApplicationPermissions
         LgpdConsentimentosRegistrar,
         LgpdDadosExportar,
         LgpdDadosAnonimizar,
+        IntegracoesGerenciar,
     ];
 }

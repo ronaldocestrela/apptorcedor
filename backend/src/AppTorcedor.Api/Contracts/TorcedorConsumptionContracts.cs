@@ -48,7 +48,8 @@ public sealed record TorcedorEligibleBenefitOfferDetailResponse(
     bool IsShirtCustomizationOffer,
     IReadOnlyList<string> ShirtSizes,
     IReadOnlyList<string> ShirtModels,
-    string RedemptionWorkflowStatus);
+    string RedemptionWorkflowStatus,
+    bool RequiresApprovalForNextRedemption);
 
 public sealed class TorcedorRedeemBenefitOfferRequest
 {
