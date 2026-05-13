@@ -241,6 +241,37 @@ export async function replaceRolePermissions(roleName: string, permissionNames: 
   await api.put('/api/admin/role-permissions', { roleName, permissionNames })
 }
 
+export type PartnerApiKeyListItem = {
+  id: string
+  name: string
+  keyPrefix: string
+  isActive: boolean
+  createdAt: string
+  lastUsedAtUtc: string | null
+}
+
+export type PartnerApiKeyCreated = {
+  id: string
+  name: string
+  keyPrefix: string
+  plaintextKey: string
+  createdAt: string
+}
+
+export async function listAdminPartnerApiKeys(): Promise<PartnerApiKeyListItem[]> {
+  const { data } = await api.get<PartnerApiKeyListItem[]>('/api/admin/partner-keys')
+  return data
+}
+
+export async function createAdminPartnerApiKey(name: string): Promise<PartnerApiKeyCreated> {
+  const { data } = await api.post<PartnerApiKeyCreated>('/api/admin/partner-keys', { name })
+  return data
+}
+
+export async function revokeAdminPartnerApiKey(id: string): Promise<void> {
+  await api.delete(`/api/admin/partner-keys/${encodeURIComponent(id)}`)
+}
+
 export type AuthTokensResponse = {
   accessToken: string
   refreshToken: string

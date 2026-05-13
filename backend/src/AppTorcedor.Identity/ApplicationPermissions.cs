@@ -36,6 +36,8 @@ public static class ApplicationPermissions
     public const string LgpdConsentimentosRegistrar = "Lgpd.Consentimentos.Registrar";
     public const string LgpdDadosExportar = "Lgpd.Dados.Exportar";
     public const string LgpdDadosAnonimizar = "Lgpd.Dados.Anonimizar";
+    public const string WebhooksVisualizar = "Webhooks.Visualizar";
+    public const string WebhooksGerenciar = "Webhooks.Gerenciar";
 
     public const string IntegracoesGerenciar = "Integracoes.Gerenciar";
 
@@ -73,6 +75,8 @@ public static class ApplicationPermissions
         LgpdConsentimentosRegistrar,
         LgpdDadosExportar,
         LgpdDadosAnonimizar,
+        WebhooksVisualizar,
+        WebhooksGerenciar,
         IntegracoesGerenciar,
     ];
 }

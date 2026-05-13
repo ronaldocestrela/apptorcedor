@@ -13,11 +13,11 @@ namespace AppTorcedor.Api.Controllers;
 
 [ApiController]
 [Route("api/admin/partner-keys")]
-[Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.IntegracoesGerenciar)]
 public sealed class AdminPartnerKeysController(IMediator mediator) : ControllerBase
 {
     /// <summary>Lista todas as API keys de parceiros (sem hash, sem chave em texto claro).</summary>
     [HttpGet]
+    [Authorize(Policy = Policies.WebhooksRead)]
     public async Task<ActionResult<IReadOnlyList<PartnerApiKeyListItemDto>>> List(CancellationToken cancellationToken)
     {
         var items = await mediator.Send(new ListPartnerApiKeysQuery(), cancellationToken).ConfigureAwait(false);
@@ -29,6 +29,7 @@ public sealed class AdminPartnerKeysController(IMediator mediator) : ControllerB
     /// A chave em texto claro (<c>plaintextKey</c>) é retornada APENAS nesta resposta — armazene-a imediatamente.
     /// </summary>
     [HttpPost]
+    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.WebhooksGerenciar)]
     public async Task<ActionResult<PartnerApiKeyCreatedDto>> Create(
         [FromBody] CreatePartnerApiKeyRequest body,
         CancellationToken cancellationToken)
@@ -46,6 +47,7 @@ public sealed class AdminPartnerKeysController(IMediator mediator) : ControllerB
 
     /// <summary>Revoga (desativa) uma API key de parceiro. A key deixa de funcionar imediatamente.</summary>
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = Policies.PermissionPrefix + ApplicationPermissions.WebhooksGerenciar)]
     public async Task<IActionResult> Revoke(Guid id, CancellationToken cancellationToken)
     {
         var found = await mediator.Send(new RevokePartnerApiKeyCommand(id), cancellationToken).ConfigureAwait(false);

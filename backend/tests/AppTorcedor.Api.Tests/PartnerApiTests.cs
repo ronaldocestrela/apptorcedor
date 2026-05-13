@@ -2,7 +2,10 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using AppTorcedor.Api.Authorization;
+using AppTorcedor.Api.Controllers;
 using AppTorcedor.Infrastructure.Testing;
+using Microsoft.AspNetCore.Authorization;
 using Xunit;
 
 namespace AppTorcedor.Api.Tests;
@@ -181,6 +184,24 @@ public sealed class PartnerApiTests(AppWebApplicationFactory factory) : IClassFi
         Assert.Equal(HttpStatusCode.OK, lookupRes.StatusCode);
         var resultBody = await lookupRes.Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(resultBody.GetProperty("exists").GetBoolean());
+    }
+
+    [Fact]
+    public void Admin_partner_keys_controller_has_split_read_and_manage_policies()
+    {
+        var methods = typeof(AdminPartnerKeysController).GetMethods();
+
+        var list = methods.Single(m => m.Name == nameof(AdminPartnerKeysController.List));
+        var listAuth = list.GetCustomAttributes(typeof(AuthorizeAttribute), false).Cast<AuthorizeAttribute>().Single();
+        Assert.Equal(Policies.WebhooksRead, listAuth.Policy);
+
+        var create = methods.Single(m => m.Name == nameof(AdminPartnerKeysController.Create));
+        var createAuth = create.GetCustomAttributes(typeof(AuthorizeAttribute), false).Cast<AuthorizeAttribute>().Single();
+        Assert.Equal(Policies.PermissionPrefix + AppTorcedor.Identity.ApplicationPermissions.WebhooksGerenciar, createAuth.Policy);
+
+        var revoke = methods.Single(m => m.Name == nameof(AdminPartnerKeysController.Revoke));
+        var revokeAuth = revoke.GetCustomAttributes(typeof(AuthorizeAttribute), false).Cast<AuthorizeAttribute>().Single();
+        Assert.Equal(Policies.PermissionPrefix + AppTorcedor.Identity.ApplicationPermissions.WebhooksGerenciar, revokeAuth.Policy);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────

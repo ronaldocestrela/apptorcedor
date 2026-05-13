@@ -9,4 +9,7 @@ public static class Policies
 
     /// <summary>Upload opponent logos: <see cref="Identity.ApplicationPermissions.JogosCriar"/> or <see cref="Identity.ApplicationPermissions.JogosEditar"/>.</summary>
     public const string GamesOpponentLogosUpload = "GamesOpponentLogosUpload";
+
+    /// <summary>Partner keys read access: <see cref="Identity.ApplicationPermissions.WebhooksVisualizar"/> or <see cref="Identity.ApplicationPermissions.WebhooksGerenciar"/>.</summary>
+    public const string WebhooksRead = "WebhooksRead";
 }

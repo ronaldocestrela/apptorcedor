@@ -34,6 +34,8 @@ export const ApplicationPermissions = {
   LgpdConsentimentosRegistrar: 'Lgpd.Consentimentos.Registrar',
   LgpdDadosExportar: 'Lgpd.Dados.Exportar',
   LgpdDadosAnonimizar: 'Lgpd.Dados.Anonimizar',
+  WebhooksVisualizar: 'Webhooks.Visualizar',
+  WebhooksGerenciar: 'Webhooks.Gerenciar',
 } as const
 
 export type ApplicationPermission =
@@ -56,6 +58,8 @@ export const ADMIN_AREA_PERMISSIONS: readonly ApplicationPermission[] = [
   ApplicationPermissions.LgpdConsentimentosRegistrar,
   ApplicationPermissions.LgpdDadosExportar,
   ApplicationPermissions.LgpdDadosAnonimizar,
+  ApplicationPermissions.WebhooksVisualizar,
+  ApplicationPermissions.WebhooksGerenciar,
   ApplicationPermissions.PagamentosVisualizar,
   ApplicationPermissions.PagamentosGerenciar,
   ApplicationPermissions.PagamentosEstornar,
