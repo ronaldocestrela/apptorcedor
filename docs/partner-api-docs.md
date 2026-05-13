@@ -59,6 +59,8 @@ Headers:
 
 O API aceita telefone em qualquer formato — com parênteses, hífens, espaços, DDI (+55), etc. O importante é conter o número.
 
+Observação técnica: o servidor normaliza também o telefone já salvo no cadastro (remove caracteres não numéricos) para evitar divergências entre formatos antigos e novos.
+
 ---
 
 ## 📨 Resposta da API
@@ -142,6 +144,10 @@ Solução:
 - Espere alguns minutos e tente novamente
 - Se persistir, avise ao administrador
 ```
+
+Nota: após a melhoria de robustez do lookup por telefone, respostas 500 por inconsistência de formatação foram mitigadas. Se ocorrer 500, trate como indisponibilidade temporária e aplique fallback de negócio (sem benefício) até nova tentativa.
+
+Atualização operacional: a gravação de uso da API key (`lastUsedAtUtc`) foi ajustada para evitar execução concorrente com contexto de banco da requisição, reduzindo cenários de resposta intermitente em consultas de lookup.
 
 ---
 
