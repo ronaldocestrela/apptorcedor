@@ -24,6 +24,7 @@ import {
   Home,
   Settings2,
   ChevronDown,
+  Webhook,
 } from 'lucide-react'
 import { ApplicationPermissions } from '../../../shared/auth/applicationPermissions'
 import { hasPermission } from '../../../shared/auth/permissionUtils'
@@ -192,8 +193,10 @@ export function AdminLayout() {
             || hasPermission(user, ApplicationPermissions.LgpdDocumentosVisualizar)
             || hasPermission(user, ApplicationPermissions.LgpdConsentimentosVisualizar)
             || hasPermission(user, ApplicationPermissions.LgpdDadosExportar)
-            || hasPermission(user, ApplicationPermissions.LgpdDadosAnonimizar)) ? (
-            <SidebarSection label="Sistema" routes={['configurations', 'audit-logs', 'role-permissions', 'lgpd']}>
+            || hasPermission(user, ApplicationPermissions.LgpdDadosAnonimizar)
+            || hasPermission(user, ApplicationPermissions.WebhooksVisualizar)
+            || hasPermission(user, ApplicationPermissions.WebhooksGerenciar)) ? (
+            <SidebarSection label="Sistema" routes={['configurations', 'audit-logs', 'role-permissions', 'lgpd', 'webhook-tokens']}>
               {hasPermission(user, ApplicationPermissions.ConfiguracoesVisualizar) ? (
                 <NavItem to="configurations" icon={<Settings size={ICON_SIZE} />} label="Configurações" />
               ) : null}
@@ -212,6 +215,10 @@ export function AdminLayout() {
               {(hasPermission(user, ApplicationPermissions.LgpdDadosExportar)
                 || hasPermission(user, ApplicationPermissions.LgpdDadosAnonimizar)) ? (
                 <NavItem to="lgpd/privacy" icon={<Database size={ICON_SIZE} />} label="LGPD — Dados" />
+              ) : null}
+              {(hasPermission(user, ApplicationPermissions.WebhooksVisualizar)
+                || hasPermission(user, ApplicationPermissions.WebhooksGerenciar)) ? (
+                <NavItem to="webhook-tokens" icon={<Webhook size={ICON_SIZE} />} label="Integrações — Tokens" />
               ) : null}
             </SidebarSection>
           ) : null}

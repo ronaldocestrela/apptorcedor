@@ -87,6 +87,12 @@ builder.Services.AddAuthorization(options =>
             policy.RequireAssertion(ctx =>
                 ctx.User.HasClaim(AppClaimTypes.Permission, ApplicationPermissions.JogosCriar)
                 || ctx.User.HasClaim(AppClaimTypes.Permission, ApplicationPermissions.JogosEditar)));
+    options.AddPolicy(
+        Policies.WebhooksRead,
+        policy =>
+            policy.RequireAssertion(ctx =>
+                ctx.User.HasClaim(AppClaimTypes.Permission, ApplicationPermissions.WebhooksVisualizar)
+                || ctx.User.HasClaim(AppClaimTypes.Permission, ApplicationPermissions.WebhooksGerenciar)));
 });
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();

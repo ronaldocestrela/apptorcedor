@@ -21,6 +21,7 @@ import { RolePermissionsPage } from '../features/admin/pages/RolePermissionsPage
 import { StaffManagementPage } from '../features/admin/pages/StaffManagementPage'
 import { UserDetailPage } from '../features/admin/pages/UserDetailPage'
 import { UsersListPage } from '../features/admin/pages/UsersListPage'
+import { WebhookTokensAdminPage } from '../features/admin/pages/WebhookTokensAdminPage'
 import { AdminLayout } from '../features/admin/layout/AdminLayout'
 import { AuthProvider } from '../features/auth/AuthContext'
 import { PermissionRoute } from '../features/auth/PermissionRoute'
@@ -97,6 +98,7 @@ export function App() {
               <Route path="lgpd/documents" element={<LegalDocumentsPage />} />
               <Route path="lgpd/consents" element={<UserConsentsPage />} />
               <Route path="lgpd/privacy" element={<PrivacyOpsPage />} />
+              <Route path="webhook-tokens" element={<WebhookTokensAdminPage />} />
             </Route>
           </Route>
         </Route>
