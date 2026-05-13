@@ -88,27 +88,48 @@ public sealed class PartnerApiKeyService(AppDbContext db, ILogger<PartnerApiKeyS
         if (record is null)
             return null;
 
-        // Atualiza LastUsedAtUtc de forma fire-and-forget (não bloqueia a resposta).
-        _ = UpdateLastUsedAsync(record.Id);
+        // Atualiza no mesmo fluxo para evitar corrida com DbContext scoped.
+        await UpdateLastUsedAsync(record.Id, cancellationToken).ConfigureAwait(false);
 
         return new ValidatedPartnerKeyDto(record.Id, record.Name);
     }
 
-    private async Task UpdateLastUsedAsync(Guid id)
+    private async Task UpdateLastUsedAsync(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            var record = await db.PartnerApiKeys.FindAsync(id).ConfigureAwait(false);
-            if (record is not null)
+            try
             {
-                record.LastUsedAtUtc = DateTimeOffset.UtcNow;
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                await db.PartnerApiKeys
+                    .Where(x => x.Id == id)
+                    .ExecuteUpdateAsync(
+                        setters => setters.SetProperty(x => x.LastUsedAtUtc, _ => DateTimeOffset.UtcNow),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (InvalidOperationException)
+            {
+                await UpdateLastUsedWithTrackedEntityAsync(id, cancellationToken).ConfigureAwait(false);
+            }
+            catch (NotSupportedException)
+            {
+                await UpdateLastUsedWithTrackedEntityAsync(id, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to update LastUsedAtUtc for PartnerApiKey {Id}", id);
         }
+    }
+
+    private async Task UpdateLastUsedWithTrackedEntityAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var record = await db.PartnerApiKeys.FirstOrDefaultAsync(x => x.Id == id, cancellationToken).ConfigureAwait(false);
+        if (record is null)
+            return;
+
+        record.LastUsedAtUtc = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Computa SHA-256 da chave raw e retorna hex lowercase de 64 caracteres.</summary>

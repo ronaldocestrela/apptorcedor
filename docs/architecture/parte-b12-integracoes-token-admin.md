@@ -37,6 +37,7 @@ Base: `/api/admin/partner-keys`
   - autenticação: scheme `PartnerApiKey` via header `X-Api-Key`
   - resposta: `{ exists, isActiveMember }`
   - LGPD: não expõe dados pessoais além do resultado booleano
+  - robustez de lookup: o telefone agora é normalizado removendo todos os caracteres não numéricos também do valor armazenado, reduzindo erros quando o cadastro antigo contém formatos não padronizados.
 
 ## Frontend administrativo
 
@@ -65,3 +66,5 @@ Base: `/api/admin/partner-keys`
 - Não foi alterado o endpoint Stripe webhook (`/api/webhooks/stripe`) nem callback legacy de pagamentos.
 - Não foi introduzido novo tipo de token; a gestão admin reutiliza a infraestrutura de Partner API keys já existente.
 - Rotação nesta fase é operacional: gerar novo token e revogar o antigo.
+- O lookup por telefone passou a usar comparação normalizada em memória (projeção mínima de `Id` + `PhoneNumber`) para evitar fragilidade de tradução SQL com cadeias extensas de `Replace`.
+- A atualização de `LastUsedAtUtc` da API key deixou de ser fire-and-forget com `DbContext` scoped e passou para atualização aguardada no mesmo fluxo (com fallback para providers sem `ExecuteUpdateAsync`), eliminando condição de corrida que causava intermitência no Partner Lookup.

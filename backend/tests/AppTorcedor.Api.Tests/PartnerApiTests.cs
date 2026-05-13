@@ -229,4 +229,5 @@ public sealed class PartnerApiTests(AppWebApplicationFactory factory) : IClassFi
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
         return body.GetProperty("accessToken").GetString()!;
     }
+
 }
