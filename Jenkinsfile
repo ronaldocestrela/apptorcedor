@@ -429,7 +429,7 @@ pipeline {
         } else {
           withCredentials([string(credentialsId: 'github-token-deploy-status', variable: 'GH_STATUS_TOKEN')]) {
             sh '''#!/bin/bash
-              set -euo pipefail
+              set -uo pipefail
               if [ -z "${GIT_COMMIT:-}" ] || [ -z "${GITHUB_REPOSITORY:-}" ]; then
                 echo "GIT_COMMIT ou GITHUB_REPOSITORY ausente; pulando status no GitHub." >&2
                 exit 0
@@ -441,6 +441,11 @@ pipeline {
                 -H "X-GitHub-Api-Version: 2022-11-28" \
                 "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GIT_COMMIT}" \
                 -d "${BODY}"
+              status_code=$?
+              if [ $status_code -ne 0 ]; then
+                echo "Aviso: falha ao enviar status de sucesso para GitHub (curl exit ${status_code})." >&2
+              fi
+              exit 0
             '''
           }
         }
@@ -467,6 +472,11 @@ pipeline {
                 -H "X-GitHub-Api-Version: 2022-11-28" \
                 "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GIT_COMMIT}" \
                 -d "${BODY}"
+              status_code=$?
+              if [ $status_code -ne 0 ]; then
+                echo "Aviso: falha ao enviar status de falha para GitHub (curl exit ${status_code})." >&2
+              fi
+              exit 0
             '''
           }
         }
